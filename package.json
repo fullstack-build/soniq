@@ -34,23 +34,23 @@
   },
   "homepage": "https://github.com/fullstack-build/fullstack.one#readme",
   "devDependencies": {
+    "@types/dotenv": "^4.0.2",
     "@types/koa": "^2.0.39",
     "@types/koa-bodyparser": "^3.0.25",
     "@types/koa-router": "^7.0.23",
     "@types/node": "^8.0.31",
-    "typescript": "^2.6"
+    "typescript": "^2.6",
+    "git-hooks": "^1.1.9",
+    "tslint": "^5.8.0"
   },
   "dependencies": {
-    "@types/dotenv": "^4.0.2",
     "body-parser": "^1.18.2",
     "dotenv": "^4.0.0",
-    "git-hooks": "^1.1.9",
     "koa": "^2.3.0",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.2.1",
     "pg": "^7.3.0",
     "ts-node": "^3.3.0",
-    "tslint": "^5.8.0",
     "typescript": "^2.6"
   }
 }
