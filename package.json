@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
     "node": ">=8.6"
@@ -52,5 +52,6 @@
     "ts-node": "^3.3.0",
     "tslint": "^5.8.0",
     "typescript": "^2.6"
-  }
+  },
+  "author": "Eugene <opensource@terehov.de> (http://fullstack.build)"
 }
