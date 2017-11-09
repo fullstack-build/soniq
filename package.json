@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one",
-  "version": "0.0.1",
+  "version": "0.1.0-0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
     "node": ">=8.6"
