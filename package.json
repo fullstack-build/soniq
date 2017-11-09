@@ -2,9 +2,15 @@
   "name": "fullstack.one",
   "version": "0.0.1",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
+  "engines": {
+    "node": ">=8.6"
+  },
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node .",
+    "dev": "nodemon",
+    "tslint": "tslint './server/**/*.ts?(x)'",
+    "test": "mocha -r ts-node/register test/*.ts"
   },
   "repository": {
     "type": "git",
@@ -27,9 +33,23 @@
     "url": "https://github.com/fullstack-build/fullstack.one/issues"
   },
   "homepage": "https://github.com/fullstack-build/fullstack.one#readme",
+  "devDependencies": {
+    "@types/koa": "^2.0.39",
+    "@types/koa-bodyparser": "^3.0.25",
+    "@types/koa-router": "^7.0.23",
+    "@types/node": "^8.0.31",
+    "typescript": "^2.6"
+  },
   "dependencies": {
+    "body-parser": "^1.18.2",
     "dotenv": "^4.0.0",
-    "koa2": "^2.0.0-alpha.7",
-    "ts-node": "^3.3.0"
+    "git-hooks": "^1.1.9",
+    "koa": "^2.3.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.2.1",
+    "pg": "^7.3.0",
+    "ts-node": "^3.3.0",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6"
   }
 }
