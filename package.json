@@ -1,0 +1,30 @@
+{
+  "name": "fullstack.one",
+  "version": "0.0.1",
+  "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [
+    "PostgreSQL",
+    "Node.js",
+    "GraphQL",
+    "TypeScript",
+    "API",
+    "Framework"
+  ],
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one/issues"
+  },
+  "homepage": "https://github.com/fullstack-build/fullstack.one#readme"
+}

@@ -1,2 +1,2 @@
 # fullstack.one
-PostgreSQL, Node.js, GraphQL, TypeScript Framework
+PostgreSQL, Node.js, GraphQL, TypeScript, API Framework
