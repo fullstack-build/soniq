@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=8.6"
   },
-  "main": "src/server",
+  "main": "packages/fullstack.one/server",
   "scripts": {
     "start": "ts-node .",
     "dev": "nodemon",
@@ -39,9 +39,10 @@
     "@types/koa-bodyparser": "^3.0.25",
     "@types/koa-router": "^7.0.23",
     "@types/node": "^8.0.31",
-    "typescript": "^2.6",
     "git-hooks": "^1.1.9",
-    "tslint": "^5.8.0"
+    "lerna": "^2.5.1",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
