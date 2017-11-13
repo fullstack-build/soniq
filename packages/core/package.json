@@ -1,0 +1,21 @@
+{
+  "name": "@fullstack-one/core",
+  "version": "0.1.0",
+  "description": "fullstack.one main server class",
+  "main": "server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/dotenv": "^4.0.2",
+    "@types/koa": "^2.0.39"
+  },
+  "dependencies": {
+    "@fullstack-one/logger": "0.1.0",
+    "dotenv": "^4.0.0",
+    "koa": "^2.4.1"
+  }
+}

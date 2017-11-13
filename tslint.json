@@ -5,6 +5,11 @@
     "tslint-config-airbnb"
   ],
   "jsRules": {},
-  "rules": {},
-  "rulesDirectory": []
+  "rules": {
+    "no-namespace": false
+  },
+  "rulesDirectory": [],
+  "linterOptions":{
+    "exclude":  ["**/node_modules/**", "*.d.ts"]
+  }
 }

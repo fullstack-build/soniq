@@ -1,15 +1,15 @@
 {
-  "name": "fullstack.one",
+  "name": "fullstack-one",
   "version": "0.1.0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
     "node": ">=8.6"
   },
-  "main": "packages/fullstack.one/server",
+  "main": "packages/server/main",
   "scripts": {
     "start": "ts-node .",
     "dev": "nodemon",
-    "tslint": "tslint './server/**/*.ts?(x)' --fix",
+    "tslint": "tslint './packages/**/*.ts?(x)' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
   "repository": {
@@ -34,23 +34,16 @@
   },
   "homepage": "https://github.com/fullstack-build/fullstack.one#readme",
   "devDependencies": {
-    "@types/dotenv": "^4.0.2",
-    "@types/koa": "^2.0.39",
-    "@types/koa-bodyparser": "^3.0.25",
-    "@types/koa-router": "^7.0.23",
     "@types/node": "^8.0.31",
     "git-hooks": "^1.1.9",
     "lerna": "^2.5.1",
     "tslint": "^5.8.0",
+    "nodemon": "^1.12.1",
     "tslint-config-airbnb": "^5.3.0"
   },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "dotenv": "^4.0.0",
-    "koa": "^2.3.0",
-    "koa-bodyparser": "^4.2.0",
-    "koa-router": "^7.2.1",
-    "pg": "^7.3.0",
+    "is-https": "^1.0.0",
+    "lodash": "^4.17.4",
     "ts-node": "^3.3.0",
     "typescript": "^2.6"
   }
