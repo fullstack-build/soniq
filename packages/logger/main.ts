@@ -7,7 +7,7 @@ import { ILogger } from './ILogger';
 import { ILogObject } from './ILogObject';
 
 export class Logger implements ILogger {
-  private LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
+  private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
 
   // Logger Name
   private moduleName: string = null;
@@ -76,10 +76,6 @@ export class Logger implements ILogger {
   }
 
   public error(...args: any[]) {
-    // no function
-  }
-
-  public fatal(...args: any[]) {
     // no function
   }
 

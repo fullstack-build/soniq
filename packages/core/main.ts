@@ -36,7 +36,7 @@ export namespace FullstackOne {
       this.loadConfig();
 
       // init core logger
-      this.logger = this.getLogger('main');
+      this.logger = this.getLogger('core');
 
       // set isHTTPS based on KOA with each request
 

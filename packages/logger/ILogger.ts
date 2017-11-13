@@ -4,5 +4,4 @@ export interface ILogger {
   info: () => void;
   warn: () => void;
   error: () => void;
-  fatal: () => void;
 }
