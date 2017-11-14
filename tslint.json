@@ -6,7 +6,8 @@
   ],
   "jsRules": {},
   "rules": {
-    "no-namespace": false
+    "no-namespace": false,
+    "object-literal-sort-keys": false
   },
   "rulesDirectory": [],
   "linterOptions":{

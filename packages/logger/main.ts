@@ -14,7 +14,7 @@ export class Logger implements ILogger {
   // project environment
   private envInfo: IEnvironmentInformation;
   // tracer
-  private tracerLogger: Tracer = null
+  private tracerLogger: Tracer = null;
   // debug
   private debugLogger: DebugLogger = null;
   // LogEntries

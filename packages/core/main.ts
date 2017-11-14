@@ -1,10 +1,12 @@
 import * as dotenv from 'dotenv';
+import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as _ from 'lodash';
 import * as path from 'path';
 
 // fullstackOne imports
+import { Db } from '../db/main';
 import { Logger } from '../logger/main';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
@@ -17,6 +19,8 @@ export namespace FullstackOne {
     private ENVIRONMENT: IEnvironmentInformation;
     private CONFIG: IConfig;
     private logger: Logger;
+    private dbSetup: Db;
+    private dbPool: Db;
     private APP: Koa;
 
     constructor() {
@@ -38,10 +42,16 @@ export namespace FullstackOne {
       // init core logger
       this.logger = this.getLogger('core');
 
+      // create Db connection
+      this.connectDB();
+
       // set isHTTPS based on KOA with each request
 
       // start server
       this.startServer();
+
+      // execute book scripts
+      this.executeBootScripts();
 
       // draw cli
       this.cliArt();
@@ -58,7 +68,7 @@ export namespace FullstackOne {
 
     // return CONFIG
     // return either full config or only module config
-    public getConfig(pModule?: string): IConfig {
+    public getConfig(pModule?: string): any {
       if (pModule == null) {
         return this.CONFIG;
       } else {
@@ -97,12 +107,45 @@ export namespace FullstackOne {
       this.CONFIG = config;
     }
 
+    // connect to setup db and create a general connection pool
+    private connectDB() {
+      const configDB = this.getConfig('db');
+      // create connection with setup user
+      const dbSetup = new Db(this, configDB.setup, false);
+      // create general conncetion pool
+      const dbPool = new Db(this, configDB.general, true);
+
+    }
+
+    // execute all boot scripts in the boot folder
+    private executeBootScripts() {
+      // get all boot files sync
+      const files = fastGlob.sync(
+        `${this.ENVIRONMENT.path}/boot/*.{ts,js}`,
+        { deep: true, onlyFiles: true });
+
+      // sort files
+      files.sort();
+      // execute all boot scripts
+      for (const file of files) {
+        // include all boot files sync
+        const bootScript = require(file);
+        try {
+          (bootScript.default != null) ? bootScript.default(this) : bootScript(this);
+          this.logger.trace('boot script successful', file);
+        } catch (err) {
+          this.logger.warn('boot script error', file, err);
+        }
+
+      }
+    }
+
     private startServer(): void {
       this.APP = new Koa();
       // start KOA on PORT
       this.APP.listen(this.ENVIRONMENT.port);
       // success log
-      this.logger.info('Server Listening on port', this.ENVIRONMENT.port);
+      this.logger.info('Server listening on port', this.ENVIRONMENT.port);
     }
 
     // draw CLI art

@@ -20,6 +20,9 @@ else
 	printf "${GREEN}tslint passed.${NC}\n"
 fi
 
+# In case of a auto fix - auto add changes to commit
+git add .
+
 # If there were no failures, it is good to commit
 if $pass; then
 	exit 0
