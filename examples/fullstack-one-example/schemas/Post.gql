@@ -1,0 +1,10 @@
+type Post @model {
+  id: ID! @isUnique
+  title: String
+  content: String
+  owner: User! @relation(name: "PostOwner")
+  ownerSecret: String
+  titleImage: File @relation(name: "TitleImage")
+  contributors: [User!]! @relation(name: "PostContributors")
+  contributorSecret: String
+}

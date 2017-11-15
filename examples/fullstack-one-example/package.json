@@ -1,0 +1,46 @@
+{
+  "name": "fullstack.one-example",
+  "version": "0.1.0",
+  "description": "Example project: how to use fullstack.one",
+  "engines": {
+    "node": ">=8.6",
+    "npm": ">=5"
+  },
+  "main": "main.ts",
+  "scripts": {
+    "start": "ts-node --inspect .",
+    "dev": "nodemon",
+    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
+    "test": "mocha -r ts-node/register test/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one-example.git"
+  },
+  "keywords": [
+    "fullstack.one",
+    "example"
+  ],
+  "author": "Eugene <opensource@terehov.de> (http://fullstack.build)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one-example/issues"
+  },
+  "homepage": "https://github.com/fullstack-build/fullstack.one-example#readme",
+  "devDependencies": {
+    "@types/dotenv": "^4.0.2",
+    "@types/node": "^8.0.31",
+    "git-hooks": "^1.1.9",
+    "lerna": "^2.5.1",
+    "tslint": "^5.8.0",
+    "tslint-config-airbnb": "^5.3.0"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "fullstack-one": "^0.1.0",
+    "fullstack.one": "git+https://github.com/fullstack-build/fullstack.one.git",
+    "nodemon": "^1.12.1",
+    "ts-node": "^3.3.0",
+    "typescript": "^2.6"
+  }
+}

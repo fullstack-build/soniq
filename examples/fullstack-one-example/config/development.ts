@@ -1,0 +1,5 @@
+export = {
+  logger: {
+    minLevel: 'trace',
+  },
+};

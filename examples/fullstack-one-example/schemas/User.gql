@@ -1,0 +1,9 @@
+type User @model {
+  id: ID! @isUnique
+  email: String @isUnique
+  username: String
+  firstLetterOfUserName: String @computed(expression: "firstNofField", params: {n: 1})
+  payload: String
+  posts: [Post!]! @relation(name: "PostOwner")
+  postContributions: [Post!]! @relation(name: "PostContributors")
+}

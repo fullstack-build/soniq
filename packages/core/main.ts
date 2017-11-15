@@ -11,6 +11,8 @@ import { Logger } from '../logger/main';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
 
+// import { loadSchema } from 'helper/graphqlSchemaLoader';
+
 // init .env
 dotenv.config();
 
@@ -44,6 +46,9 @@ export namespace FullstackOne {
 
       // create Db connection
       this.connectDB();
+
+      // load schemas
+      this.loadSchemas();
 
       // set isHTTPS based on KOA with each request
 
@@ -115,6 +120,10 @@ export namespace FullstackOne {
       // create general conncetion pool
       const dbPool = new Db(this, configDB.general, true);
 
+    }
+
+    private loadSchemas() {
+      return false; // console.error('###');
     }
 
     // execute all boot scripts in the boot folder
