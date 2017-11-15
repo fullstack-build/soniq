@@ -126,14 +126,15 @@ class FullstackOneCore {
   private async loadSchemas() {
     try {
       const pattern = this.ENVIRONMENT.path + '/schemas/*.gql';
-      const graphQlSchemas = await graphQlHelper.loadSchemas(pattern);
+      const graphQlSchemas = await graphQlHelper.loadGraphQlSchemas(pattern);
+      const combinedGraphQlSchemas = graphQlSchemas.join('\n');
 
-      const parsedGraphQlSchema = graphQlHelper.parseSchema(graphQlSchemas[0]);
+      const parsedGraphQlSchema = graphQlHelper.parseGraphQlSchema(combinedGraphQlSchemas);
 
-      graphQlHelper.schemaToDbMigration(parsedGraphQlSchema);
+      graphQlHelper.graphQlJsonSchemasToDbMigration(parsedGraphQlSchema);
 
     } catch (err) {
-      this.logger.warn('loadSchemas error', err);
+      this.logger.warn('loadGraphQlSchemas error', err);
     }
   }
 
