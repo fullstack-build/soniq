@@ -1,4 +1,4 @@
-import { FullstackOne } from '../../packages/core/main';
-const fullstackOneCore = FullstackOne.getInstance();
+import * as FullstackOne from '../../packages/core/main';
+const fullstackOne = FullstackOne.getInstance();
 
-console.log('!!!', fullstackOneCore.getApp());
+console.log('!!!', fullstackOne.getApp());
