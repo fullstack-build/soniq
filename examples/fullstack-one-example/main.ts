@@ -1,4 +1,4 @@
 import * as FullstackOne from '../../packages/core/main';
-const fullstackOne = FullstackOne.getInstance();
+const $one = FullstackOne.getInstance();
 
-console.log('!!!', fullstackOne.getApp());
+console.log('!!!', $one.getApp());

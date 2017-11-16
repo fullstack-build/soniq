@@ -1,14 +1,15 @@
 import * as fastGlob from 'fast-glob';
 import { readFile } from 'fs';
-import { promisify } from 'util';
+import { isArray, promisify } from 'util';
 const readFileAsync = promisify(readFile);
 import { parse } from 'graphql';
 
-import { ITableObject } from './ITableObject';
+import { ITableObjects } from './ITableObjects';
+import { parseGraphQlJsonNode } from './parser';
 
 export namespace graphQlHelper {
 
-  export const loadGraphQlSchemas = async (pattern: string) => {
+  export const loadGraphQlSchema = async (pattern: string) => {
 
     try {
 
@@ -35,33 +36,10 @@ export namespace graphQlHelper {
 
   };
 
-  export const graphQlJsonSchemasToDbMigration = (graphQlJsonSchemas) => {
-    const schemas = graphQlJsonSchemas.definitions;
-    parseGraphQlJsonSchema(schemas[2]);
-
-    return null;
-  };
-
-  const parseGraphQlJsonSchema = (graphQlJsonSchema) => {
-
-    const tableObject: ITableObject = {
-      tableName: graphQlJsonSchema.name.value,
-      description: '',
-      fields: [],
-    };
-
-    // create fields
-    tableObject.fields = graphQlJsonSchema.fields.map();
-
-    for (const fieldGraphQlJSON of ) {
-      const fieldMigrations = buildFieldObject(tableObject.tableName, fieldGraphQlJSON);
-      if (fieldMigrations != null) {
-        tableObject.fields.push(fieldMigrations);
-      }
-    }
-
-    // console.log(tableObject);
-
+  export const parseGraphQlJsonSchemaToTableObject = (graphQlJsonSchema): ITableObjects => {
+    const tableObjects: ITableObjects = {};
+    parseGraphQlJsonNode(tableObjects, graphQlJsonSchema);
+    return tableObjects;
   };
 
 }

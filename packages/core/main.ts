@@ -12,8 +12,8 @@ import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
 
 // helper
-import { graphQlHelper } from '../graphQlHelper/graphql';
-export *  from '../graphQlHelper/graphql';
+import { graphQlHelper } from '../graphQlHelper/main';
+export *  from '../graphQlHelper/main';
 
 // init .env
 dotenv.config();
@@ -49,7 +49,7 @@ class FullstackOneCore {
     this.connectDB();
 
     // load schemas
-    this.loadSchemas();
+    this.loadSchema();
 
     // set isHTTPS based on KOA with each request
 
@@ -123,18 +123,19 @@ class FullstackOneCore {
 
   }
 
-  private async loadSchemas() {
+  private async loadSchema() {
     try {
-      const pattern = this.ENVIRONMENT.path + '/schemas/*.gql';
-      const graphQlSchemas = await graphQlHelper.loadGraphQlSchemas(pattern);
-      const combinedGraphQlSchemas = graphQlSchemas.join('\n');
+      const pattern = this.ENVIRONMENT.path + '/schema/*.gql';
+      const graphQlTypes = await graphQlHelper.loadGraphQlSchema(pattern);
+      const combinedGraphQlSchema = graphQlTypes.join('\n');
 
-      const parsedGraphQlSchema = graphQlHelper.parseGraphQlSchema(combinedGraphQlSchemas);
+      const graphQlJsonSchema = graphQlHelper.parseGraphQlSchema(combinedGraphQlSchema);
 
-      graphQlHelper.graphQlJsonSchemasToDbMigration(parsedGraphQlSchema);
+      const tableObjects = graphQlHelper.parseGraphQlJsonSchemaToTableObject(graphQlJsonSchema);
+      this.logger.info('parsed schema: ', JSON.stringify(tableObjects, null, 2));
 
     } catch (err) {
-      this.logger.warn('loadGraphQlSchemas error', err);
+      this.logger.warn('loadGraphQlSchema error', err);
     }
   }
 
