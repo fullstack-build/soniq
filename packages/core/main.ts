@@ -134,6 +134,10 @@ class FullstackOneCore {
       const tableObjects = graphQlHelper.parseGraphQlJsonSchemaToTableObject(graphQlJsonSchema);
       this.logger.info('parsed schema: ', JSON.stringify(tableObjects, null, 2));
 
+      // write parsed schema into migrations folder
+      graphQlHelper.writeTableObjectIntoMigrationsFolder(
+        `${this.ENVIRONMENT.path}/migrations/`, tableObjects);
+
     } catch (err) {
       this.logger.warn('loadGraphQlSchema error', err);
     }

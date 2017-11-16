@@ -1,7 +1,8 @@
 import * as fastGlob from 'fast-glob';
-import { readFile } from 'fs';
-import { isArray, promisify } from 'util';
+import { readFile, writeFile } from 'fs';
+import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
+const writeFileAsync = promisify(writeFile);
 import { parse } from 'graphql';
 
 import { ITableObjects } from './ITableObjects';
@@ -40,6 +41,17 @@ export namespace graphQlHelper {
     const tableObjects: ITableObjects = {};
     parseGraphQlJsonNode(tableObjects, graphQlJsonSchema);
     return tableObjects;
+  };
+
+  export const writeTableObjectIntoMigrationsFolder = async (migrationsPath: string,
+                                                             tableObject: ITableObjects) => {
+    const timestampMigration = migrationsPath + (new Date()).getTime() + '.json';
+    try {
+      await writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), 'utf8');
+    } catch (err) {
+      throw err;
+    }
+
   };
 
 }
