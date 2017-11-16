@@ -1,0 +1,167 @@
+{
+  "File": {
+    "isDbModel": true,
+    "tableName": "File",
+    "fields": [
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "url",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "post",
+        "type": "relation"
+      }
+    ]
+  },
+  "Post": {
+    "isDbModel": true,
+    "tableName": "Post",
+    "fields": [
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "title",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "content",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": false
+        },
+        "name": "owner",
+        "type": "relation"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "ownerSecret",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "titleImage",
+        "type": "relation"
+      },
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": false
+        },
+        "name": "contributors",
+        "type": "relation",
+        "defaultValue": []
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "contributorSecret",
+        "type": "varchar"
+      }
+    ]
+  },
+  "User": {
+    "isDbModel": true,
+    "tableName": "User",
+    "fields": [
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": true
+        },
+        "name": "email",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "username",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "firstLetterOfUserName",
+        "type": "computed"
+      },
+      {
+        "constraints": {
+          "nullable": true,
+          "unique": false
+        },
+        "name": "payload",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": false
+        },
+        "name": "posts",
+        "type": "relation",
+        "defaultValue": []
+      },
+      {
+        "constraints": {
+          "nullable": false,
+          "unique": false
+        },
+        "name": "postContributions",
+        "type": "relation",
+        "defaultValue": []
+      }
+    ]
+  }
+}

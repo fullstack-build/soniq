@@ -128,7 +128,7 @@ const graphQlJsonSchemaParser = {
         tableObject.isDbModel = true;
         break;
       case 'isUnique':
-        tableObject.unique = true;
+        tableObject.constraints.unique = true;
         break;
       case 'computed':
         tableObject.type = 'computed';

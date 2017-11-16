@@ -6,11 +6,10 @@
       {
         "constraints": {
           "nullable": false,
-          "unique": false
+          "unique": true
         },
         "name": "id",
-        "type": "uuid",
-        "unique": true
+        "type": "uuid"
       },
       {
         "constraints": {
@@ -37,11 +36,10 @@
       {
         "constraints": {
           "nullable": false,
-          "unique": false
+          "unique": true
         },
         "name": "id",
-        "type": "uuid",
-        "unique": true
+        "type": "uuid"
       },
       {
         "constraints": {
@@ -109,20 +107,18 @@
       {
         "constraints": {
           "nullable": false,
-          "unique": false
+          "unique": true
         },
         "name": "id",
-        "type": "uuid",
-        "unique": true
+        "type": "uuid"
       },
       {
         "constraints": {
           "nullable": true,
-          "unique": false
+          "unique": true
         },
         "name": "email",
-        "type": "varchar",
-        "unique": true
+        "type": "varchar"
       },
       {
         "constraints": {

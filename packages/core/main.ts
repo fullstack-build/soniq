@@ -13,6 +13,8 @@ import { IEnvironmentInformation } from './IEnvironmentInformation';
 
 // helper
 import { graphQlHelper } from '../graphQlHelper/main';
+import { getMigrationsUp } from '../graphQlHelper/migration';
+
 export *  from '../graphQlHelper/main';
 
 // init .env
@@ -137,6 +139,9 @@ class FullstackOneCore {
       // write parsed schema into migrations folder
       graphQlHelper.writeTableObjectIntoMigrationsFolder(
         `${this.ENVIRONMENT.path}/migrations/`, tableObjects);
+
+      const sqlStatements = await getMigrationsUp(`${this.ENVIRONMENT.path}/migrations/`);
+      this.logger.debug(sqlStatements.join('\n'));
 
     } catch (err) {
       this.logger.warn('loadGraphQlSchema error', err);
