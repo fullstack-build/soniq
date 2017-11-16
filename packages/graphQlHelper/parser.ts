@@ -46,6 +46,7 @@ const graphQlJsonSchemaParser = {
 
     const newField = {
       constraints: {
+        isPrimaryKey: false,
         nullable: true,
         unique: false,
       },
@@ -89,6 +90,7 @@ const graphQlJsonSchemaParser = {
     switch (fieldType) {
       case 'ID':
         dbType = 'uuid';
+        fieldObject.constraints.isPrimaryKey = true;
         break;
       case 'String':
         dbType = 'varchar';

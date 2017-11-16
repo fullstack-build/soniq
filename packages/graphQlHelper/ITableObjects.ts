@@ -3,7 +3,6 @@ export interface ITableObjects {
     isDbModel: boolean;
     tableName: string;
     description?: string;
-    primaryKey: string;
     foreignKeys: [{
       // Name of the association
       name: string;
@@ -23,6 +22,7 @@ export interface ITableObjects {
       type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
       defaultValue: string;
       constraints: {
+        isPrimaryKey: boolean;
         nullable: boolean;
         unique: boolean;
       }

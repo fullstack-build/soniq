@@ -72,6 +72,12 @@ const createSqlFromTableObject = (sqlCommands, pTableObject) => {
       fieldStatementArray.push(field.type);
 
       // constraints
+
+      // primary key
+      if (!!field.constraints.isPrimaryKey) {
+        fieldStatementArray.push('PRIMARY KEY');
+      }
+
       // unique
       if (!!field.constraints.unique) {
         fieldStatementArray.push('UNIQUE');
