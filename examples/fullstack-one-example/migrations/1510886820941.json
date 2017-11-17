@@ -1,0 +1,188 @@
+{
+  "File": {
+    "isDbModel": true,
+    "schemaName": "public",
+    "tableName": "File",
+    "fields": [
+      {
+        "constraints": {
+          "isPrimaryKey": true,
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "url",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "post",
+        "type": "relation"
+      }
+    ]
+  },
+  "Post": {
+    "isDbModel": true,
+    "schemaName": "public",
+    "tableName": "Post",
+    "fields": [
+      {
+        "constraints": {
+          "isPrimaryKey": true,
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "title",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "content",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": false,
+          "unique": false
+        },
+        "name": "owner",
+        "type": "relation"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "ownerSecret",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "titleImage",
+        "type": "relation"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": false,
+          "unique": false
+        },
+        "name": "contributors",
+        "type": "relation",
+        "defaultValue": []
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "contributorSecret",
+        "type": "varchar"
+      }
+    ]
+  },
+  "User": {
+    "isDbModel": true,
+    "schemaName": "public",
+    "tableName": "User",
+    "fields": [
+      {
+        "constraints": {
+          "isPrimaryKey": true,
+          "nullable": false,
+          "unique": true
+        },
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": true
+        },
+        "name": "email",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "username",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "firstLetterOfUserName",
+        "type": "computed"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": true,
+          "unique": false
+        },
+        "name": "payload",
+        "type": "varchar"
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": false,
+          "unique": false
+        },
+        "name": "posts",
+        "type": "relation",
+        "defaultValue": []
+      },
+      {
+        "constraints": {
+          "isPrimaryKey": false,
+          "nullable": false,
+          "unique": false
+        },
+        "name": "postContributions",
+        "type": "relation",
+        "defaultValue": []
+      }
+    ]
+  }
+}

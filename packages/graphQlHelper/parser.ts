@@ -1,48 +1,63 @@
-export const parseGraphQlJsonNode = (tableObjects, node) => {
+// refDbObjectActualTable: ref to current parent table obj will be passed through all iterations
+export const parseGraphQlJsonNode = (gQlSchemaNode,
+                                     dbObjectNode,
+                                     dbObject?,
+                                     refDbObjectActualTable?) => {
+
+  // ref to dbObject will be passed through all iterations
+  const refDbObj = dbObject || dbObjectNode;
 
   // dynamic parser loader
-  if (node == null || node.kind == null) {
+  if (gQlSchemaNode == null || gQlSchemaNode.kind == null) {
     // ignore empty nodes or nodes without a kind
-  } else if (graphQlJsonSchemaParser[node.kind] == null) {
-    process.stdout.write('parser.error.unknown.type: ' + node.kind);
+  } else if (graphQlJsonSchemaParser[gQlSchemaNode.kind] == null) {
+    process.stdout.write('parser.error.unknown.type: ' + gQlSchemaNode.kind);
   } else { // parse
-    graphQlJsonSchemaParser[node.kind](tableObjects, node);
+    graphQlJsonSchemaParser[gQlSchemaNode.kind](gQlSchemaNode,
+                                                dbObjectNode,
+                                                refDbObj,
+                                                refDbObjectActualTable);
   }
 
 };
 
 const graphQlJsonSchemaParser = {
   // iterate over all type definitions
-  Document: (tableObjects, node) => {
-    Object.values(node.definitions).map((element) => {
-      parseGraphQlJsonNode(tableObjects, element);
+  Document: (gQlSchemaNode, dbObjectNode, refDbObj) => {
+    Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
+      parseGraphQlJsonNode(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj);
     });
   },
 
   // parse Type Definitions
-  ObjectTypeDefinition: (tableObjects, node) => {
-    const typeName = node.name.value;
+  ObjectTypeDefinition: (gQlSchemaDocumentNode, dbObjectNode, refDbObj) => {
+    const typeName = gQlSchemaDocumentNode.name.value;
     // create tableObject in tableObjects
-    tableObjects[typeName] = {
+    // and save ref to it for recursion
+    const refDbObjectActualTable = dbObjectNode[typeName] = {
       isDbModel: false,
+      schemaName: 'public',
       tableName: typeName,
     };
     // parse ObjectType properties
-    Object.values(node).map((element) => {
+    Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
       // iterate over sub nodes (e.g. intefaces, fields, directives
-      if (Array.isArray(element)) {
-        Object.values(element).map((subnode) => {
+      if (Array.isArray(gQlSchemaDocumentNodeProperty)) {
+        Object.values(gQlSchemaDocumentNodeProperty).map((gQlSchemaDocumentSubnode) => {
           // parse sub node
-          parseGraphQlJsonNode(tableObjects[typeName], subnode);
+          parseGraphQlJsonNode(gQlSchemaDocumentSubnode,
+                               dbObjectNode[typeName],
+                               refDbObj,
+                               refDbObjectActualTable);
         });
       }
     });
   },
 
   // parse FieldDefinition Definitions
-  FieldDefinition: (tableObject, node) => {
+  FieldDefinition: (gQlFieldDefinitionNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
     // create fields object if not set already
-    tableObject.fields = tableObject.fields || [];
+    dbObjectNode.fields = dbObjectNode.fields || [];
 
     const newField = {
       constraints: {
@@ -51,46 +66,45 @@ const graphQlJsonSchemaParser = {
         unique: false,
       },
     };
-    tableObject.fields.push(newField);
-
-    /*
-    // create field object if not set already
-    const tableObjectField = tableObject.fields[fieldName] = tableObject.fields[fieldName] || {};
-    // set name
-    tableObject.fields[fieldName].name = fieldName;
-    */
+    // add new field ref to dbObject
+    // newField will now update data in the dbObject through this ref
+    dbObjectNode.fields.push(newField);
 
     // parse FieldDefinition properties
-    Object.values(node).map((element) => {
-      if (typeof element !== 'string' && !Array.isArray(element)) {
+    Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
+      if (typeof gQlSchemaFieldNodeProperty !== 'string' &&
+          !Array.isArray(gQlSchemaFieldNodeProperty)) {
 
         // parse sub node
-        parseGraphQlJsonNode(newField, element);
+        parseGraphQlJsonNode(gQlSchemaFieldNodeProperty,
+                             newField,
+                             refDbObj,
+                             refDbObjectActualTable);
 
-      } else if (typeof element !== 'string' && !!Array.isArray(element)) {
+      } else if (typeof gQlSchemaFieldNodeProperty !== 'string' &&
+                 !!Array.isArray(gQlSchemaFieldNodeProperty)) {
 
         // iterate over sub nodes (e.g. arguments, directives
-        Object.values(element).map((subnode) => {
+        Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
           // parse sub node
-          parseGraphQlJsonNode(newField, subnode);
+          parseGraphQlJsonNode(gQlSchemaFieldSubnode, newField, refDbObj, refDbObjectActualTable);
         });
-
       }
     });
   },
   // parse Name kind
-  Name: (fieldObject, node) => {
+  Name: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
     // set field name
-    fieldObject.name = node.value;
+    dbObjectNode.name = gQlSchemaNode.value;
   },
   // parse NamedType kind
-  NamedType: (fieldObject, node) => {
-    const fieldType = node.name.value;
+  NamedType: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+    const fieldType = gQlSchemaNode.name.value;
     let dbType = 'varchar';
     switch (fieldType) {
       case 'ID':
         dbType = 'uuid';
-        fieldObject.constraints.isPrimaryKey = true;
+        dbObjectNode.constraints.isPrimaryKey = true;
         break;
       case 'String':
         dbType = 'varchar';
@@ -102,41 +116,41 @@ const graphQlJsonSchemaParser = {
     }
 
     // set field name
-    fieldObject.type = dbType;
+    dbObjectNode.type = dbType;
   },
-
   // parse NonNullType kind
-  NonNullType: (fieldObject, node) => {
+  NonNullType: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
 
     // set NOT NULL restriction
-    fieldObject.constraints.nullable = false;
+    dbObjectNode.constraints.nullable = false;
 
     // parse sub type
-    if (node.type != null) {
-      parseGraphQlJsonNode(fieldObject, node.type);
+    if (gQlSchemaNode.type != null) {
+      const gQlSchemaTypeNode = gQlSchemaNode.type;
+      parseGraphQlJsonNode(gQlSchemaTypeNode, dbObjectNode, refDbObj, refDbObjectActualTable);
     }
   },
   // set list type
-  ListType: (fieldObject, node) => {
-    fieldObject.type = 'jsonb';
-    fieldObject.defaultValue = [];
+  ListType: (gQlSchemaTypeNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+    dbObjectNode.type = 'jsonb';
+    dbObjectNode.defaultValue = [];
   },
   // parse Directive
-  Directive: (tableObject, node) => {
+  Directive: (gQlDirectiveNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
 
-    const directiveKind = node.name.value;
+    const directiveKind = gQlDirectiveNode.name.value;
     switch (directiveKind) {
       case 'model':
-        tableObject.isDbModel = true;
+        dbObjectNode.isDbModel = true;
         break;
       case 'isUnique':
-        tableObject.constraints.unique = true;
+        dbObjectNode.constraints.unique = true;
         break;
       case 'computed':
-        tableObject.type = 'computed';
+        dbObjectNode.type = 'computed';
         break;
       case 'relation':
-        tableObject.type = 'relation';
+        dbObjectNode.type = 'relation';
         break;
       default:
         process.stdout.write('parser.error.unknown.directive.kind: ' +  directiveKind);

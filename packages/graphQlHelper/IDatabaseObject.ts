@@ -1,21 +1,9 @@
-export interface ITableObjects {
+export interface IDatabaseObject {
   [tableName: string]: {
     isDbModel: boolean;
+    schemaName: string;
     tableName: string;
     description?: string;
-    foreignKeys: [{
-      // Name of the association
-      name: string;
-      description?: string;
-      // joins from
-      field: string;
-      // joins to
-      reference: {
-        schema: string;
-        model: string;
-        field: string;
-      }
-    }];
     fields: [{
       name: string;
       description?: string;
@@ -25,7 +13,19 @@ export interface ITableObjects {
         isPrimaryKey: boolean;
         nullable: boolean;
         unique: boolean;
-      }
+      },
+      relation?: {
+        type: 'own' | 'belongTo'
+        // Name of the association
+        name: string;
+        description?: string;
+        // joins to
+        reference: {
+          schema: string;
+          model: string;
+          field: string;
+        }
+      };
     }];
   };
 }

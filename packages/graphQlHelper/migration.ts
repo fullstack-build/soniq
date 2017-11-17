@@ -4,7 +4,7 @@ import { basename } from 'path';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
 
-import { ITableObjects } from './ITableObjects';
+import { IDatabaseObject } from './IDatabaseObject';
 
 export const getMigrationsUp =
   async (pMigrationsPath: string, pMigrationDate?: number): Promise<string[]> => {
@@ -35,7 +35,7 @@ export const getMigrationsUp =
 
   };
 
-export const createSqlFromTableObjects = (pTableObjects: ITableObjects): string[] => {
+export const createSqlFromTableObjects = (pTableObjects: IDatabaseObject): string[] => {
 
   const sqlCommands: string[] = [];
 
@@ -54,7 +54,7 @@ export const createSqlFromTableObjects = (pTableObjects: ITableObjects): string[
 const createSqlFromTableObject = (sqlCommands, pTableObject) => {
 
   // create table statement
-  sqlCommands.push(`CREATE TABLE "${pTableObject.tableName}"();`);
+  sqlCommands.push(`CREATE TABLE "${pTableObject.schemaName}.${pTableObject.tableName}"();`);
 
   // create column statements
   for (const field of pTableObject.fields) {
@@ -66,7 +66,8 @@ const createSqlFromTableObject = (sqlCommands, pTableObject) => {
     } else {
       const fieldStatementArray = [];
       fieldStatementArray.push(
-        `ALTER TABLE "${pTableObject.tableName}" ADD COLUMN "${field.name}"`);
+        `ALTER TABLE "${pTableObject.schemaName}.${pTableObject.tableName}"` +
+         `ADD COLUMN "${field.name}"`);
 
       // add type
       fieldStatementArray.push(field.type);

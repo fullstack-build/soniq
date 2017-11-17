@@ -5,6 +5,7 @@
     "fields": [
       {
         "constraints": {
+          "isPrimaryKey": true,
           "nullable": false,
           "unique": true
         },
@@ -13,6 +14,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -21,6 +23,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -35,6 +38,7 @@
     "fields": [
       {
         "constraints": {
+          "isPrimaryKey": true,
           "nullable": false,
           "unique": true
         },
@@ -43,6 +47,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -51,6 +56,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -59,6 +65,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": false,
           "unique": false
         },
@@ -67,6 +74,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -75,6 +83,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -83,6 +92,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": false,
           "unique": false
         },
@@ -92,6 +102,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -106,6 +117,7 @@
     "fields": [
       {
         "constraints": {
+          "isPrimaryKey": true,
           "nullable": false,
           "unique": true
         },
@@ -114,6 +126,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": true
         },
@@ -122,6 +135,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -130,6 +144,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -138,6 +153,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": true,
           "unique": false
         },
@@ -146,6 +162,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": false,
           "unique": false
         },
@@ -155,6 +172,7 @@
       },
       {
         "constraints": {
+          "isPrimaryKey": false,
           "nullable": false,
           "unique": false
         },

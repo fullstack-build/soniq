@@ -5,7 +5,7 @@ const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
 import { parse } from 'graphql';
 
-import { ITableObjects } from './ITableObjects';
+import { IDatabaseObject } from './IDatabaseObject';
 import { parseGraphQlJsonNode } from './parser';
 
 export namespace graphQlHelper {
@@ -37,14 +37,14 @@ export namespace graphQlHelper {
 
   };
 
-  export const parseGraphQlJsonSchemaToTableObject = (graphQlJsonSchema): ITableObjects => {
-    const tableObjects: ITableObjects = {};
-    parseGraphQlJsonNode(tableObjects, graphQlJsonSchema);
-    return tableObjects;
+  export const parseGraphQlJsonSchemaToTableObject = (graphQlJsonSchema): IDatabaseObject => {
+    const databaseObject: IDatabaseObject = {};
+    parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
+    return databaseObject;
   };
 
   export const writeTableObjectIntoMigrationsFolder = async (migrationsPath: string,
-                                                             tableObject: ITableObjects) => {
+                                                             tableObject: IDatabaseObject) => {
     const timestampMigration = migrationsPath + (new Date()).getTime() + '.json';
     try {
       await writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), 'utf8');
