@@ -1,8 +1,15 @@
-// refDbObjectActualTable: ref to current parent table obj will be passed through all iterations
+import * as _ from 'lodash';
+
+// refDbObjectCurrentTable:
+//  - ref to current parent table obj will be passed through all iterations after table was added
+// refDbObjectCurrentTableField:
+// - ref to current parent table field obj will be passed through all iterations
+//   after table field was added
 export const parseGraphQlJsonNode = (gQlSchemaNode,
                                      dbObjectNode,
                                      dbObject?,
-                                     refDbObjectActualTable?) => {
+                                     refDbObjectCurrentTable?,
+                                     refDbObjectCurrentTableField?) => {
 
   // ref to dbObject will be passed through all iterations
   const refDbObj = dbObject || dbObjectNode;
@@ -11,34 +18,54 @@ export const parseGraphQlJsonNode = (gQlSchemaNode,
   if (gQlSchemaNode == null || gQlSchemaNode.kind == null) {
     // ignore empty nodes or nodes without a kind
   } else if (graphQlJsonSchemaParser[gQlSchemaNode.kind] == null) {
-    process.stdout.write('parser.error.unknown.type: ' + gQlSchemaNode.kind);
+    process.stdout.write('parser.error.unknown.type: ' + gQlSchemaNode.kind + '\n');
   } else { // parse
     graphQlJsonSchemaParser[gQlSchemaNode.kind](gQlSchemaNode,
                                                 dbObjectNode,
                                                 refDbObj,
-                                                refDbObjectActualTable);
+                                                refDbObjectCurrentTable,
+                                                refDbObjectCurrentTableField);
   }
 
 };
 
 const graphQlJsonSchemaParser = {
+
   // iterate over all type definitions
-  Document: (gQlSchemaNode, dbObjectNode, refDbObj) => {
+  Document: (gQlSchemaNode,
+             dbObjectNode,
+             refDbObj) => {
+
+    // FIRST:
+    // create blank objects for all tables (needed for validation of relationships)
+    Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
+      const tableName = gQlJsonSchemaDocumentNode.name.value;
+      // create tableObject in dbObject
+      refDbObj.tables[tableName] = {
+        name: tableName,
+        isDbModel: false,
+        schemaName: 'public',
+      };
+    });
+
+    // SECOND:
+    // parse all documents recursively
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
       parseGraphQlJsonNode(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj);
     });
   },
 
   // parse Type Definitions
-  ObjectTypeDefinition: (gQlSchemaDocumentNode, dbObjectNode, refDbObj) => {
-    const typeName = gQlSchemaDocumentNode.name.value;
-    // create tableObject in tableObjects
-    // and save ref to it for recursion
-    const refDbObjectActualTable = dbObjectNode[typeName] = {
-      isDbModel: false,
-      schemaName: 'public',
-      tableName: typeName,
-    };
+  ObjectTypeDefinition: (gQlSchemaDocumentNode,
+                         dbObjectNode,
+                         refDbObj) => {
+
+    // get table name from typeDefinition
+    const tableName = gQlSchemaDocumentNode.name.value;
+
+    // and save ref to tableObject for recursion
+    const refDbObjectCurrentTable = dbObjectNode.tables[tableName];
+
     // parse ObjectType properties
     Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
       // iterate over sub nodes (e.g. intefaces, fields, directives
@@ -46,16 +73,20 @@ const graphQlJsonSchemaParser = {
         Object.values(gQlSchemaDocumentNodeProperty).map((gQlSchemaDocumentSubnode) => {
           // parse sub node
           parseGraphQlJsonNode(gQlSchemaDocumentSubnode,
-                               dbObjectNode[typeName],
+                               refDbObjectCurrentTable,
                                refDbObj,
-                               refDbObjectActualTable);
+                               refDbObjectCurrentTable);
         });
       }
     });
   },
 
   // parse FieldDefinition Definitions
-  FieldDefinition: (gQlFieldDefinitionNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+  FieldDefinition: (gQlFieldDefinitionNode,
+                    dbObjectNode,
+                    refDbObj,
+                    refDbObjectCurrentTable) => {
+
     // create fields object if not set already
     dbObjectNode.fields = dbObjectNode.fields || [];
 
@@ -70,35 +101,72 @@ const graphQlJsonSchemaParser = {
     // newField will now update data in the dbObject through this ref
     dbObjectNode.fields.push(newField);
 
-    // parse FieldDefinition properties
-    Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
-      if (typeof gQlSchemaFieldNodeProperty !== 'string' &&
+    // check if field is relation
+    if (_.get(gQlFieldDefinitionNode, 'directives[0].name.value') === 'relation') {
+      // handle relation
+      relationBuilderHelper(gQlFieldDefinitionNode,
+                            dbObjectNode,
+                            refDbObj,
+                            refDbObjectCurrentTable,
+                            newField);
+    } else {
+      // handle normal field
+
+      // parse FieldDefinition properties
+      Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
+
+        if (typeof gQlSchemaFieldNodeProperty === 'object' &&
           !Array.isArray(gQlSchemaFieldNodeProperty)) {
+          // object
 
-        // parse sub node
-        parseGraphQlJsonNode(gQlSchemaFieldNodeProperty,
-                             newField,
-                             refDbObj,
-                             refDbObjectActualTable);
-
-      } else if (typeof gQlSchemaFieldNodeProperty !== 'string' &&
-                 !!Array.isArray(gQlSchemaFieldNodeProperty)) {
-
-        // iterate over sub nodes (e.g. arguments, directives
-        Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
           // parse sub node
-          parseGraphQlJsonNode(gQlSchemaFieldSubnode, newField, refDbObj, refDbObjectActualTable);
-        });
-      }
-    });
+          parseGraphQlJsonNode(gQlSchemaFieldNodeProperty,
+                               newField,
+                               refDbObj,
+                               refDbObjectCurrentTable,
+                               newField);
+
+        } else if (typeof gQlSchemaFieldNodeProperty === 'object' &&
+          !!Array.isArray(gQlSchemaFieldNodeProperty)) {
+          // array
+
+          // iterate over sub nodes (e.g. arguments, directives
+          Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
+            // parse sub node
+            parseGraphQlJsonNode(gQlSchemaFieldSubnode,
+                                 newField,
+                                 refDbObj,
+                                 refDbObjectCurrentTable,
+                                 newField);
+          });
+        }
+      });
+    }
+
   },
+
   // parse Name kind
-  Name: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
-    // set field name
-    dbObjectNode.name = gQlSchemaNode.value;
+  Name: (gQlSchemaNode,
+         dbObjectNode,
+         refDbObj,
+         refDbObjectCurrentTable,
+         refDbObjectCurrentTableField) => {
+
+    // todo one to many relationships are nested
+    if (gQlSchemaNode != null && dbObjectNode != null) {
+      // set field name
+      dbObjectNode.name = gQlSchemaNode.value;
+    }
+
   },
+
   // parse NamedType kind
-  NamedType: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+  NamedType: (gQlSchemaNode,
+              dbObjectNode,
+              refDbObj,
+              refDbObjectCurrentTable,
+              refDbObjectCurrentTableField) => {
+
     const fieldType = gQlSchemaNode.name.value;
     let dbType = 'varchar';
     switch (fieldType) {
@@ -110,7 +178,7 @@ const graphQlJsonSchemaParser = {
         dbType = 'varchar';
         break;
       default:
-        // probably relation name
+        // unknown type
         process.stdout.write('parser.error.unknown.field.type: ' +  fieldType +  '\n');
         break;
     }
@@ -118,8 +186,13 @@ const graphQlJsonSchemaParser = {
     // set field name
     dbObjectNode.type = dbType;
   },
+
   // parse NonNullType kind
-  NonNullType: (gQlSchemaNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+  NonNullType: (gQlSchemaNode,
+                dbObjectNode,
+                refDbObj,
+                refDbObjectCurrentTable,
+                refDbObjectCurrentTableField) => {
 
     // set NOT NULL restriction
     dbObjectNode.constraints.nullable = false;
@@ -127,16 +200,31 @@ const graphQlJsonSchemaParser = {
     // parse sub type
     if (gQlSchemaNode.type != null) {
       const gQlSchemaTypeNode = gQlSchemaNode.type;
-      parseGraphQlJsonNode(gQlSchemaTypeNode, dbObjectNode, refDbObj, refDbObjectActualTable);
+      parseGraphQlJsonNode(gQlSchemaTypeNode,
+                           dbObjectNode,
+                           refDbObj,
+                           refDbObjectCurrentTable,
+                           refDbObjectCurrentTableField);
     }
   },
+
   // set list type
-  ListType: (gQlSchemaTypeNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+  ListType: (gQlSchemaTypeNode,
+             dbObjectNode,
+             refDbObj,
+             refDbObjectCurrentTable,
+             refDbObjectCurrentTableField) => {
+
     dbObjectNode.type = 'jsonb';
-    dbObjectNode.defaultValue = [];
+    dbObjectNode.defaultValue = {};
   },
+
   // parse Directive
-  Directive: (gQlDirectiveNode, dbObjectNode, refDbObj, refDbObjectActualTable) => {
+  Directive: (gQlDirectiveNode,
+              dbObjectNode,
+              refDbObj,
+              refDbObjectCurrentTable,
+              refDbObjectCurrentTableField) => {
 
     const directiveKind = gQlDirectiveNode.name.value;
     switch (directiveKind) {
@@ -150,6 +238,8 @@ const graphQlJsonSchemaParser = {
         dbObjectNode.type = 'computed';
         break;
       case 'relation':
+        // mark field as relation
+        // relation directive was handled already in the FieldDefinition handler
         dbObjectNode.type = 'relation';
         break;
       default:
@@ -157,4 +247,63 @@ const graphQlJsonSchemaParser = {
         break;
     }
   },
+
+  // parse Argument
+  Argument: (gQlNode,
+             dbObjectNode,
+             refDbObj,
+             refDbObjectCurrentTable,
+             refDbObjectCurrentTableField) => {
+
+    // set argument name and value
+    // todo one to many relationships are nested
+    if (gQlNode != null && dbObjectNode != null) {
+      dbObjectNode[gQlNode.name.value] = gQlNode.value.value;
+    }
+  },
+};
+
+const relationBuilderHelper = (gQlDirectiveNode,
+                               dbObjectNode,
+                               refDbObj,
+                               refDbObjectCurrentTable,
+                               refDbObjectCurrentTableField) => {
+
+  const relationName = _.get(gQlDirectiveNode, 'directives[0].arguments[0].value.value');
+  const schemaName = 'public';
+  const tableName = refDbObjectCurrentTable.name;
+  const fieldName = _.get(gQlDirectiveNode, 'name.value');
+  const fieldType = _.get(gQlDirectiveNode, 'directives[0].name.value');
+  const relationType = ((node) => {
+    if (node.type.kind === 'NamedType') {
+      return 'ONE';
+    } else if (node.type.kind === 'NonNullType' &&
+               node.type.type.kind === 'NamedType') {
+      return 'ONE';
+    } else if (node.type.kind === 'NonNullType' &&
+               node.type.type.kind === 'ListType' &&
+               node.type.type.type.kind === 'NonNullType' &&
+               node.type.type.type.type.kind === 'NamedType') {
+      return 'MANY';
+    }
+  })(gQlDirectiveNode);
+
+  // create relation in dbObject if ont set yet
+  // and save ref for later
+  const relationsArray = refDbObj.relations[relationName] = refDbObj.relations[relationName] || [];
+
+  // create relation
+  const relation = {
+    fieldName,
+    name: relationName,
+    type: relationType,
+    // joins to
+    reference: {
+      schemaName,
+      tableName,
+      fieldName,
+    },
+  };
+
+  relationsArray.push(relation);
 };

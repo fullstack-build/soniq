@@ -134,13 +134,17 @@ class FullstackOneCore {
       const graphQlJsonSchema = graphQlHelper.parseGraphQlSchema(combinedGraphQlSchema);
 
       const tableObjects = graphQlHelper.parseGraphQlJsonSchemaToTableObject(graphQlJsonSchema);
-      this.logger.info('parsed schema: ', JSON.stringify(tableObjects, null, 2));
+      // this.logger.info('parsed schema: ', JSON.stringify(tableObjects, null, 2));
+
+      const optionalMigrationId = 123;
 
       // write parsed schema into migrations folder
-      graphQlHelper.writeTableObjectIntoMigrationsFolder(
-        `${this.ENVIRONMENT.path}/migrations/`, tableObjects);
+      await graphQlHelper.writeTableObjectIntoMigrationsFolder(
+        `${this.ENVIRONMENT.path}/migrations/`, tableObjects, optionalMigrationId);
 
-      const sqlStatements = await getMigrationsUp(`${this.ENVIRONMENT.path}/migrations/`);
+      const sqlStatements = await getMigrationsUp(`${this.ENVIRONMENT.path}/migrations/`,
+                                                  optionalMigrationId);
+      // display result sql in terminal
       this.logger.debug(sqlStatements.join('\n'));
 
     } catch (err) {

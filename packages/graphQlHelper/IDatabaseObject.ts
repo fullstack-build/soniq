@@ -1,31 +1,43 @@
-export interface IDatabaseObject {
-  [tableName: string]: {
-    isDbModel: boolean;
+interface IRelation {
+  name: string;
+  fieldName: string;
+  type: 'own' | 'belongTo';
+  // Name of the association
+  description?: string;
+  // joins to
+  reference: {
     schemaName: string;
     tableName: string;
-    description?: string;
-    fields: [{
+    fieldName: string;
+  };
+}
+
+interface IMaxTwoRelations {
+  0: IRelation;
+  1: IRelation;
+}
+
+export interface IDatabaseObject {
+  tables: {
+    [name: string]: {
+      isDbModel: boolean;
+      schemaName: string;
       name: string;
       description?: string;
-      type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
-      defaultValue: string;
-      constraints: {
-        isPrimaryKey: boolean;
-        nullable: boolean;
-        unique: boolean;
-      },
-      relation?: {
-        type: 'own' | 'belongTo'
-        // Name of the association
+      fields: [{
         name: string;
         description?: string;
-        // joins to
-        reference: {
-          schema: string;
-          model: string;
-          field: string;
-        }
-      };
-    }];
+        type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
+        defaultValue: string;
+        constraints: {
+          isPrimaryKey: boolean;
+          nullable: boolean;
+          unique: boolean;
+        },
+      }];
+    };
+  };
+  relations: {
+    [name: string]: IMaxTwoRelations;
   };
 }

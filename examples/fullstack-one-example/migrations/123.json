@@ -1,0 +1,243 @@
+{
+  "tables": {
+    "File": {
+      "name": "File",
+      "isDbModel": true,
+      "schemaName": "public",
+      "fields": [
+        {
+          "constraints": {
+            "isPrimaryKey": true,
+            "nullable": false,
+            "unique": true
+          },
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "url",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        }
+      ]
+    },
+    "Post": {
+      "name": "Post",
+      "isDbModel": true,
+      "schemaName": "public",
+      "fields": [
+        {
+          "constraints": {
+            "isPrimaryKey": true,
+            "nullable": false,
+            "unique": true
+          },
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "title",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "content",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "ownerSecret",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "contributorSecret",
+          "type": "varchar"
+        }
+      ]
+    },
+    "User": {
+      "name": "User",
+      "isDbModel": true,
+      "schemaName": "public",
+      "fields": [
+        {
+          "constraints": {
+            "isPrimaryKey": true,
+            "nullable": false,
+            "unique": true
+          },
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": true
+          },
+          "name": "email",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "username",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "firstLetterOfUserName",
+          "type": "computed"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          },
+          "name": "payload",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": false
+          }
+        }
+      ]
+    }
+  },
+  "relations": {
+    "TitleImage": [
+      {
+        "fieldName": "post",
+        "name": "TitleImage",
+        "type": "ONE",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "File",
+          "fieldName": "post"
+        }
+      },
+      {
+        "fieldName": "titleImage",
+        "name": "TitleImage",
+        "type": "ONE",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "Post",
+          "fieldName": "titleImage"
+        }
+      }
+    ],
+    "PostOwner": [
+      {
+        "fieldName": "owner",
+        "name": "PostOwner",
+        "type": "ONE",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "Post",
+          "fieldName": "owner"
+        }
+      },
+      {
+        "fieldName": "posts",
+        "name": "PostOwner",
+        "type": "MANY",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "User",
+          "fieldName": "posts"
+        }
+      }
+    ],
+    "PostContributors": [
+      {
+        "fieldName": "contributors",
+        "name": "PostContributors",
+        "type": "MANY",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "Post",
+          "fieldName": "contributors"
+        }
+      },
+      {
+        "fieldName": "postContributions",
+        "name": "PostContributors",
+        "type": "MANY",
+        "reference": {
+          "schemaName": "public",
+          "tableName": "User",
+          "fieldName": "postContributions"
+        }
+      }
+    ]
+  }
+}

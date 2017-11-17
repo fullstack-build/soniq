@@ -1,3 +1,5 @@
+// MTM through Arrays https://medium.com/@leshchuk/mtm-on-arrays-in-postgresql-a97f3c50b8c6
+
 import * as fastGlob from 'fast-glob';
 import { readFile } from 'fs';
 import { basename } from 'path';
@@ -17,6 +19,11 @@ export const getMigrationsUp =
         `${pMigrationsPath}/*.json`,
         { deep: true, onlyFiles: true });
 
+      // check if files are available
+      if (files.length === 0) {
+        throw new Error('migration.file.not.found');
+      }
+
       // sort files
       files.sort();
 
@@ -26,8 +33,8 @@ export const getMigrationsUp =
         return (versionId <= migrationDate) ? currentPath : relevantFile;
       });
 
-      const tableObject = require(relevantMigartionFilePath);
-      return createSqlFromTableObjects(tableObject);
+      const databaseObject = require(relevantMigartionFilePath);
+      return createSqlFromTableObjects(databaseObject);
 
     } catch (err) {
       throw err;
@@ -35,17 +42,19 @@ export const getMigrationsUp =
 
   };
 
-export const createSqlFromTableObjects = (pTableObjects: IDatabaseObject): string[] => {
+export const createSqlFromTableObjects = (databaseObject: IDatabaseObject): string[] => {
 
   const sqlCommands: string[] = [];
 
-  // copy into regular object
-  Object.values(pTableObjects).map((tableObject) => {
+  // iterate over database tables
+  Object.values(databaseObject.tables).map((tableObject) => {
     // only parse those with isDbModel = true
     if (!!tableObject.isDbModel) {
       createSqlFromTableObject(sqlCommands, tableObject);
     }
   });
+
+  // todo create relations
 
   return sqlCommands;
 

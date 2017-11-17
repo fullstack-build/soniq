@@ -38,16 +38,22 @@ export namespace graphQlHelper {
   };
 
   export const parseGraphQlJsonSchemaToTableObject = (graphQlJsonSchema): IDatabaseObject => {
-    const databaseObject: IDatabaseObject = {};
+    const databaseObject: IDatabaseObject = {
+      tables: {},
+      relations: {},
+    };
     parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
     return databaseObject;
   };
 
   export const writeTableObjectIntoMigrationsFolder = async (migrationsPath: string,
-                                                             tableObject: IDatabaseObject) => {
-    const timestampMigration = migrationsPath + (new Date()).getTime() + '.json';
+                                                             tableObject: IDatabaseObject,
+                                                             migrationId?: number) => {
+    // create name for migration
+    const timestampMigration = migrationsPath + (migrationId || (new Date()).getTime()) + '.json';
+
     try {
-      await writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), 'utf8');
+      return await writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), 'utf8');
     } catch (err) {
       throw err;
     }
