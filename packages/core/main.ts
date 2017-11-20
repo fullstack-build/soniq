@@ -19,7 +19,9 @@ export *  from '../graphQlHelper/main';
 
 // init .env -- check if all are set
 try {
-  dotenv.config();
+  dotenv.config({
+    sample: `${__dirname}/../../.env.example`,
+  });
 } catch (err) {
   process.stderr.write(err.toString() + '\n');
   process.exit(1);
