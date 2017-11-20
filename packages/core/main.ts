@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from 'dotenv-safe';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 import * as Koa from 'koa';
@@ -17,8 +17,13 @@ import { getMigrationsUp } from '../graphQlHelper/migration';
 
 export *  from '../graphQlHelper/main';
 
-// init .env
-dotenv.config();
+// init .env -- check if all are set
+try {
+  dotenv.config();
+} catch (err) {
+  process.stderr.write(err.toString() + '\n');
+  process.exit(1);
+}
 
 class FullstackOneCore {
   private ENVIRONMENT: IEnvironmentInformation;

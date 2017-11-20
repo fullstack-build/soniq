@@ -41,6 +41,7 @@
     "tslint-config-airbnb": "^5.3.0"
   },
   "dependencies": {
+    "dotenv-safe": "^4.0.4",
     "is-https": "^1.0.0",
     "lodash": "^4.17.4",
     "ts-node": "^3.3.0",
