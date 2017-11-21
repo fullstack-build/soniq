@@ -1,4 +1,4 @@
-type Post @model {
+type Post @table {
   id: ID! @isUnique
   title: String
   content: String

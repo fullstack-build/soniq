@@ -5,11 +5,11 @@ import * as _ from 'lodash';
 // refDbObjectCurrentTableField:
 // - ref to current parent table field obj will be passed through all iterations
 //   after table field was added
-export const parseGraphQlJsonNode = (gQlSchemaNode,
+export function parseGraphQlJsonNode(gQlSchemaNode,
                                      dbObjectNode,
                                      dbObject?,
                                      refDbObjectCurrentTable?,
-                                     refDbObjectCurrentTableField?) => {
+                                     refDbObjectCurrentTableField?) {
 
   // ref to dbObject will be passed through all iterations
   const refDbObj = dbObject || dbObjectNode;
@@ -17,19 +17,19 @@ export const parseGraphQlJsonNode = (gQlSchemaNode,
   // dynamic parser loader
   if (gQlSchemaNode == null || gQlSchemaNode.kind == null) {
     // ignore empty nodes or nodes without a kind
-  } else if (graphQlJsonSchemaParser[gQlSchemaNode.kind] == null) {
+  } else if (GQL_JSON_PARSER[gQlSchemaNode.kind] == null) {
     process.stdout.write('parser.error.unknown.type: ' + gQlSchemaNode.kind + '\n');
   } else { // parse
-    graphQlJsonSchemaParser[gQlSchemaNode.kind](gQlSchemaNode,
-                                                dbObjectNode,
-                                                refDbObj,
-                                                refDbObjectCurrentTable,
-                                                refDbObjectCurrentTableField);
+    GQL_JSON_PARSER[gQlSchemaNode.kind](gQlSchemaNode,
+                                        dbObjectNode,
+                                        refDbObj,
+                                        refDbObjectCurrentTable,
+                                        refDbObjectCurrentTableField);
   }
 
-};
+}
 
-const graphQlJsonSchemaParser = {
+const GQL_JSON_PARSER = {
 
   // iterate over all type definitions
   Document: (gQlSchemaNode,
@@ -228,7 +228,7 @@ const graphQlJsonSchemaParser = {
 
     const directiveKind = gQlDirectiveNode.name.value;
     switch (directiveKind) {
-      case 'model':
+      case 'table':
         dbObjectNode.isDbModel = true;
         break;
       case 'isUnique':
@@ -243,7 +243,7 @@ const graphQlJsonSchemaParser = {
         dbObjectNode.type = 'relation';
         break;
       default:
-        process.stdout.write('parser.error.unknown.directive.kind: ' +  directiveKind);
+        process.stdout.write('parser.error.unknown.directive.kind: ' +  directiveKind + '\n');
         break;
     }
   },
@@ -263,11 +263,11 @@ const graphQlJsonSchemaParser = {
   },
 };
 
-const relationBuilderHelper = (gQlDirectiveNode,
+function relationBuilderHelper(gQlDirectiveNode,
                                dbObjectNode,
                                refDbObj,
                                refDbObjectCurrentTable,
-                               refDbObjectCurrentTableField) => {
+                               refDbObjectCurrentTableField) {
 
   const relationName = _.get(gQlDirectiveNode, 'directives[0].arguments[0].value.value');
   const schemaName = 'public';
@@ -306,4 +306,4 @@ const relationBuilderHelper = (gQlDirectiveNode,
   };
 
   relationsArray.push(relation);
-};
+}

@@ -8,8 +8,7 @@ const readFileAsync = promisify(readFile);
 
 import { IDatabaseObject } from './IDatabaseObject';
 
-export const getMigrationsUp =
-  async (pMigrationsPath: string, pMigrationDate?: number): Promise<string[]> => {
+export async function getMigrationsUp(pMigrationsPath: string, pMigrationDate?: number): Promise<string[]> {
     const migrationDate = pMigrationDate || (new Date()).getTime();
 
     // get latest migration before migrationDate
@@ -40,9 +39,9 @@ export const getMigrationsUp =
       throw err;
     }
 
-  };
+  }
 
-export const createSqlFromTableObjects = (databaseObject: IDatabaseObject): string[] => {
+export function createSqlFromTableObjects(databaseObject: IDatabaseObject): string[] {
 
   const sqlCommands: string[] = [];
 
@@ -58,9 +57,9 @@ export const createSqlFromTableObjects = (databaseObject: IDatabaseObject): stri
 
   return sqlCommands;
 
-};
+}
 
-const createSqlFromTableObject = (sqlCommands, pTableObject) => {
+function createSqlFromTableObject(sqlCommands, pTableObject) {
 
   // create table statement
   sqlCommands.push(`CREATE TABLE "${pTableObject.schemaName}.${pTableObject.tableName}"();`);
@@ -105,5 +104,4 @@ const createSqlFromTableObject = (sqlCommands, pTableObject) => {
       sqlCommands.push(fieldStatementStr);
     }
   }
-
-};
+}

@@ -1,4 +1,4 @@
-type User @model {
+type User @table {
   id: ID! @isUnique
   email: String @isUnique
   username: String
