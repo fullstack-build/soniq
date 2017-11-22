@@ -1,13 +1,16 @@
 import { Client, Pool, PoolConfig } from 'pg';
 
 export class Db {
-
   private logger;
   private client: Client;
   private clientConnection;
   private pool: Pool;
 
-  constructor(pFullStackOneCore: any, pCredentials: PoolConfig, pIsPool: boolean = false) {
+  constructor(
+    pFullStackOneCore: any,
+    pCredentials: PoolConfig,
+    pIsPool: boolean = false,
+  ) {
     this.logger = pFullStackOneCore.getLogger('db');
 
     if (!pIsPool) { // create client
@@ -18,5 +21,4 @@ export class Db {
       this.logger.info('Postgres pool created');
     }
   }
-
 }

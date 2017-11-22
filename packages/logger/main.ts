@@ -26,7 +26,7 @@ export class Logger implements ILogger {
   constructor(pFullStackOneCore: any, pModuleName: string = 'root') {
     this.moduleName = pModuleName;
 
-    const env = this.envInfo = pFullStackOneCore.getEnvironmentInformation();
+    const env = (this.envInfo = pFullStackOneCore.getEnvironmentInformation());
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}`;
 
     // setup tracer
@@ -83,7 +83,6 @@ export class Logger implements ILogger {
    *  PRIVATE METHODS
    */
   private logToDebug(pLogObject: ILogObject) {
-
     // use tracer output to log message to DEBUG
     this.debugLogger[pLogObject.title](pLogObject.output);
 
@@ -108,7 +107,5 @@ export class Logger implements ILogger {
     // log remotely to logentries
     this._leNode[pLogObject.title](logEntry);
     */
-
   }
-
 }

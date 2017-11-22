@@ -8,41 +8,45 @@ const readFileAsync = promisify(readFile);
 
 import { IDatabaseObject } from './IDatabaseObject';
 
-export async function getMigrationsUp(pMigrationsPath: string, pMigrationDate?: number): Promise<string[]> {
-    const migrationDate = pMigrationDate || (new Date()).getTime();
+export async function getMigrationsUp(
+  pMigrationsPath: string,
+  pMigrationDate?: number,
+): Promise<string[]> {
+  const migrationDate = pMigrationDate || new Date().getTime();
 
-    // get latest migration before migrationDate
-    try {
+  // get latest migration before migrationDate
+  try {
+    const files = await fastGlob.default(`${pMigrationsPath}/*.json`, {
+      deep: true,
+      onlyFiles: true,
+    });
 
-      const files = await fastGlob.default(
-        `${pMigrationsPath}/*.json`,
-        { deep: true, onlyFiles: true });
-
-      // check if files are available
-      if (files.length === 0) {
-        throw new Error('migration.file.not.found');
-      }
-
-      // sort files
-      files.sort();
-
-      // find relevant migartion file
-      const relevantMigartionFilePath = files.reduce((relevantFile, currentPath) => {
-        const versionId = parseInt(basename(currentPath, '.json'), 10);
-        return (versionId <= migrationDate) ? currentPath : relevantFile;
-      });
-
-      const databaseObject = require(relevantMigartionFilePath);
-      return createSqlFromTableObjects(databaseObject);
-
-    } catch (err) {
-      throw err;
+    // check if files are available
+    if (files.length === 0) {
+      throw new Error('migration.file.not.found');
     }
 
+    // sort files
+    files.sort();
+
+    // find relevant migartion file
+    const relevantMigartionFilePath = files.reduce(
+      (relevantFile, currentPath) => {
+        const versionId = parseInt(basename(currentPath, '.json'), 10);
+        return versionId <= migrationDate ? currentPath : relevantFile;
+      },
+    );
+
+    const databaseObject = require(relevantMigartionFilePath);
+    return createSqlFromTableObjects(databaseObject);
+  } catch (err) {
+    throw err;
   }
+}
 
-export function createSqlFromTableObjects(databaseObject: IDatabaseObject): string[] {
-
+export function createSqlFromTableObjects(
+  databaseObject: IDatabaseObject,
+): string[] {
   const sqlCommands: string[] = [];
 
   // iterate over database tables
@@ -53,20 +57,27 @@ export function createSqlFromTableObjects(databaseObject: IDatabaseObject): stri
     }
   });
 
-  // todo create relations
+  // iterate over database relations
+  Object.values(databaseObject.relations).map((relation) => {
+    // check if relation exists
+    // console.error(relation);
+    // only parse those with isDbModel = true
+    /*if (!!tableObject.isDbModel) {
+      createSqlFromTableObject(sqlCommands, tableObject);
+    }*/
+  });
 
   return sqlCommands;
-
 }
 
 function createSqlFromTableObject(sqlCommands, pTableObject) {
-
   // create table statement
-  sqlCommands.push(`CREATE TABLE "${pTableObject.schemaName}.${pTableObject.tableName}"();`);
+  sqlCommands.push(
+    `CREATE TABLE "${pTableObject.schemaName}.${pTableObject.name}"();`,
+  );
 
   // create column statements
   for (const field of pTableObject.fields) {
-
     if (field.type === 'computed') {
       // ignore computed
     } else if (field.type === 'relation') {
@@ -74,8 +85,8 @@ function createSqlFromTableObject(sqlCommands, pTableObject) {
     } else {
       const fieldStatementArray = [];
       fieldStatementArray.push(
-        `ALTER TABLE "${pTableObject.schemaName}.${pTableObject.tableName}"` +
-         `ADD COLUMN "${field.name}"`);
+        `ALTER TABLE "${pTableObject.schemaName}.${pTableObject.name}" ADD COLUMN "${field.name}"`,
+      );
 
       // add type
       fieldStatementArray.push(field.type);

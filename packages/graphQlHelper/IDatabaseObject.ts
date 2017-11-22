@@ -1,5 +1,7 @@
 interface IRelation {
   name: string;
+  schemaName: string;
+  tableName: string;
   fieldName: string;
   type: 'own' | 'belongTo';
   // Name of the association
@@ -24,17 +26,19 @@ export interface IDatabaseObject {
       schemaName: string;
       name: string;
       description?: string;
-      fields: [{
-        name: string;
-        description?: string;
-        type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
-        defaultValue: string;
-        constraints: {
-          isPrimaryKey: boolean;
-          nullable: boolean;
-          unique: boolean;
-        },
-      }];
+      fields: [
+        {
+          name: string;
+          description?: string;
+          type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
+          defaultValue: string;
+          constraints: {
+            isPrimaryKey: boolean;
+            nullable: boolean;
+            unique: boolean;
+          };
+        }
+      ];
     };
   };
   relations: {

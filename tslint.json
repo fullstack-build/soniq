@@ -11,6 +11,7 @@
     "max-line-length": [true, 150],
     "ter-indent": false,
     "ordered-imports": false,
+    "no-boolean-literal-compare": true,
     "naming-convention": [
       true,
       {"type": "property", "modifiers": ["static", "const"], "format": "UPPER_CASE"},

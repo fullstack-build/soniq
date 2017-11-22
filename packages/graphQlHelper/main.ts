@@ -9,12 +9,12 @@ import { IDatabaseObject } from './IDatabaseObject';
 import { parseGraphQlJsonNode } from './parser';
 
 export namespace graphQlHelper {
-
   export const loadGraphQlSchema = async (pattern: string) => {
-
     try {
-
-      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+      const files = await fastGlob.default(pattern, {
+        deep: false,
+        onlyFiles: true,
+      });
 
       const readFilesPromises = [];
       files.map((filePath) => {
@@ -23,7 +23,6 @@ export namespace graphQlHelper {
 
       return await Promise.all(readFilesPromises);
     } catch (err) {
-
       throw err;
     }
   };
@@ -34,10 +33,9 @@ export namespace graphQlHelper {
     } catch (err) {
       throw err;
     }
-
   };
 
-  export const parseGraphQlJsonSchemaToTableObject = (graphQlJsonSchema): IDatabaseObject => {
+  export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDatabaseObject => {
     const databaseObject: IDatabaseObject = {
       tables: {},
       relations: {},
@@ -46,18 +44,23 @@ export namespace graphQlHelper {
     return databaseObject;
   };
 
-  export const writeTableObjectIntoMigrationsFolder = async (migrationsPath: string,
-                                                             tableObject: IDatabaseObject,
-                                                             migrationId?: number) => {
+  export const writeTableObjectIntoMigrationsFolder = async (
+    migrationsPath: string,
+    tableObject: IDatabaseObject,
+    migrationId?: number,
+  ) => {
     // create name for migration
-    const timestampMigration = migrationsPath + (migrationId || (new Date()).getTime()) + '.json';
+    const timestampMigration =
+      migrationsPath + (migrationId || new Date().getTime()) + '.json';
 
     try {
-      return await writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), 'utf8');
+      return await writeFileAsync(
+        timestampMigration,
+        JSON.stringify(tableObject, null, 2),
+        'utf8',
+      );
     } catch (err) {
       throw err;
     }
-
   };
-
 }

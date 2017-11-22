@@ -27,6 +27,24 @@
           "constraints": {
             "isPrimaryKey": false,
             "nullable": true,
+            "unique": true
+          },
+          "name": "container",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
+            "unique": true
+          },
+          "name": "fileName",
+          "type": "varchar"
+        },
+        {
+          "constraints": {
+            "isPrimaryKey": false,
+            "nullable": true,
             "unique": false
           }
         }
@@ -175,67 +193,79 @@
   "relations": {
     "TitleImage": [
       {
+        "schemaName": "public",
+        "tableName": "File",
         "fieldName": "post",
         "name": "TitleImage",
         "type": "ONE",
         "reference": {
+          "fieldName": "post",
           "schemaName": "public",
-          "tableName": "File",
-          "fieldName": "post"
+          "tableName": "Post"
         }
       },
       {
+        "schemaName": "public",
+        "tableName": "Post",
         "fieldName": "titleImage",
         "name": "TitleImage",
         "type": "ONE",
         "reference": {
+          "fieldName": "titleImage",
           "schemaName": "public",
-          "tableName": "Post",
-          "fieldName": "titleImage"
+          "tableName": "File"
         }
       }
     ],
     "PostOwner": [
       {
+        "schemaName": "public",
+        "tableName": "Post",
         "fieldName": "owner",
         "name": "PostOwner",
         "type": "ONE",
         "reference": {
+          "fieldName": "owner",
           "schemaName": "public",
-          "tableName": "Post",
-          "fieldName": "owner"
+          "tableName": "User"
         }
       },
       {
+        "schemaName": "public",
+        "tableName": "User",
         "fieldName": "posts",
         "name": "PostOwner",
         "type": "MANY",
         "reference": {
+          "fieldName": "posts",
           "schemaName": "public",
-          "tableName": "User",
-          "fieldName": "posts"
+          "tableName": "Post"
         }
       }
     ],
     "PostContributors": [
       {
+        "schemaName": "public",
+        "tableName": "Post",
         "fieldName": "contributors",
         "name": "PostContributors",
         "type": "MANY",
         "reference": {
+          "fieldName": "contributors",
           "schemaName": "public",
-          "tableName": "Post",
-          "fieldName": "contributors"
+          "tableName": "User"
         }
       },
       {
+        "schemaName": "public",
+        "tableName": "User",
         "fieldName": "postContributions",
         "name": "PostContributors",
         "type": "MANY",
         "reference": {
+          "fieldName": "postContributions",
           "schemaName": "public",
-          "tableName": "User",
-          "fieldName": "postContributions"
+          "tableName": "Post"
         }
       }
     ]

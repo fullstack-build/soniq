@@ -5,6 +5,25 @@
     "tslint-config-airbnb"
   ],
   "jsRules": {},
-  "rules": {},
-  "rulesDirectory": []
+  "rules": {
+    "no-namespace": false,
+    "object-literal-sort-keys": false,
+    "max-line-length": [true, 150],
+    "ter-indent": false,
+    "ordered-imports": false,
+    "no-boolean-literal-compare": true,
+    "naming-convention": [
+      true,
+      {"type": "property", "modifiers": ["static", "const"], "format": "UPPER_CASE"},
+      {"type": "class", "modifiers": "abstract", "prefix": "Abstract"},
+      {"type": "interface", "prefix": "I"},
+      {"type": "genericTypeParameter", "prefix": "T"},
+      {"type": "enumMember", "format": "PascalCase"}
+
+    ]
+  },
+  "rulesDirectory": [],
+  "linterOptions":{
+    "exclude":  ["**/node_modules/**", "*.d.ts"]
+  }
 }
