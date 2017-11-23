@@ -1,12 +1,14 @@
-export default [
+export = [
   {
-    type: 'READ',
     name: 'Author',
+    type: 'READ',
     table: 'User',
     fields: [
-      'id', 'username',
+      'id', 'firstLetterOfUserName',
     ],
-    expressions: ['Authenticated'],
+    expressions: [{
+      name: 'Authenticated',
+    }],
   }, {
     type: 'READ',
     name: 'Me',

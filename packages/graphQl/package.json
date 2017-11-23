@@ -2,7 +2,7 @@
   "name": "@fullstack-one/db",
   "version": "0.1.0",
   "description": "fullstack.one GraphQL Helper",
-  "main": "main.ts",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "echo \"Error: no start specified\" && exit 1"
@@ -10,8 +10,12 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "apollo-server-koa": "^1.2.0",
     "fast-glob": "^1.0.1",
-    "graphql": "^0.11.7"
+    "graphql": "^0.11.7",
+    "graphql-tools": "^2.8.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.3.0"
   },
   "devDependencies": {}
 }

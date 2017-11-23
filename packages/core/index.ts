@@ -7,20 +7,23 @@ import * as path from 'path';
 import { EventEmitter2 } from 'eventemitter2';
 
 // fullstackOne imports
-import { Db } from '../db/main';
-import { Logger } from '../logger/main';
+import { Db } from '../db';
+import { Logger } from '../logger';
+import { graphQl } from '../graphQl/index';
+
+// fullstackOne interfaces
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
+import { IDatabaseObject } from './IDatabaseObject';
 
 // helper
-import { graphQlHelper } from '../graphQlHelper/main';
-import { getMigrationsUp } from '../graphQlHelper/migration';
-
-export * from '../graphQlHelper/main';
+// import { graphQlHelper } from '../graphQlHelper/main';
+// import { getMigrationsUp } from '../graphQlHelper/migration';
 
 // init .env -- check if all are set
 try {
   dotenv.config({
+    // .env.example is in fullstack-one root folder
     sample: `${__dirname}/../../.env.example`,
   });
 } catch (err) {
@@ -37,8 +40,7 @@ class FullstackOneCore {
   private dbSetup: Db;
   private dbPool: Db;
   private APP: Koa;
-  private gQlSchema;
-  private gQlJsonSchema;
+  private dbObject: IDatabaseObject;
 
   constructor() {
     this.hasBooted = false;
@@ -81,16 +83,19 @@ class FullstackOneCore {
 
   // return EnvironmentInformation
   public getEnvironmentInformation(): IEnvironmentInformation {
-    return this.ENVIRONMENT;
+    // return copy instead of a ref
+    return { ...this.ENVIRONMENT };
   }
 
   // return CONFIG
   // return either full config or only module config
   public getConfig(pModule?: string): any {
     if (pModule == null) {
-      return this.CONFIG;
+      // return copy instead of a ref
+      return { ... this.CONFIG };
     } else {
-      return this.CONFIG[pModule];
+      // return copy instead of a ref
+      return { ... this.CONFIG[pModule] };
     }
   }
 
@@ -109,14 +114,20 @@ class FullstackOneCore {
     return this.eventEmitter;
   }
 
-  // return GraphQl Schema
-  public getGQlSchema() {
-    return this.gQlSchema;
+  // forward GraphQl Schema
+  public async getGraphQlSchema() {
+    return await graphQl.getGraphQlSchema();
   }
 
-  // return GraphQl JSON Schema
-  public getGQlJsonSchema() {
-    return this.gQlJsonSchema;
+  // forward GraphQl JSON Schema
+  public async getGraphQlJsonSchema() {
+    return await graphQl.getGraphQlJsonSchema();
+  }
+
+  // return DB object
+  public getDbObject() {
+    // return copy instead of ref
+    return { ...this.dbObject };
   }
 
   /**
@@ -129,19 +140,24 @@ class FullstackOneCore {
 
   // load config based on ENV
   private loadConfig(): void {
-    const mainConfigPath = `${this.ENVIRONMENT.path}/config/default.ts`;
-    const envConfigPath = `${this.ENVIRONMENT.path}/config/${
-      this.ENVIRONMENT.env
-    }.ts`;
+    // framework config path
+    const frameworkConfigPath = `../../config/default.ts`;
 
-    // load default config
-    let config: IConfig;
+    // project config paths
+    const mainConfigPath = `${this.ENVIRONMENT.path}/config/default.ts`;
+    const envConfigPath = `${this.ENVIRONMENT.path}/config/${this.ENVIRONMENT.env}.ts`;
+
+    // load framework config file
+    let config: IConfig = require(frameworkConfigPath);
+
+    // extend framework config
+    // with project config (so it can override framework settings
     if (!!fs.existsSync(mainConfigPath)) {
-      config = require(mainConfigPath);
+      config = _.merge(config, require(mainConfigPath));
     }
     // extend with env config
     if (!!fs.existsSync(envConfigPath)) {
-      _.merge(config, require(envConfigPath));
+      config = _.merge(config, require(envConfigPath));
     }
     this.CONFIG = config;
     this.emit('config.loaded', config);
@@ -156,11 +172,9 @@ class FullstackOneCore {
     // start server
     await this.startServer();
 
-    // load schemas
-    await this.loadSchema();
-
-    // add GraphQL endpoints
-    // await graphQlEndpoints(this);
+    // boot GraphQL and add endpoints
+    this.dbObject = await graphQl.bootGraphQl(this);
+    this.emit('dbObject.set');
 
     // execute book scripts
      await this.executeBootScripts();
@@ -189,13 +203,14 @@ class FullstackOneCore {
     this.emit('db.pool.created');
   }
 
+/*
   private async loadSchema() {
     try {
       const pattern = this.ENVIRONMENT.path + '/schema/*.gql';
-      const graphQlTypes = await graphQlHelper.loadGraphQlSchema(pattern);
+      const graphQlTypes = await graphQlHelper.loadFilesByGlobPattern(pattern);
       this.gQlSchema = graphQlTypes.join('\n');
       // emit event
-      this.emit('schema.loadi.success');
+      this.emit('schema.load.success');
 
       this.gQlJsonSchema = graphQlHelper.parseGraphQlSchema(this.gQlSchema);
       // emit event
@@ -226,11 +241,12 @@ class FullstackOneCore {
       // display result sql in terminal
       this.logger.debug(sqlStatements.join('\n'));
     } catch (err) {
-      this.logger.warn('loadGraphQlSchema error', err);
+      this.logger.warn('loadFilesByGlobPattern error', err);
       // emit event
       this.emit('schema.load.error');
     }
   }
+*/
 
   // execute all boot scripts in the boot folder
   private async executeBootScripts() {
@@ -302,10 +318,20 @@ export function getBootingPromise(): Promise<FullstackOneCore> {
       $resolve(INSTANCE);
     } else {
 
-      INSTANCE.getEventEmitter().on('fullstack-one.ready',() => {
+      INSTANCE.getEventEmitter().on('fullstack-one.ready', () => {
         $resolve(INSTANCE);
       });
     }
+
+  });
+}
+
+// helper to confert an event to a promise
+export function eventToPromise(pEventName: string): Promise<any> {
+  return new Promise(($resolve, $reject) => {
+    INSTANCE.getEventEmitter().on(pEventName, (...args: any[]) => {
+      $resolve([... args]);
+    });
 
   });
 }

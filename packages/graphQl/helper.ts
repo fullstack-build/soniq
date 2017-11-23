@@ -5,16 +5,14 @@ const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
 import { parse } from 'graphql';
 
-import { IDatabaseObject } from './IDatabaseObject';
-import { parseGraphQlJsonNode } from './parser';
+import { IDatabaseObject } from '../core/IDatabaseObject';
+import { parseGraphQlJsonNode } from './bootParser';
 
-export namespace graphQlHelper {
-  export const loadGraphQlSchema = async (pattern: string) => {
+export namespace graphQl.helper {
+
+  export const loadFilesByGlobPattern = async (pattern: string) => {
     try {
-      const files = await fastGlob.default(pattern, {
-        deep: false,
-        onlyFiles: true,
-      });
+      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
 
       const readFilesPromises = [];
       files.map((filePath) => {
@@ -22,6 +20,29 @@ export namespace graphQlHelper {
       });
 
       return await Promise.all(readFilesPromises);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  export const requireFilesByGlobPattern = async (pattern: string) => {
+    try {
+      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+
+      const requiredFiles = [];
+      files.map((filePath) => {
+        let requiredFileContent: any = null;
+        try {
+          const requiredFile = require(filePath);
+          requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
+        } catch (err) {
+          throw err;
+        }
+
+        requiredFiles.push(requiredFileContent);
+      });
+
+      return requiredFiles;
     } catch (err) {
       throw err;
     }
@@ -41,7 +62,8 @@ export namespace graphQlHelper {
       relations: {},
     };
     parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
-    return databaseObject;
+    // return copy instead of ref
+    return { ...databaseObject };
   };
 
   export const writeTableObjectIntoMigrationsFolder = async (

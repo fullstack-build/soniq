@@ -6,7 +6,7 @@ import { basename } from 'path';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
 
-import { IDatabaseObject } from './IDatabaseObject';
+import { IDatabaseObject } from '../core/IDatabaseObject';
 
 export async function getMigrationsUp(
   pMigrationsPath: string,
