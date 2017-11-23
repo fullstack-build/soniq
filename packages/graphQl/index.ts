@@ -19,6 +19,8 @@ export namespace graphQl {
   let gQlJsonSchema: any;
   let permissions: IPermissions;
   let expressions: IExpressions;
+  let gQlRuntimeSchema: string;
+  let gQlRuntimeDocument: any;
 
   export const bootGraphQl = async ($one) => {
 
@@ -56,7 +58,10 @@ export namespace graphQl {
       // emit event
       $one.emit('expressions.load.success');
 
-      runtimeParser(gQlJsonSchema, permissions, expressions);
+      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions);
+
+      gQlRuntimeDocument = combinedSchemaInformation.document;
+      gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
 
       // add endpoints
       addEndpoints($one);
@@ -86,14 +91,14 @@ export namespace graphQl {
 
     const gqlRouter = new KoaRouter();
 
-    /*const schema = makeExecutableSchema({
-			typeDefs: generatedTestSchema,
-			resolvers: testResolvers,
-		});*/
+    const schema = makeExecutableSchema({
+			typeDefs: gQlRuntimeSchema,
+			resolvers: queryBuilder,
+		});
 
     // koaBody is needed just for POST.
-    // gqlRouter.post('/graphql', koaBody(), graphqlKoa({schema}));
-    // gqlRouter.get('/graphql', graphqlKoa({schema}));
+    gqlRouter.post('/graphql', koaBody(), graphqlKoa({ schema }));
+    gqlRouter.get('/graphql', graphqlKoa({ schema }));
 
     gqlRouter.get(graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: graphQlConfig.endpoint }));
 

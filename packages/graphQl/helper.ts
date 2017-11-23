@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'fs';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
-import { parse } from 'graphql';
+import { parse, print } from 'graphql';
 
 import { IDatabaseObject } from '../core/IDatabaseObject';
 import { parseGraphQlJsonNode } from './bootParser';
@@ -51,6 +51,14 @@ export namespace graphQl.helper {
   export const parseGraphQlSchema = (graphQlSchema) => {
     try {
       return parse(graphQlSchema, { noLocation: true, noSource: true });
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  export const printGraphQlDocument = (gQlDocument: any): string => {
+    try {
+      return print(gQlDocument);
     } catch (err) {
       throw err;
     }
