@@ -14,20 +14,45 @@
     "no-boolean-literal-compare": true,
     "object-shorthand-properties-first": false,
     "no-else-after-return": false,
+    "trailing-comma": false,
+    "function-name": [true, {
+      "method-regex": "^_?_?[a-z$][\\w\\d]+$",
+      "private-method-regex": "^_?_?[a-z$][\\w\\d]+$",
+      "protected-method-regex": "^_?_?[a-z$][\\w\\d]+$",
+      "static-method-regex": "^_?_?[a-z$][\\w\\d]+$",
+      "function-regex": "^_?_?[a-z$][\\w\\d]+$"
+    }],
     "naming-convention": [
       true,
-      {"type": "property", "modifiers": ["static", "const"], "format": "UPPER_CASE"},
-      {"type": "class", "modifiers": "abstract", "prefix": "Abstract"},
-      {"type": "interface", "prefix": "I"},
-      {"type": "genericTypeParameter", "prefix": "T"},
-      {"type": "enumMember", "format": "PascalCase"}
+      {
+        "type": "property",
+        "modifiers": ["static", "const"],
+        "format": "UPPER_CASE"
+      },
+      {
+        "type": "class",
+        "modifiers": "abstract",
+        "prefix": "Abstract"
+      },
+      {
+        "type": "interface",
+        "prefix": "I"
+      },
+      {
+        "type": "genericTypeParameter",
+        "prefix": "T"
+      },
+      {
+        "type": "enumMember",
+        "format": "PascalCase"
+      }
 
     ],
     "no-shadowed-variable": false
 
   },
   "rulesDirectory": [],
-  "linterOptions":{
-    "exclude":  ["**/node_modules/**", "*.d.ts", "packages/**/node_modules", "**/packages/**/node_modules/**/*"]
+  "linterOptions": {
+    "exclude": ["**/node_modules/**", "*.d.ts", "packages/**/node_modules", "**/packages/**/node_modules/**/*"]
   }
 }

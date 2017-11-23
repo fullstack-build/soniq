@@ -8,6 +8,7 @@ import { graphQl as gQLHelper } from './helper';
 export * from './migration';
 
 import { runtimeParser } from './runtimeParser';
+import queryBuilder from './queryBuilder';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';

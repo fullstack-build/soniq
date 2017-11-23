@@ -1,4 +1,7 @@
-import { IExpressions, IPermissions } from '../interfaces';
+import {
+  IExpressions,
+  IPermissions
+} from '../interfaces';
 
 import createUnionDefinition from './createUnionDefinition';
 import findDirectiveIndex from './findDirectiveIndex';
@@ -7,16 +10,20 @@ import getBasicSchema from './getBasicSchema';
 import getRelationForeignTable from './getRelationForeignTable';
 import getRelationType from './getRelationType';
 import parseObjectArgument from './parseObjectArgument';
+import arrayToNamedArray from './arrayToNamedArray';
 
 export default (classification: any, permissions: IPermissions, expressions: IExpressions) => {
 
-  const { tables, otherDefinitions } = classification;
+  const {
+    tables,
+    otherDefinitions
+  } = classification;
 
   // create new GraphQL document
   const graphQlDocument = {
     kind: 'Document',
     // definitions: [...otherDefinitions],
-    definitions: JSON.parse(JSON.stringify(otherDefinitions)),
+    definitions: JSON.parse(JSON.stringify(otherDefinitions))
   };
 
   const tableUnions = {};
@@ -106,7 +113,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         const fieldSql = `(${fieldExpression}) AS "${fieldName}"`;
 
         fieldAlreadyAddedAsSpecialType = true;
-        view.fields.push({ name: fieldName, expression: fieldSql, gqlDefinition: field });
+        view.fields.push({
+          name: fieldName,
+          expression: fieldSql,
+          gqlDefinition: field
+        });
       }
 
       // field is relation
@@ -125,7 +136,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       // add all normal fields (if not already added)
       if (fieldAlreadyAddedAsSpecialType !== true) {
-        view.fields.push({ name: fieldName, expression: fieldName, gqlDefinition: field });
+        view.fields.push({
+          name: fieldName,
+          expression: fieldName,
+          gqlDefinition: field
+        });
       }
     });
 
@@ -189,8 +204,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     tableView.name.value = tableFusion.name;
 
     tableView.fields = tableView.fields.filter((field) => {
-        return tableFusion.fieldNames.indexOf(field.name.value) >= 0;
-      });
+      return tableFusion.fieldNames.indexOf(field.name.value) >= 0;
+    });
 
     // Rename table to view
     Object.values(tableView.directives).forEach((directive) => {
@@ -222,12 +237,9 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
   graphQlDocument.definitions = graphQlDocument.definitions.concat(basicSchema);
 
-  return { document: graphQlDocument, views, viewFusions: fusionViews };
+  return {
+    document: graphQlDocument,
+    views,
+    viewFusions: fusionViews
+  };
 };
-
-// helper
-function arrayToNamedArray(pArray: any): any {
-  return pArray.reduce((obj, elem) => {
-    obj[elem.name] = elem; return obj;
-  },                   {});
-}
