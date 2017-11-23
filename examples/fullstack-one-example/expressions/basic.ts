@@ -28,7 +28,7 @@ export = [
     name: 'FirstNOfField',
     returnType: 'String',
     generate: (context, params): string => {
-      return `(substring("${context.table}"."${context.field || params.field}" from 1 for ${params.n || 1}) || ".")`;
+      return `(substring("${context.table}"."${params.field}" from 1 for ${params.n || 1}) || ".")`;
     },
   },
 ];

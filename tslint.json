@@ -13,6 +13,7 @@
     "ordered-imports": false,
     "no-boolean-literal-compare": true,
     "object-shorthand-properties-first": false,
+    "no-else-after-return": false,
     "naming-convention": [
       true,
       {"type": "property", "modifiers": ["static", "const"], "format": "UPPER_CASE"},
@@ -21,10 +22,12 @@
       {"type": "genericTypeParameter", "prefix": "T"},
       {"type": "enumMember", "format": "PascalCase"}
 
-    ]
+    ],
+    "no-shadowed-variable": false
+
   },
   "rulesDirectory": [],
   "linterOptions":{
-    "exclude":  ["**/node_modules/**", "*.d.ts"]
+    "exclude":  ["**/node_modules/**", "*.d.ts", "packages/**/node_modules", "**/packages/**/node_modules/**/*"]
   }
 }
