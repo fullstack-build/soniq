@@ -7,14 +7,14 @@ export = [
       'id', 'firstLetterOfUserName',
     ],
     expressions: [{
-      name: 'Authenticated',
+      name: 'Anyone',
     }],
   }, {
     type: 'READ',
     name: 'Me',
     table: 'User',
     fields: [
-      'id', 'username', 'email',
+      'id', 'username', 'email', 'posts',
     ],
     expressions: [{
       name: 'Owner',

@@ -45,13 +45,21 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     tableView.name.value = viewName;
 
     const view: any = {
-      table,
       tableName,
       name: viewName,
       type: 'VIEW',
       fields: [],
       expressions: [],
     };
+
+    // Create FusionView for Table if it not already exists
+    if (fusionViews[tableName] == null) {
+      fusionViews[tableName] = {
+        name: tableName + '_Fusion',
+        tableName,
+        fieldNames: []
+      };
+    }
 
     // create unions array for table if not yet available
     tableUnions[tableName] = tableUnions[tableName] || [];
@@ -61,7 +69,14 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     // filter required views
     // only allow fields with positive permissions
     tableView.fields = tableView.fields.filter((field) => {
-      return permission.fields.indexOf(field.name.value) >= 0;
+      const fieldName = field.name.value;
+      const isIncluded = permission.fields.indexOf(fieldName) >= 0;
+
+      if (isIncluded === true && fusionViews[tableName].fieldNames.indexOf(fieldName)) {
+        fusionViews[tableName].fieldNames.push(fieldName);
+      }
+
+      return isIncluded;
     });
 
     // new object: each table leads to 0..n views based on permissions
@@ -74,9 +89,6 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
     // Add view to GraphQl graphQlDocument
     graphQlDocument.definitions.push(tableView);
-
-    // Add GraphQl definition to view
-    view.gqlDefinition = tableView;
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
@@ -115,8 +127,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         fieldAlreadyAddedAsSpecialType = true;
         view.fields.push({
           name: fieldName,
-          expression: fieldSql,
-          gqlDefinition: field
+          expression: fieldSql
         });
       }
 
@@ -127,8 +138,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         if (getRelationType(field) === 'ONE') {
           view.fields.push({
             name: fieldName,
-            expression: fieldName + '_' + getRelationForeignTable(field) + '_id',
-            gqlDefinition: field,
+            expression: fieldName + '_' + getRelationForeignTable(field) + '_id'
           });
         }
         fieldAlreadyAddedAsSpecialType = true;
@@ -138,8 +148,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       if (fieldAlreadyAddedAsSpecialType !== true) {
         view.fields.push({
           name: fieldName,
-          expression: fieldName,
-          gqlDefinition: field
+          expression: fieldName
         });
       }
     });
@@ -167,33 +176,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
   });
 
-  // Generate FusionViews based on all available views
-  Object.values(views).forEach((view) => {
-
-    if (fusionViews[view.tableName] == null) {
-      fusionViews[view.tableName] = {
-        name: view.tableName + '_Fusion',
-        fields: [],
-        fieldNames: [],
-        tableName: view.tableName,
-      };
-    }
-
-    // iterate view fields, add all fields from all views to fusionView
-    Object.values(view.fields).forEach((field) => {
-      const fusionFieldName = `${view.name}_${field.name}`;
-
-      fusionViews[view.tableName]
-        .fields
-        .push(`"${view.name}"."${field.name}" AS "${fusionFieldName}"`);
-
-      if (fusionViews[view.tableName].fieldNames.indexOf(field.name) < 0) {
-        fusionViews[view.tableName].fieldNames.push(field.name);
-      }
-    });
-  });
-
-  // build GraphQL View based on DB views
+  // build GraphQL FustionViews based on DB viewson DB views
   Object.values(fusionViews).forEach((tableFusion) => {
 
     const table = tables[tableFusion.tableName];
