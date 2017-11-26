@@ -17,12 +17,12 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
 
   // console.log(print(document), views, viewFusions);
 
-  /* console.log('> NEW GQL:');
+  /*console.log('> NEW GQL:');
   console.log(print(document));
   console.log('>');
   console.log('> ===================================================');
   console.log('>');
-  console.log('> Views:', JSON.stringify(views, null, 2)); */
+  console.log('> Views:', JSON.stringify(views, null, 2));*/
 
   return { document, views };
 

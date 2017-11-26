@@ -3,7 +3,6 @@ import {
   IPermissions
 } from '../interfaces';
 
-import createUnionDefinition from './createUnionDefinition';
 import findDirectiveIndex from './findDirectiveIndex';
 import getArgumentByName from './getArgumentByName';
 import getBasicSchema from './getBasicSchema';
@@ -11,6 +10,9 @@ import getRelationForeignTable from './getRelationForeignTable';
 import getRelationType from './getRelationType';
 import parseObjectArgument from './parseObjectArgument';
 import arrayToNamedArray from './arrayToNamedArray';
+import getQueryArguments from './getQueryArguments';
+import getTypesEnum from './getTypesEnum';
+import getTypenamesField from './getTypenamesField';
 
 export default (classification: any, permissions: IPermissions, expressions: IExpressions) => {
 
@@ -26,11 +28,13 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     definitions: JSON.parse(JSON.stringify(otherDefinitions))
   };
 
-  const tableUnions = {};
-  const fusionViews: any = {};
+  const gQlTypes: any = {};
   const views = [];
   const expressionsByName = arrayToNamedArray(expressions);
   const queries = [];
+  // Field key is "tableName.fieldName"
+  const relationForeignTableByFieldKey = {};
+  const tableTypes = {};
 
   // iterate over permissions
   // each permission will become a view
@@ -52,19 +56,18 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       expressions: [],
     };
 
-    // Create FusionView for Table if it not already exists
-    if (fusionViews[tableName] == null) {
-      fusionViews[tableName] = {
-        name: tableName + '_Fusion',
+    // Create gQl Type for Table if it not already exists
+    if (gQlTypes[tableName] == null) {
+      gQlTypes[tableName] = {
+        name: tableName,
         tableName,
-        fieldNames: []
+        fieldNames: [],
+        types: []
       };
     }
 
-    // create unions array for table if not yet available
-    tableUnions[tableName] = tableUnions[tableName] || [];
-    // and push view
-    tableUnions[tableName].push(viewName);
+    // Add current type to list
+    gQlTypes[tableName].types.push(viewName.toUpperCase());
 
     // filter required views
     // only allow fields with positive permissions
@@ -72,8 +75,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       const isIncluded = permission.fields.indexOf(fieldName) >= 0;
 
-      if (isIncluded === true && fusionViews[tableName].fieldNames.indexOf(fieldName)) {
-        fusionViews[tableName].fieldNames.push(fieldName);
+      if (isIncluded === true && gQlTypes[tableName].fieldNames.indexOf(fieldName)) {
+        gQlTypes[tableName].fieldNames.push(fieldName);
       }
 
       return isIncluded;
@@ -88,7 +91,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     });
 
     // Add view to GraphQl graphQlDocument
-    graphQlDocument.definitions.push(tableView);
+    // graphQlDocument.definitions.push(tableView);
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
@@ -135,6 +138,10 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       if (relationDirectiveIndex !== -1) {
         const relationDirective = field.directives[relationDirectiveIndex];
 
+        const relationName = getArgumentByName(relationDirective, 'name').value.value;
+
+        relationForeignTableByFieldKey[tableName + '.' + fieldName] = getRelationForeignTable(field);
+
         if (getRelationType(field) === 'ONE') {
           view.fields.push({
             name: fieldName,
@@ -151,6 +158,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           expression: fieldName
         });
       }
+    });
+
+    view.fields.push({
+      name: '_typenames',
+      expression: `ARRAY['${viewName.toUpperCase()}'] AS _typenames`
     });
 
     // creates SQL expressions for permission
@@ -176,43 +188,46 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
   });
 
-  // build GraphQL FustionViews based on DB viewson DB views
-  Object.values(fusionViews).forEach((tableFusion) => {
+  // build GraphQL gQlTypes based on DB views
+  Object.values(gQlTypes).forEach((gQlType) => {
 
-    const table = tables[tableFusion.tableName];
+    const tableName = gQlType.tableName;
+    const typesEnumName = (tableName + '_TYPES').toUpperCase();
+    const table = tables[gQlType.tableName];
     // new object: GraphQL definition for fusionView
     // const tableView = { ...table };
     const tableView = JSON.parse(JSON.stringify(table));
 
-    tableView.name.value = tableFusion.name;
+    tableView.name.value = gQlType.name;
 
+    // Filter fields for gqlDefinition of the table
     tableView.fields = tableView.fields.filter((field) => {
-      return tableFusion.fieldNames.indexOf(field.name.value) >= 0;
+      return gQlType.fieldNames.indexOf(field.name.value) >= 0;
     });
 
-    // Rename table to view
-    Object.values(tableView.directives).forEach((directive) => {
-      if (directive.name.value === 'table') {
-        directive.name.value = 'fusionView';
+    // Add arguments to relation fields
+    tableView.fields = tableView.fields.map((value, key) => {
+      if (relationForeignTableByFieldKey[tableName + '.' + value.name.value]) {
+        const foreignTypesEnumName = (relationForeignTableByFieldKey[tableName + '.' + value.name.value] + '_TYPES').toUpperCase();
+        value.arguments = getQueryArguments(foreignTypesEnumName);
       }
+
+      return value;
     });
 
-    // Add view to graphQlDocument
+    // Add _typenames field to type
+    tableView.fields.push(getTypenamesField(typesEnumName));
+
+    // Add types-enum definition of table to graphQlDocument
+    graphQlDocument.definitions.push(getTypesEnum(typesEnumName, gQlType.types));
+
+    // Add table type to graphQlDocument
     graphQlDocument.definitions.push(tableView);
-
-    // add fusionView to union of the table
-    tableUnions[tableFusion.tableName].push(tableFusion.name);
-  });
-
-  // build GraphQl union definitions
-  Object.entries(tableUnions).forEach((unionEntry) => {
-    const tableName = unionEntry[0];
-    const tableUnion = unionEntry[1];
-    graphQlDocument.definitions.push(createUnionDefinition(tableName, tableUnion));
 
     queries.push({
       name: tableName.toString().toLowerCase() + 's',
       type: tableName,
+      typesEnumName: (tableName + '_TYPES').toUpperCase()
     });
   });
 
@@ -223,6 +238,6 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   return {
     document: graphQlDocument,
     views,
-    viewFusions: fusionViews
+    viewFusions: gQlTypes
   };
 };

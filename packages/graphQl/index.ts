@@ -12,6 +12,7 @@ import queryBuilder from './queryBuilder';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';
+import { log } from 'util';
 
 export namespace graphQl {
 
@@ -43,6 +44,8 @@ export namespace graphQl {
       const dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
       $one.emit('schema.parsed.to.dbObject');
+      // tslint:disable-next-line:no-console
+      console.log(JSON.stringify(dbObject, null, 2));
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
@@ -69,6 +72,8 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
       $one.emit('bootGraphQl.error', err);

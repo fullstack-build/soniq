@@ -1,28 +1,14 @@
-function getQuery(name, type) {
+
+import getQueryArguments from './getQueryArguments';
+
+function getQuery(name, type, typesEnumName) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
       value: name,
     },
-    arguments: [
-      {
-        kind: 'InputValueDefinition',
-        name: {
-          kind: 'Name',
-          value: 'sql',
-        },
-        type: {
-          kind: 'NamedType',
-          name: {
-            kind: 'Name',
-            value: 'String',
-          },
-        },
-        defaultValue: null,
-        directives: [],
-      },
-    ],
+    arguments: getQueryArguments(typesEnumName),
     type: {
       kind: 'NonNullType',
       type: {
@@ -47,7 +33,7 @@ export default (queries) => {
 
   const queryFields = [];
   Object.values(queries).forEach((query) => {
-    queryFields.push(getQuery(query.name, query.type));
+    queryFields.push(getQuery(query.name, query.type, query.typesEnumName));
   });
 
   const definitions = [

@@ -10,4 +10,15 @@ export = [
       name: 'Anyone',
     }],
   },
+  {
+    name: 'Owner',
+    type: 'READ',
+    table: 'Post',
+    fields: [
+      'id', 'title', 'content', 'owner', 'ownerSecret',
+    ],
+    expressions: [{
+      name: 'Owner',
+    }],
+  },
 ];

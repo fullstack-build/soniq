@@ -14,7 +14,7 @@ export = [
     name: 'Me',
     table: 'User',
     fields: [
-      'id', 'username', 'email', 'posts',
+      'id', 'firstLetterOfUserName', 'username', 'email', 'posts',
     ],
     expressions: [{
       name: 'Owner',
