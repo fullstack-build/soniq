@@ -32,9 +32,6 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   const views = [];
   const expressionsByName = arrayToNamedArray(expressions);
   const queries = [];
-  // Field key is "tableName.fieldName"
-  const relationForeignTableByFieldKey = {};
-  const tableTypes = {};
 
   // iterate over permissions
   // each permission will become a view
@@ -62,12 +59,20 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         name: tableName,
         tableName,
         fieldNames: [],
-        types: []
+        typeNames: [],
+        types: {},
+        relationByField: {}
       };
     }
 
     // Add current type to list
-    gQlTypes[tableName].types.push(viewName.toUpperCase());
+    gQlTypes[tableName].types[viewName.toUpperCase()] = {
+      viewName,
+      typeName: viewName.toUpperCase(),
+      tableName,
+      fields: []
+    };
+    gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
 
     // filter required views
     // only allow fields with positive permissions
@@ -77,6 +82,10 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       if (isIncluded === true && gQlTypes[tableName].fieldNames.indexOf(fieldName)) {
         gQlTypes[tableName].fieldNames.push(fieldName);
+      }
+
+      if (isIncluded === true) {
+        gQlTypes[tableName].types[viewName.toUpperCase()].fields.push(fieldName);
       }
 
       return isIncluded;
@@ -140,7 +149,12 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
-        relationForeignTableByFieldKey[tableName + '.' + fieldName] = getRelationForeignTable(field);
+        gQlTypes[tableName].relationByField[fieldName] = {
+          relationName,
+          foreignTableName: getRelationForeignTable(field),
+          relationType: getRelationType(field),
+          fieldName: fieldName + '_' + getRelationForeignTable(field) + '_id'
+        };
 
         if (getRelationType(field) === 'ONE') {
           view.fields.push({
@@ -206,20 +220,25 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     });
 
     // Add arguments to relation fields
-    tableView.fields = tableView.fields.map((value, key) => {
-      if (relationForeignTableByFieldKey[tableName + '.' + value.name.value]) {
-        const foreignTypesEnumName = (relationForeignTableByFieldKey[tableName + '.' + value.name.value] + '_TYPES').toUpperCase();
-        value.arguments = getQueryArguments(foreignTypesEnumName);
+    tableView.fields = tableView.fields.map((field, key) => {
+      if (gQlType.relationByField[field.name.value]) {
+        const foreignTypesEnumName = (gQlType.relationByField[field.name.value].foreignTableName + '_TYPES').toUpperCase();
+        field.arguments = getQueryArguments(foreignTypesEnumName);
       }
 
-      return value;
+      // Remove NonNullType because a field can be NULL if a user has no permissions
+      if (field.type.kind === 'NonNullType') {
+        field.type = field.type.type;
+      }
+
+      return field;
     });
 
     // Add _typenames field to type
     tableView.fields.push(getTypenamesField(typesEnumName));
 
     // Add types-enum definition of table to graphQlDocument
-    graphQlDocument.definitions.push(getTypesEnum(typesEnumName, gQlType.types));
+    graphQlDocument.definitions.push(getTypesEnum(typesEnumName, gQlType.typeNames));
 
     // Add table type to graphQlDocument
     graphQlDocument.definitions.push(tableView);
@@ -238,6 +257,6 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   return {
     document: graphQlDocument,
     views,
-    viewFusions: gQlTypes
+    gQlTypes
   };
 };

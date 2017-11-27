@@ -11,7 +11,7 @@ import {
 export function runtimeParser(userSchema: any, permissions: IPermissions, expressions: IExpressions): any {
 
   const classification = classifyUserDefinitions(userSchema);
-  const { document, views } = createPublicSchema(classification, permissions, expressions);
+  const { document, views, gQlTypes } = createPublicSchema(classification, permissions, expressions);
 
   // console.log('doc', JSON.stringify(document, null, 2));
 
@@ -24,6 +24,6 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
   console.log('>');
   console.log('> Views:', JSON.stringify(views, null, 2));*/
 
-  return { document, views };
+  return { document, views, gQlTypes };
 
 }

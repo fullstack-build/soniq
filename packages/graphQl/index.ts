@@ -8,7 +8,7 @@ import { graphQl as gQLHelper } from './helper';
 export * from './migration';
 
 import { runtimeParser } from './runtimeParser';
-import queryBuilder from './queryBuilder';
+import { getResolvers } from './queryBuilder/testResolver';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';
@@ -22,6 +22,8 @@ export namespace graphQl {
   let expressions: IExpressions;
   let gQlRuntimeSchema: string;
   let gQlRuntimeDocument: any;
+  let gQlTypes: any;
+  let dbObject: any;
 
   export const bootGraphQl = async ($one) => {
 
@@ -41,7 +43,7 @@ export namespace graphQl {
       // emit event
       $one.emit('schema.parsed');
 
-      const dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
+      dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
       $one.emit('schema.parsed.to.dbObject');
       // tslint:disable-next-line:no-console
@@ -65,6 +67,7 @@ export namespace graphQl {
 
       gQlRuntimeDocument = combinedSchemaInformation.document;
       gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
+      gQlTypes = combinedSchemaInformation.gQlTypes;
 
       // add endpoints
       addEndpoints($one);
@@ -98,7 +101,7 @@ export namespace graphQl {
 
     const schema = makeExecutableSchema({
 			typeDefs: gQlRuntimeSchema,
-			resolvers: queryBuilder,
+			resolvers: getResolvers(gQlTypes, dbObject),
 		});
 
     // koaBody is needed just for POST.
