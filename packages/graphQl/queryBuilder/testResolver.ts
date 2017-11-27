@@ -13,6 +13,8 @@ export function getResolvers(gQlTypes, dbObject) {
     RootQuery: {
       users: (obj, args, context, info) => {
         // tslint:disable-next-line:no-console
+        console.log(JSON.stringify(info, null, 2));
+        // tslint:disable-next-line:no-console
         console.log(JSON.stringify(parseResolveInfo(info), null, 2));
         // tslint:disable-next-line:no-console
         console.log('>>>>SQL>>>> ============================================');
