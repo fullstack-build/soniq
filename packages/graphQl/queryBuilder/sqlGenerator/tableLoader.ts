@@ -122,10 +122,10 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
       } else {
         fieldSelect.push(`${getFieldExpression(field.name, typeNames, gQlType, localNameByType)} "${field.name}"`);
       }
+    } else {
+      fieldSelect.push(getTypeNamesSelect(typeNames, gQlType, localNameByType));
     }
   });
-
-  fieldSelect.push(getTypeNamesSelect(typeNames, gQlType, localNameByType));
 
   const fromExpression = getFromExpression(typeNames, gQlType, localNameByType);
 
