@@ -16,7 +16,10 @@ export function getFieldExpression(name, typeNames, gQlType, localNameByType) {
     }
   });
 
-  fields.push('null');
+  // ID can never be null. All other fields can.
+  if (name !== 'id') {
+    fields.push('null');
+  }
 
   return `COALESCE(${fields.join(', ')})`;
 }
