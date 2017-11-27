@@ -13,7 +13,11 @@ export function getResolvers(gQlTypes, dbObject) {
     RootQuery: {
       users: (obj, args, context, info) => {
         // tslint:disable-next-line:no-console
-        console.log(JSON.stringify(info, null, 2));
+        console.log(JSON.stringify(parseResolveInfo(info), null, 2));
+        // tslint:disable-next-line:no-console
+        console.log('>>>>SQL>>>> ============================================');
+        // tslint:disable-next-line:no-console
+        console.log(queryResolver(obj, args, context, info).sql);
 
         // return [{id:13, firstLetterOfUserName: 'A'}];
         return [{

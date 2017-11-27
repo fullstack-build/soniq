@@ -11,21 +11,7 @@ export function getFieldExpression(name, typeNames, gQlType, localNameByType) {
   const fields = [];
 
   Object.values(typeNames).forEach((typeName) => {
-    if (gQlType.types[typeName] != null && gQlType.types[typeName].fields.indexOf(name) >= 0 && localNameByType[typeName] != null) {
-      fields.push(`"${localNameByType[typeName]}"."${name}"`);
-    }
-  });
-
-  fields.push('null');
-
-  return `COALESCE(${fields.join(', ')})`;
-}
-
-export function getFieldExpressionWithoutCheck(name, typeNames, gQlType, localNameByType) {
-  const fields = [];
-
-  Object.values(typeNames).forEach((typeName) => {
-    if (gQlType.types[typeName] != null && localNameByType[typeName] != null) {
+    if (gQlType.types[typeName] != null && gQlType.types[typeName].nativeFieldNames.indexOf(name) >= 0 && localNameByType[typeName] != null) {
       fields.push(`"${localNameByType[typeName]}"."${name}"`);
     }
   });
@@ -112,7 +98,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
         const relation = gQlType.relationByField[field.name];
 
         if (relation.relationType === 'ONE') {
-          const fieldIdExpression = getFieldExpressionWithoutCheck(relation.fieldName, typeNames, gQlType, localNameByType);
+          const fieldIdExpression = getFieldExpression(relation.fieldName, typeNames, gQlType, localNameByType);
 
           const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, fieldIdExpression);
 
@@ -143,7 +129,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
   let sql = `SELECT ${fieldSelect.join(', \n')} FROM ${fromExpression}`;
 
   if (match != null) {
-    const exp = getFieldExpressionWithoutCheck(match.foreignFieldName, typeNames, gQlType, localNameByType);
+    const exp = getFieldExpression(match.foreignFieldName, typeNames, gQlType, localNameByType);
     sql += ` WHERE ${exp} = ${match.idExpression}`;
   }
 
@@ -159,13 +145,14 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, matchIdE
 
   const match = {
     idExpression: matchIdExpression,
-    foreignFieldName: foreignRelation.fieldName
+    foreignFieldName: 'id'
   };
 
   if (relation.relationType === 'ONE') {
     match.foreignFieldName = 'id';
     return rowToJson(c, query, gQlTypes, dbObject, match);
   } else {
+    match.foreignFieldName = foreignRelation.reference.fieldName + '_' + foreignRelation.reference.tableName + '_id';
     return jsonAgg(c, query, gQlTypes, dbObject, match);
   }
 }

@@ -70,7 +70,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       viewName,
       typeName: viewName.toUpperCase(),
       tableName,
-      fields: []
+      fields: [],
+      nativeFieldNames: []
     };
     gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
 
@@ -141,6 +142,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           name: fieldName,
           expression: fieldSql
         });
+
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is relation
@@ -163,6 +166,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           });
         }
         fieldAlreadyAddedAsSpecialType = true;
+
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + '_' + getRelationForeignTable(field) + '_id');
       }
 
       // add all normal fields (if not already added)
@@ -171,6 +176,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           name: fieldName,
           expression: fieldName
         });
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
     });
 
