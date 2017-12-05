@@ -7,6 +7,7 @@ type User @table {
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "bla")
+  testDefault: String @type(name: "Date") @default(expression: "now()")
 }
 
 union UserPayload = PrivateUserPayload | BusinessUserPayload

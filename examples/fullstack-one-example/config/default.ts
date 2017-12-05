@@ -9,17 +9,18 @@ export = {
     setup: {
       database: 'fullstack-one-example',
       host: 'localhost',
-      user: 'root',
+      user: 'postgres',
       password: '',
-      port: 3211,
+      port: 5432,
+      ssl: false,
     },
     general: {
-      user: 'dbuser',
-      host: 'database.server.com',
-      database: 'mydb',
-      password: 'secretpassword',
-      port: 3211,
-      ssl: true,
+      database: 'fullstack-one-example',
+      host: 'localhost',
+      user: 'postgres',
+      password: '',
+      port: 5432,
+      ssl: false,
       // set pool max size to 20
       max: 20,
       // set min pool size to 4

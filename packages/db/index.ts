@@ -1,24 +1,66 @@
 import { Client, Pool, PoolConfig } from 'pg';
+export { Client, Pool } from 'pg';
 
 export class Db {
+  private $one;
   private logger;
+  private credentials;
   private client: Client;
-  private clientConnection;
   private pool: Pool;
 
   constructor(
     pFullStackOneCore: any,
-    pCredentials: PoolConfig,
-    pIsPool: boolean = false,
+    pCredentials: PoolConfig
   ) {
-    this.logger = pFullStackOneCore.getLogger('db');
+    this.$one         = pFullStackOneCore;
+    this.logger       = pFullStackOneCore.getLogger('db');
+    this.credentials  = pCredentials;
 
-    if (!pIsPool) { // create client
-      this.client = new Client(pCredentials);
-      this.logger.info('Postgres connection created');
+    /*if (!pIsPool) { // create client
+
     } else { // create pool
       this.pool = new Pool(pCredentials);
       this.logger.info('Postgres pool created');
+    }*/
+  }
+
+  public async getClient() {
+    // create connection if not yet available
+    if (this.client == null) {
+      try {
+        this.client = new Client(this.credentials);
+
+        // create connection
+        await this.client.connect();
+        this.logger.info('Postgres connection created');
+
+      } catch (err) {
+        throw err;
+      }
     }
+
+    return this.client;
+  }
+
+  public async getPool() {
+    // create pool if not yet available
+    if (this.pool == null) {
+      try {
+        this.pool = new Pool(this.credentials);
+
+        // create first connection
+        const client = await this.pool.connect();
+        try {
+          this.logger.info('Postgres pool created');
+        } finally {
+          client.release();
+        }
+
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    return this.pool;
   }
 }

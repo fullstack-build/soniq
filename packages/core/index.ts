@@ -7,7 +7,7 @@ import * as path from 'path';
 import { EventEmitter2 } from 'eventemitter2';
 
 // fullstackOne imports
-import { Db } from '../db';
+import { Db, Client, Pool } from '../db';
 import { Logger } from '../logger';
 import { graphQl } from '../graphQl/index';
 
@@ -37,8 +37,8 @@ class FullstackOneCore {
   private CONFIG: IConfig;
   private logger: Logger;
   private eventEmitter: EventEmitter2;
-  private dbSetup: Db;
-  private dbPool: Db;
+  private dbSetupConnection: Client;
+  private dbPool: Pool;
   private APP: Koa;
   private dbObject: IDatabaseObject;
 
@@ -130,6 +130,16 @@ class FullstackOneCore {
     return { ...this.dbObject };
   }
 
+  // return DB setup connection
+  public getDbSetupConnection() {
+    return this.dbSetupConnection;
+  }
+
+  // return DB pool
+  public getDbPool() {
+    return this.dbPool;
+  }
+
   /**
    * PRIVATE METHODS
    */
@@ -166,41 +176,54 @@ class FullstackOneCore {
   // boot async and fire event when ready
   private async bootAsync(): Promise<void> {
 
-    // create Db connection
-    await this.connectDB();
+    try {
 
-    // start server
-    await this.startServer();
+      // create Db connection
+      await this.connectDB();
 
-    // boot GraphQL and add endpoints
-    this.dbObject = await graphQl.bootGraphQl(this);
-    this.emit('dbObject.set');
+      // start server
+      await this.startServer();
 
-    // execute book scripts
-     await this.executeBootScripts();
+      // boot GraphQL and add endpoints
+      this.dbObject = await graphQl.bootGraphQl(this);
+      this.emit('dbObject.set');
 
-    // draw cli
-    this.cliArt();
+      // execute book scripts
+      await this.executeBootScripts();
 
-    // emit ready event
-    this.hasBooted = true;
-    this.emit('ready', this);
+      // draw cli
+      this.cliArt();
+
+      // emit ready event
+      this.hasBooted = true;
+      this.emit('ready', this);
+    } catch (err) {
+      this.logger.error('An error occurred while booting', err);
+      this.emit('not-ready', err);
+    }
 
   }
 
   // connect to setup db and create a general connection pool
-  private connectDB() {
+  private async connectDB() {
     const configDB = this.getConfig('db');
 
-    // create connection with setup user
-    const dbSetup = new Db(this, configDB.setup, false);
-    // emit event
-    this.emit('db.setup.connection.created');
+    try {
+      // create connection with setup user
+      const dbSetup = new Db(this, configDB.setup);
+      this.dbSetupConnection = await dbSetup.getClient();
+      // emit event
+      this.emit('db.setup.connection.created');
 
-    // create general conncetion pool
-    const dbPool = new Db(this, configDB.general, true);
-    // emit event
-    this.emit('db.pool.created');
+      // create general conncetion pool
+      const db = new Db(this, configDB.general);
+      this.dbPool = await db.getPool();
+      // emit event
+      this.emit('db.pool.created');
+    } catch (err) {
+      throw err;
+    }
+
   }
 
 /*
@@ -310,7 +333,7 @@ export function getInstance(): FullstackOneCore {
 }
 
 // return finished booting promise
-export function getBootingPromise(): Promise<FullstackOneCore> {
+export function getReadyPromise(): Promise<FullstackOneCore> {
   return new Promise(($resolve, $reject) => {
 
     // already booted?
@@ -318,8 +341,13 @@ export function getBootingPromise(): Promise<FullstackOneCore> {
       $resolve(INSTANCE);
     } else {
 
+      // catch ready event
       INSTANCE.getEventEmitter().on('fullstack-one.ready', () => {
         $resolve(INSTANCE);
+      });
+      // catch not ready event
+      INSTANCE.getEventEmitter().on('fullstack-one.not-ready', (err) => {
+        $reject(err);
       });
     }
 
