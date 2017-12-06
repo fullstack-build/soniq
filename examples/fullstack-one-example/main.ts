@@ -18,8 +18,36 @@ $one.getEventEmitter().on('fullstack-one.*.not-ready',(err) => {
   }
 })();
 
-// catch anotehr system event as a promise
+// catch another system event as a promise
 (async () => {
   const payloadArray = await FullstackOne.eventToPromise('fullstack-one.*.dbObject.set');
   console.log('!!! PROMISED event caught fullstack-one.*.dbObject.set');
 })();
+
+// go
+$one.getEventEmitter().on('fullstack-one.*.ready',async () => {
+
+  try {
+
+    $one.getDbSetupClient().on('notification', (msg) => {
+      //if (msg.name === 'notification' && msg.channel === 'table_update') {
+
+      console.error('*****', msg);
+      /*var pl = JSON.parse(msg.payload);
+			console.log("*========*");
+			Object.keys(pl).forEach(function (key) {
+				console.log(key, pl[key]);
+			});
+			console.log("-========-");
+		}*/
+    });
+    $one.getDbSetupClient().query("LISTEN table_update");
+
+    const res2 = await $one.getDbSetupClient().query('INSERT INTO users ("name") VALUES(\'123\')');
+    console.error('*2', res2);
+
+  } catch (err) {
+    console.error(err);
+  }
+
+});

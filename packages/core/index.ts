@@ -5,9 +5,9 @@ import * as Koa from 'koa';
 import * as _ from 'lodash';
 import * as path from 'path';
 import { randomBytes } from 'crypto';
-import { EventEmitter2 } from 'eventemitter2';
 
 // fullstackOne imports
+import { Events, EventEmitter2 } from '../events';
 import { Db, Client, Pool } from '../db';
 import { Logger } from '../logger';
 import { graphQl } from '../graphQl/index';
@@ -36,18 +36,18 @@ class FullstackOneCore {
   private instanceId: string;
   private hasBooted: boolean;
   private ENVIRONMENT: IEnvironmentInformation;
+  private eventEmitter: Events;
   private CONFIG: IConfig;
   private logger: Logger;
-  private eventEmitter: EventEmitter2;
-  private dbSetupConnection: Client;
+  private dbSetupClient: Client;
   private dbPool: Pool;
   private APP: Koa;
   private dbObject: IDatabaseObject;
 
   constructor() {
     this.hasBooted = false;
-    // create unique instance ID
-    this.instanceId = randomBytes(20).toString('hex');
+    // create unique instance ID (4 char)
+    this.instanceId = randomBytes(20).toString('hex').substr(5,4);
 
     // load project package.js
     const projectPath = path.dirname(require.main.filename);
@@ -63,13 +63,7 @@ class FullstackOneCore {
     };
 
     // create event emitter
-    this.eventEmitter = new EventEmitter2({
-      wildcard: true,
-      delimiter: '.',
-      newListener: false,
-      maxListeners: 100,
-      verboseMemoryLeak: true,
-    });
+    this.eventEmitter = new Events(this);
 
     // load config
     this.loadConfig();
@@ -113,14 +107,14 @@ class FullstackOneCore {
     return new Logger(this, pModuleName);
   }
 
-  // return eventEmitter
+  // return koa app
   public getApp(): Koa {
     return this.APP;
   }
 
   // return APP
   public getEventEmitter(): EventEmitter2 {
-    return this.eventEmitter;
+    return this.eventEmitter.getEventEmitter();
   }
 
   // forward GraphQl Schema
@@ -140,8 +134,8 @@ class FullstackOneCore {
   }
 
   // return DB setup connection
-  public getDbSetupConnection() {
-    return this.dbSetupConnection;
+  public getDbSetupClient() {
+    return this.dbSetupClient;
   }
 
   // return DB pool
@@ -153,8 +147,8 @@ class FullstackOneCore {
    * PRIVATE METHODS
    */
 
-  public emit = (eventName: string, ...args: any[]): void => {
-    this.eventEmitter.emit(`fullstack-one.${this.instanceId}.${eventName}`, ...args);
+  public emit(eventName: string, ...args: any[]): void {
+    this.eventEmitter.emit(eventName, ...args);
   }
 
   // load config based on ENV
@@ -220,7 +214,7 @@ class FullstackOneCore {
     try {
       // create connection with setup user
       const dbSetup = new Db(this, configDB.setup);
-      this.dbSetupConnection = await dbSetup.getClient();
+      this.dbSetupClient = await dbSetup.getClient();
       // emit event
       this.emit('db.setup.connection.created');
 

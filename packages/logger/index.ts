@@ -11,6 +11,8 @@ export class Logger implements ILogger {
 
   // Logger Name
   private moduleName: string = null;
+  // instance ID
+  private instanceId: string = null;
   // project environment
   private envInfo: IEnvironmentInformation;
   // tracer
@@ -23,16 +25,17 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor(pFullStackOneCore: any, pModuleName: string = 'root') {
+  constructor($one: any, pModuleName: string = 'root') {
     this.moduleName = pModuleName;
+    this.instanceId = $one.getInstanceId();
 
-    const env = (this.envInfo = pFullStackOneCore.getEnvironmentInformation());
-    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}`;
+    const env = (this.envInfo = $one.getEnvironmentInformation());
+    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}/I:${this.instanceId}`;
 
     // setup tracer
     const tracerConfig: any = {
       // min level
-      level: pFullStackOneCore.getConfig('logger').minLevel,
+      level: $one.getConfig('logger').minLevel,
       // set log levels
       methods: this.LEVELS,
       // override tracer transport with logToDebug
@@ -41,7 +44,7 @@ export class Logger implements ILogger {
     this.tracerLogger = Tracer.colorConsole(tracerConfig);
 
     // setup debug
-    this.debugLogger = DebugLogger(`fullstack-one:${this.moduleName}`);
+    this.debugLogger = DebugLogger(`fullstack-one:${this.moduleName}:${this.instanceId}`);
 
     /*
     // setup LogEntries

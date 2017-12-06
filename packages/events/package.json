@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/db",
+  "name": "@fullstack-one/events",
   "version": "0.1.0",
-  "description": "fullstack.one db connector package",
+  "description": "fullstack.one events package",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,9 +10,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "pg": "^7.4.0"
+    "eventemitter2": "^5.0.0"
   },
-  "devDependencies": {
-    "@types/pg": "^7.1.5"
-  }
+  "devDependencies": {}
 }
