@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as _ from 'lodash';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 import { EventEmitter2 } from 'eventemitter2';
 
 // fullstackOne imports
@@ -32,6 +33,7 @@ try {
 }
 
 class FullstackOneCore {
+  private instanceId: string;
   private hasBooted: boolean;
   private ENVIRONMENT: IEnvironmentInformation;
   private CONFIG: IConfig;
@@ -44,6 +46,8 @@ class FullstackOneCore {
 
   constructor() {
     this.hasBooted = false;
+    // create unique instance ID
+    this.instanceId = randomBytes(20).toString('hex');
 
     // load project package.js
     const projectPath = path.dirname(require.main.filename);
@@ -80,6 +84,11 @@ class FullstackOneCore {
   /**
    * PUBLIC METHODS
    */
+
+  // return instanceId
+  public getInstanceId(): string {
+    return this.instanceId;
+  }
 
   // return EnvironmentInformation
   public getEnvironmentInformation(): IEnvironmentInformation {
@@ -145,7 +154,7 @@ class FullstackOneCore {
    */
 
   public emit = (eventName: string, ...args: any[]): void => {
-    this.eventEmitter.emit(`fullstack-one.${eventName}`, ...args);
+    this.eventEmitter.emit(`fullstack-one.${this.instanceId}.${eventName}`, ...args);
   }
 
   // load config based on ENV
@@ -319,6 +328,7 @@ class FullstackOneCore {
     process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
     process.stdout.write('env: ' + this.ENVIRONMENT.env + '\n');
     process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
+    process.stdout.write('instance id: ' + this.instanceId + '\n');
     process.stdout.write('____________________________________\n');
   }
 
@@ -342,11 +352,11 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
     } else {
 
       // catch ready event
-      INSTANCE.getEventEmitter().on('fullstack-one.ready', () => {
+      INSTANCE.getEventEmitter().on(`fullstack-one.${INSTANCE.getInstanceId()}.ready`, () => {
         $resolve(INSTANCE);
       });
       // catch not ready event
-      INSTANCE.getEventEmitter().on('fullstack-one.not-ready', (err) => {
+      INSTANCE.getEventEmitter().on(`fullstack-one.${INSTANCE.getInstanceId()}.not-ready`, (err) => {
         $reject(err);
       });
     }

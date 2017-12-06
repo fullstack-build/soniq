@@ -81,11 +81,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       const isIncluded = permission.fields.indexOf(fieldName) >= 0;
 
-      if (isIncluded === true && gQlTypes[tableName].fieldNames.indexOf(fieldName)) {
+      if (isIncluded && gQlTypes[tableName].fieldNames.indexOf(fieldName)) {
         gQlTypes[tableName].fieldNames.push(fieldName);
       }
 
-      if (isIncluded === true) {
+      if (isIncluded) {
         gQlTypes[tableName].types[viewName.toUpperCase()].fields.push(fieldName);
       }
 
@@ -171,7 +171,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       }
 
       // add all normal fields (if not already added)
-      if (fieldAlreadyAddedAsSpecialType !== true) {
+      if (!fieldAlreadyAddedAsSpecialType) {
         view.fields.push({
           name: fieldName,
           expression: fieldName

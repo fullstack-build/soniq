@@ -43,7 +43,7 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
 
   Object.values(typeNames).forEach((typeName) => {
     if (gQlType.types[typeName] != null && localNameByType[typeName] != null) {
-      if (isFirstSet !== true) {
+      if (!isFirstSet) {
         isFirstSet = true;
         firstType = {
           typeName,

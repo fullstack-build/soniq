@@ -1,11 +1,11 @@
 import * as FullstackOne from '../../';
 const $one = FullstackOne.getInstance();
 
-$one.getEventEmitter().on('fullstack-one.ready',() => {
+$one.getEventEmitter().on('fullstack-one.*.ready',() => {
   console.log('EVENT: ready');
 });
 
-$one.getEventEmitter().on('fullstack-one.not-ready',(err) => {
+$one.getEventEmitter().on('fullstack-one.*.not-ready',(err) => {
   console.error('Error-EVENT: not-ready', err);
 });
 
@@ -20,6 +20,6 @@ $one.getEventEmitter().on('fullstack-one.not-ready',(err) => {
 
 // catch anotehr system event as a promise
 (async () => {
-  const payloadArray = await FullstackOne.eventToPromise('fullstack-one.dbObject.set');
-  console.log('!!! PROMISED event caught fullstack-one.dbObject.set');
+  const payloadArray = await FullstackOne.eventToPromise('fullstack-one.*.dbObject.set');
+  console.log('!!! PROMISED event caught fullstack-one.*.dbObject.set');
 })();
