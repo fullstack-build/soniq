@@ -36,16 +36,16 @@ export namespace graphQl {
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
       gQlSchema = await gQLHelper.helper.loadFilesByGlobPattern(gQlSchemaPattern);
       // emit event
-      $one.emit('schema.load.success');
+      $one.getEventEmitter().internalEmit('schema.load.success');
 
       const gQlSchemaCombined = gQlSchema.join('\n');
       gQlJsonSchema = gQLHelper.helper.parseGraphQlSchema(gQlSchemaCombined);
       // emit event
-      $one.emit('schema.parsed');
+      $one.getEventEmitter().internalEmit('schema.parsed');
 
       dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
-      $one.emit('schema.parsed.to.dbObject');
+      $one.getEventEmitter().internalEmit('schema.parsed.to.dbObject');
       // tslint:disable-next-line:no-console
       console.log(JSON.stringify(dbObject, null, 2));
 
@@ -54,14 +54,14 @@ export namespace graphQl {
       const permissionsArray = await gQLHelper.helper.requireFilesByGlobPattern(permissionsPattern);
       permissions = [].concat.apply([], permissionsArray);
       // emit event
-      $one.emit('permissions.load.success');
+      $one.getEventEmitter().internalEmit('permissions.load.success');
 
       // load expressions
       const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
       const expressionsArray = await gQLHelper.helper.requireFilesByGlobPattern(expressionsPattern);
       expressions = [].concat.apply([], expressionsArray);
       // emit event
-      $one.emit('expressions.load.success');
+      $one.getEventEmitter().internalEmit('expressions.load.success');
 
       const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions);
 
@@ -79,7 +79,7 @@ export namespace graphQl {
       console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
-      $one.emit('bootGraphQl.error', err);
+      $one.getEventEmitter().internalEmit('bootGraphQl.error', err);
     }
 
   };
