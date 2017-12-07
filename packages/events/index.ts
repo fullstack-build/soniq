@@ -3,7 +3,6 @@ import { EventEmitter2 } from 'eventemitter2';
 export interface IEventEmitter {
   on: (eventName: string, listener: (...args: any[]) => void) => void;
   emit: (eventName: string, ...args: any[]) =>  void;
-  internalEmit: (eventName: string, ...args: any[]) =>  void;
 
 }
 
@@ -12,6 +11,7 @@ class EventEmitter implements IEventEmitter {
   private eventEmitter: EventEmitter2;
   private $one;
   private dbClient;
+  private namespace: string = 'f1';
 
   constructor($one) {
     this.$one = $one;
@@ -24,15 +24,16 @@ class EventEmitter implements IEventEmitter {
     });
 
     // finish initialization after ready event
-    this.eventEmitter.on(`fullstack-one.${this.$one.getInstanceId()}.ready`,() => this.finishInitialisation());
+    this.eventEmitter.on(`${this.namespace}.${this.$one.getInstanceId()}.ready`,() => this.finishInitialisation());
   }
 
   public emit(eventName: string, ...args: any[]): void {
-    this.eventEmitter.emit(eventName, ...args);
-  }
+    const eventNamespaceName = `${this.namespace}.${this.$one.getInstanceId()}.${eventName}`;
 
-  public internalEmit(eventName: string, ...args: any[]): void {
-    this.emit(`f1.${this.$one.getInstanceId()}.${eventName}`, ...args);
+    // emit on this noe
+    this._emit(eventNamespaceName, ...args);
+    // synchronize to other nodes
+    this.sendEventToPg(eventNamespaceName, ...args);
   }
 
   public on(eventName: string, listener: (...args: any[]) => void) {
@@ -40,29 +41,50 @@ class EventEmitter implements IEventEmitter {
   }
 
   /* private methods */
+  private _emit(eventName: string, ...args: any[]): void {
+    this.eventEmitter.emit(eventName, ...args);
+  }
+
+  private sendEventToPg(eventName: string, ...args: any[]) {
+
+    const event = {
+      name: eventName,
+      instanceId: this.$one.getInstanceId(),
+      args: {
+        ...args
+      }
+    };
+
+    // send event to PG (if connection available)
+    if (this.dbClient != null) {
+      this.dbClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+    }
+
+  }
   private async finishInitialisation() {
     this.dbClient = this.$one.getDbSetupClient();
     try {
+      // catch events from other nodes
+      this.dbClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));
 
-      this.dbClient.on('notification', (msg) => {
-        // if (msg.name === 'notification' && msg.channel === 'table_update') {
-
-        // console.error('*****', msg);
-        /*var pl = JSON.parse(msg.payload);
-				console.log("*========*");
-				Object.keys(pl).forEach(function (key) {
-					console.log(key, pl[key]);
-				});
-				console.log("-========-");
-			}*/
-      });
-      this.dbClient.query('LISTEN table_update');
-
-      const res2 = await this.dbClient.query('INSERT INTO users ("name") VALUES(\'123\')');
-      // console.error('*2', res2);
+      this.dbClient.query(`LISTEN ${this.namespace}`);
 
     } catch (err) {
-      // console.error(err);
+      throw err;
+    }
+  }
+
+  private receiveEventFromPg(msg) {
+    // from our namespace
+    if (msg.name === 'notification' && msg.channel === this.namespace) {
+      const event = JSON.parse(msg.payload);
+
+      // fire on this node if not from same node
+      if (event.instanceId !== this.$one.getInstanceId()) {
+
+        const params = [event.name, ...Object.values(event.args)];
+        this._emit.apply(this, params);
+      }
     }
   }
 
