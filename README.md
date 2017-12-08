@@ -2,7 +2,7 @@
 PostgreSQL, Node.js, GraphQL, TypeScript, API Framework
 
 
-*We gonna use Postgres for:*
+*We are going to use Postgres for:*
 * Authentication and Authorization
 * Relation oriented and document oriented data
 * Queues (SKIP LOCKED, e.g. PGBoss)

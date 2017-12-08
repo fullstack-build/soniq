@@ -33,7 +33,6 @@ try {
 }
 
 class FullstackOneCore {
-  private instanceId: string;
   private hasBooted: boolean;
   private ENVIRONMENT: IEnvironmentInformation;
   private eventEmitter: IEventEmitter;
@@ -46,8 +45,6 @@ class FullstackOneCore {
 
   constructor() {
     this.hasBooted = false;
-    // create unique instance ID (6 char)
-    this.instanceId = randomBytes(20).toString('hex').substr(5,6);
 
     // load project package.js
     const projectPath = path.dirname(require.main.filename);
@@ -60,6 +57,8 @@ class FullstackOneCore {
       path: projectPath,
       port: parseInt(process.env.PORT, 10),
       version: PROJECT_PACKAGE.version,
+      // create unique instance ID (6 char)
+      instanceId: randomBytes(20).toString('hex').substr(5,6)
     };
 
     // load config
@@ -81,7 +80,7 @@ class FullstackOneCore {
 
   // return instanceId
   public getInstanceId(): string {
-    return this.instanceId;
+    return this.ENVIRONMENT.instanceId;
   }
 
   // return EnvironmentInformation
@@ -194,7 +193,7 @@ class FullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.eventEmitter.emit('ready', this.instanceId);
+      this.eventEmitter.emit('ready', this.getInstanceId());
     } catch (err) {
       this.logger.error('An error occurred while booting', err);
       this.eventEmitter.emit('not-ready', err);
@@ -317,7 +316,7 @@ class FullstackOneCore {
     process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
     process.stdout.write('env: ' + this.ENVIRONMENT.env + '\n');
     process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
-    process.stdout.write('instance id: ' + this.instanceId + '\n');
+    process.stdout.write('instance id: ' + this.ENVIRONMENT.instanceId + '\n');
     process.stdout.write('____________________________________\n');
   }
 
