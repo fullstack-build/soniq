@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-one/db",
+  "name": "@fullstack-one/graphql",
   "version": "0.1.0",
   "description": "fullstack.one GraphQL package",
   "main": "index.ts",

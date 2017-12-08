@@ -62,11 +62,11 @@ class FullstackOneCore {
       version: PROJECT_PACKAGE.version,
     };
 
-    // create event emitter
-    this.eventEmitter = Events.getEventEmitter(this);
-
     // load config
     this.loadConfig();
+
+    // create event emitter
+    this.eventEmitter = Events.getEventEmitter(this);
 
     // init core logger
     this.logger = this.getLogger('core');
@@ -169,7 +169,6 @@ class FullstackOneCore {
       config = _.merge(config, require(envConfigPath));
     }
     this.CONFIG = config;
-    this.eventEmitter.emit('config.loaded', config);
   }
 
   // boot async and fire event when ready
@@ -327,9 +326,9 @@ class FullstackOneCore {
 // GETTER
 
 // FullstackOne SINGLETON
-const INSTANCE = new FullstackOneCore();
+const $one = new FullstackOneCore();
 export function getInstance(): FullstackOneCore {
-  return INSTANCE;
+  return $one;
 }
 
 // return finished booting promise
@@ -338,15 +337,15 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
 
     // already booted?
     if (this.hasBooted) {
-      $resolve(INSTANCE);
+      $resolve($one);
     } else {
 
       // catch ready event
-      INSTANCE.getEventEmitter().on(`f1.${INSTANCE.getInstanceId()}.ready`, () => {
-        $resolve(INSTANCE);
+      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.ready`, () => {
+        $resolve($one);
       });
       // catch not ready event
-      INSTANCE.getEventEmitter().on(`f1.${INSTANCE.getInstanceId()}.not-ready`, (err) => {
+      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.not-ready`, (err) => {
         $reject(err);
       });
     }
@@ -357,7 +356,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
 // helper to confert an event to a promise
 export function eventToPromise(pEventName: string): Promise<any> {
   return new Promise(($resolve, $reject) => {
-    INSTANCE.getEventEmitter().on(pEventName, (...args: any[]) => {
+    $one.getEventEmitter().on(pEventName, (...args: any[]) => {
       $resolve([... args]);
     });
 

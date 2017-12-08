@@ -1,20 +1,23 @@
 import { EventEmitter2 } from 'eventemitter2';
 
 export interface IEventEmitter {
-  on: (eventName: string, listener: (...args: any[]) => void) => void;
   emit: (eventName: string, ...args: any[]) =>  void;
-
+  on: (eventName: string, listener: (...args: any[]) => void) => void;
+  onAnyInstance: (eventName: string, listener: (...args: any[]) => void) => void;
 }
 
 class EventEmitter implements IEventEmitter {
 
   private eventEmitter: EventEmitter2;
   private $one;
+  private instanceId: string;
   private dbClient;
   private namespace: string = 'f1';
 
   constructor($one) {
     this.$one = $one;
+    this.instanceId = $one.getInstanceId();
+    this.namespace = this.$one.getConfig('eventEmitter').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',
@@ -24,25 +27,49 @@ class EventEmitter implements IEventEmitter {
     });
 
     // finish initialization after ready event
-    this.eventEmitter.on(`${this.namespace}.${this.$one.getInstanceId()}.ready`,() => this.finishInitialisation());
+    this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
   }
 
   public emit(eventName: string, ...args: any[]): void {
-    const eventNamespaceName = `${this.namespace}.${this.$one.getInstanceId()}.${eventName}`;
+    const eventNamespaceName = `${this.namespace}.${eventName}`;
 
     // emit on this noe
-    this._emit(eventNamespaceName, ...args);
+    this._emit(eventNamespaceName, this.instanceId, ...args);
+
     // synchronize to other nodes
-    this.sendEventToPg(eventNamespaceName, ...args);
+    this.sendEventToPg(eventNamespaceName, this.instanceId, ...args);
   }
 
   public on(eventName: string, listener: (...args: any[]) => void) {
-    this.eventEmitter.on(eventName, listener);
+    const eventNameForThisInstanceOnly = `${this.instanceId}.${eventName}`;
+
+    this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
+  }
+
+  public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
+    const eventNameForAnyInstance = `*.${eventName}`;
+
+    this.eventEmitter.on(eventNameForAnyInstance, listener);
   }
 
   /* private methods */
-  private _emit(eventName: string, ...args: any[]): void {
-    this.eventEmitter.emit(eventName, ...args);
+  private _emit(eventName: string, instanceId: string, ...args: any[]): void {
+    const eventNameWithInstanceId = `${instanceId}.${eventName}`;
+
+    this.eventEmitter.emit(eventNameWithInstanceId, instanceId, ...args);
+  }
+
+  private async finishInitialisation() {
+    this.dbClient = this.$one.getDbSetupClient();
+    try {
+      // catch events from other nodes
+      this.dbClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));
+
+      this.dbClient.query(`LISTEN ${this.namespace}`);
+
+    } catch (err) {
+      throw err;
+    }
   }
 
   private sendEventToPg(eventName: string, ...args: any[]) {
@@ -61,18 +88,6 @@ class EventEmitter implements IEventEmitter {
     }
 
   }
-  private async finishInitialisation() {
-    this.dbClient = this.$one.getDbSetupClient();
-    try {
-      // catch events from other nodes
-      this.dbClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));
-
-      this.dbClient.query(`LISTEN ${this.namespace}`);
-
-    } catch (err) {
-      throw err;
-    }
-  }
 
   private receiveEventFromPg(msg) {
     // from our namespace
@@ -82,7 +97,7 @@ class EventEmitter implements IEventEmitter {
       // fire on this node if not from same node
       if (event.instanceId !== this.$one.getInstanceId()) {
 
-        const params = [event.name, ...Object.values(event.args)];
+        const params = [event.name, event.instanceId, ...Object.values(event.args)];
         this._emit.apply(this, params);
       }
     }

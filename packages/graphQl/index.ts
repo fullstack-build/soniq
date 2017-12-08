@@ -28,7 +28,7 @@ export namespace graphQl {
   export const bootGraphQl = async ($one) => {
 
     const logger = $one.getLogger('bootGraphQl');
-    const graphQlConfig = $one.getConfig('fullstackOne').graphql;
+    const graphQlConfig = $one.getConfig('graphql');
 
     try {
 
@@ -47,7 +47,7 @@ export namespace graphQl {
       // emit event
       $one.getEventEmitter().emit('schema.parsed.to.dbObject');
       // tslint:disable-next-line:no-console
-      console.log(JSON.stringify(dbObject, null, 2));
+      // console.log(JSON.stringify(dbObject, null, 2));
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
@@ -95,7 +95,7 @@ export namespace graphQl {
   };
 
   const addEndpoints = ($one) => {
-    const graphQlConfig = $one.getConfig('fullstackOne').graphql;
+    const graphQlConfig = $one.getConfig('graphql');
 
     const gqlRouter = new KoaRouter();
 
