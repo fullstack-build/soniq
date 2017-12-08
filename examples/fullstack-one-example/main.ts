@@ -26,7 +26,7 @@ $one.getEventEmitter().on('f1.not-ready',(err) => {
 
 // catch events from other nodes
 $one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
-  console.log('* ready event on any instance', instanceId);
+  console.log('* ready event on any node', instanceId);
 });
 
 // go

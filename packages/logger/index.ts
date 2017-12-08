@@ -6,6 +6,9 @@ import { IEnvironmentInformation } from '../core/IEnvironmentInformation';
 import { ILogger } from './ILogger';
 import { ILogObject } from './ILogObject';
 
+// fullstack-one core
+import * as fullstackOne from '../core';
+
 export class Logger implements ILogger {
   private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
 
@@ -27,7 +30,7 @@ export class Logger implements ILogger {
 
   constructor($one: any, pModuleName: string = 'root') {
     this.moduleName = pModuleName;
-    this.instanceId = $one.getInstanceId();
+    this.instanceId = $one.getNodeId();
 
     const env = (this.envInfo = $one.getEnvironmentInformation());
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}/I:${this.instanceId}`;

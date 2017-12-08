@@ -3,9 +3,12 @@ import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
+// fullstack-one core
+import { helper } from '../core';
+
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
-export * from './migration';
+export * from '../migration/migration';
 
 import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/testResolver';
@@ -34,7 +37,7 @@ export namespace graphQl {
 
       // load schema
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
-      gQlSchema = await gQLHelper.helper.loadFilesByGlobPattern(gQlSchemaPattern);
+      gQlSchema = await helper.loadFilesByGlobPattern(gQlSchemaPattern);
       // emit event
       $one.getEventEmitter().emit('schema.load.success');
 
@@ -51,14 +54,14 @@ export namespace graphQl {
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
-      const permissionsArray = await gQLHelper.helper.requireFilesByGlobPattern(permissionsPattern);
+      const permissionsArray = await helper.requireFilesByGlobPattern(permissionsPattern);
       permissions = [].concat.apply([], permissionsArray);
       // emit event
       $one.getEventEmitter().emit('permissions.load.success');
 
       // load expressions
       const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
-      const expressionsArray = await gQLHelper.helper.requireFilesByGlobPattern(expressionsPattern);
+      const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
       expressions = [].concat.apply([], expressionsArray);
       // emit event
       $one.getEventEmitter().emit('expressions.load.success');

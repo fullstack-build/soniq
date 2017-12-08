@@ -4,5 +4,5 @@ export interface IEnvironmentInformation {
   path: string;
   port: number;
   version: string;
-  instanceId: string;
+  nodeId: string;
 }

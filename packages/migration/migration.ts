@@ -1,10 +1,10 @@
 // MTM through Arrays https://medium.com/@leshchuk/mtm-on-arrays-in-postgresql-a97f3c50b8c6
-
-import * as fastGlob from 'fast-glob';
 import { readFile } from 'fs';
 import { basename } from 'path';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile);
+
+import { helper } from '../core';
 
 import { IDatabaseObject } from '../core/IDatabaseObject';
 
@@ -16,10 +16,7 @@ export async function getMigrationsUp(
 
   // get latest migration before migrationDate
   try {
-    const files = await fastGlob.default(`${pMigrationsPath}/*.json`, {
-      deep: true,
-      onlyFiles: true,
-    });
+    const files = await helper.loadFilesByGlobPattern(`${pMigrationsPath}/*.json`);
 
     // check if files are available
     if (files.length === 0) {

@@ -7,6 +7,8 @@ import * as path from 'path';
 import { randomBytes } from 'crypto';
 
 // fullstackOne imports
+import { helper } from '../helper';
+export { helper } from '../helper';
 import { Events, IEventEmitter } from '../events';
 import { Db, Client, Pool } from '../db';
 import { Logger } from '../logger';
@@ -52,13 +54,13 @@ class FullstackOneCore {
 
     // ENV CONST
     this.ENVIRONMENT = {
-      env: process.env.NODE_ENV,
-      name: PROJECT_PACKAGE.name,
-      path: projectPath,
-      port: parseInt(process.env.PORT, 10),
+      env:     process.env.NODE_ENV,
+      name:    PROJECT_PACKAGE.name,
+      path:    projectPath,
+      port:    parseInt(process.env.PORT, 10),
       version: PROJECT_PACKAGE.version,
       // create unique instance ID (6 char)
-      instanceId: randomBytes(20).toString('hex').substr(5,6)
+      nodeId:  randomBytes(20).toString('hex').substr(5,6)
     };
 
     // load config
@@ -78,9 +80,9 @@ class FullstackOneCore {
    * PUBLIC METHODS
    */
 
-  // return instanceId
-  public getInstanceId(): string {
-    return this.ENVIRONMENT.instanceId;
+  // return nodeId
+  public getNodeId(): string {
+    return this.ENVIRONMENT.nodeId;
   }
 
   // return EnvironmentInformation
@@ -193,7 +195,7 @@ class FullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.eventEmitter.emit('ready', this.getInstanceId());
+      this.eventEmitter.emit('ready', this.getNodeId());
     } catch (err) {
       this.logger.error('An error occurred while booting', err);
       this.eventEmitter.emit('not-ready', err);
@@ -316,7 +318,7 @@ class FullstackOneCore {
     process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
     process.stdout.write('env: ' + this.ENVIRONMENT.env + '\n');
     process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
-    process.stdout.write('instance id: ' + this.ENVIRONMENT.instanceId + '\n');
+    process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
     process.stdout.write('____________________________________\n');
   }
 

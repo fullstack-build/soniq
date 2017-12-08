@@ -16,7 +16,7 @@ class EventEmitter implements IEventEmitter {
 
   constructor($one) {
     this.$one = $one;
-    this.instanceId = $one.getInstanceId();
+    this.instanceId = $one.getNodeId();
     this.namespace = this.$one.getConfig('eventEmitter').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
@@ -76,7 +76,7 @@ class EventEmitter implements IEventEmitter {
 
     const event = {
       name: eventName,
-      instanceId: this.$one.getInstanceId(),
+      instanceId: this.$one.getNodeId(),
       args: {
         ...args
       }
@@ -95,7 +95,7 @@ class EventEmitter implements IEventEmitter {
       const event = JSON.parse(msg.payload);
 
       // fire on this node if not from same node
-      if (event.instanceId !== this.$one.getInstanceId()) {
+      if (event.instanceId !== this.$one.getNodeId()) {
 
         const params = [event.name, event.instanceId, ...Object.values(event.args)];
         this._emit.apply(this, params);
