@@ -7,12 +7,12 @@ import * as KoaRouter from 'koa-router';
 import { graphQl as gQLHelper } from './helper';
 export * from './migration';
 
-import { runtimeParser } from './runtimeParser';
+import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/testResolver';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';
-import { log } from 'util';
+import { parseGraphQlJsonSchemaToDbObject } from './graphQlSchemaToDbObject';
 
 export namespace graphQl {
 
@@ -27,7 +27,7 @@ export namespace graphQl {
 
   export const bootGraphQl = async ($one) => {
 
-    const logger = $one.getLogger('grabootGraphQlphQL');
+    const logger = $one.getLogger('bootGraphQl');
     const graphQlConfig = $one.getConfig('fullstackOne').graphql;
 
     try {
@@ -43,7 +43,7 @@ export namespace graphQl {
       // emit event
       $one.getEventEmitter().emit('schema.parsed');
 
-      dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
+      dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
       $one.getEventEmitter().emit('schema.parsed.to.dbObject');
       // tslint:disable-next-line:no-console

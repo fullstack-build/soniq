@@ -6,7 +6,6 @@ const writeFileAsync = promisify(writeFile);
 import { parse, print } from 'graphql';
 
 import { IDatabaseObject } from '../core/IDatabaseObject';
-import { parseGraphQlJsonNode } from './bootParser';
 
 export namespace graphQl.helper {
 
@@ -62,16 +61,6 @@ export namespace graphQl.helper {
     } catch (err) {
       throw err;
     }
-  };
-
-  export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDatabaseObject => {
-    const databaseObject: IDatabaseObject = {
-      tables: {},
-      relations: {},
-    };
-    parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
-    // return copy instead of ref
-    return { ...databaseObject };
   };
 
   export const writeTableObjectIntoMigrationsFolder = async (

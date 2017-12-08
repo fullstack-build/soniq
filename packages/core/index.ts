@@ -46,8 +46,8 @@ class FullstackOneCore {
 
   constructor() {
     this.hasBooted = false;
-    // create unique instance ID (4 char)
-    this.instanceId = randomBytes(20).toString('hex').substr(5,4);
+    // create unique instance ID (6 char)
+    this.instanceId = randomBytes(20).toString('hex').substr(5,6);
 
     // load project package.js
     const projectPath = path.dirname(require.main.filename);
