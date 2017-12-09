@@ -16,6 +16,7 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "fast-glob": "^1.0.1",
-    "koa": "^2.4.1"
+    "koa": "^2.4.1",
+    "nodejs-dashboard": "^0.4.3"
   }
 }

@@ -6,8 +6,7 @@ const readFileAsync = promisify(readFile);
 
 import { helper } from '../core';
 
-import { IDatabaseObject } from '../core/IDatabaseObject';
-
+/*
 export async function getMigrationsUp(
   pMigrationsPath: string,
   pMigrationDate?: number,
@@ -35,81 +34,8 @@ export async function getMigrationsUp(
     );
 
     const databaseObject = require(relevantMigartionFilePath);
-    return createSqlFromTableObjects(databaseObject);
+    return createSqlFromDbObject(databaseObject);
   } catch (err) {
     throw err;
   }
-}
-
-export function createSqlFromTableObjects(
-  databaseObject: IDatabaseObject,
-): string[] {
-  const sqlCommands: string[] = [];
-
-  // iterate over database tables
-  Object.values(databaseObject.tables).map((tableObject) => {
-    // only parse those with isDbModel = true
-    if (!!tableObject.isDbModel) {
-      createSqlFromTableObject(sqlCommands, tableObject);
-    }
-  });
-
-  // iterate over database relations
-  Object.values(databaseObject.relations).map((relation) => {
-    // check if relation exists
-    // console.error(relation);
-    // only parse those with isDbModel = true
-    /*if (!!tableObject.isDbModel) {
-      createSqlFromTableObject(sqlCommands, tableObject);
-    }*/
-  });
-
-  return sqlCommands;
-}
-
-function createSqlFromTableObject(sqlCommands, pTableObject) {
-  // create table statement
-  sqlCommands.push(
-    `CREATE TABLE "${pTableObject.schemaName}.${pTableObject.name}"();`,
-  );
-
-  // create column statements
-  for (const field of pTableObject.fields) {
-    if (field.type === 'computed') {
-      // ignore computed
-    } else if (field.type === 'relation') {
-      // ignore relations
-    } else {
-      const fieldStatementArray = [];
-      fieldStatementArray.push(
-        `ALTER TABLE "${pTableObject.schemaName}.${pTableObject.name}" ADD COLUMN "${field.name}"`,
-      );
-
-      // add type
-      fieldStatementArray.push(field.type);
-
-      // constraints
-
-      // primary key
-      if (!!field.constraints.isPrimaryKey) {
-        fieldStatementArray.push('PRIMARY KEY');
-      }
-
-      // unique
-      if (!!field.constraints.unique) {
-        fieldStatementArray.push('UNIQUE');
-      }
-
-      // not null
-      if (!!field.constraints.nullable) {
-        fieldStatementArray.push('NOT NULL');
-      }
-
-      // add end of statement
-      fieldStatementArray.push(';');
-
-      const fieldStatementStr = fieldStatementArray.join(' ');
-      sqlCommands.push(fieldStatementStr);
-    }
-  }
-}
+}*/

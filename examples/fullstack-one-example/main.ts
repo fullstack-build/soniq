@@ -32,6 +32,8 @@ $one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
 // go
 $one.getEventEmitter().on('f1.ready', async (instanceId) => {
 
-  console.error($one.getDbObject());
+  console.log($one.getDbObject());
+  console.log('------------------');
+  $one.runMigration();
 
 });

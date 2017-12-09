@@ -13,11 +13,13 @@ import { Events, IEventEmitter } from '../events';
 import { Db, Client, Pool } from '../db';
 import { Logger } from '../logger';
 import { graphQl } from '../graphQl/index';
+import { migration } from '../migration/index';
 
 // fullstackOne interfaces
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
 import { IDatabaseObject } from './IDatabaseObject';
+export { IEnvironmentInformation, IDatabaseObject };
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -144,6 +146,10 @@ class FullstackOneCore {
     return this.dbPool;
   }
 
+  public runMigration() {
+    migration.createMigration();
+  }
+
   /**
    * PRIVATE METHODS
    */
@@ -224,51 +230,6 @@ class FullstackOneCore {
     }
 
   }
-
-/*
-  private async loadSchema() {
-    try {
-      const pattern = this.ENVIRONMENT.path + '/schema/*.gql';
-      const graphQlTypes = await graphQlHelper.loadFilesByGlobPattern(pattern);
-      this.gQlSchema = graphQlTypes.join('\n');
-      // emit event
-      this.emit('schema.load.success');
-
-      this.gQlJsonSchema = graphQlHelper.parseGraphQlSchema(this.gQlSchema);
-      // emit event
-      this.emit('schema.parsed');
-
-      const tableObjects = graphQlHelper.parseGraphQlJsonSchemaToDbObject(this.gQlJsonSchema);
-      // emit event
-      this.emit('schema.dbObject.parsed');
-
-      const optionalMigrationId = 123;
-
-      // write parsed schema into migrations folder
-      await graphQlHelper.writeTableObjectIntoMigrationsFolder(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        tableObjects,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.saved');
-
-      const sqlStatements = await getMigrationsUp(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.up.executed');
-
-      // display result sql in terminal
-      this.logger.debug(sqlStatements.join('\n'));
-    } catch (err) {
-      this.logger.warn('loadFilesByGlobPattern error', err);
-      // emit event
-      this.emit('schema.load.error');
-    }
-  }
-*/
 
   // execute all boot scripts in the boot folder
   private async executeBootScripts() {
