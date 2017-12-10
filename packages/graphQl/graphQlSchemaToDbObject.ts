@@ -1,11 +1,23 @@
 import * as _ from 'lodash';
 
+import { IDatabaseObject } from '../core/IDatabaseObject';
+
+export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDatabaseObject => {
+  const databaseObject: IDatabaseObject = {
+    tables: {},
+    relations: {},
+  };
+  parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
+  // return copy instead of ref
+  return { ...databaseObject };
+};
+
 // refDbObjectCurrentTable:
 //  - ref to current parent table obj will be passed through all iterations after table was added
 // refDbObjectCurrentTableField:
 // - ref to current parent table field obj will be passed through all iterations
 //   after table field was added
-export function parseGraphQlJsonNode(
+function parseGraphQlJsonNode(
   gQlSchemaNode,
   dbObjectNode,
   dbObject?,

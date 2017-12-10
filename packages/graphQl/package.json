@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/db",
+  "name": "@fullstack-one/graphql",
   "version": "0.1.0",
-  "description": "fullstack.one GraphQL Helper",
+  "description": "fullstack.one GraphQL package",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,10 +11,9 @@
   "license": "MIT",
   "dependencies": {
     "apollo-server-koa": "^1.2.0",
-    "fast-glob": "^1.0.1",
     "graphql": "^0.11.7",
     "graphql-parse-resolve-info": "0.1.0-alpha.18",
-    "graphql-tools": "^2.9.0",
+    "graphql-tools": "^2.12.0",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.3.0"
   },

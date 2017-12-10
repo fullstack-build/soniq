@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/db",
+  "name": "@fullstack-one/helper",
   "version": "0.1.0",
-  "description": "fullstack.one db connector package",
+  "description": "fullstack.one helper package",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,9 +10,6 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "pg": "^7.4.0"
-  },
-  "devDependencies": {
-    "@types/pg": "^7.1.5"
+    "fast-glob": "^1.0.1"
   }
 }

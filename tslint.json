@@ -48,11 +48,10 @@
       }
 
     ],
-    "no-shadowed-variable": false
-
+    "strict-boolean-expressions": false
   },
   "rulesDirectory": [],
   "linterOptions": {
-    "exclude": ["**/node_modules/**", "*.d.ts", "packages/**/node_modules", "**/packages/**/node_modules/**/*"]
+    "exclude": ["**/node_modules/**", "**/examples/**"]
   }
 }

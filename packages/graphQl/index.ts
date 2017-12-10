@@ -3,16 +3,19 @@ import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
+// fullstack-one core
+import { helper } from '../core';
+
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
-export * from './migration';
+export * from '../migration/migration';
 
-import { runtimeParser } from './runtimeParser';
+import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/testResolver';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';
-import { log } from 'util';
+import { parseGraphQlJsonSchemaToDbObject } from './graphQlSchemaToDbObject';
 
 export namespace graphQl {
 
@@ -29,39 +32,41 @@ export namespace graphQl {
 
   export const bootGraphQl = async ($one) => {
 
-    const logger = $one.getLogger('grabootGraphQlphQL');
-    const graphQlConfig = $one.getConfig('fullstackOne').graphql;
+    const logger = $one.getLogger('bootGraphQl');
+    const graphQlConfig = $one.getConfig('graphql');
 
     try {
 
       // load schema
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
-      gQlSchema = await gQLHelper.helper.loadFilesByGlobPattern(gQlSchemaPattern);
+      gQlSchema = await helper.loadFilesByGlobPattern(gQlSchemaPattern);
       // emit event
-      $one.emit('schema.load.success');
+      $one.getEventEmitter().emit('graphQl.schema.load.success');
 
       const gQlSchemaCombined = gQlSchema.join('\n');
       gQlJsonSchema = gQLHelper.helper.parseGraphQlSchema(gQlSchemaCombined);
       // emit event
-      $one.emit('schema.parsed');
+      $one.getEventEmitter().emit('graphQl.schema.parsed');
 
-      dbObject = gQLHelper.helper.parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
+      dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
-      $one.emit('schema.parsed.to.dbObject');
+      $one.getEventEmitter().emit('graphQl.schema.parsed.to.dbObject');
+      // tslint:disable-next-line:no-console
+      // console.log(JSON.stringify(dbObject, null, 2));
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
-      const permissionsArray = await gQLHelper.helper.requireFilesByGlobPattern(permissionsPattern);
+      const permissionsArray = await helper.requireFilesByGlobPattern(permissionsPattern);
       permissions = [].concat.apply([], permissionsArray);
       // emit event
-      $one.emit('permissions.load.success');
+      $one.getEventEmitter().emit('graphQl.permissions.load.success');
 
       // load expressions
       const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
-      const expressionsArray = await gQLHelper.helper.requireFilesByGlobPattern(expressionsPattern);
+      const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
       expressions = [].concat.apply([], expressionsArray);
       // emit event
-      $one.emit('expressions.load.success');
+      $one.getEventEmitter().emit('graphQl.expressions.load.success');
 
       const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions);
 
@@ -77,11 +82,9 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
-      // tslint:disable-next-line:no-console
-      console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
-      $one.emit('bootGraphQl.error', err);
+      $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);
     }
 
   };
@@ -97,7 +100,7 @@ export namespace graphQl {
   };
 
   const addEndpoints = ($one) => {
-    const graphQlConfig = $one.getConfig('fullstackOne').graphql;
+    const graphQlConfig = $one.getConfig('graphql');
 
     const gqlRouter = new KoaRouter();
 

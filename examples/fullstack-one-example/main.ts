@@ -1,11 +1,11 @@
 import * as FullstackOne from '../../';
 const $one = FullstackOne.getInstance();
 
-$one.getEventEmitter().on('fullstack-one.ready',() => {
+$one.getEventEmitter().on('f1.ready',() => {
   console.log('EVENT: ready');
 });
 
-$one.getEventEmitter().on('fullstack-one.not-ready',(err) => {
+$one.getEventEmitter().on('f1.not-ready',(err) => {
   console.error('Error-EVENT: not-ready', err);
 });
 
@@ -18,8 +18,22 @@ $one.getEventEmitter().on('fullstack-one.not-ready',(err) => {
   }
 })();
 
-// catch anotehr system event as a promise
+// catch another system event as a promise
 (async () => {
-  const payloadArray = await FullstackOne.eventToPromise('fullstack-one.dbObject.set');
-  console.log('!!! PROMISED event caught fullstack-one.dbObject.set');
+  const payloadArray = await FullstackOne.eventToPromise('f1.dbObject.set');
+  console.log('!!! PROMISED event caught fullstack-one.*.dbObject.set');
 })();
+
+// catch events from other nodes
+$one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
+  console.log('* ready event on any node', instanceId);
+});
+
+// go
+$one.getEventEmitter().on('f1.ready', async (instanceId) => {
+
+  console.log($one.getDbObject());
+  console.log('------------------');
+  $one.runMigration();
+
+});

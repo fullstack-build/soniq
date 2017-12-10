@@ -1,7 +1,7 @@
 {
   "name": "@fullstack-one/logger",
   "version": "0.1.0",
-  "description": "fullstack.one logger class",
+  "description": "fullstack.one logger package",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

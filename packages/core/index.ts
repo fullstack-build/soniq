@@ -4,17 +4,22 @@ import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as _ from 'lodash';
 import * as path from 'path';
-import { EventEmitter2 } from 'eventemitter2';
+import { randomBytes } from 'crypto';
 
 // fullstackOne imports
+import { helper } from '../helper';
+export { helper } from '../helper';
+import { Events, IEventEmitter } from '../events';
 import { Db, Client, Pool } from '../db';
 import { Logger } from '../logger';
 import { graphQl } from '../graphQl/index';
+import { migration } from '../migration/index';
 
 // fullstackOne interfaces
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
 import { IDatabaseObject } from './IDatabaseObject';
+export { IEnvironmentInformation, IDatabaseObject };
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -34,10 +39,10 @@ try {
 class FullstackOneCore {
   private hasBooted: boolean;
   private ENVIRONMENT: IEnvironmentInformation;
+  private eventEmitter: IEventEmitter;
   private CONFIG: IConfig;
   private logger: Logger;
-  private eventEmitter: EventEmitter2;
-  private dbSetupConnection: Client;
+  private dbSetupClient: Client;
   private dbPool: Pool;
   private APP: Koa;
   private dbObject: IDatabaseObject;
@@ -51,24 +56,20 @@ class FullstackOneCore {
 
     // ENV CONST
     this.ENVIRONMENT = {
-      env: process.env.NODE_ENV,
-      name: PROJECT_PACKAGE.name,
-      path: projectPath,
-      port: parseInt(process.env.PORT, 10),
+      env:     process.env.NODE_ENV,
+      name:    PROJECT_PACKAGE.name,
+      path:    projectPath,
+      port:    parseInt(process.env.PORT, 10),
       version: PROJECT_PACKAGE.version,
+      // create unique instance ID (6 char)
+      nodeId:  randomBytes(20).toString('hex').substr(5,6)
     };
-
-    // create event emitter
-    this.eventEmitter = new EventEmitter2({
-      wildcard: true,
-      delimiter: '.',
-      newListener: false,
-      maxListeners: 100,
-      verboseMemoryLeak: true,
-    });
 
     // load config
     this.loadConfig();
+
+    // create event emitter
+    this.eventEmitter = Events.getEventEmitter(this);
 
     // init core logger
     this.logger = this.getLogger('core');
@@ -80,6 +81,11 @@ class FullstackOneCore {
   /**
    * PUBLIC METHODS
    */
+
+  // return nodeId
+  public getNodeId(): string {
+    return this.ENVIRONMENT.nodeId;
+  }
 
   // return EnvironmentInformation
   public getEnvironmentInformation(): IEnvironmentInformation {
@@ -104,13 +110,13 @@ class FullstackOneCore {
     return new Logger(this, pModuleName);
   }
 
-  // return eventEmitter
+  // return koa app
   public getApp(): Koa {
     return this.APP;
   }
 
-  // return APP
-  public getEventEmitter(): EventEmitter2 {
+  // return EventEmitter
+  public getEventEmitter(): IEventEmitter  {
     return this.eventEmitter;
   }
 
@@ -131,8 +137,8 @@ class FullstackOneCore {
   }
 
   // return DB setup connection
-  public getDbSetupConnection() {
-    return this.dbSetupConnection;
+  public getDbSetupClient() {
+    return this.dbSetupClient;
   }
 
   // return DB pool
@@ -140,13 +146,13 @@ class FullstackOneCore {
     return this.dbPool;
   }
 
+  public runMigration() {
+    migration.createMigration();
+  }
+
   /**
    * PRIVATE METHODS
    */
-
-  public emit = (eventName: string, ...args: any[]): void => {
-    this.eventEmitter.emit(`fullstack-one.${eventName}`, ...args);
-  }
 
   // load config based on ENV
   private loadConfig(): void {
@@ -170,7 +176,6 @@ class FullstackOneCore {
       config = _.merge(config, require(envConfigPath));
     }
     this.CONFIG = config;
-    this.emit('config.loaded', config);
   }
 
   // boot async and fire event when ready
@@ -186,7 +191,7 @@ class FullstackOneCore {
 
       // boot GraphQL and add endpoints
       this.dbObject = await graphQl.bootGraphQl(this);
-      this.emit('dbObject.set');
+      this.eventEmitter.emit('dbObject.set');
 
       // execute book scripts
       await this.executeBootScripts();
@@ -196,10 +201,10 @@ class FullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.emit('ready', this);
+      this.eventEmitter.emit('ready', this.getNodeId());
     } catch (err) {
       this.logger.error('An error occurred while booting', err);
-      this.emit('not-ready', err);
+      this.eventEmitter.emit('not-ready', err);
     }
 
   }
@@ -211,65 +216,20 @@ class FullstackOneCore {
     try {
       // create connection with setup user
       const dbSetup = new Db(this, configDB.setup);
-      this.dbSetupConnection = await dbSetup.getClient();
+      this.dbSetupClient = await dbSetup.getClient();
       // emit event
-      this.emit('db.setup.connection.created');
+      this.eventEmitter.emit('db.setup.connection.created');
 
       // create general conncetion pool
       const db = new Db(this, configDB.general);
       this.dbPool = await db.getPool();
       // emit event
-      this.emit('db.pool.created');
+      this.eventEmitter.emit('db.pool.created');
     } catch (err) {
       throw err;
     }
 
   }
-
-/*
-  private async loadSchema() {
-    try {
-      const pattern = this.ENVIRONMENT.path + '/schema/*.gql';
-      const graphQlTypes = await graphQlHelper.loadFilesByGlobPattern(pattern);
-      this.gQlSchema = graphQlTypes.join('\n');
-      // emit event
-      this.emit('schema.load.success');
-
-      this.gQlJsonSchema = graphQlHelper.parseGraphQlSchema(this.gQlSchema);
-      // emit event
-      this.emit('schema.parsed');
-
-      const tableObjects = graphQlHelper.parseGraphQlJsonSchemaToDbObject(this.gQlJsonSchema);
-      // emit event
-      this.emit('schema.dbObject.parsed');
-
-      const optionalMigrationId = 123;
-
-      // write parsed schema into migrations folder
-      await graphQlHelper.writeTableObjectIntoMigrationsFolder(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        tableObjects,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.saved');
-
-      const sqlStatements = await getMigrationsUp(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.up.executed');
-
-      // display result sql in terminal
-      this.logger.debug(sqlStatements.join('\n'));
-    } catch (err) {
-      this.logger.warn('loadFilesByGlobPattern error', err);
-      // emit event
-      this.emit('schema.load.error');
-    }
-  }
-*/
 
   // execute all boot scripts in the boot folder
   private async executeBootScripts() {
@@ -302,7 +262,7 @@ class FullstackOneCore {
     // start KOA on PORT
     this.APP.listen(this.ENVIRONMENT.port);
     // emit event
-    this.emit('server.up', this.ENVIRONMENT.port);
+    this.eventEmitter.emit('server.up', this.ENVIRONMENT.port);
     // success log
     this.logger.info('Server listening on port', this.ENVIRONMENT.port);
   }
@@ -319,6 +279,7 @@ class FullstackOneCore {
     process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
     process.stdout.write('env: ' + this.ENVIRONMENT.env + '\n');
     process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
+    process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
     process.stdout.write('____________________________________\n');
   }
 
@@ -327,9 +288,9 @@ class FullstackOneCore {
 // GETTER
 
 // FullstackOne SINGLETON
-const INSTANCE = new FullstackOneCore();
+const $one = new FullstackOneCore();
 export function getInstance(): FullstackOneCore {
-  return INSTANCE;
+  return $one;
 }
 
 // return finished booting promise
@@ -338,15 +299,15 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
 
     // already booted?
     if (this.hasBooted) {
-      $resolve(INSTANCE);
+      $resolve($one);
     } else {
 
       // catch ready event
-      INSTANCE.getEventEmitter().on('fullstack-one.ready', () => {
-        $resolve(INSTANCE);
+      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.ready`, () => {
+        $resolve($one);
       });
       // catch not ready event
-      INSTANCE.getEventEmitter().on('fullstack-one.not-ready', (err) => {
+      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.not-ready`, (err) => {
         $reject(err);
       });
     }
@@ -357,7 +318,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
 // helper to confert an event to a promise
 export function eventToPromise(pEventName: string): Promise<any> {
   return new Promise(($resolve, $reject) => {
-    INSTANCE.getEventEmitter().on(pEventName, (...args: any[]) => {
+    $one.getEventEmitter().on(pEventName, (...args: any[]) => {
       $resolve([... args]);
     });
 

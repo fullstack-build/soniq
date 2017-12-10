@@ -33,7 +33,6 @@ export class Db {
         // create connection
         await this.client.connect();
         this.logger.info('Postgres connection created');
-
       } catch (err) {
         throw err;
       }

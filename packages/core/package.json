@@ -1,7 +1,7 @@
 {
   "name": "@fullstack-one/core",
   "version": "0.1.0",
-  "description": "fullstack.one main server class",
+  "description": "fullstack.one main server package",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "dotenv": "^4.0.0",
-    "eventemitter2": "^4.1.2",
     "fast-glob": "^1.0.1",
-    "koa": "^2.4.1"
+    "koa": "^2.4.1",
+    "nodejs-dashboard": "^0.4.3"
   }
 }

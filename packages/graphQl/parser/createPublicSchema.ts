@@ -84,7 +84,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     if (permission.type === 'READ') {
       gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
     } else {
-      // tableView.kind = 'GraphQLInputObjectType';
+      tableView.kind = 'GraphQLInputObjectType';
     }
 
     // filter required views
@@ -93,7 +93,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       const isIncluded = permission.fields.indexOf(fieldName) >= 0;
 
-      if (isIncluded === true && gQlTypes[tableName].fieldNames.indexOf(fieldName) < 0) {
+      if (isIncluded && gQlTypes[tableName].fieldNames.indexOf(fieldName) < 0) {
         gQlTypes[tableName].fieldNames.push(fieldName);
       }
 
@@ -199,7 +199,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       }
 
       // add all normal fields (if not already added)
-      if (fieldAlreadyAddedAsSpecialType !== true) {
+      if (!fieldAlreadyAddedAsSpecialType) {
         view.fields.push({
           name: fieldName,
           expression: fieldName

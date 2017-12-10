@@ -8,7 +8,7 @@
   "main": "packages/server/main",
   "scripts": {
     "start": "echo \"Error: no start specified\" && exit 1",
-    "tslint": "tslint './packages/**/*.ts?(x)' --fix",
+    "tslint": "tslint --project '.' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
   "repository": {
@@ -42,12 +42,13 @@
   },
   "dependencies": {
     "dotenv-safe": "^4.0.4",
+    "eventemitter2": "^5.0.0",
+    "fast-glob": "^1.0.1",
     "graphql": "^0.11.7",
     "is-https": "^1.0.0",
     "lodash": "^4.17.4",
     "ts-node": "^3.3.0",
     "tslint-config-airbnb-base": "^0.1.0",
-    "tslint-eslint-rules": "^4.1.1",
     "tsutils": "^2.12.2",
     "typescript": "^2.6.1"
   }
