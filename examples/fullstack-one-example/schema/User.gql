@@ -3,14 +3,15 @@ type User @table {
   email: String @isUnique
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: UserPayload
+# payload: UserPayload
+  payload: PrivateUserPayload
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "bla")
   testDefault: String @type(name: "Date") @default(expression: "now()")
 }
 
-union UserPayload = PrivateUserPayload | BusinessUserPayload
+#union UserPayload = PrivateUserPayload | BusinessUserPayload
 
 type PrivateUserPayload {
   birthday: String
