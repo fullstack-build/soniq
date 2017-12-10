@@ -24,7 +24,7 @@ export = [
     }],
   }, {
     type: 'UPDATE',
-    name: 'UpdateMe',
+    name: 'Me',
     table: 'User',
     fields: [
       'id', 'username', 'email',

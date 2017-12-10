@@ -22,7 +22,7 @@ export = [
     }],
   },
   {
-    name: 'OwnerCreate',
+    name: 'Owner',
     type: 'CREATE',
     table: 'Post',
     fields: [
@@ -33,7 +33,7 @@ export = [
     }],
   },
   {
-    name: 'OwnerUpdate',
+    name: 'Owner',
     type: 'UPDATE',
     table: 'Post',
     fields: [
@@ -44,7 +44,7 @@ export = [
     }],
   },
   {
-    name: 'OwnerDelete',
+    name: 'Owner',
     type: 'DELETE',
     table: 'Post',
     fields: [
@@ -55,7 +55,7 @@ export = [
     }],
   },
   {
-    name: 'AdminDelete',
+    name: 'Admin',
     type: 'DELETE',
     table: 'Post',
     fields: [

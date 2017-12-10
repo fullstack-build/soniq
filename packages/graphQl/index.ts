@@ -82,6 +82,7 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
+      // console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
       $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);

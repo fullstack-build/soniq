@@ -46,7 +46,10 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     const table = tables[tableName];
     // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
-    const viewName = permission.table + '_' + permission.name;
+    let viewName = permission.table + '_' + permission.name;
+    if (permission.type === 'CREATE' || permission.type === 'UPDATE' || permission.type === 'DELETE') {
+      viewName = permission.type.toLocaleLowerCase() + '_' + viewName;
+    }
     tableView.name.value = viewName;
 
     const view: any = {
@@ -121,7 +124,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       graphQlDocument.definitions.push(tableView);
 
       mutations.push({
-        name: permission.type.toLowerCase() + '_' + viewName.toString().toLowerCase() + 's',
+        name: viewName.toString(),
         type: permission.type,
         inputType: viewName,
         returnType: tableName,
