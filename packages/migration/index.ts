@@ -1,4 +1,5 @@
 import * as FullstackOne from '../core';
+import createViewsFromDbObject from './createViewsFromDbObject';
 
 export namespace migration {
 
@@ -15,6 +16,10 @@ export namespace migration {
       // emit event
       this.emit('schema.dbObject.migration.saved');*/
 
+      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo');
+      // tslint:disable-next-line:no-console
+      console.log('view sql statements: \n', viewSqlStatements);
+
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
       console.log('sql statements: \n', sqlStatements);
@@ -24,6 +29,9 @@ export namespace migration {
       // display result sql in terminal
       // this.logger.debug(sqlStatements.join('\n'));
     } catch (err) {
+
+      // tslint:disable-next-line:no-console
+      console.log('err', err);
       // this.logger.warn('loadFilesByGlobPattern error', err);
       // emit event
       // this.emit('schema.load.error');

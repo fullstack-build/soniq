@@ -6,6 +6,7 @@ export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject =
   const databaseObject: IDbObject = {
     tables: {},
     relations: {},
+    views: []
   };
   parseGraphQlJsonNode(graphQlJsonSchema, databaseObject);
   // return copy instead of ref

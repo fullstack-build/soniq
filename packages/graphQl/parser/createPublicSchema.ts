@@ -195,7 +195,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         if (getRelationType(field) === 'ONE') {
           view.fields.push({
             name: fieldName,
-            expression: relationFieldName
+            expression: `"${relationFieldName}"`
           });
 
           // Add relation-field-name to GQL Input for mutating it
@@ -210,7 +210,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       if (!fieldAlreadyAddedAsSpecialType) {
         view.fields.push({
           name: fieldName,
-          expression: fieldName
+          expression: `"${fieldName}"`
         });
         gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }

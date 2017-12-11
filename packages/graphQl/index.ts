@@ -74,6 +74,8 @@ export namespace graphQl {
       queries = combinedSchemaInformation.queries;
       mutations = combinedSchemaInformation.mutations;
 
+      dbObject.views = combinedSchemaInformation.views;
+
       // add endpoints
       addEndpoints($one);
 

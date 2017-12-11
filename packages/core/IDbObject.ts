@@ -25,6 +25,7 @@ export interface IDbObject {
   relations: {
     [name: string]: IMaxTwoRelations;
   };
+  views: any;
 }
 
 interface IMaxTwoRelations {
