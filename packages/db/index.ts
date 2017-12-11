@@ -24,7 +24,7 @@ export class Db {
     }*/
   }
 
-  public async getClient() {
+  public async getClient(): Promise<Client> {
     // create connection if not yet available
     if (this.client == null) {
       try {
@@ -41,7 +41,15 @@ export class Db {
     return this.client;
   }
 
-  public async getPool() {
+  public async endClient(): Promise<void> {
+    if (this.client != null) {
+      return await this.client.end();
+    } else {
+      return;
+    }
+  }
+
+  public async getPool(): Promise<Pool> {
     // create pool if not yet available
     if (this.pool == null) {
       try {
@@ -61,5 +69,13 @@ export class Db {
     }
 
     return this.pool;
+  }
+
+  public async endPool(): Promise<void> {
+    if (this.pool != null) {
+      return await this.pool.end();
+    } else {
+      return;
+    }
   }
 }

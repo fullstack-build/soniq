@@ -1,6 +1,8 @@
 import * as dotenv from 'dotenv-safe';
+import * as terminus from '@godaddy/terminus';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
+import * as http from 'http';
 import * as Koa from 'koa';
 import * as _ from 'lodash';
 import * as path from 'path';
@@ -42,12 +44,14 @@ class FullstackOneCore {
   private eventEmitter: IEventEmitter;
   private CONFIG: IConfig;
   private logger: Logger;
-  private dbSetupClient: Client;
-  private dbPool: Pool;
+  private dbSetupObj: Db;
+  private dbPoolObj: Db;
+  private server: http.Server;
   private APP: Koa;
   private dbObject: IDatabaseObject;
 
   constructor() {
+
     this.hasBooted = false;
 
     // load project package.js
@@ -81,6 +85,10 @@ class FullstackOneCore {
   /**
    * PUBLIC METHODS
    */
+  // return whether server is ready
+  public isReady() {
+    return this.hasBooted;
+  }
 
   // return nodeId
   public getNodeId(): string {
@@ -137,13 +145,13 @@ class FullstackOneCore {
   }
 
   // return DB setup connection
-  public getDbSetupClient() {
-    return this.dbSetupClient;
+  public async getDbSetupClient(): Promise<Client> {
+    return await this.dbSetupObj.getClient();
   }
 
   // return DB pool
-  public getDbPool() {
-    return this.dbPool;
+  public async getDbPool(): Promise<Pool> {
+    return await this.dbPoolObj.getPool();
   }
 
   public runMigration() {
@@ -215,16 +223,34 @@ class FullstackOneCore {
 
     try {
       // create connection with setup user
-      const dbSetup = new Db(this, configDB.setup);
-      this.dbSetupClient = await dbSetup.getClient();
+      this.dbSetupObj = new Db(this, configDB.setup);
       // emit event
       this.eventEmitter.emit('db.setup.connection.created');
 
-      // create general conncetion pool
-      const db = new Db(this, configDB.general);
-      this.dbPool = await db.getPool();
+      // create general connection pool
+      this.dbPoolObj = new Db(this, configDB.general);
       // emit event
       this.eventEmitter.emit('db.pool.created');
+    } catch (err) {
+      throw err;
+    }
+
+  }
+
+  private async disconnectDB() {
+
+    try {
+      // end setup client
+      await this.dbSetupObj.endClient();
+      // emit event
+      this.eventEmitter.emit('db.setup.connection.ended');
+
+      // end pool
+      await this.dbPoolObj.endPool();
+      // emit event
+      this.eventEmitter.emit('db.pool.ended');
+      return true;
+
     } catch (err) {
       throw err;
     }
@@ -260,11 +286,50 @@ class FullstackOneCore {
     this.APP = new Koa();
 
     // start KOA on PORT
-    this.APP.listen(this.ENVIRONMENT.port);
+    this.server = http.createServer(this.APP.callback()).listen(this.ENVIRONMENT.port);
+
+    // register graceful shutdown - terminus
+    this.gracefulShutdown();
+
     // emit event
     this.eventEmitter.emit('server.up', this.ENVIRONMENT.port);
     // success log
     this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+  }
+
+  private gracefulShutdown() {
+    terminus(this.server, {
+      onSigterm,
+      // healtcheck options
+      healthChecks: {
+        // for now we only resolve a promise to make sure the server runs
+        '/_health/liveness': () => Promise.resolve(),
+        // make sure we are ready to answer requests
+        '/_health/readiness': () => getReadyPromise()
+      },
+      // cleanup options
+      timeout: 1000,
+      logger: this.logger.info
+    });
+
+    async function onSigterm() {
+      this.logger.info('server is starting cleanup');
+      this.eventEmitter.emit('server.sigterm', this.getNodeId());
+
+      try {
+
+        // close DB connections
+        await this.disconnectDB();
+        this.logger.info('server is shutting down');
+        this.eventEmitter.emit('server.shutdown', this.getNodeId());
+        return true;
+      } catch (err) {
+
+        this.logger.warn('Error occurred during clean up attempt', err);
+        this.eventEmitter.emit('server.sigterm.error', this.getNodeId(), err);
+        throw err;
+      }
+    }
   }
 
   // draw CLI art
@@ -298,7 +363,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
   return new Promise(($resolve, $reject) => {
 
     // already booted?
-    if (this.hasBooted) {
+    if ($one.isReady()) {
       $resolve($one);
     } else {
 

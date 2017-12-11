@@ -17,7 +17,7 @@ export namespace migration {
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
-      console.error('sql statements: \n', sqlStatements);
+      console.log('sql statements: \n', sqlStatements);
       // emit event
       // this.emit('schema.dbObject.migration.up.executed');
 
@@ -45,7 +45,7 @@ export namespace migration {
     // iterate over database relations
     Object.values(databaseObject.relations).map((relation) => {
       // check if relation exists
-      // console.error(relation);
+      // console.log('*', relation);
       // only parse those with isDbModel = true
       /*if (!!tableObject.isDbModel) {
 				createSqlFromTableObject(sqlCommands, tableObject);
@@ -77,7 +77,6 @@ export namespace migration {
         fieldStatementArray.push(field.type);
 
         // constraints
-
         // primary key
         if (!!field.constraints.isPrimaryKey) {
           fieldStatementArray.push('PRIMARY KEY');

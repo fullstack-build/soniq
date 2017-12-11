@@ -1,3 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION plv8;
+
 CREATE OR REPLACE FUNCTION _management.create_version() RETURNS trigger AS $$
 
 	var currentRole =  (currentRoleResult != null && currentRoleResult[0] != null && currentRoleResult[0].current_role != null)? currentRoleResult[0].current_role : "";

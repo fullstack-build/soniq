@@ -10,5 +10,3 @@ type Post @table {
   contributors: [User!]! @relation(name: "PostContributors")
   contributorSecret: String
 }
-
-directive @slugify on FIELD
