@@ -13,6 +13,10 @@ import arrayToNamedArray from './arrayToNamedArray';
 import getQueryArguments from './getQueryArguments';
 import getTypesEnum from './getTypesEnum';
 import getTypenamesField from './getTypenamesField';
+import convertToInputType from './convertToInputType';
+import { log } from 'util';
+
+import { introspectionQuery } from 'graphql';
 
 export default (classification: any, permissions: IPermissions, expressions: IExpressions) => {
 
@@ -32,17 +36,20 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   const views = [];
   const expressionsByName = arrayToNamedArray(expressions);
   const queries = [];
+  const mutations = [];
 
   // iterate over permissions
   // each permission will become a view
   Object.values(permissions).forEach((permission) => {
-
     const tableName = permission.table;
     // todo: CAN BE NULL => check and throw exception
     const table = tables[tableName];
     // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
-    const viewName = permission.table + '_' + permission.name;
+    let viewName = permission.table + '_' + permission.name;
+    if (permission.type === 'CREATE' || permission.type === 'UPDATE' || permission.type === 'DELETE') {
+      viewName = permission.type.toLocaleLowerCase() + '_' + viewName;
+    }
     tableView.name.value = viewName;
 
     const view: any = {
@@ -51,6 +58,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       type: 'VIEW',
       fields: [],
       expressions: [],
+      operation: permission.type,
+      permission
     };
 
     // Create gQl Type for Table if it not already exists
@@ -71,9 +80,15 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       typeName: viewName.toUpperCase(),
       tableName,
       fields: [],
+      operation: permission.type,
       nativeFieldNames: []
     };
-    gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
+
+    if (permission.type === 'READ') {
+      gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
+    } else {
+      tableView.kind = 'GraphQLInputObjectType';
+    }
 
     // filter required views
     // only allow fields with positive permissions
@@ -81,13 +96,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       const isIncluded = permission.fields.indexOf(fieldName) >= 0;
 
-      if (isIncluded && gQlTypes[tableName].fieldNames.indexOf(fieldName)) {
+      if (isIncluded && gQlTypes[tableName].fieldNames.indexOf(fieldName) < 0) {
         gQlTypes[tableName].fieldNames.push(fieldName);
       }
 
-      if (isIncluded) {
-        gQlTypes[tableName].types[viewName.toUpperCase()].fields.push(fieldName);
-      }
+      gQlTypes[tableName].types[viewName.toUpperCase()].fields.push(fieldName);
 
       return isIncluded;
     });
@@ -101,7 +114,24 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     });
 
     // Add view to GraphQl graphQlDocument
-    // graphQlDocument.definitions.push(tableView);
+    if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
+      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!', JSON.stringify(tableView, null, 2))
+
+      // const inputTypes = convertToInputType(tableView, otherDefinitions);
+
+      tableView.kind = 'InputObjectTypeDefinition';
+
+      graphQlDocument.definitions.push(tableView);
+
+      mutations.push({
+        name: viewName.toString(),
+        type: permission.type,
+        inputType: viewName,
+        returnType: tableName,
+        typesEnumName: (tableName + '_TYPES').toUpperCase(),
+        viewName
+      });
+    }
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
@@ -143,7 +173,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           expression: fieldSql
         });
 
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        // Add native fields to gQlTypes
+          gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is relation
@@ -180,10 +211,13 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       }
     });
 
-    view.fields.push({
-      name: '_typenames',
-      expression: `ARRAY['${viewName.toUpperCase()}'] AS _typenames`
-    });
+    // Add _typenames field into READ Views
+    if (permission.type === 'READ') {
+      view.fields.push({
+        name: '_typenames',
+        expression: `ARRAY['${viewName.toUpperCase()}'] AS _typenames`
+      });
+    }
 
     // creates SQL expressions for permission
     Object.values(permission.expressions).forEach((expression) => {
@@ -210,6 +244,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
   // build GraphQL gQlTypes based on DB views
   Object.values(gQlTypes).forEach((gQlType) => {
+    // console.log('>>>>>>', JSON.stringify(gQlType, null, 2))
 
     const tableName = gQlType.tableName;
     const typesEnumName = (tableName + '_TYPES').toUpperCase();
@@ -254,15 +289,21 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       type: tableName,
       typesEnumName: (tableName + '_TYPES').toUpperCase()
     });
+
+    /* Object.keys(gQlType.types).forEach((view, index) => {
+
+    })); */
   });
 
-  const basicSchema = getBasicSchema(queries);
+  const basicSchema = getBasicSchema(queries, mutations);
 
   graphQlDocument.definitions = graphQlDocument.definitions.concat(basicSchema);
 
   return {
     document: graphQlDocument,
     views,
-    gQlTypes
+    gQlTypes,
+    queries,
+    mutations
   };
 };

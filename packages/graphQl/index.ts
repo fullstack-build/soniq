@@ -27,6 +27,8 @@ export namespace graphQl {
   let gQlRuntimeDocument: any;
   let gQlTypes: any;
   let dbObject: any;
+  let mutations: any;
+  let queries: any;
 
   export const bootGraphQl = async ($one) => {
 
@@ -71,6 +73,8 @@ export namespace graphQl {
       gQlRuntimeDocument = combinedSchemaInformation.document;
       gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
       gQlTypes = combinedSchemaInformation.gQlTypes;
+      queries = combinedSchemaInformation.queries;
+      mutations = combinedSchemaInformation.mutations;
 
       // add endpoints
       addEndpoints($one);
@@ -78,6 +82,7 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
+      // console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
       $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);
@@ -102,7 +107,7 @@ export namespace graphQl {
 
     const schema = makeExecutableSchema({
 			typeDefs: gQlRuntimeSchema,
-			resolvers: getResolvers(gQlTypes, dbObject),
+			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations),
 		});
 
     // koaBody is needed just for POST.

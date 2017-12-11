@@ -21,4 +21,48 @@ export = [
       name: 'Owner',
     }],
   },
+  {
+    name: 'Owner',
+    type: 'CREATE',
+    table: 'Post',
+    fields: [
+      'id', 'title', 'content', 'ownerSecret',
+    ],
+    expressions: [{
+      name: 'Owner',
+    }],
+  },
+  {
+    name: 'Owner',
+    type: 'UPDATE',
+    table: 'Post',
+    fields: [
+      'id', 'title', 'content', 'ownerSecret',
+    ],
+    expressions: [{
+      name: 'Owner',
+    }],
+  },
+  {
+    name: 'Owner',
+    type: 'DELETE',
+    table: 'Post',
+    fields: [
+      'id',
+    ],
+    expressions: [{
+      name: 'Owner',
+    }],
+  },
+  {
+    name: 'Admin',
+    type: 'DELETE',
+    table: 'Post',
+    fields: [
+      'id',
+    ],
+    expressions: [{
+      name: 'Admin',
+    }],
+  },
 ];

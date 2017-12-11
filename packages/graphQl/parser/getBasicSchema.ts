@@ -1,5 +1,25 @@
 
 import getQueryArguments from './getQueryArguments';
+import getMutationArguments from './getMutationArguments';
+
+function getMutation(name, inputType, typesEnumName, returnType) {
+  return {
+    kind: 'FieldDefinition',
+    name: {
+      kind: 'Name',
+      value: name,
+    },
+    arguments: getMutationArguments(typesEnumName, inputType),
+    type: {
+      kind: 'NamedType',
+      name: {
+        kind: 'Name',
+        value: returnType,
+      },
+    },
+    directives: [],
+  };
+}
 
 function getQuery(name, type, typesEnumName) {
   return {
@@ -29,11 +49,16 @@ function getQuery(name, type, typesEnumName) {
   };
 }
 
-export default (queries) => {
+export default (queries, mutations) => {
 
   const queryFields = [];
   Object.values(queries).forEach((query) => {
     queryFields.push(getQuery(query.name, query.type, query.typesEnumName));
+  });
+
+  const mutationFields = [];
+  Object.values(mutations).forEach((mutation) => {
+    mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.typesEnumName, mutation.returnType));
   });
 
   const definitions = [
@@ -48,20 +73,40 @@ export default (queries) => {
             kind: 'NamedType',
             name: {
               kind: 'Name',
-              value: 'RootQuery',
+              value: 'Query',
             },
           },
         },
+        {
+          kind: 'OperationTypeDefinition',
+          operation: 'mutation',
+          type: {
+            kind: 'NamedType',
+            name: {
+              kind: 'Name',
+              value: 'Mutation',
+            },
+          },
+        }
       ],
     }, {
       kind: 'ObjectTypeDefinition',
       name: {
         kind: 'Name',
-        value: 'RootQuery',
+        value: 'Query',
       },
       interfaces: [],
       directives: [],
       fields: queryFields,
+    }, {
+      kind: 'ObjectTypeDefinition',
+      name: {
+        kind: 'Name',
+        value: 'Mutation',
+      },
+      interfaces: [],
+      directives: [],
+      fields: mutationFields,
     },
   ];
 

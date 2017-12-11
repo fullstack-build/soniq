@@ -10,7 +10,7 @@ export = {
       database: 'fullstack-one-example',
       host: 'localhost',
       user: 'postgres',
-      password: '',
+      password: 'postgres',
       port: 5432,
       ssl: false,
     },
@@ -18,7 +18,7 @@ export = {
       database: 'fullstack-one-example',
       host: 'localhost',
       user: 'postgres',
-      password: '',
+      password: 'postgres',
       port: 5432,
       ssl: false,
       // set pool max size to 20

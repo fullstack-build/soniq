@@ -1,56 +1,17 @@
 [{
-  "id": 4,
-  "title": "Welcome #2",
-  "content": "Hi there, now I am creating a new blog!",
-  "ownerSecret": null,
-  "owner": {
-    "id": 2,
-    "email": null,
-    "_typenames": ["USER_AUTHOR"]
+  "id": 1,
+  "email": "dustin@fullstack.build",
+  "payload": {
+    "city": "Heidelberg",
+    "birthday": "14.06.1994"
   },
-  "_typenames": ["POST_PUBLIC"]
+  "_typenames": ["USER_AUTHOR", "USER_ME"]
 }, {
   "id": 2,
-  "title": "Introduction",
-  "content": "In my blog i'll write about things!",
-  "ownerSecret": "S2",
-  "owner": {
-    "id": 1,
-    "email": "dustin@fullstack.build",
-    "_typenames": ["USER_AUTHOR", "USER_ME"]
+  "email": null,
+  "payload": {
+    "city": "Frankfurt",
+    "birthday": "11.02.19xx"
   },
-  "_typenames": ["POST_PUBLIC", "POST_OWNER"]
-}, {
-  "id": 5,
-  "title": "Hello there!",
-  "content": "My first post is very nice because I like writing about things!",
-  "ownerSecret": null,
-  "owner": {
-    "id": 2,
-    "email": null,
-    "_typenames": ["USER_AUTHOR"]
-  },
-  "_typenames": ["POST_PUBLIC"]
-}, {
-  "id": 3,
-  "title": "Final",
-  "content": "This is my last post. I noticed I don't like writing!",
-  "ownerSecret": "S3",
-  "owner": {
-    "id": 1,
-    "email": "dustin@fullstack.build",
-    "_typenames": ["USER_AUTHOR", "USER_ME"]
-  },
-  "_typenames": ["POST_PUBLIC", "POST_OWNER"]
-}, {
-  "id": 1,
-  "title": "Welcome #1",
-  "content": "This is my very first post!",
-  "ownerSecret": "S1",
-  "owner": {
-    "id": 1,
-    "email": "dustin@fullstack.build",
-    "_typenames": ["USER_AUTHOR", "USER_ME"]
-  },
-  "_typenames": ["POST_PUBLIC", "POST_OWNER"]
+  "_typenames": ["USER_AUTHOR"]
 }]
