@@ -23,6 +23,7 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
   console.log('> ===================================================');
   console.log('>'); */
   // console.log('> Views:', JSON.stringify(views, null, 2));
+  // console.log('> Views:', JSON.stringify(views, null, 2));
 
   return { document, views, gQlTypes, queries, mutations };
 
