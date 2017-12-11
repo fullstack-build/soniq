@@ -7,6 +7,8 @@ function resolveCreateMutation(query, mutation) {
   const fieldNames = Object.keys(query.args.input);
   const fieldValues = Object.values(query.args.input);
 
+  const values = [];
+
   const f = fieldNames.map((name) => {
     // tslint:disable-next-line:quotemark
     return "'" + name + "'";
@@ -14,18 +16,12 @@ function resolveCreateMutation(query, mutation) {
 
   // tslint:disable-next-line:quotemark
   const v = fieldValues.map((value) => {
-    let tempValue = value;
-
-    if (isNaN(tempValue)) {
-      // tslint:disable-next-line:quotemark
-      tempValue = "'" + tempValue + "'";
-    }
-
-    return tempValue;
+    values.push(value);
+    return '$' + values.length;
   }).join(', ');
 
   // tslint:disable-next-line:quotemark
-  return { sql: `INSERT INTO ${mutation.viewName} (${f}) VALUES (${v})` };
+  return { sql: `INSERT INTO ${mutation.viewName} (${f}) VALUES (${v})`, values };
 }
 
 function resolveUpdateMutation(query, mutation) {
@@ -33,37 +29,26 @@ function resolveUpdateMutation(query, mutation) {
   const fieldValues = Object.values(query.args.input);
 
   const setFields = [];
+  const values = [];
   let entityId = null;
 
   Object.keys(query.args.input).forEach((fieldName) => {
-    let fieldValue = query.args.input[fieldName];
+    const fieldValue = query.args.input[fieldName];
     if (fieldName !== 'id') {
-
-      if (isNaN(fieldValue)) {
-        // tslint:disable-next-line:quotemark
-        fieldValue = "'" + fieldValue + "'";
-      }
-
-      // TODO: This is a SQL Injection Issue
-      setFields.push(`"${fieldName}" = ${fieldValue}`);
+      values.push(fieldValue);
+      setFields.push(`"${fieldName}" = $${values.length}`);
     } else {
       entityId = fieldValue;
     }
   });
 
-  if (isNaN(entityId)) {
-    // tslint:disable-next-line:quotemark
-    entityId = "'" + entityId + "'";
-  }
+  values.push(entityId);
 
-  // tslint:disable-next-line:quotemark
-  const v = fieldValues.map((value) => {
-    // tslint:disable-next-line:quotemark
-    return "'" + value + "'";
-  }).join(', ');
+  return { sql: `UPDATE ${mutation.viewName} SET ${setFields.join(', ')} WHERE id = $${values.length}`, values };
+}
 
-  // tslint:disable-next-line:quotemark
-  return { sql: `UPDATE ${mutation.viewName} SET ${setFields.join(', ')} WHERE id = ${entityId}` };
+function resolveDeleteMutation(query, mutation) {
+  return { sql: `DELETE FROM ${mutation.viewName} WHERE id = $1 RETURNING id`, values: [query.args.input.id] };
 }
 
 export function getMutationResolver(gQlTypes, dbObject, mutations) {
@@ -83,6 +68,8 @@ export function getMutationResolver(gQlTypes, dbObject, mutations) {
         return resolveCreateMutation(query, mutation);
       case 'UPDATE':
         return resolveUpdateMutation(query, mutation);
+      case 'DELETE':
+        return resolveDeleteMutation(query, mutation);
       default:
         throw new Error('Mutation-Type does not exist! "' + mutation.type + '"');
     }

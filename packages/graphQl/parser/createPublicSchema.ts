@@ -14,6 +14,8 @@ import getQueryArguments from './getQueryArguments';
 import getTypesEnum from './getTypesEnum';
 import getTypenamesField from './getTypenamesField';
 import convertToInputType from './convertToInputType';
+import mergeDeletePermissions from './mergeDeletePermissions';
+import createIdField from './createIdField';
 import { log } from 'util';
 
 import { introspectionQuery } from 'graphql';
@@ -38,19 +40,28 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   const queries = [];
   const mutations = [];
 
+  const filteredPermissions = mergeDeletePermissions(permissions);
+
   // iterate over permissions
   // each permission will become a view
-  Object.values(permissions).forEach((permission) => {
+  Object.values(filteredPermissions).forEach((permission) => {
     const tableName = permission.table;
     // todo: CAN BE NULL => check and throw exception
     const table = tables[tableName];
     // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
-    let viewName = permission.table + '_' + permission.name;
-    if (permission.type === 'CREATE' || permission.type === 'UPDATE' || permission.type === 'DELETE') {
+    let viewName = tableName + '_' + permission.name;
+    if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
       viewName = permission.type.toLocaleLowerCase() + '_' + viewName;
     }
+    if (permission.type === 'DELETE') {
+      viewName = permission.type.toLocaleLowerCase() + '_' + tableName;
+    }
     tableView.name.value = viewName;
+
+    if (permission.type === 'UPDATE' && permission.fields.indexOf('id') < 0) {
+      throw new Error('A update permission is required to include field "id". Please check permission "' + permission.name + '".');
+    }
 
     const view: any = {
       tableName,
@@ -113,25 +124,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       }
     });
 
-    // Add view to GraphQl graphQlDocument
-    if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
-      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!', JSON.stringify(tableView, null, 2))
-
-      // const inputTypes = convertToInputType(tableView, otherDefinitions);
-
-      tableView.kind = 'InputObjectTypeDefinition';
-
-      graphQlDocument.definitions.push(tableView);
-
-      mutations.push({
-        name: viewName.toString(),
-        type: permission.type,
-        inputType: viewName,
-        returnType: tableName,
-        typesEnumName: (tableName + '_TYPES').toUpperCase(),
-        viewName
-      });
-    }
+    const filterFieldsForMutation = [];
+    const addIdFieldsForMutation = [];
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
@@ -173,8 +167,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           expression: fieldSql
         });
 
+        // This field cannot be set with a mutation
+        filterFieldsForMutation.push(fieldName);
+
         // Add native fields to gQlTypes
-          gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is relation
@@ -183,18 +180,26 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
+        const relationFieldName = fieldName + '_' + getRelationForeignTable(field) + '_id';
+
         gQlTypes[tableName].relationByField[fieldName] = {
           relationName,
           foreignTableName: getRelationForeignTable(field),
           relationType: getRelationType(field),
-          fieldName: fieldName + '_' + getRelationForeignTable(field) + '_id'
+          fieldName: relationFieldName
         };
+
+        // This field cannot be set with a mutation
+        filterFieldsForMutation.push(fieldName);
 
         if (getRelationType(field) === 'ONE') {
           view.fields.push({
             name: fieldName,
-            expression: fieldName + '_' + getRelationForeignTable(field) + '_id'
+            expression: relationFieldName
           });
+
+          // Add relation-field-name to GQL Input for mutating it
+          addIdFieldsForMutation.push(relationFieldName);
         }
         fieldAlreadyAddedAsSpecialType = true;
 
@@ -236,6 +241,46 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       view.expressions.push(expressionSql);
     });
+
+    // filter input fields
+    // only allow fields that are mutable
+    tableView.fields = tableView.fields.filter((field) => {
+      const fieldName = field.name.value;
+      const isIncluded = filterFieldsForMutation.indexOf(fieldName) >= 0;
+
+      return !isIncluded;
+    });
+
+    // Add relation fields for mutations
+    Object.values(addIdFieldsForMutation).forEach((fieldName) => {
+      tableView.fields.push(createIdField(fieldName));
+    });
+
+    // Add view to GraphQl graphQlDocument
+    if (permission.type === 'CREATE' || permission.type === 'UPDATE' || permission.type === 'DELETE') {
+      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!', JSON.stringify(tableView, null, 2))
+
+      // const inputTypes = convertToInputType(tableView, otherDefinitions);
+
+      tableView.kind = 'InputObjectTypeDefinition';
+
+      graphQlDocument.definitions.push(tableView);
+
+      let returnType = tableName;
+
+      if (permission.type === 'DELETE') {
+        returnType = 'ID';
+      }
+
+      mutations.push({
+        name: viewName.toString(),
+        type: permission.type,
+        inputType: viewName,
+        returnType,
+        typesEnumName: (tableName + '_TYPES').toUpperCase(),
+        viewName
+      });
+    }
 
     // Add view to views
     views.push(view);

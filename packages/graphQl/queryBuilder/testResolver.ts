@@ -64,10 +64,17 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
         console.log(JSON.stringify(parseResolveInfo(info), null, 2));
         // tslint:disable-next-line:no-console
         console.log('>>>>SQL>>>> ============================================');
+
+        const mutationQuery = mutationResolver(obj, args, context, info);
         // tslint:disable-next-line:no-console
-        console.log(mutationResolver(obj, args, context, info).sql);
-        // tslint:disable-next-line:no-console
-        console.log(queryResolver(obj, args, context, info).sql);
+        console.log(mutationQuery.sql, mutationQuery.values);
+        try {
+          // tslint:disable-next-line:no-console
+          console.log(queryResolver(obj, args, context, info).sql);
+        } catch (e) {
+          // tslint:disable-next-line:no-console
+          console.log('NO RETURN QUERY');
+        }
         // return [{id:13, firstLetterOfUserName: 'A'}];
         return {
           id: 12,

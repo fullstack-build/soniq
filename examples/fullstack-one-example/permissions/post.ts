@@ -26,7 +26,7 @@ export = [
     type: 'CREATE',
     table: 'Post',
     fields: [
-      'id', 'title', 'content', 'ownerSecret',
+      'id', 'title', 'content', 'ownerSecret', 'owner'
     ],
     expressions: [{
       name: 'Owner',
