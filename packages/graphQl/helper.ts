@@ -3,7 +3,7 @@ import { promisify } from 'util';
 const writeFileAsync = promisify(writeFile);
 import { parse, print } from 'graphql';
 
-import { IDatabaseObject } from '../core/IDatabaseObject';
+import { IDbObject } from '../core/IDbObject';
 
 export namespace graphQl.helper {
 
@@ -25,7 +25,7 @@ export namespace graphQl.helper {
 
   export const writeTableObjectIntoMigrationsFolder = async (
     migrationsPath: string,
-    tableObject: IDatabaseObject,
+    tableObject: IDbObject,
     migrationId?: number,
   ) => {
     // create name for migration

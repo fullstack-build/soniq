@@ -195,11 +195,11 @@
       {
         "schemaName": "public",
         "tableName": "File",
-        "fieldName": "post",
+        "columnName": "post",
         "name": "TitleImage",
         "type": "ONE",
         "reference": {
-          "fieldName": "post",
+          "columnName": "post",
           "schemaName": "public",
           "tableName": "Post"
         }
@@ -207,11 +207,11 @@
       {
         "schemaName": "public",
         "tableName": "Post",
-        "fieldName": "titleImage",
+        "columnName": "titleImage",
         "name": "TitleImage",
         "type": "ONE",
         "reference": {
-          "fieldName": "titleImage",
+          "columnName": "titleImage",
           "schemaName": "public",
           "tableName": "File"
         }
@@ -221,11 +221,11 @@
       {
         "schemaName": "public",
         "tableName": "Post",
-        "fieldName": "owner",
+        "columnName": "owner",
         "name": "PostOwner",
         "type": "ONE",
         "reference": {
-          "fieldName": "owner",
+          "columnName": "owner",
           "schemaName": "public",
           "tableName": "User"
         }
@@ -233,11 +233,11 @@
       {
         "schemaName": "public",
         "tableName": "User",
-        "fieldName": "posts",
+        "columnName": "posts",
         "name": "PostOwner",
         "type": "MANY",
         "reference": {
-          "fieldName": "posts",
+          "columnName": "posts",
           "schemaName": "public",
           "tableName": "Post"
         }
@@ -247,11 +247,11 @@
       {
         "schemaName": "public",
         "tableName": "Post",
-        "fieldName": "contributors",
+        "columnName": "contributors",
         "name": "PostContributors",
         "type": "MANY",
         "reference": {
-          "fieldName": "contributors",
+          "columnName": "contributors",
           "schemaName": "public",
           "tableName": "User"
         }
@@ -259,11 +259,11 @@
       {
         "schemaName": "public",
         "tableName": "User",
-        "fieldName": "postContributions",
+        "columnName": "postContributions",
         "name": "PostContributors",
         "type": "MANY",
         "reference": {
-          "fieldName": "postContributions",
+          "columnName": "postContributions",
           "schemaName": "public",
           "tableName": "Post"
         }

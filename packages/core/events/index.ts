@@ -10,13 +10,13 @@ class EventEmitter implements IEventEmitter {
 
   private eventEmitter: EventEmitter2;
   private $one;
-  private instanceId: string;
+  private nodeId: string;
   private dbClient;
   private namespace: string = 'f1';
 
   constructor($one) {
     this.$one = $one;
-    this.instanceId = $one.getNodeId();
+    this.nodeId = $one.nodeId;
     this.namespace = this.$one.getConfig('eventEmitter').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
@@ -34,14 +34,14 @@ class EventEmitter implements IEventEmitter {
     const eventNamespaceName = `${this.namespace}.${eventName}`;
 
     // emit on this noe
-    this._emit(eventNamespaceName, this.instanceId, ...args);
+    this._emit(eventNamespaceName, this.nodeId, ...args);
 
     // synchronize to other nodes
-    this.sendEventToPg(eventNamespaceName, this.instanceId, ...args);
+    this.sendEventToPg(eventNamespaceName, this.nodeId, ...args);
   }
 
   public on(eventName: string, listener: (...args: any[]) => void) {
-    const eventNameForThisInstanceOnly = `${this.instanceId}.${eventName}`;
+    const eventNameForThisInstanceOnly = `${this.nodeId}.${eventName}`;
 
     this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
   }
@@ -76,7 +76,7 @@ class EventEmitter implements IEventEmitter {
 
     const event = {
       name: eventName,
-      instanceId: this.$one.getNodeId(),
+      instanceId: this.$one.nodeId,
       args: {
         ...args
       }
@@ -95,7 +95,7 @@ class EventEmitter implements IEventEmitter {
       const event = JSON.parse(msg.payload);
 
       // fire on this node if not from same node
-      if (event.instanceId !== this.$one.getNodeId()) {
+      if (event.instanceId !== this.$one.nodeId) {
 
         const params = [event.name, event.instanceId, ...Object.values(event.args)];
         this._emit.apply(this, params);

@@ -41,12 +41,15 @@
     "tslint-config-airbnb": "^5.3.0"
   },
   "dependencies": {
+    "@godaddy/terminus": "^2.0.0",
+    "debug-logger": "^0.4.1",
     "dotenv-safe": "^4.0.4",
     "eventemitter2": "^5.0.0",
     "fast-glob": "^1.0.1",
     "graphql": "^0.11.7",
     "is-https": "^1.0.0",
     "lodash": "^4.17.4",
+    "tracer": "^0.8.11",
     "ts-node": "^3.3.0",
     "tslint-config-airbnb-base": "^0.1.0",
     "tsutils": "^2.12.2",

@@ -17,7 +17,7 @@ export namespace migration {
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
-      console.error('sql statements: \n', sqlStatements);
+      console.log('sql statements: \n', sqlStatements);
       // emit event
       // this.emit('schema.dbObject.migration.up.executed');
 
@@ -30,7 +30,7 @@ export namespace migration {
     }
   }
   export function createSqlFromDbObject(
-    databaseObject: FullstackOne.IDatabaseObject,
+    databaseObject: FullstackOne.IDbObject,
   ): string[] {
     const sqlCommands: string[] = [];
 
@@ -45,7 +45,7 @@ export namespace migration {
     // iterate over database relations
     Object.values(databaseObject.relations).map((relation) => {
       // check if relation exists
-      // console.error(relation);
+      // console.log('*', relation);
       // only parse those with isDbModel = true
       /*if (!!tableObject.isDbModel) {
 				createSqlFromTableObject(sqlCommands, tableObject);
@@ -55,33 +55,68 @@ export namespace migration {
     return sqlCommands;
   }
 
-  function createSqlFromTableObject(sqlCommands, pTableObject) {
+  function createSqlFromTableObject(sqlCommands, tableObject) {
+    const tableName = `"${tableObject.schemaName}"."${tableObject.name}"`;
     // create table statement
     sqlCommands.push(
-      `CREATE TABLE "${pTableObject.schemaName}.${pTableObject.name}"();`,
+      `CREATE TABLE ${tableName}();`,
     );
 
     // create column statements
-    for (const field of pTableObject.fields) {
-      if (field.type === 'computed') {
+    for (const columnObject of tableObject.columns) {
+      if (columnObject.type === 'computed') {
         // ignore computed
-      } else if (field.type === 'relation') {
+      } else if (columnObject.type === 'custom') {
+        // ignore custom
+      } else if (columnObject.type === 'relation') {
         // ignore relations
       } else {
-        const fieldStatementArray = [];
-        fieldStatementArray.push(
-          `ALTER TABLE "${pTableObject.schemaName}.${pTableObject.name}" ADD COLUMN "${field.name}"`,
-        );
+        // create column statement
+        sqlCommands.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" ${columnObject.type};`);
 
-        // add type
-        fieldStatementArray.push(field.type);
+        // generate constraints for column
+        createColumnConstraints(sqlCommands, tableName, columnObject);
 
+      }
+    }
+  }
+
+  function createColumnConstraints(sqlCommands, tableName, columnObject) {
+
+        const multiColumnUniqueConstraint = [];
         // constraints
+        Object.entries(columnObject.constraints).forEach((columnConstraint) => {
+          const columnConstraintsStatementPrefix: string = `ALTER TABLE ${tableName}`;
+          // tslint:disable-next-line:no-console
+          // console.log(columnConstraint);
 
-        // primary key
-        if (!!field.constraints.isPrimaryKey) {
-          fieldStatementArray.push('PRIMARY KEY');
-        }
+          // primary key
+          if (columnConstraint[0] === 'isPrimaryKey' && !!columnConstraint[1]) {
+            // make PK
+            sqlCommands.push(
+              `${columnConstraintsStatementPrefix} ADD PRIMARY KEY ("${columnObject.name}");`
+            );
+            // assumption: all PKs are generated uuidv4
+            sqlCommands.push(
+              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnObject.name}" SET DEFAULT uuid_generate_v4();`
+            );
+          }
+          // handle single unique
+          if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'boolean' && !!columnConstraint[1]) {
+            sqlCommands.push(
+              `${columnConstraintsStatementPrefix} ADD CONSTRAINT "unique_${columnObject.name}" UNIQUE ("${columnObject.name}");`
+            );
+          }
+          // multy column unique
+          if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'string') {
+            // console.error('***Multi column unique',  columnObject.name);
+          }
+        });
+
+        // create unique constraints
+        // console.error('***');
+
+/*
 
         // unique
         if (!!field.constraints.unique) {
@@ -92,14 +127,12 @@ export namespace migration {
         if (!!field.constraints.nullable) {
           fieldStatementArray.push('NOT NULL');
         }
+        */
 
-        // add end of statement
-        fieldStatementArray.push(';');
+    // add end of statement
+    // fieldStatementArray.push(';');
 
-        const fieldStatementStr = fieldStatementArray.join(' ');
-        sqlCommands.push(fieldStatementStr);
-      }
-    }
+    return sqlCommands;
   }
 
 }
