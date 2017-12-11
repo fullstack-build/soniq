@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 
-import { IDatabaseObject } from '../core/IDatabaseObject';
+import { IDbObject } from '../core/IDbObject';
 
-export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDatabaseObject => {
-  const databaseObject: IDatabaseObject = {
+export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject => {
+  const databaseObject: IDbObject = {
     tables: {},
     relations: {},
   };
@@ -15,8 +15,8 @@ export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDatabaseOb
 // refDbObjectCurrentTable:
 //  - ref to current parent table obj will be passed through all iterations after table was added
 // refDbObjectCurrentTableField:
-// - ref to current parent table field obj will be passed through all iterations
-//   after table field was added
+// - ref to current parent table column obj will be passed through all iterations
+//   after table column was added
 function parseGraphQlJsonNode(
   gQlSchemaNode,
   dbObjectNode,
@@ -101,8 +101,8 @@ const GQL_JSON_PARSER = {
     refDbObj,
     refDbObjectCurrentTable,
   ) => {
-    // create fields object if not set already
-    dbObjectNode.fields = dbObjectNode.fields || [];
+    // create columns object if not set already
+    dbObjectNode.columns = dbObjectNode.columns || [];
 
     const newField = {
       constraints: {
@@ -111,11 +111,11 @@ const GQL_JSON_PARSER = {
         unique: false,
       },
     };
-    // add new field ref to dbObject
+    // add new column ref to dbObject
     // newField will now update data in the dbObject through this ref
-    dbObjectNode.fields.push(newField);
+    dbObjectNode.columns.push(newField);
 
-    // check if field is relation
+    // check if column is relation
     if (
       _.get(gQlFieldDefinitionNode, 'directives[0].name.value') === 'relation'
     ) {
@@ -128,7 +128,7 @@ const GQL_JSON_PARSER = {
         newField,
       );
     } else {
-      // handle normal field
+      // handle normal column
 
       // parse FieldDefinition properties
       Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
@@ -179,7 +179,7 @@ const GQL_JSON_PARSER = {
   ) => {
     // todo one to many relationships are nested
     if (gQlSchemaNode != null && dbObjectNode != null) {
-      // set field name
+      // set column name
       dbObjectNode.name = gQlSchemaNode.value;
     }
   },
@@ -192,9 +192,9 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTable,
     refDbObjectCurrentTableField,
   ) => {
-    const fieldType = gQlSchemaNode.name.value;
+    const columnType = gQlSchemaNode.name.value;
     let dbType = 'varchar';
-    switch (fieldType) {
+    switch (columnType) {
       case 'ID':
         dbType = 'uuid';
         dbObjectNode.constraints.isPrimaryKey = true;
@@ -205,12 +205,12 @@ const GQL_JSON_PARSER = {
       default:
         // unknown type
         process.stdout.write(
-          'parser.error.unknown.field.type: ' + fieldType + '\n',
+          'parser.error.unknown.field.type: ' + columnType + '\n',
         );
         break;
     }
 
-    // set field name
+    // set column name
     dbObjectNode.type = dbType;
   },
 
@@ -265,12 +265,16 @@ const GQL_JSON_PARSER = {
         break;
       case 'isUnique':
         dbObjectNode.constraints.unique = true;
+        // does uniqueness have a name? -> override with the name
+        if (gQlDirectiveNode.arguments[0] != null && gQlDirectiveNode.arguments[0].name.value === 'name') {
+          dbObjectNode.constraints.unique = gQlDirectiveNode.arguments[0].value.value;
+        }
         break;
       case 'computed':
         dbObjectNode.type = 'computed';
         break;
       case 'relation':
-        // mark field as relation
+        // mark column as relation
         // relation directive was handled already in the FieldDefinition handler
         dbObjectNode.type = 'relation';
         break;
@@ -312,8 +316,8 @@ function relationBuilderHelper(
   const schemaName = 'public';
   const referencedSchemaName = 'public';
   const tableName = refDbObjectCurrentTable.name;
-  const fieldName = _.get(gQlDirectiveNode, 'name.value');
-  const fieldType = _.get(gQlDirectiveNode, 'directives[0].name.value');
+  const columnName = _.get(gQlDirectiveNode, 'name.value');
+  const columnType = _.get(gQlDirectiveNode, 'directives[0].name.value');
   let referencedTableName = _.get(gQlDirectiveNode, 'type');
 
   const relationType = ((node) => {
@@ -349,14 +353,14 @@ function relationBuilderHelper(
   const relation = {
     schemaName,
     tableName,
-    fieldName,
-    name: relationName,
-    type: relationType,
+    columnName,
+    name:       relationName,
+    type:       relationType,
     // joins to
-    reference: {
-      fieldName,
+    reference:  {
+      columnName,
       schemaName: referencedSchemaName,
-      tableName: referencedTableName,
+      tableName:  referencedTableName,
     },
   };
 

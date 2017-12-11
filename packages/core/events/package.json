@@ -10,7 +10,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "eventemitter2": "^5.0.0"
+
   },
   "devDependencies": {}
 }

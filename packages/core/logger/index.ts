@@ -1,13 +1,11 @@
+import * as F1 from '../index';
 import * as DebugLogger from 'debug-logger';
 // import * as LE from 'le_node';
 import * as Tracer from 'tracer';
 
-import { IEnvironmentInformation } from '../core/IEnvironmentInformation';
+import { IEnvironmentInformation } from '../IEnvironmentInformation';
 import { ILogger } from './ILogger';
 import { ILogObject } from './ILogObject';
-
-// fullstack-one core
-import * as fullstackOne from '../core';
 
 export class Logger implements ILogger {
   private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
@@ -15,7 +13,7 @@ export class Logger implements ILogger {
   // Logger Name
   private moduleName: string = null;
   // instance ID
-  private instanceId: string = null;
+  private nodeId: string = null;
   // project environment
   private envInfo: IEnvironmentInformation;
   // tracer
@@ -28,12 +26,13 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor($one: any, pModuleName: string = 'root') {
-    this.moduleName = pModuleName;
-    this.instanceId = $one.getNodeId();
+  constructor($one: F1.IFullstackOneCore, pModuleName: string = 'root') {
 
-    const env = (this.envInfo = $one.getEnvironmentInformation());
-    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}/I:${this.instanceId}`;
+    this.moduleName = pModuleName;
+    this.nodeId = $one.nodeId;
+
+    const env = (this.envInfo = $one.ENVIRONMENT);
+    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}/I:${this.nodeId}`;
 
     // setup tracer
     const tracerConfig: any = {
@@ -47,7 +46,7 @@ export class Logger implements ILogger {
     this.tracerLogger = Tracer.colorConsole(tracerConfig);
 
     // setup debug
-    this.debugLogger = DebugLogger(`fullstack-one:${this.moduleName}:${this.instanceId}`);
+    this.debugLogger = DebugLogger(`${this.moduleName}`);
 
     /*
     // setup LogEntries

@@ -51,8 +51,6 @@ export namespace graphQl {
       dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
       $one.getEventEmitter().emit('graphQl.schema.parsed.to.dbObject');
-      // tslint:disable-next-line:no-console
-      // console.log(JSON.stringify(dbObject, null, 2));
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
@@ -82,7 +80,6 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
-      // console.log(err);
       logger.warn('bootGraphQl.error', err);
       // emit event
       $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);

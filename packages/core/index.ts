@@ -8,20 +8,23 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import { randomBytes } from 'crypto';
 
-// fullstackOne imports
-import { helper } from '../helper';
-export { helper } from '../helper';
-import { Events, IEventEmitter } from '../events';
-import { Db, Client, Pool } from '../db';
-import { Logger } from '../logger';
-import { graphQl } from '../graphQl/index';
-import { migration } from '../migration/index';
-
-// fullstackOne interfaces
+// fullstack-one interfaces
+import { AbstractPackage } from './AbstractPackage';
+export { AbstractPackage };
+import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
-import { IDatabaseObject } from './IDatabaseObject';
-export { IEnvironmentInformation, IDatabaseObject };
+import { IDbObject } from './IDbObject';
+export { IFullstackOneCore, IEnvironmentInformation, IDbObject };
+
+// fullstack-one imports
+import { helper } from '../helper';
+export { helper } from '../helper';
+import { Events, IEventEmitter } from './events';
+import { DbClient, DbPool, PgClient, PgPool } from '../db';
+import { Logger } from './logger';
+import { graphQl } from '../graphQl/index';
+import { migration } from '../migration/index';
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -38,17 +41,19 @@ try {
   process.exit(1);
 }
 
-class FullstackOneCore {
+class FullstackOneCore implements IFullstackOneCore {
+
+  public readonly ENVIRONMENT: IEnvironmentInformation;
+  public readonly nodeId: string;
   private hasBooted: boolean;
-  private ENVIRONMENT: IEnvironmentInformation;
   private eventEmitter: IEventEmitter;
   private CONFIG: IConfig;
   private logger: Logger;
-  private dbSetupObj: Db;
-  private dbPoolObj: Db;
+  private dbSetupClientObj: DbClient;
+  private dbPoolObj: DbPool;
   private server: http.Server;
   private APP: Koa;
-  private dbObject: IDatabaseObject;
+  private dbObject: IDbObject;
 
   constructor() {
 
@@ -68,6 +73,7 @@ class FullstackOneCore {
       // create unique instance ID (6 char)
       nodeId:  randomBytes(20).toString('hex').substr(5,6)
     };
+    this.nodeId = this.ENVIRONMENT.nodeId;
 
     // load config
     this.loadConfig();
@@ -86,30 +92,19 @@ class FullstackOneCore {
    * PUBLIC METHODS
    */
   // return whether server is ready
-  public isReady() {
+  public isReady(): boolean {
     return this.hasBooted;
-  }
-
-  // return nodeId
-  public getNodeId(): string {
-    return this.ENVIRONMENT.nodeId;
-  }
-
-  // return EnvironmentInformation
-  public getEnvironmentInformation(): IEnvironmentInformation {
-    // return copy instead of a ref
-    return { ...this.ENVIRONMENT };
   }
 
   // return CONFIG
   // return either full config or only module config
-  public getConfig(pModule?: string): any {
-    if (pModule == null) {
+  public getConfig(pModuleName?: string): IConfig | any {
+    if (pModuleName == null) {
       // return copy instead of a ref
       return { ... this.CONFIG };
     } else {
       // return copy instead of a ref
-      return { ... this.CONFIG[pModule] };
+      return { ... this.CONFIG[pModuleName] };
     }
   }
 
@@ -139,19 +134,19 @@ class FullstackOneCore {
   }
 
   // return DB object
-  public getDbObject() {
+  public getDbObject(): IDbObject {
     // return copy instead of ref
     return { ...this.dbObject };
   }
 
   // return DB setup connection
-  public getDbSetupClient(): Client {
-    return this.dbSetupObj.getClient();
+  public getDbSetupClient(): PgClient {
+    return this.dbSetupClientObj.client;
   }
 
   // return DB pool
-  public getDbPool(): Pool {
-    return this.dbPoolObj.getPool();
+  public getDbPool(): PgPool {
+    return this.dbPoolObj.pool;
   }
 
   public runMigration() {
@@ -191,7 +186,7 @@ class FullstackOneCore {
 
     try {
 
-      // create Db connection
+      // connect Db
       await this.connectDB();
 
       // start server
@@ -209,8 +204,10 @@ class FullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.eventEmitter.emit('ready', this.getNodeId());
+      this.eventEmitter.emit('ready', this.nodeId);
     } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.error('An error occurred while booting', err);
       this.logger.error('An error occurred while booting', err);
       this.eventEmitter.emit('not-ready', err);
     }
@@ -223,17 +220,17 @@ class FullstackOneCore {
 
     try {
       // create connection with setup user
-      this.dbSetupObj = new Db(this, configDB.setup);
+      this.dbSetupClientObj = new DbClient(this, configDB.setup);
       // create connection
-      await this.dbSetupObj.createClient();
+      await this.dbSetupClientObj.create();
 
       // emit event
       this.eventEmitter.emit('db.setup.connection.created');
 
       // create general connection pool
-      this.dbPoolObj = new Db(this, configDB.general);
+      this.dbPoolObj = new DbPool(this, configDB.general);
       // create pool
-      await this.dbSetupObj.createPool();
+      await this.dbPoolObj.create();
 
       // emit event
       this.eventEmitter.emit('db.pool.created');
@@ -247,12 +244,12 @@ class FullstackOneCore {
 
     try {
       // end setup client
-      await this.dbSetupObj.endClient();
+      await this.dbSetupClientObj.end();
       // emit event
       this.eventEmitter.emit('db.setup.connection.ended');
 
       // end pool
-      await this.dbPoolObj.endPool();
+      await this.dbPoolObj.end();
       // emit event
       this.eventEmitter.emit('db.pool.ended');
       return true;
@@ -358,7 +355,7 @@ class FullstackOneCore {
 
 // GETTER
 
-// FullstackOne SINGLETON
+// F1 SINGLETON
 const $one = new FullstackOneCore();
 export function getInstance(): FullstackOneCore {
   return $one;

@@ -186,8 +186,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         gQlTypes[tableName].relationByField[fieldName] = {
           relationName,
           foreignTableName: getRelationForeignTable(field),
-          relationType: getRelationType(field),
-          fieldName: fieldName + '_' + getRelationForeignTable(field) + '_id'
+          relationType:     getRelationType(field),
+          columnName:       fieldName + '_' + getRelationForeignTable(field) + '_id'
         };
 
         if (getRelationType(field) === 'ONE') {
