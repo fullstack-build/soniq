@@ -60,7 +60,7 @@ class EventEmitter implements IEventEmitter {
   }
 
   private async finishInitialisation() {
-    this.dbClient = await this.$one.getDbSetupClient();
+    this.dbClient = this.$one.getDbSetupClient();
     try {
       // catch events from other nodes
       this.dbClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));

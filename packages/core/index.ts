@@ -145,13 +145,13 @@ class FullstackOneCore {
   }
 
   // return DB setup connection
-  public async getDbSetupClient(): Promise<Client> {
-    return await this.dbSetupObj.getClient();
+  public getDbSetupClient(): Client {
+    return this.dbSetupObj.getClient();
   }
 
   // return DB pool
-  public async getDbPool(): Promise<Pool> {
-    return await this.dbPoolObj.getPool();
+  public getDbPool(): Pool {
+    return this.dbPoolObj.getPool();
   }
 
   public runMigration() {
@@ -224,11 +224,17 @@ class FullstackOneCore {
     try {
       // create connection with setup user
       this.dbSetupObj = new Db(this, configDB.setup);
+      // create connection
+      await this.dbSetupObj.createClient();
+
       // emit event
       this.eventEmitter.emit('db.setup.connection.created');
 
       // create general connection pool
       this.dbPoolObj = new Db(this, configDB.general);
+      // create pool
+      await this.dbSetupObj.createPool();
+
       // emit event
       this.eventEmitter.emit('db.pool.created');
     } catch (err) {
