@@ -1,0 +1,2 @@
+- Update Permession is required to have column `id`
+- Delete Permission can only have column `id`
