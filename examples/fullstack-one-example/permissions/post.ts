@@ -62,7 +62,7 @@ export = [
       'id',
     ],
     expressions: [{
-      name: 'Admin',
+      name: 'Owner',
     }],
   },
 ];

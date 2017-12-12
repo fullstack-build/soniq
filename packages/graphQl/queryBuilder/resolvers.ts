@@ -48,7 +48,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
 
           // Set current user for permissions
           if (context.userId != null) {
-            await client.query('set local jwt.claims.user_id to ' + context.userId);
+            await client.query(`set local jwt.claims.user_id to '${context.userId}'`);
           }
 
           // tslint:disable-next-line:no-console
@@ -57,7 +57,10 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
           // Query data
           const { rows } = await client.query(selectQuery.sql, selectQuery.values);
 
-          const data = JSON.parse(rows[0][selectQuery.query.name]);
+          // tslint:disable-next-line:no-console
+          console.log('rows', rows);
+
+          const data = rows[0][selectQuery.query.name];
 
           await client.query('COMMIT');
 
@@ -84,7 +87,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
 
           // Set current user for permissions
           if (context.userId != null) {
-            await client.query('set local jwt.claims.user_id to ' + context.userId);
+            await client.query(`set local jwt.claims.user_id to '${context.userId}'`);
           }
 
           // tslint:disable-next-line:no-console

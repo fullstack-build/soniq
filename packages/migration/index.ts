@@ -16,16 +16,27 @@ export namespace migration {
       // emit event
       this.emit('schema.dbObject.migration.saved');*/
 
-      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo');
+      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
-      console.log('sql statements: \n', sqlStatements);
+      // console.log('sql statements: \n', sqlStatements);
+      // tslint:disable-next-line:forin
+      for (const i in sqlStatements) {
+        // tslint:disable-next-line:no-console
+        console.log(sqlStatements[i]);
+      }
       // emit event
       // this.emit('schema.dbObject.migration.up.executed');
 
       // tslint:disable-next-line:no-console
-      console.log('view sql statements: \n', viewSqlStatements);
+      // console.log('view sql statements: \n', viewSqlStatements);
+
+      // tslint:disable-next-line:forin
+      for (const i in viewSqlStatements) {
+        // tslint:disable-next-line:no-console
+        console.log(viewSqlStatements[i]);
+      }
 
       // display result sql in terminal
       // this.logger.debug(sqlStatements.join('\n'));
