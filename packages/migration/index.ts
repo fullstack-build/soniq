@@ -86,75 +86,51 @@ export namespace migration {
         sqlCommands.push(
           `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE ${columnObject.type} USING "${columnObject.name}"::${columnObject.type};`
         );
-
-        // generate constraints for column
-        // todo
-        // createColumnConstraints(sqlCommands, tableName, columnObject);
-
       }
     }
+
+    // generate constraints for column
+    createColumnConstraints(sqlCommands, tableName, tableObject);
   }
 
-  function createColumnConstraints(sqlCommands, tableName, columnObject) {
+  function createColumnConstraints(sqlCommands, tableName, tableObject) {
 
-        const multiColumnUniqueConstraint = [];
-        // constraints
-        /*Object.entries(columnObject.constraints).forEach((columnConstraint) => {
-          const columnConstraintsStatementPrefix: string = `ALTER TABLE ${tableName}`;
-          // tslint:disable-next-line:no-console
-          if (columnObject.name == null) {
-            console.error(tableName, columnObject, columnConstraint);
-          } else {
-            console.error(tableName, columnObject.name);
-          }
+    // constraints
+    Object.entries(tableObject.constraints).forEach((constraint) => {
+      const constraintName = constraint[0];
+      const constraintDefinition = constraint[1];
+      const columnNamesAsStr = constraintDefinition.columns.map(columnName => `"${columnName}"`).join(',');
 
-          // primary key
-          if (columnConstraint[0] === 'isPrimaryKey' && !!columnConstraint[1]) {
-            // make PK
+      const columnConstraintsStatementPrefix: string = `ALTER TABLE ${tableName}`;
+
+      switch (constraintDefinition.type) {
+        case 'primaryKey':
+          // convention: all PKs are generated uuidv4
+          constraintDefinition.columns.forEach((columnName) => {
             sqlCommands.push(
-              `${columnConstraintsStatementPrefix} ADD PRIMARY KEY ("${columnObject.name}");`
+              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
             );
-            // assumption: all PKs are generated uuidv4
-            sqlCommands.push(
-              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnObject.name}" SET DEFAULT uuid_generate_v4();`
-            );
-          }
-          // nullable
-          if (columnConstraint[0] === 'nullable' && !!columnConstraint[1]) {
-            sqlCommands.push(
-              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnObject.name}" SET NOT NULL;`
-            );
-          }
-          // handle single unique
-          if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'boolean' && !!columnConstraint[1]) {
-            sqlCommands.push(
-              `${columnConstraintsStatementPrefix} ADD CONSTRAINT "unique_${columnObject.name}" UNIQUE ("${columnObject.name}");`
-            );
-          }
-          // multy column unique
-          if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'string') {
-            // console.error('***Multi column unique',  columnObject.name);
-          }
-        });*/
+          });
 
-        // create unique constraints
-        // console.error('***');
+          // make PK
+          sqlCommands.push(
+            `${columnConstraintsStatementPrefix} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
+          );
+          break;
 
-/*
+        case 'not_null':
+          sqlCommands.push(
+            `${columnConstraintsStatementPrefix} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
+          );
+          break;
 
-        // unique
-        if (!!field.constraints.unique) {
-          fieldStatementArray.push('UNIQUE');
-        }
-
-        // not null
-        if (!!field.constraints.nullable) {
-          fieldStatementArray.push('NOT NULL');
-        }
-        */
-
-    // add end of statement
-    // fieldStatementArray.push(';');
+        case 'unique':
+          sqlCommands.push(
+            `${columnConstraintsStatementPrefix} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
+          );
+          break;
+      }
+    });
 
     return sqlCommands;
   }

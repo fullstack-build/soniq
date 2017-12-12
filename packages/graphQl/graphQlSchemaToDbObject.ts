@@ -106,7 +106,9 @@ const GQL_JSON_PARSER = {
     // create columns object if not set already
     dbObjectNode.columns = dbObjectNode.columns || [];
 
-    const newField = {};
+    const newField = {
+      constraintNames: []
+    };
     // add new column ref to dbObject
     // newField will now update data in the dbObject through this ref
     dbObjectNode.columns.push(newField);
@@ -193,14 +195,12 @@ const GQL_JSON_PARSER = {
         // set type to uuid
         dbType = 'uuid';
         // add new PK constraint
-        const constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_pkey`;
-        const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
-          type: 'primaryKey',
-          columns: []
-        };
-        // add column name to constraint
-        constraint.columns.push(refDbObjectCurrentTableField.name);
-
+        addConstraint('primaryKey',
+                      gQlSchemaNode,
+                      dbObjectNode,
+                      refDbObj,
+                      refDbObjectCurrentTable,
+                      refDbObjectCurrentTableField);
         break;
       case 'String':
         dbType = 'varchar';
@@ -226,13 +226,12 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTableField,
   ) => {
     // add new constraint
-    const constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_notnull`;
-    const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
-      type: 'not_null',
-      columns: []
-    };
-    // add column name to constraint
-    constraint.columns.push(refDbObjectCurrentTableField.name);
+    addConstraint('not_null',
+                  gQlSchemaNode,
+                  dbObjectNode,
+                  refDbObj,
+                  refDbObjectCurrentTable,
+                  refDbObjectCurrentTableField);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {
@@ -274,21 +273,12 @@ const GQL_JSON_PARSER = {
         break;
       case 'isUnique':
 
-        // named unique constraint - override
-        let constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_key`;
-        if (gQlDirectiveNode.arguments[0] != null && gQlDirectiveNode.arguments[0].name.value === 'name') {
-          const namedConstraintName = gQlDirectiveNode.arguments[0].value.value;
-          constraintName = `${refDbObjectCurrentTable.name}_${namedConstraintName}_key`;
-        }
-
-        // create new constraint
-        const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
-          type: 'unique',
-          columns: []
-        };
-        // add column name to constraint
-        constraint.columns.push(refDbObjectCurrentTableField.name);
-
+        addConstraint('unique',
+                      gQlDirectiveNode,
+                      dbObjectNode,
+                      refDbObj,
+                      refDbObjectCurrentTable,
+                      refDbObjectCurrentTableField);
         break;
       case 'computed':
         dbObjectNode.type = 'computed';
@@ -321,6 +311,46 @@ const GQL_JSON_PARSER = {
     }
   },
 };
+
+function addConstraint(constraintType,
+                       gQlSchemaNode,
+                       dbObjectNode,
+                       refDbObj,
+                       refDbObjectCurrentTable,
+                       refDbObjectCurrentTableField) {
+
+  let constraintName = null;
+  switch (constraintType) {
+    case 'unique':
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_key`;
+      // named unique constraint - override
+      if (gQlSchemaNode.arguments[0] != null && gQlSchemaNode.arguments[0].name.value === 'name') {
+        const namedConstraintName = gQlSchemaNode.arguments[0].value.value;
+        constraintName = `${refDbObjectCurrentTable.name}_${namedConstraintName}_key`;
+      }
+      break;
+    case 'primaryKey':
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_pkey`;
+      break;
+    case 'not_null':
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_notnull`;
+      break;
+  }
+
+  // create new constraint if name was set
+  if (constraintName != null) {
+    const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
+      type: constraintType,
+      columns: []
+    };
+    // add column name to constraint
+    constraint.columns.push(refDbObjectCurrentTableField.name);
+
+    // add constraint to field
+    refDbObjectCurrentTableField.constraintNames.push(constraintName);
+  }
+
+}
 
 function relationBuilderHelper(
   gQlDirectiveNode,
