@@ -30,70 +30,94 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
 
-  /* const one = getInstance();
+  const one = getInstance();
   const pool = one.getDbPool();
-
-  pool.query('SELECT * FROM pg_config').then((value) => {
-    // tslint:disable-next-line:no-console
-    console.log(value);
-  }); */
 
   const queryResolvers = {};
   const mutationResolvers = {};
 
   Object.values(queries).forEach((query) => {
-    queryResolvers[query.name] = (obj, args, context, info) => {
-        // tslint:disable-next-line:no-console
-        console.log('!! QUERY !!   ' +  + query.name);
-        // tslint:disable-next-line:no-console
-        console.log(JSON.stringify(info, null, 2));
-        // tslint:disable-next-line:no-console
-        console.log(JSON.stringify(parseResolveInfo(info), null, 2));
-        // tslint:disable-next-line:no-console
-        console.log('>>>>SQL>>>> ============================================ ');
-        // tslint:disable-next-line:no-console
-        console.log(queryResolver(obj, args, context, info).sql);
+    queryResolvers[query.name] = async (obj, args, context, info) => {
 
-        // return [{id:13, firstLetterOfUserName: 'A'}];
-        return [{
-          id: 12,
-          email: 'dustin@fullstack.build',
-          _typenames: ['USER_ME']
-        }, {
-          id: 13,
-          email: 'eugene@fullstack.build',
-          firstLetterOfUserName: 'A',
-          _typenames: ['USER_AUTHOR']
-        }];
+        const client = await pool.connect();
+
+        const selectQuery = queryResolver(obj, args, context, info);
+
+        try {
+          await client.query('BEGIN');
+
+          // Set current user for permissions
+          if (context.userId != null) {
+            await client.query('set local jwt.claims.user_id to ' + context.userId);
+          }
+
+          // tslint:disable-next-line:no-console
+          console.log('RUN QUERY', selectQuery.sql, selectQuery.values);
+
+          // Query data
+          const { rows } = await client.query(selectQuery.sql, selectQuery.values);
+
+          const data = JSON.parse(rows[0][selectQuery.query.name]);
+
+          await client.query('COMMIT');
+
+          return data;
+
+        } catch (e) {
+          await client.query('ROLLBACK');
+          throw e;
+        } finally {
+          client.release();
+        }
     };
   });
 
   Object.values(mutations).forEach((mutation) => {
-    mutationResolvers[mutation.name] = (obj, args, context, info) => {
+    mutationResolvers[mutation.name] = async (obj, args, context, info) => {
 
-        // tslint:disable-next-line:no-console
-        console.log('CON', context);
-        // tslint:disable-next-line:no-console
-        console.log('!! MUTATION !!   ' +  + mutation.name);
-        // tslint:disable-next-line:no-console
-        console.log('>>>>SQL>>>> ============================================');
+        const client = await pool.connect();
 
         const mutationQuery = mutationResolver(obj, args, context, info);
-        // tslint:disable-next-line:no-console
-        console.log(mutationQuery.sql, mutationQuery.values);
-        try {
+
+        try {
+          await client.query('BEGIN');
+
+          // Set current user for permissions
+          if (context.userId != null) {
+            await client.query('set local jwt.claims.user_id to ' + context.userId);
+          }
+
           // tslint:disable-next-line:no-console
-          console.log(queryResolver(obj, args, context, info).sql);
+          console.log('RUN MUTATION', mutationQuery.sql, mutationQuery.values);
+
+          // Query data
+          const { rows } = await client.query(mutationQuery.sql, mutationQuery.values);
+
+          let returnData;
+
+          // When mutationType is DELETE just return the id. Otherwise query for the new data.
+          if (mutationQuery.mutation.type === 'DELETE') {
+            returnData = rows[0].id;
+          } else {
+            const returnQuery = queryResolver(obj, args, context, info);
+
+            // tslint:disable-next-line:no-console
+            console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
+
+            const { rows: returnRows } = await client.query(returnQuery.sql, returnQuery.values);
+            returnData = JSON.parse(returnRows[0][returnQuery.query.name])[0];
+          }
+
+          await client.query('COMMIT');
+
+          return returnData;
+
         } catch (e) {
-          // tslint:disable-next-line:no-console
-          console.log('NO RETURN QUERY');
+          await client.query('ROLLBACK');
+          throw e;
+        } finally {
+          client.release();
         }
-        // return [{id:13, firstLetterOfUserName: 'A'}];
-        return {
-          id: 12,
-          title: 'first Post',
-          _typenames: ['POST_OWNER']
-        };
     };
   });
 

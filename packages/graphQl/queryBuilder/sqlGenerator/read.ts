@@ -203,6 +203,6 @@ export function getQueryResolver(gQlTypes, dbObject) {
       counter
     } = jsonAgg(0, query, gQlTypes, dbObject, null);
 
-    return { sql: `SELECT ${sql}` };
+    return { sql: `SELECT ${sql}`, values: [], query };
   };
 }

@@ -4,7 +4,7 @@ export = [
     type: 'READ',
     table: 'User',
     fields: [
-      'id', 'firstLetterOfUserName'
+      'id', 'firstLetterOfUserName', 'payload'
     ],
     expressions: [{
       name: 'Anyone',
@@ -27,7 +27,7 @@ export = [
     name: 'Me',
     table: 'User',
     fields: [
-      'id', 'username', 'email',
+      'id', 'username', 'email', 'payload'
     ],
     expressions: [{
       name: 'Owner',
