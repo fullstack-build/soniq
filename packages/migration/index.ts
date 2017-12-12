@@ -81,10 +81,15 @@ export namespace migration {
         // ignore relations
       } else {
         // create column statement
-        sqlCommands.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" ${columnObject.type};`);
+        sqlCommands.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" varchar;`);
+        // set column type
+        sqlCommands.push(
+          `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE ${columnObject.type} USING "${columnObject.name}"::${columnObject.type};`
+        );
 
         // generate constraints for column
-        createColumnConstraints(sqlCommands, tableName, columnObject);
+        // todo
+        // createColumnConstraints(sqlCommands, tableName, columnObject);
 
       }
     }
@@ -94,10 +99,14 @@ export namespace migration {
 
         const multiColumnUniqueConstraint = [];
         // constraints
-        Object.entries(columnObject.constraints).forEach((columnConstraint) => {
+        /*Object.entries(columnObject.constraints).forEach((columnConstraint) => {
           const columnConstraintsStatementPrefix: string = `ALTER TABLE ${tableName}`;
           // tslint:disable-next-line:no-console
-          // console.log(columnConstraint);
+          if (columnObject.name == null) {
+            console.error(tableName, columnObject, columnConstraint);
+          } else {
+            console.error(tableName, columnObject.name);
+          }
 
           // primary key
           if (columnConstraint[0] === 'isPrimaryKey' && !!columnConstraint[1]) {
@@ -110,6 +119,12 @@ export namespace migration {
               `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnObject.name}" SET DEFAULT uuid_generate_v4();`
             );
           }
+          // nullable
+          if (columnConstraint[0] === 'nullable' && !!columnConstraint[1]) {
+            sqlCommands.push(
+              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnObject.name}" SET NOT NULL;`
+            );
+          }
           // handle single unique
           if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'boolean' && !!columnConstraint[1]) {
             sqlCommands.push(
@@ -120,7 +135,7 @@ export namespace migration {
           if (columnConstraint[0] === 'unique' && typeof columnConstraint[1] === 'string') {
             // console.error('***Multi column unique',  columnObject.name);
           }
-        });
+        });*/
 
         // create unique constraints
         // console.error('***');

@@ -13,13 +13,13 @@ export interface IDbObject {
           defaultValue: string;
         }
       ];
-      constraints: [
-        {
-          type: 'primaryKey' | 'nullable' | 'unique';
+      constraints: {
+        [name: string]: {
+          type: 'primaryKey' | 'not_null' | 'unique';
           name: string;
           columns: [string];
         }
-      ];
+      };
     };
   };
   relations: {
