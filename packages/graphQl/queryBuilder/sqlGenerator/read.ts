@@ -142,6 +142,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
     sql += ` WHERE ${exp} = ${match.idExpression}`;
   }
 
+  // TODO: Make this injection save and more useful
   if (customSqlQuery != null) {
     if (match != null) {
       sql += ` AND`;
