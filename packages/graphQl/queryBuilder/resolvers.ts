@@ -108,7 +108,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
             console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
 
             const { rows: returnRows } = await client.query(returnQuery.sql, returnQuery.values);
-            returnData = JSON.parse(returnRows[0][returnQuery.query.name])[0];
+            returnData = returnRows[0][returnQuery.query.name][0];
           }
 
           await client.query('COMMIT');
