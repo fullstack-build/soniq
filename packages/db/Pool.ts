@@ -8,11 +8,10 @@ export class DbPool extends F1.AbstractPackage implements IDb {
   private credentials;
 
   constructor(
-    $one: F1.IFullstackOneCore,
     pCredentials: PgPoolConfig
   ) {
 
-    super($one);
+    super();
     this.credentials  = pCredentials;
     this.pool         = new PgPool(this.credentials);
   }

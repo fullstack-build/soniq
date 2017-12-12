@@ -8,10 +8,9 @@ export class DbClient extends F1.AbstractPackage implements IDb {
   private credentials;
 
   constructor(
-    $one: F1.IFullstackOneCore,
     pCredentials: PgClientConfig
   ) {
-    super($one);
+    super();
 
     this.credentials  = pCredentials;
     this.client       = new PgClient(this.credentials);

@@ -84,8 +84,9 @@ class FullstackOneCore implements IFullstackOneCore {
     // init core logger
     this.logger = this.getLogger('core');
 
-    // continue booting async
-    this.bootAsync();
+    // continue booting async on next tick
+    // (is needed in order to be able to call getInstance from outside)
+    process.nextTick(() => { this.bootAsync(); });
   }
 
   /**
@@ -220,7 +221,7 @@ class FullstackOneCore implements IFullstackOneCore {
 
     try {
       // create connection with setup user
-      this.dbSetupClientObj = new DbClient(this, configDB.setup);
+      this.dbSetupClientObj = new DbClient(configDB.setup);
       // create connection
       await this.dbSetupClientObj.create();
 
@@ -228,7 +229,7 @@ class FullstackOneCore implements IFullstackOneCore {
       this.eventEmitter.emit('db.setup.connection.created');
 
       // create general connection pool
-      this.dbPoolObj = new DbPool(this, configDB.general);
+      this.dbPoolObj = new DbPool(configDB.general);
       // create pool
       await this.dbPoolObj.create();
 
