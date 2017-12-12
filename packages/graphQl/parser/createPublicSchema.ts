@@ -16,9 +16,11 @@ import getTypenamesField from './getTypenamesField';
 import convertToInputType from './convertToInputType';
 import mergeDeletePermissions from './mergeDeletePermissions';
 import createIdField from './createIdField';
+import createScalar from './createScalar';
 import { log } from 'util';
 
 import { introspectionQuery } from 'graphql';
+import { graphiqlKoa } from 'apollo-server-koa/dist/koaApollo';
 
 export default (classification: any, permissions: IPermissions, expressions: IExpressions) => {
 
@@ -33,6 +35,9 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     // definitions: [...otherDefinitions],
     definitions: JSON.parse(JSON.stringify(otherDefinitions))
   };
+
+  // Add JSON Scalar
+  graphQlDocument.definitions.push(createScalar('JSON'));
 
   const gQlTypes: any = {};
   const views = [];

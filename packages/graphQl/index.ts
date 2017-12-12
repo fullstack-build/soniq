@@ -11,7 +11,7 @@ import { graphQl as gQLHelper } from './helper';
 export * from '../migration/migration';
 
 import { runtimeParser } from './parser';
-import { getResolvers } from './queryBuilder/testResolver';
+import { getResolvers } from './queryBuilder/resolvers';
 
 // import interfaces
 import { IPermissions, IExpressions } from './interfaces';
@@ -82,6 +82,8 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
+      // console.log('err', err);
+
       logger.warn('bootGraphQl.error', err);
       // emit event
       $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);
@@ -109,9 +111,21 @@ export namespace graphQl {
 			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations),
 		});
 
+    const gQlParam = (ctx) => {
+
+      const userId = ctx.cookies.get('userId', { signed: false }) || 0;
+
+      return {
+        schema,
+        context: {
+          userId
+        }
+      };
+    };
+
     // koaBody is needed just for POST.
-    gqlRouter.post('/graphql', koaBody(), graphqlKoa({ schema }));
-    gqlRouter.get('/graphql', graphqlKoa({ schema }));
+    gqlRouter.post('/graphql', koaBody(), graphqlKoa(gQlParam));
+    gqlRouter.get('/graphql', graphqlKoa(gQlParam));
 
     gqlRouter.get(graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: graphQlConfig.endpoint }));
 

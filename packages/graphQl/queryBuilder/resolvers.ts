@@ -14,6 +14,18 @@ import {
   getInstance
 } from '../../core';
 
+/* ======================================================= */
+
+// Note: The normal import isn't working here for some reason. This is why I import via require.
+
+// tslint:disable-next-line:import-name
+// import GraphQLJSON from 'graphql-type-json';
+
+// tslint:disable-next-line:no-var-requires
+const graphqlTypeJson = require('graphql-type-json');
+
+/* ======================================================= */
+
 export function getResolvers(gQlTypes, dbObject, queries, mutations) {
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -58,10 +70,11 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
 
   Object.values(mutations).forEach((mutation) => {
     mutationResolvers[mutation.name] = (obj, args, context, info) => {
+
+        // tslint:disable-next-line:no-console
+        console.log('CON', context);
         // tslint:disable-next-line:no-console
         console.log('!! MUTATION !!   ' +  + mutation.name);
-        // tslint:disable-next-line:no-console
-        console.log(JSON.stringify(parseResolveInfo(info), null, 2));
         // tslint:disable-next-line:no-console
         console.log('>>>>SQL>>>> ============================================');
 
@@ -85,6 +98,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
   });
 
   const resolvers = {
+    JSON: graphqlTypeJson,
     Query: queryResolvers,
     Mutation: mutationResolvers
   };

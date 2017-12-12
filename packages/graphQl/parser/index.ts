@@ -16,6 +16,7 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
   // console.log('doc', JSON.stringify(document, null, 2));
 
   // console.log(print(document), views, viewFusions);
+  // console.log(print(document));
 
   /* console.log('> NEW GQL:');
   console.log(print(document));

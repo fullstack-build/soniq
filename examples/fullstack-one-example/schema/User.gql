@@ -3,7 +3,7 @@ type User @table {
   email: String @isUnique
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: JSON @schema(name:"userPayload")
+  #payload: JSON @schema(name: "userPayload")
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "bla")
