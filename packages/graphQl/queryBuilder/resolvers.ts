@@ -102,7 +102,12 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
           if (mutationQuery.mutation.type === 'DELETE') {
             returnData = rows[0].id;
           } else {
-            const returnQuery = queryResolver(obj, args, context, info);
+            const match = {
+              foreignFieldName: 'id',
+              idExpression: `'${mutationQuery.id}'::uuid`
+            };
+
+            const returnQuery = queryResolver(obj, args, context, info, match);
 
             // tslint:disable-next-line:no-console
             console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);

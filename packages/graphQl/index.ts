@@ -82,7 +82,8 @@ export namespace graphQl {
       return dbObject;
 
     } catch (err) {
-      // console.log('err', err);
+      // tslint:disable-next-line:no-console
+      console.log('err', err);
 
       logger.warn('bootGraphQl.error', err);
       // emit event

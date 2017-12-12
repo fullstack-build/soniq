@@ -21,7 +21,7 @@ function resolveCreateMutation(query, mutation) {
   }).join(', ');
 
   // tslint:disable-next-line:quotemark
-  return { sql: `INSERT INTO "${mutation.viewName}" (${f}) VALUES (${v})`, values, mutation };
+  return { sql: `INSERT INTO "${mutation.viewName}" (${f}) VALUES (${v})`, values, mutation, id: query.args.input.id };
 }
 
 function resolveUpdateMutation(query, mutation) {
@@ -44,11 +44,11 @@ function resolveUpdateMutation(query, mutation) {
 
   values.push(entityId);
 
-  return { sql: `UPDATE "${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length}`, values, mutation };
+  return { sql: `UPDATE "${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length}`, values, mutation, id: query.args.input.id };
 }
 
 function resolveDeleteMutation(query, mutation) {
-  return { sql: `DELETE FROM "${mutation.viewName}" WHERE id = $1 RETURNING id`, values: [query.args.input.id], mutation };
+  return { sql: `DELETE FROM "${mutation.viewName}" WHERE id = $1 RETURNING id`, values: [query.args.input.id], mutation, id: query.args.input.id };
 }
 
 export function getMutationResolver(gQlTypes, dbObject, mutations) {

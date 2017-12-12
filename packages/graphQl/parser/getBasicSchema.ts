@@ -1,6 +1,6 @@
-
 import getQueryArguments from './getQueryArguments';
 import getMutationArguments from './getMutationArguments';
+import createSqlQueryInput from './createSqlQueryInput';
 
 function getMutation(name, inputType, typesEnumName, returnType) {
   return {
@@ -61,54 +61,59 @@ export default (queries, mutations) => {
     mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.typesEnumName, mutation.returnType));
   });
 
-  const definitions = [
-    {
-      kind: 'SchemaDefinition',
-      directives: [],
-      operationTypes: [
-        {
-          kind: 'OperationTypeDefinition',
-          operation: 'query',
-          type: {
-            kind: 'NamedType',
-            name: {
-              kind: 'Name',
-              value: 'Query',
-            },
+  const definitions = [];
+
+  definitions.push({
+    kind: 'SchemaDefinition',
+    directives: [],
+    operationTypes: [{
+        kind: 'OperationTypeDefinition',
+        operation: 'query',
+        type: {
+          kind: 'NamedType',
+          name: {
+            kind: 'Name',
+            value: 'Query',
           },
         },
-        {
-          kind: 'OperationTypeDefinition',
-          operation: 'mutation',
-          type: {
-            kind: 'NamedType',
-            name: {
-              kind: 'Name',
-              value: 'Mutation',
-            },
+      },
+      {
+        kind: 'OperationTypeDefinition',
+        operation: 'mutation',
+        type: {
+          kind: 'NamedType',
+          name: {
+            kind: 'Name',
+            value: 'Mutation',
           },
-        }
-      ],
-    }, {
-      kind: 'ObjectTypeDefinition',
-      name: {
-        kind: 'Name',
-        value: 'Query',
-      },
-      interfaces: [],
-      directives: [],
-      fields: queryFields,
-    }, {
-      kind: 'ObjectTypeDefinition',
-      name: {
-        kind: 'Name',
-        value: 'Mutation',
-      },
-      interfaces: [],
-      directives: [],
-      fields: mutationFields,
+        },
+      }
+    ],
+  });
+
+  definitions.push({
+    kind: 'ObjectTypeDefinition',
+    name: {
+      kind: 'Name',
+      value: 'Query',
     },
-  ];
+    interfaces: [],
+    directives: [],
+    fields: queryFields,
+  });
+
+  definitions.push({
+    kind: 'ObjectTypeDefinition',
+    name: {
+      kind: 'Name',
+      value: 'Mutation',
+    },
+    interfaces: [],
+    directives: [],
+    fields: mutationFields,
+  });
+
+  definitions.push(createSqlQueryInput());
 
   return definitions;
 };

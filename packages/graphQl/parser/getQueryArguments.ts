@@ -34,7 +34,7 @@ function getSqlArgument() {
           kind: 'NamedType',
           name: {
             kind: 'Name',
-            value: 'String',
+            value: 'SqlQuery',
           },
         },
         defaultValue: null,

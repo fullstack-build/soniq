@@ -78,8 +78,14 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
     return type;
   });
 
+  let customSqlQuery = null;
+
   if (query.args != null && query.args.typenames != null) {
     typeNames = query.args.typenames;
+  }
+
+  if (query.args != null && query.args.sql != null) {
+    customSqlQuery = query.args.sql;
   }
 
   const fields = query.fieldsByTypeName[tableName];
@@ -134,6 +140,15 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
   if (match != null) {
     const exp = getFieldExpression(match.foreignFieldName, typeNames, gQlType, localNameByType);
     sql += ` WHERE ${exp} = ${match.idExpression}`;
+  }
+
+  if (customSqlQuery != null) {
+    if (match != null) {
+      sql += ` AND`;
+    } else {
+      sql += ` WHERE`;
+    }
+    sql += ` ${customSqlQuery.text}`;
   }
 
   return {
@@ -195,14 +210,13 @@ export function jsonAgg(c, query, gQlTypes, dbObject, match) {
 }
 
 export function getQueryResolver(gQlTypes, dbObject) {
-
-  return (obj, args, context, info) =>  {
+  return (obj, args, context, info, match = null) =>  {
     const query = parseResolveInfo(info);
 
     const {
       sql,
       counter
-    } = jsonAgg(0, query, gQlTypes, dbObject, null);
+    } = jsonAgg(0, query, gQlTypes, dbObject, match);
 
     return { sql: `SELECT ${sql}`, values: [], query };
   };
