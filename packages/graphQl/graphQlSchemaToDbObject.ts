@@ -173,7 +173,6 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTable,
     refDbObjectCurrentTableField,
   ) => {
-    // todo one to many relationships are nested
     if (gQlSchemaNode != null && dbObjectNode != null) {
       // set column name
       dbObjectNode.name = gQlSchemaNode.value;
@@ -283,11 +282,6 @@ const GQL_JSON_PARSER = {
       case 'computed':
         dbObjectNode.type = 'computed';
         break;
-      case 'relation':
-        // mark column as relation
-        // relation directive was handled already in the FieldDefinition handler
-        dbObjectNode.type = 'relation';
-        break;
       default:
         process.stdout.write(
           'parser.error.unknown.directive.kind: ' + directiveKind + '\n',
@@ -363,12 +357,20 @@ function relationBuilderHelper(
     gQlDirectiveNode,
     'directives[0].arguments[0].value.value',
   );
+
   const schemaName = 'public';
   const referencedSchemaName = 'public';
   const tableName = refDbObjectCurrentTable.name;
   const columnName = _.get(gQlDirectiveNode, 'name.value');
   const columnType = _.get(gQlDirectiveNode, 'directives[0].name.value');
   let referencedTableName = _.get(gQlDirectiveNode, 'type');
+
+  // set relation name
+  refDbObjectCurrentTableField.name = columnName;
+  // mark column as relation
+  refDbObjectCurrentTableField.type = 'relation';
+  // set relation name for column
+  refDbObjectCurrentTableField.relationName = relationName;
 
   const relationType = ((node) => {
     if (node.type.kind === 'NamedType') {

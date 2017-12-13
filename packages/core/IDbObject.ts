@@ -11,7 +11,8 @@ export interface IDbObject {
           description?: string;
           type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
           defaultValue: string;
-          constraintNames: [string]
+          constraintNames: [string];
+          relationName?: string;
         }
       ];
       constraints: {
