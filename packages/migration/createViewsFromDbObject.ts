@@ -17,6 +17,7 @@ export default (dbObject, applicationUserName, includePrivileges) => {
     });
   }
 
+  // todo @Dustin: Can be null if relation table was not found
   Object.values(dbObject.views).forEach((view) => {
     let security = '';
     const fieldSelects = view.fields.map((field) => {

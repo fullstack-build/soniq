@@ -63,21 +63,29 @@ export namespace migration {
     });
 
     // iterate over database relations
+    sqlCommands.push(`-- relations:`);
     Object.values(databaseObject.relations).map((relation) => {
-      // check if relation exists
-      // console.log('*', relation);
-      // only parse those with isDbModel = true
-      /*if (!!tableObject.isDbModel) {
-				createSqlFromTableObject(sqlCommands, tableObject);
-			}*/
+
+      // todo write error for many-to-many
+
+      // check if both relation tables exists
+      if (databaseObject.tables[relation[0].tableName] != null) {
+        createRelations(sqlCommands, relation[0]);
+      }
+      if (relation[1] != null && databaseObject.tables[relation[1].tableName] != null) {
+        createRelations(sqlCommands, relation[1]);
+      }
+
     });
 
     return sqlCommands;
   }
 
+  // http://www.postgresqltutorial.com/postgresql-alter-table/
   function createSqlFromTableObject(sqlCommands, tableObject) {
     const tableName = `"${tableObject.schemaName}"."${tableObject.name}"`;
     // create table statement
+    sqlCommands.push(`-- table ${tableName}:`);
     sqlCommands.push(
       `CREATE TABLE ${tableName}();`,
     );
@@ -98,9 +106,25 @@ export namespace migration {
           `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE ${columnObject.type} USING "${columnObject.name}"::${columnObject.type};`
         );
       }
+
+      // add default values
+      if (columnObject.defaultValue != null) {
+        if (columnObject.defaultValue.isExpression) {
+          // set default - expression
+          sqlCommands.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT  ${columnObject.defaultValue.value};`
+          );
+        } else {
+          // set default - value
+          sqlCommands.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT '${columnObject.defaultValue.value}';`
+          );
+        }
+      }
     }
 
     // generate constraints for column
+    sqlCommands.push(`-- constraints for ${tableName}:`);
     createColumnConstraints(sqlCommands, tableName, tableObject);
   }
 
@@ -112,32 +136,30 @@ export namespace migration {
       const constraintDefinition = constraint[1];
       const columnNamesAsStr = constraintDefinition.columns.map(columnName => `"${columnName}"`).join(',');
 
-      const columnConstraintsStatementPrefix: string = `ALTER TABLE ${tableName}`;
-
       switch (constraintDefinition.type) {
         case 'primaryKey':
           // convention: all PKs are generated uuidv4
           constraintDefinition.columns.forEach((columnName) => {
             sqlCommands.push(
-              `${columnConstraintsStatementPrefix} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
+              `ALTER TABLE ${tableName} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
             );
           });
 
           // make PK
           sqlCommands.push(
-            `${columnConstraintsStatementPrefix} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
+            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
           );
           break;
 
         case 'not_null':
           sqlCommands.push(
-            `${columnConstraintsStatementPrefix} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
+            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
           );
           break;
 
         case 'unique':
           sqlCommands.push(
-            `${columnConstraintsStatementPrefix} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
+            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
           );
           break;
       }
@@ -146,4 +168,22 @@ export namespace migration {
     return sqlCommands;
   }
 
+  function createRelations(sqlCommands, relationObject) {
+
+    const tableName = `"${relationObject.schemaName}"."${relationObject.tableName}"`;
+
+    // create column for FK // convention: uuid
+    sqlCommands.push(
+      `ALTER TABLE ${tableName} ` +
+      `ADD COLUMN "${relationObject.columnName}" uuid;`
+    );
+
+    // add foreign key
+    // convention: every row has an id column that will be refenrenced
+    sqlCommands.push(
+      `ALTER TABLE ${tableName} ` +
+      `ADD CONSTRAINT "fk_${relationObject.name}" FOREIGN KEY ("${relationObject.columnName}") ` +
+      `REFERENCES "${relationObject.reference.schemaName}"."${relationObject.reference.tableName}"("${relationObject.reference.columnName}");`
+    );
+  }
 }

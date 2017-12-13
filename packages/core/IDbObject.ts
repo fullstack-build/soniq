@@ -10,9 +10,13 @@ export interface IDbObject {
           name: string;
           description?: string;
           type: 'computed' | 'varchar' | 'uuid' | 'jsonb' | 'relation';
-          defaultValue: string;
+          defaultValue?: {
+            isExpression: boolean;
+            value: 'string';
+          };
           constraintNames: [string];
           relationName?: string;
+          schemaName?: string;
         }
       ];
       constraints: {

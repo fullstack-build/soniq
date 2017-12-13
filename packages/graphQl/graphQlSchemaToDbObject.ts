@@ -15,7 +15,7 @@ export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject =
 
 // refDbObjectCurrentTable:
 //  - ref to current parent table obj will be passed through all iterations after table was added
-// refDbObjectCurrentTableField:
+// refDbObjectCurrentTableColumn:
 // - ref to current parent table column obj will be passed through all iterations
 //   after table column was added
 function parseGraphQlJsonNode(
@@ -23,7 +23,7 @@ function parseGraphQlJsonNode(
   dbObjectNode,
   dbObject?,
   refDbObjectCurrentTable?,
-  refDbObjectCurrentTableField?,
+  refDbObjectCurrentTableColumn?,
 ) {
   // ref to dbObject will be passed through all iterations
   const refDbObj = dbObject || dbObjectNode;
@@ -32,8 +32,8 @@ function parseGraphQlJsonNode(
   if (gQlSchemaNode == null || gQlSchemaNode.kind == null) {
     // ignore empty nodes or nodes without a kind
   } else if (GQL_JSON_PARSER[gQlSchemaNode.kind] == null) {
-    process.stdout.write(
-      'parser.error.unknown.type: ' + gQlSchemaNode.kind + '\n',
+    process.stderr.write(
+      'GraphQL.parsererror.unknown.type: ' + gQlSchemaNode.kind + '\n',
     );
   } else {
     // parse
@@ -42,7 +42,7 @@ function parseGraphQlJsonNode(
       dbObjectNode,
       refDbObj,
       refDbObjectCurrentTable,
-      refDbObjectCurrentTableField,
+      refDbObjectCurrentTableColumn,
     );
   }
 }
@@ -171,7 +171,7 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
     if (gQlSchemaNode != null && dbObjectNode != null) {
       // set column name
@@ -185,12 +185,15 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
-    const columnType = gQlSchemaNode.name.value;
+    const columnType = gQlSchemaNode.name.value.toLocaleLowerCase();
     let dbType = 'varchar';
+    // types
+    // GraphQl: http://graphql.org/graphql-js/basic-types/
+    // PG: https://www.postgresql.org/docs/current/static/datatype.html
     switch (columnType) {
-      case 'ID':
+      case 'id':
         // set type to uuid
         dbType = 'uuid';
         // add new PK constraint
@@ -199,15 +202,27 @@ const GQL_JSON_PARSER = {
                       dbObjectNode,
                       refDbObj,
                       refDbObjectCurrentTable,
-                      refDbObjectCurrentTableField);
+                      refDbObjectCurrentTableColumn);
         break;
-      case 'String':
+      case 'string':
         dbType = 'varchar';
+        break;
+      case 'int':
+        dbType = 'int';
+        break;
+      case 'float':
+        dbType = 'float8';
+        break;
+      case 'boolean':
+        dbType = 'bool';
+        break;
+      case 'json':
+        dbType = 'jsonb';
         break;
       default:
         // unknown type
-        process.stdout.write(
-          'parser.error.unknown.field.type: ' + columnType + '\n',
+        process.stderr.write(
+          'GraphQL.parsererror.unknown.field.type: ' + refDbObjectCurrentTable.name + '.' + columnType + '\n',
         );
         break;
     }
@@ -222,7 +237,7 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
     // add new constraint
     addConstraint('not_null',
@@ -230,7 +245,7 @@ const GQL_JSON_PARSER = {
                   dbObjectNode,
                   refDbObj,
                   refDbObjectCurrentTable,
-                  refDbObjectCurrentTableField);
+                  refDbObjectCurrentTableColumn);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {
@@ -240,7 +255,7 @@ const GQL_JSON_PARSER = {
         dbObjectNode,
         refDbObj,
         refDbObjectCurrentTable,
-        refDbObjectCurrentTableField,
+        refDbObjectCurrentTableColumn,
       );
     }
   },
@@ -251,7 +266,7 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
     dbObjectNode.type = 'jsonb';
     dbObjectNode.defaultValue = {};
@@ -263,7 +278,7 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
     const directiveKind = gQlDirectiveNode.name.value;
     switch (directiveKind) {
@@ -277,14 +292,31 @@ const GQL_JSON_PARSER = {
                       dbObjectNode,
                       refDbObj,
                       refDbObjectCurrentTable,
-                      refDbObjectCurrentTableField);
+                      refDbObjectCurrentTableColumn);
         break;
-      case 'computed':
+      case 'computed': // mark as computed
         dbObjectNode.type = 'computed';
         break;
+      case 'custom': // mark as custom
+        dbObjectNode.type = 'custom';
+        break;
+      case 'schema': // additional jscon schema validation
+        dbObjectNode.schemaName = _.get(gQlDirectiveNode, 'arguments[0].value.value');
+        break;
+      case 'type': // override type with PG native type
+        dbObjectNode.type = _.get(gQlDirectiveNode, 'arguments[0].value.value');
+        break;
+      case 'default': // set default value
+        setDefaultValueForColumn(gQlDirectiveNode,
+                                 dbObjectNode,
+                                 refDbObj,
+                                 refDbObjectCurrentTable,
+                                 refDbObjectCurrentTableColumn);
+        break;
       default:
-        process.stdout.write(
-          'parser.error.unknown.directive.kind: ' + directiveKind + '\n',
+        process.stderr.write(
+          'GraphQL.parsererror.unknown.directive.kind: ' +
+          refDbObjectCurrentTable.name + '.' + refDbObjectCurrentTableColumn.name + '.' + directiveKind + '\n',
         );
         break;
     }
@@ -296,27 +328,42 @@ const GQL_JSON_PARSER = {
     dbObjectNode,
     refDbObj,
     refDbObjectCurrentTable,
-    refDbObjectCurrentTableField,
+    refDbObjectCurrentTableColumn,
   ) => {
     // set argument name and value
-    // todo one to many relationships are nested
     if (gQlNode != null && dbObjectNode != null) {
       dbObjectNode[gQlNode.name.value] = gQlNode.value.value;
     }
   },
 };
 
+function setDefaultValueForColumn(gQlSchemaNode,
+                                  dbObjectNode,
+                                  refDbObj,
+                                  refDbObjectCurrentTable,
+                                  refDbObjectCurrentTableColumn) {
+
+  const isExpression = (_.get(gQlSchemaNode, 'arguments[0].name.value').toLocaleLowerCase() === 'expression');
+  const defaultValue = _.get(gQlSchemaNode, 'arguments[0].value.value');
+  // add default object to column
+  refDbObjectCurrentTableColumn.defaultValue = {
+    isExpression,
+    value: defaultValue
+  };
+
+}
+
 function addConstraint(constraintType,
                        gQlSchemaNode,
                        dbObjectNode,
                        refDbObj,
                        refDbObjectCurrentTable,
-                       refDbObjectCurrentTableField) {
+                       refDbObjectCurrentTableColumn) {
 
   let constraintName = null;
   switch (constraintType) {
     case 'unique':
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_key`;
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_key`;
       // named unique constraint - override
       if (gQlSchemaNode.arguments[0] != null && gQlSchemaNode.arguments[0].name.value === 'name') {
         const namedConstraintName = gQlSchemaNode.arguments[0].value.value;
@@ -324,10 +371,10 @@ function addConstraint(constraintType,
       }
       break;
     case 'primaryKey':
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_pkey`;
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_pkey`;
       break;
     case 'not_null':
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableField.name}_notnull`;
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_notnull`;
       break;
   }
 
@@ -338,10 +385,10 @@ function addConstraint(constraintType,
       columns: []
     };
     // add column name to constraint
-    constraint.columns.push(refDbObjectCurrentTableField.name);
+    constraint.columns.push(refDbObjectCurrentTableColumn.name);
 
     // add constraint to field
-    refDbObjectCurrentTableField.constraintNames.push(constraintName);
+    refDbObjectCurrentTableColumn.constraintNames.push(constraintName);
   }
 
 }
@@ -351,7 +398,7 @@ function relationBuilderHelper(
   dbObjectNode,
   refDbObj,
   refDbObjectCurrentTable,
-  refDbObjectCurrentTableField,
+  refDbObjectCurrentTableColumn,
 ) {
   const relationName = _.get(
     gQlDirectiveNode,
@@ -361,16 +408,16 @@ function relationBuilderHelper(
   const schemaName = 'public';
   const referencedSchemaName = 'public';
   const tableName = refDbObjectCurrentTable.name;
-  const columnName = _.get(gQlDirectiveNode, 'name.value');
+  const virtualColumnName = _.get(gQlDirectiveNode, 'name.value');
   const columnType = _.get(gQlDirectiveNode, 'directives[0].name.value');
-  let referencedTableName = _.get(gQlDirectiveNode, 'type');
+  let referencedTableName = null;
 
   // set relation name
-  refDbObjectCurrentTableField.name = columnName;
+  refDbObjectCurrentTableColumn.name = virtualColumnName;
   // mark column as relation
-  refDbObjectCurrentTableField.type = 'relation';
+  refDbObjectCurrentTableColumn.type = 'relation';
   // set relation name for column
-  refDbObjectCurrentTableField.relationName = relationName;
+  refDbObjectCurrentTableColumn.relationName = relationName;
 
   const relationType = ((node) => {
     if (node.type.kind === 'NamedType') {
@@ -396,25 +443,40 @@ function relationBuilderHelper(
     }
   })(gQlDirectiveNode);
 
-  // create relation in dbObject if ont set yet
-  // and save ref for later
-  const relationsArray = (refDbObj.relations[relationName] =
-    refDbObj.relations[relationName] || []);
+  // check if relation table exists
+  if (refDbObj.tables[referencedTableName] == null) {
 
-  // create relation
-  const relation = {
-    schemaName,
-    tableName,
-    columnName,
-    name:       relationName,
-    type:       relationType,
-    // joins to
-    reference:  {
-      columnName,
-      schemaName: referencedSchemaName,
-      tableName:  referencedTableName,
-    },
-  };
+    process.stderr.write(
+      'GraphQL.parsererror.unknown.relation.table: ' + tableName + '.' + virtualColumnName + ' ' + referencedTableName + '\n',
+    );
+  } else {
+    // convention: always reference ID pk
+    const referencedColumnName = 'id';
+    // fk column naming convention: {name}_{foreignTableName}_{foreignFieldName}
+    const actualColumnName = `${relationName}_${referencedTableName}_${referencedColumnName}`;
 
-  relationsArray.push(relation);
+    // create relation in dbObject if not set yet
+    // and save ref for later
+    const relationsArray = (refDbObj.relations[relationName] =
+      refDbObj.relations[relationName] || []);
+
+    // create relation
+    const relation = {
+      schemaName,
+      tableName,
+      columnName: actualColumnName,
+      name:       relationName,
+      type:       relationType,
+      // joins to
+      reference:  {
+
+        columnName: referencedColumnName,
+        schemaName: referencedSchemaName,
+        tableName:  referencedTableName,
+      },
+    };
+
+    relationsArray.push(relation);
+  }
+
 }
