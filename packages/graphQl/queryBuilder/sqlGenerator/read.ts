@@ -106,7 +106,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
       if (gQlType.relationByField[field.name] != null) {
         const relation = gQlType.relationByField[field.name];
         if (relation.relationType === 'ONE') {
-          const fieldIdExpression = getFieldExpression(relation.fieldName, typeNames, gQlType, localNameByType);
+          const fieldIdExpression = getFieldExpression(relation.columnName, typeNames, gQlType, localNameByType);
 
           const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, fieldIdExpression);
 
@@ -170,7 +170,7 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, matchIdE
     match.foreignFieldName = 'id';
     return rowToJson(c, query, gQlTypes, dbObject, match);
   } else {
-    match.foreignFieldName = foreignRelation.reference.columnName + '_' + foreignRelation.reference.tableName + '_id';
+    match.foreignFieldName = foreignRelation.columnName;
     return jsonAgg(c, query, gQlTypes, dbObject, match);
   }
 }

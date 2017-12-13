@@ -191,7 +191,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           relationName,
           foreignTableName: getRelationForeignTable(field),
           relationType: getRelationType(field),
-          fieldName: relationFieldName
+          columnName: relationFieldName
         };
 
         // This field cannot be set with a mutation
