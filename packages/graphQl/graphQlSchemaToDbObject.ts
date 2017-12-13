@@ -33,7 +33,7 @@ function parseGraphQlJsonNode(
     // ignore empty nodes or nodes without a kind
   } else if (GQL_JSON_PARSER[gQlSchemaNode.kind] == null) {
     process.stderr.write(
-      'GraphQL.parsererror.unknown.type: ' + gQlSchemaNode.kind + '\n',
+      'GraphQL.parser.error.unknown.type: ' + gQlSchemaNode.kind + '\n',
     );
   } else {
     // parse
@@ -222,7 +222,7 @@ const GQL_JSON_PARSER = {
       default:
         // unknown type
         process.stderr.write(
-          'GraphQL.parsererror.unknown.field.type: ' + refDbObjectCurrentTable.name + '.' + columnType + '\n',
+          'GraphQL.parser.error.unknown.field.type: ' + refDbObjectCurrentTable.name + '.' + columnType + '\n',
         );
         break;
     }
@@ -315,7 +315,7 @@ const GQL_JSON_PARSER = {
         break;
       default:
         process.stderr.write(
-          'GraphQL.parsererror.unknown.directive.kind: ' +
+          'GraphQL.parser.error.unknown.directive.kind: ' +
           refDbObjectCurrentTable.name + '.' + refDbObjectCurrentTableColumn.name + '.' + directiveKind + '\n',
         );
         break;
@@ -447,13 +447,13 @@ function relationBuilderHelper(
   if (refDbObj.tables[referencedTableName] == null) {
 
     process.stderr.write(
-      'GraphQL.parsererror.unknown.relation.table: ' + tableName + '.' + virtualColumnName + ' ' + referencedTableName + '\n',
+      'GraphQL.parser.error.unknown.relation.table: ' + tableName + '.' + virtualColumnName + ' ' + referencedTableName + '\n',
     );
   } else {
     // convention: always reference ID pk
     const referencedColumnName = 'id';
     // fk column naming convention: {name}_{foreignTableName}_{foreignFieldName}
-    const actualColumnName = `${relationName}_${referencedTableName}_${referencedColumnName}`;
+    const nativeColumnName = `${virtualColumnName}_${referencedTableName}_${referencedColumnName}`;
 
     // create relation in dbObject if not set yet
     // and save ref for later
@@ -464,7 +464,8 @@ function relationBuilderHelper(
     const relation = {
       schemaName,
       tableName,
-      columnName: actualColumnName,
+      virtualColumnName,
+      columnName: nativeColumnName,
       name:       relationName,
       type:       relationType,
       // joins to

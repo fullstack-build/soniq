@@ -105,7 +105,6 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
     if (field.name !== '_typenames') {
       if (gQlType.relationByField[field.name] != null) {
         const relation = gQlType.relationByField[field.name];
-
         if (relation.relationType === 'ONE') {
           const fieldIdExpression = getFieldExpression(relation.fieldName, typeNames, gQlType, localNameByType);
 
