@@ -1,6 +1,7 @@
 type User @table {
   id: ID! @isUnique
   email: String @isUnique @default(value: "test@test.de")
+  gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
   payload: JSON @schema(name: "userPayload")
@@ -8,4 +9,9 @@ type User @table {
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "bla")
   testDefault: String @type(name: "Date") @default(expression: "now()")
+}
+
+enum Gender {
+  male
+  female
 }

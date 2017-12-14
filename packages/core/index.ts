@@ -14,8 +14,8 @@ export { AbstractPackage };
 import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
-import { IDbObject } from './IDbObject';
-export { IFullstackOneCore, IEnvironmentInformation, IDbObject };
+import { IDbObject, IDbRelation } from './IDbObject';
+export { IFullstackOneCore, IEnvironmentInformation, IDbObject, IDbRelation };
 
 // fullstack-one imports
 import { helper } from '../helper';

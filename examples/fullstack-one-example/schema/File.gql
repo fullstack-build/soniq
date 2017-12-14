@@ -3,5 +3,4 @@ type File @table {
   url: String
   container: String @isUnique(name: "FileSource")
   fileName: String @isUnique(name: "FileSource")
-  post: Post @relation(name: "TitleImage")
 }

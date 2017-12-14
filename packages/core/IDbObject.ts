@@ -9,7 +9,8 @@ export interface IDbObject {
         {
           name: string;
           description?: string;
-          type: 'computed' | 'custom' | 'varchar' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation';
+          type: 'computed' | 'customResolver' | 'varchar' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
+          customType?: string;
           defaultValue?: {
             isExpression: boolean;
             value: 'string';
@@ -31,21 +32,26 @@ export interface IDbObject {
   relations: {
     [name: string]: IMaxTwoRelations;
   };
+  enums: {
+    [name: string]: [string];
+  };
   views: any;
 }
 
 interface IMaxTwoRelations {
-  0: IRelation;
-  1?: IRelation;
+  0: IDbRelation;
+  1?: IDbRelation;
 }
 
-interface IRelation {
+export interface IDbRelation {
   name: string;
   schemaName: string;
   tableName: string;
   virtualColumnName: string;
   columnName: string;
-  type: 'own' | 'belongTo';
+  type: 'ONE' | 'MANY';
+  onDelete?: 'restrict' | 'cascade' | 'set NULL' | 'set DEFAULT';
+  onUpdate?: 'restrict' | 'cascade' | 'set NULL' | 'set DEFAULT';
   // Name of the association
   description?: string;
   // joins to

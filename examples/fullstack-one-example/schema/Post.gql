@@ -2,7 +2,7 @@ type Post @table {
   id: ID! @isUnique
   title: String
   content: String
-  owner: User! @relation(name: "PostOwner")
+  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "cascade")
   ownerSecret: String
   titleImage: File @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")

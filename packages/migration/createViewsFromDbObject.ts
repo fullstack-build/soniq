@@ -8,6 +8,7 @@ const operationMapper = {
 
 export default (dbObject, applicationUserName, includePrivileges) => {
   const statements = [];
+  statements.push('-- views');
 
   if (includePrivileges === true) {
     Object.values(dbObject.tables).forEach((table) => {
