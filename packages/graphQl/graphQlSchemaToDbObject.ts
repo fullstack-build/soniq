@@ -330,6 +330,17 @@ const GQL_JSON_PARSER = {
                       refDbObjectCurrentTable,
                       refDbObjectCurrentTableColumn);
         break;
+      case 'check': // native PG check constraint
+        // iterate over all constraints
+        gQlDirectiveNode.arguments.forEach((argument) => {
+          addConstraint('check',
+                        argument,
+                        dbObjectNode,
+                        refDbObj,
+                        refDbObjectCurrentTable,
+                        refDbObjectCurrentTableColumn);
+        });
+        break;
       case 'validate': // validate constraint
 
         // iterate over all constraints
@@ -426,13 +437,20 @@ function addConstraint(constraintType,
     case 'not_null':
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_notnull`;
       break;
-    case 'validate':
-      const checkType = gQlSchemaNode.name.value;
+    case 'check':
+      const checkName = gQlSchemaNode.name.value;
       options = {
-        param1: checkType,
+        param1: gQlSchemaNode.value.value
+      };
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${checkName}_check`;
+      break;
+    case 'validate':
+      const validateType = gQlSchemaNode.name.value;
+      options = {
+        param1: validateType,
         param2: gQlSchemaNode.value.value
       };
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${checkType}_validator`;
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${validateType}_validator`;
     break;
   }
 

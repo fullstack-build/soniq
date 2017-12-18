@@ -1,6 +1,6 @@
 type User @table {
   id: ID! @isUnique
-  email: String @isUnique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
+  email: String @isUnique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build") @check(notGenreicAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'")
   gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})

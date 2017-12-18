@@ -188,10 +188,16 @@ export namespace migration {
           );
         break;
         case 'validate':
-          const param1 = constraintDefinition.options.param1;
-          const param2 = (constraintDefinition.options.param2 != null) ? constraintDefinition.options.param2 : '';
+          const validatorName  = constraintDefinition.options.param1;
+          const validatorParam = (constraintDefinition.options.param2 != null) ? constraintDefinition.options.param2 : '';
           sqlCommands.push(
-            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (_meta.validate(${columnNamesAsStr}, '${param1}', '${param2}'));`
+            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}"` +
+            ` CHECK (_meta.validate(${columnNamesAsStr}, '${validatorName}', '${validatorParam}'));`
+          );
+        case 'check':
+          const checkExpression = constraintDefinition.options.param1;
+          sqlCommands.push(
+            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (${checkExpression});`
           );
         break;
       }
