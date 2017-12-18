@@ -330,6 +330,18 @@ const GQL_JSON_PARSER = {
                       refDbObjectCurrentTable,
                       refDbObjectCurrentTableColumn);
         break;
+      case 'validate': // validate constraint
+
+        // iterate over all constraints
+        gQlDirectiveNode.arguments.forEach((argument) => {
+          addConstraint('validate',
+                        argument,
+                        dbObjectNode,
+                        refDbObj,
+                        refDbObjectCurrentTable,
+                        refDbObjectCurrentTableColumn);
+        });
+        break;
       case 'computed': // mark as computed
         dbObjectNode.type = 'computed';
         break;
@@ -397,7 +409,8 @@ function addConstraint(constraintType,
                        refDbObjectCurrentTable,
                        refDbObjectCurrentTableColumn) {
 
-  let constraintName = null;
+  let constraintName  = null;
+  let options         = {};
   switch (constraintType) {
     case 'unique':
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_key`;
@@ -413,12 +426,21 @@ function addConstraint(constraintType,
     case 'not_null':
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_notnull`;
       break;
+    case 'validate':
+      const checkType = gQlSchemaNode.name.value;
+      options = {
+        param1: checkType,
+        param2: gQlSchemaNode.value.value
+      };
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${checkType}_validator`;
+    break;
   }
 
   // create new constraint if name was set
   if (constraintName != null) {
     const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
       type: constraintType,
+      options,
       columns: []
     };
     // add column name to constraint

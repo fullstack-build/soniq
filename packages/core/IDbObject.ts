@@ -22,9 +22,13 @@ export interface IDbObject {
       ];
       constraints: {
         [name: string]: {
-          type: 'primaryKey' | 'not_null' | 'unique';
+          type: 'primaryKey' | 'not_null' | 'unique' | 'check' | 'validate';
           name: string;
           columns: [string];
+          options: {
+            param1: string;
+            param2: string;
+          }
         }
       };
     };

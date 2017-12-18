@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.current_user()
+CREATE OR REPLACE FUNCTION _meta.current_user()
     RETURNS "User"
     LANGUAGE 'sql'
 

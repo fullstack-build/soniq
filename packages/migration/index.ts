@@ -176,19 +176,24 @@ export namespace migration {
           sqlCommands.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
           );
-          break;
-
+        break;
         case 'not_null':
           sqlCommands.push(
             `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
           );
-          break;
-
+        break;
         case 'unique':
           sqlCommands.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
           );
-          break;
+        break;
+        case 'validate':
+          const param1 = constraintDefinition.options.param1;
+          const param2 = (constraintDefinition.options.param2 != null) ? constraintDefinition.options.param2 : '';
+          sqlCommands.push(
+            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (_meta.validate(${columnNamesAsStr}, '${param1}', '${param2}'));`
+          );
+        break;
       }
     });
 
