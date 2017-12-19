@@ -1,4 +1,6 @@
 export interface IConfig {
-  fullstackOne: any;
+  core: any;
+  eventEmitter: any;
+  graphql: any;
   logger: any;
 }

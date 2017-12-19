@@ -41,30 +41,30 @@ export namespace graphQl {
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
       gQlSchema = await helper.loadFilesByGlobPattern(gQlSchemaPattern);
       // emit event
-      $one.getEventEmitter().emit('graphQl.schema.load.success');
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.load.success`);
 
       const gQlSchemaCombined = gQlSchema.join('\n');
       gQlJsonSchema = gQLHelper.helper.parseGraphQlSchema(gQlSchemaCombined);
       // emit event
-      $one.getEventEmitter().emit('graphQl.schema.parsed');
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
 
       dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
       // emit event
-      $one.getEventEmitter().emit('graphQl.schema.parsed.to.dbObject');
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbObject`);
 
       // load permissions
       const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
       const permissionsArray = await helper.requireFilesByGlobPattern(permissionsPattern);
       permissions = [].concat.apply([], permissionsArray);
       // emit event
-      $one.getEventEmitter().emit('graphQl.permissions.load.success');
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
       // load expressions
       const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
       const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
       expressions = [].concat.apply([], expressionsArray);
       // emit event
-      $one.getEventEmitter().emit('graphQl.expressions.load.success');
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
       const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions);
 
@@ -87,7 +87,7 @@ export namespace graphQl {
 
       logger.warn('bootGraphQl.error', err);
       // emit event
-      $one.getEventEmitter().emit('graphQl.bootGraphQl.error', err);
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.bootGraphQl.error`, err);
     }
 
   };

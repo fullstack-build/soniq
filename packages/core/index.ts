@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv-safe';
+import * as onExit from 'signal-exit';
 import * as terminus from '@godaddy/terminus';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
@@ -54,6 +55,7 @@ class FullstackOneCore implements IFullstackOneCore {
   private server: http.Server;
   private APP: Koa;
   private dbObject: IDbObject;
+  private knownNodeIds: [string];
 
   constructor() {
 
@@ -71,18 +73,35 @@ class FullstackOneCore implements IFullstackOneCore {
       port:    parseInt(process.env.PORT, 10),
       version: PROJECT_PACKAGE.version,
       // create unique instance ID (6 char)
-      nodeId:  randomBytes(20).toString('hex').substr(5,6)
+      nodeId:  randomBytes(20).toString('hex').substr(5,6),
+      namespace: 'f1' // default
     };
     this.nodeId = this.ENVIRONMENT.nodeId;
+    // add nodeId to list of known nodes
+    this.knownNodeIds = [this.nodeId];
 
     // load config
     this.loadConfig();
+
+    // set namespace from config
+    this.ENVIRONMENT.namespace = this.CONFIG.core.namespace;
 
     // create event emitter
     this.eventEmitter = Events.getEventEmitter(this);
 
     // init core logger
     this.logger = this.getLogger('core');
+
+    // collect known nodes
+    this.eventEmitter.onAnyInstance(`${this.ENVIRONMENT.namespace}.ready`, (nodeId) => {
+      this.updateNodeIdsFromDb();
+    });
+
+    // has to be exiting before we lose connection
+    this.eventEmitter.onAnyInstance(`${this.ENVIRONMENT.namespace}.exiting`, (nodeId) => {
+      // wait one tick until it actually finishes
+      process.nextTick(() => { this.updateNodeIdsFromDb(); });
+    });
 
     // continue booting async on next tick
     // (is needed in order to be able to call getInstance from outside)
@@ -158,6 +177,18 @@ class FullstackOneCore implements IFullstackOneCore {
    * PRIVATE METHODS
    */
 
+  private emit(eventName: string, ...args: any[]): void {
+    // add namespace
+    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
+    this.eventEmitter.emit(eventNamespaceName, this.nodeId, ...args);
+  }
+
+  private on(eventName: string, listener: (...args: any[]) => void) {
+    // add namespace
+    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
+    this.eventEmitter.on(eventNamespaceName, listener);
+  }
+
   // load config based on ENV
   private loadConfig(): void {
     // framework config path
@@ -195,7 +226,7 @@ class FullstackOneCore implements IFullstackOneCore {
 
       // boot GraphQL and add endpoints
       this.dbObject = await graphQl.bootGraphQl(this);
-      this.eventEmitter.emit('dbObject.set');
+      this.emit('dbObject.set');
 
       // execute book scripts
       await this.executeBootScripts();
@@ -205,12 +236,12 @@ class FullstackOneCore implements IFullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.eventEmitter.emit('ready', this.nodeId);
+      this.emit('ready', this.nodeId);
     } catch (err) {
       // tslint:disable-next-line:no-console
       console.error('An error occurred while booting', err);
       this.logger.error('An error occurred while booting', err);
-      this.eventEmitter.emit('not-ready', err);
+      this.emit('not-ready', err);
     }
 
   }
@@ -221,20 +252,45 @@ class FullstackOneCore implements IFullstackOneCore {
 
     try {
       // create connection with setup user
-      this.dbSetupClientObj = new DbClient(configDB.setup);
+      const configDbWithAppName = configDB.setup;
+      configDbWithAppName.application_name = this.ENVIRONMENT.namespace + '_client_' + this.nodeId;
+      this.dbSetupClientObj = new DbClient(configDbWithAppName);
       // create connection
       await this.dbSetupClientObj.create();
-
       // emit event
-      this.eventEmitter.emit('db.setup.connection.created');
+      this.emit('db.setup.connection.created');
 
-      // create general connection pool
-      this.dbPoolObj = new DbPool(configDB.general);
       // create pool
-      await this.dbPoolObj.create();
+      await _gracefullyAdjustPoolSize.bind(this)();
 
-      // emit event
-      this.eventEmitter.emit('db.pool.created');
+      // and adjust pool size for every node change
+      this.on(`nodes.changed`, (nodeId) => { _gracefullyAdjustPoolSize.bind(this)(); });
+
+      async function _gracefullyAdjustPoolSize() {
+
+        // gracefully end pool if already available
+        if (this.dbPoolObj != null) {
+          // dont wait for promise, we just immediately create a new pool
+          this.dbPoolObj.end();
+        }
+
+        const knownNodes = this.knownNodeIds.length;
+        const connectionsPerInstance = configDB.general.totalMax / knownNodes - 1; // reserve one for setup
+
+        // create general connection pool
+        const generalDbWithAppNameAndMaxConnections = {
+          ... configDB.general,
+          application_name: this.ENVIRONMENT.namespace + '_pool_' + this.nodeId,
+          max: connectionsPerInstance
+        };
+        // new pool with adjusted number of connections
+        this.dbPoolObj = new DbPool(generalDbWithAppNameAndMaxConnections);
+        // create pool
+        await this.dbPoolObj.create();
+        // emit event
+        this.emit('db.pool.created');
+      }
+
     } catch (err) {
       throw err;
     }
@@ -244,15 +300,16 @@ class FullstackOneCore implements IFullstackOneCore {
   private async disconnectDB() {
 
     try {
-      // end setup client
-      await this.dbSetupClientObj.end();
-      // emit event
-      this.eventEmitter.emit('db.setup.connection.ended');
+      // end setup client and pool
+      await Promise.all([
+          this.dbSetupClientObj.end(),
+          this.dbPoolObj.end()
+        ]);
 
-      // end pool
-      await this.dbPoolObj.end();
       // emit event
-      this.eventEmitter.emit('db.pool.ended');
+      this.emit('db.setup.connection.ended');
+      // emit event
+      this.emit('db.pool.ended');
       return true;
 
     } catch (err) {
@@ -296,14 +353,13 @@ class FullstackOneCore implements IFullstackOneCore {
     this.gracefulShutdown();
 
     // emit event
-    this.eventEmitter.emit('server.up', this.ENVIRONMENT.port);
+    this.emit('server.up', this.ENVIRONMENT.port);
     // success log
     this.logger.info('Server listening on port', this.ENVIRONMENT.port);
   }
 
   private gracefulShutdown() {
     terminus(this.server, {
-      onSigterm,
       // healtcheck options
       healthChecks: {
         // for now we only resolve a promise to make sure the server runs
@@ -316,23 +372,55 @@ class FullstackOneCore implements IFullstackOneCore {
       logger: this.logger.info
     });
 
-    async function onSigterm() {
-      this.logger.info('server is starting cleanup');
-      this.eventEmitter.emit('server.sigterm', this.getNodeId());
+    // release resources here before node exits
+    onExit(async (exitCode, signal) => {
 
-      try {
+      if (signal) {
+        this.logger.info('exiting');
 
-        // close DB connections
-        await this.disconnectDB();
-        this.logger.info('server is shutting down');
-        this.eventEmitter.emit('server.shutdown', this.getNodeId());
-        return true;
-      } catch (err) {
+        this.logger.info('starting cleanup');
+        this.emit('exiting', this.ENVIRONMENT.nodeId);
+        try {
 
-        this.logger.warn('Error occurred during clean up attempt', err);
-        this.eventEmitter.emit('server.sigterm.error', this.getNodeId(), err);
-        throw err;
+          // close DB connections - has to by synchronous - no await
+          // try to exit as many as possible
+          this.disconnectDB();
+
+          this.logger.info('shutting down');
+
+          this.emit('down', this.ENVIRONMENT.nodeId);
+          return true;
+        } catch (err) {
+
+          this.logger.warn('Error occurred during clean up attempt', err);
+          this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
+          throw err;
+        }
       }
+      return false;
+    });
+
+  }
+
+  private async updateNodeIdsFromDb(): Promise<void> {
+
+    try {
+      const dbName = this.getConfig('db').general.database;
+      const applicationNamePrefix = `${this.ENVIRONMENT.namespace}_client_`;
+      const dbNodes = await this.dbSetupClientObj.client.query(
+        `SELECT * FROM pg_stat_activity WHERE datname = '${dbName}' AND application_name LIKE '${applicationNamePrefix}%';`
+      );
+      const nodeIds: [string] = dbNodes.rows.map((row) => {
+        return row.application_name.replace(applicationNamePrefix, '');
+      }) as [string];
+      // check if number of nodes has changed
+      if (this.knownNodeIds.length !== nodeIds.length) {
+        this.knownNodeIds = nodeIds;
+        this.emit('nodes.changed');
+      }
+
+    } catch (err) {
+      this.logger.warn(err);
     }
   }
 
@@ -372,11 +460,11 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
     } else {
 
       // catch ready event
-      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.ready`, () => {
+      $one.getEventEmitter().on(`${$one.ENVIRONMENT.namespace}.ready`, () => {
         $resolve($one);
       });
       // catch not ready event
-      $one.getEventEmitter().on(`${$one.getConfig('eventEmitter').namespace}.not-ready`, (err) => {
+      $one.getEventEmitter().on(`${$one.ENVIRONMENT.namespace}.not-ready`, (err) => {
         $reject(err);
       });
     }

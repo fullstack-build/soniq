@@ -17,7 +17,7 @@ class EventEmitter implements IEventEmitter {
   constructor($one) {
     this.$one = $one;
     this.nodeId = $one.nodeId;
-    this.namespace = this.$one.getConfig('eventEmitter').namespace;
+    this.namespace = this.$one.getConfig('core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',
@@ -31,31 +31,27 @@ class EventEmitter implements IEventEmitter {
   }
 
   public emit(eventName: string, ...args: any[]): void {
-    const eventNamespaceName = `${this.namespace}.${eventName}`;
 
-    // emit on this noe
-    this._emit(eventNamespaceName, this.nodeId, ...args);
+    // emit on this node
+    this._emit(eventName, this.nodeId, ...args);
 
     // synchronize to other nodes
-    this.sendEventToPg(eventNamespaceName, this.nodeId, ...args);
+    this.sendEventToPg(eventName, this.nodeId, ...args);
   }
 
   public on(eventName: string, listener: (...args: any[]) => void) {
     const eventNameForThisInstanceOnly = `${this.nodeId}.${eventName}`;
-
     this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
   }
 
   public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
-
     this.eventEmitter.on(eventNameForAnyInstance, listener);
   }
 
   /* private methods */
   private _emit(eventName: string, instanceId: string, ...args: any[]): void {
     const eventNameWithInstanceId = `${instanceId}.${eventName}`;
-
     this.eventEmitter.emit(eventNameWithInstanceId, instanceId, ...args);
   }
 

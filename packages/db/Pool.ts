@@ -21,7 +21,7 @@ export class DbPool extends F1.AbstractPackage implements IDb {
       // create first connection
       const pool = await this.pool.connect();
       try {
-        this.logger.info('Postgres pool created');
+        this.logger.info(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);
       } finally {
         pool.release();
       }
@@ -34,6 +34,7 @@ export class DbPool extends F1.AbstractPackage implements IDb {
   }
 
   public async end(): Promise<void> {
+    this.logger.info('Postgres pool ended');
     return await this.pool.end();
   }
 }

@@ -5,4 +5,5 @@ export interface IEnvironmentInformation {
   port: number;
   version: string;
   nodeId: string;
+  namespace: string;
 }

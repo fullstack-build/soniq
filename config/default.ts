@@ -1,7 +1,8 @@
 export = {
-  eventEmitter: {
+  core: {
     namespace: 'f1'
   },
+  eventEmitter: {},
   graphql: {
     endpoint:           '/graphql',
     graphiQlEndpoint:   '/graphiql',

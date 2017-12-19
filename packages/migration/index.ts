@@ -1,6 +1,7 @@
 import * as FullstackOne from '../core';
 import createViewsFromDbObject from './createViewsFromDbObject';
 import getRelationForeignTable from '../graphQl/parser/getRelationForeignTable';
+import { pgToDbObject } from '../db/pgToDbObject';
 
 export namespace migration {
 
@@ -17,17 +18,21 @@ export namespace migration {
       // emit event
       this.emit('schema.dbObject.migration.saved');*/
 
+      const dbObjectFromPg = await pgToDbObject($one);
+      // tslint:disable-next-line:no-console
+      // console.log('dbObjectFromPG:', JSON.stringify(dbObjectFromPg, null, 2));
+
       const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
-      console.log(sqlStatements.join('\n'));
+      // console.log(sqlStatements.join('\n'));
 
       // emit event
       // this.emit('schema.dbObject.migration.up.executed');
 
       // tslint:disable-next-line:no-console
-      console.log(viewSqlStatements.join('\n'));
+      // console.log(viewSqlStatements.join('\n'));
 
       // display result sql in terminal
       // this.logger.debug(sqlStatements.join('\n'));
@@ -176,17 +181,17 @@ export namespace migration {
           sqlCommands.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
           );
-        break;
+          break;
         case 'not_null':
           sqlCommands.push(
             `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
           );
-        break;
+          break;
         case 'unique':
           sqlCommands.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
           );
-        break;
+          break;
         case 'validate':
           const validatorName  = constraintDefinition.options.param1;
           const validatorParam = (constraintDefinition.options.param2 != null) ? constraintDefinition.options.param2 : '';
@@ -194,12 +199,13 @@ export namespace migration {
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}"` +
             ` CHECK (_meta.validate(${columnNamesAsStr}, '${validatorName}', '${validatorParam}'));`
           );
+          break;
         case 'check':
           const checkExpression = constraintDefinition.options.param1;
           sqlCommands.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (${checkExpression});`
           );
-        break;
+          break;
       }
     });
 

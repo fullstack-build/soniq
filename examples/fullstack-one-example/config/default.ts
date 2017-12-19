@@ -21,8 +21,8 @@ export = {
       password: 'postgres',
       port: 5432,
       ssl: false,
-      // set pool max size to 20
-      max: 20,
+      // set pool max size to 20 (among all instances)
+      totalMax: 20,
       // set min pool size to 4
       min: 4,
       // close idle clients after 1 second
