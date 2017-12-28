@@ -2,6 +2,7 @@ import {
   parseResolveInfo
 } from 'graphql-parse-resolve-info';
 import { log } from 'util';
+import { _ } from 'lodash';
 
 // Generate local alias name for views/tables
 export function getLocalName(counter) {
@@ -83,7 +84,7 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
 }
 
 // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-export function resolveTable(c, query, gQlTypes, dbObject, match) {
+export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   // Get the tableName from the nested query object
   const tableName = Object.keys(query.fieldsByTypeName)[0];
 
@@ -137,7 +138,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
           const fieldIdExpression = getFieldExpression(relation.columnName, typeNames, gQlType, localNameByType);
 
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, fieldIdExpression);
+          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, fieldIdExpression);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -150,7 +151,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
         if (relation.relationType === 'MANY') {
           // A many relation just needs to match by it's idExpression
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, idExpression);
+          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -183,25 +184,54 @@ export function resolveTable(c, query, gQlTypes, dbObject, match) {
     sql += ` WHERE ${exp} = ${match.idExpression}`;
   }
 
-  // TODO: Make this injection save and more useful
-  // This is not finished. I will write docs once it is.
+  // Check if a custom sql statement exists
   if (customSqlQuery != null) {
+    // Add AND/WHERE dependent on the previos concatination
     if (match != null) {
       sql += ` AND`;
     } else {
       sql += ` WHERE`;
     }
-    sql += ` ${customSqlQuery.text}`;
+
+    // Compile the lodash template to replace fields and params
+    const compiled = _.template(customSqlQuery.text);
+
+    // Generate correct sql query to add it to the main query
+    const sqlQuery = compiled({
+      // The param function returns e.g. $1, $2 and adds the value to the correct position
+      param: (index) => {
+
+        // Throw error when the requested value is not in the values array
+        if (customSqlQuery.values[index] == null) {
+          throw new Error(`Requested value "param(${index})" in custom SQL query is not defined: "${customSqlQuery.text}"`);
+        }
+
+        // Push current value to output value array
+        const value = customSqlQuery.values[index];
+        values.push(value);
+
+        // Return $n for pg client
+        return '$' + values.length;
+      },
+      // Gets a correct expression for a field e.g.: "COALESCE("_local_4_"."title", "_local_5_"."title", null)"
+      field: (name) => {
+        return getFieldExpression(name, typeNames, gQlType, localNameByType);
+      }
+    });
+
+    // Add custom query to main query
+    sql += ` (${sqlQuery})`;
   }
 
   return {
     sql: `${sql}`,
-    counter
+    counter,
+    values
   };
 }
 
 // Resolves a relation of a column/field to a new Subquery
-export function resolveRelation(c, query, relation, gQlTypes, dbObject, matchIdExpression) {
+export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression) {
   // Get the relation from dbObject
   const relationConnections = dbObject.relations[relation.relationName];
 
@@ -219,18 +249,18 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, matchIdE
     match.foreignFieldName = 'id';
 
     // A ONE relation will respond a single object
-    return rowToJson(c, query, gQlTypes, dbObject, match);
+    return rowToJson(c, query, gQlTypes, dbObject, values, match);
   } else {
     // If this is the MANY part/column/field of the relation we need to match by its foreignColumnName
     match.foreignFieldName = foreignRelation.columnName;
 
     // A MANY relation will respond an array of objects
-    return jsonAgg(c, query, gQlTypes, dbObject, match);
+    return jsonAgg(c, query, gQlTypes, dbObject, values, match);
   }
 }
 
 // Generates an object from a select query (This is needed for ONE relations like loading a owner of a post)
-export function rowToJson(c, query, gQlTypes, dbObject, match) {
+export function rowToJson(c, query, gQlTypes, dbObject, values, match) {
   // Counter is to generate unique local aliases for all Tables (Joins of Views)
   let counter = c;
   // Generate new local alias (e.g. "_local_1_")
@@ -238,7 +268,7 @@ export function rowToJson(c, query, gQlTypes, dbObject, match) {
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject, values, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
@@ -251,12 +281,13 @@ export function rowToJson(c, query, gQlTypes, dbObject, match) {
 
   return {
     sql,
-    counter
+    counter,
+    values
   };
 }
 
 // Generates Array of Objects from a select query
-export function jsonAgg(c, query, gQlTypes, dbObject, match) {
+export function jsonAgg(c, query, gQlTypes, dbObject, values, match) {
   // Counter is to generate unique local aliases for all Tables (Joins of Views)
   let counter = c;
   // Generate new local alias (e.g. "_local_1_")
@@ -264,7 +295,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, match) {
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject,values, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
@@ -273,11 +304,13 @@ export function jsonAgg(c, query, gQlTypes, dbObject, match) {
   // Wrap the Table Select around json_agg and row_to_json to generate an JSON array of objects
   // It will be named as localTableName (e.g. "_local_1_")
   // The result will be named to the querie's name
-  const sql = `(SELECT json_agg(row_to_json("${localTableName}")) FROM (${ret.sql}) "${localTableName}") "${query.name}"`;
+  // Edit: Added COALESCE(..., '[]'::json) to catch replace NULL with an empty array if subquery has no results
+  const sql = `(SELECT COALESCE(json_agg(row_to_json("${localTableName}")), '[]'::json) FROM (${ret.sql}) "${localTableName}") "${query.name}"`;
 
   return {
     sql,
-    counter
+    counter,
+    values
   };
 }
 
@@ -290,9 +323,10 @@ export function getQueryResolver(gQlTypes, dbObject) {
     // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
     const {
       sql,
-      counter
-    } = jsonAgg(0, query, gQlTypes, dbObject, match);
+      counter,
+      values
+    } = jsonAgg(0, query, gQlTypes, dbObject, [], match);
 
-    return { sql: `SELECT ${sql}`, values: [], query };
+    return { sql: `SELECT ${sql}`, values, query };
   };
 }
