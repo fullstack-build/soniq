@@ -54,18 +54,23 @@ const GQL_JSON_PARSER = {
     // FIRST:
     // create blank objects for all tables and enums (needed for validation of relationships)
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
-      const typeName = gQlJsonSchemaDocumentNode.name.value;
-      // table
-      if (gQlJsonSchemaDocumentNode.kind === 'ObjectTypeDefinition') {
-        // create tableObject in dbObject
-        refDbObj.tables[typeName] = {
-          name: typeName,
-          isDbModel: false,
-          schemaName: 'public',
-          constraints: {}
-        };
-      } else if (gQlJsonSchemaDocumentNode.kind === 'EnumTypeDefinition') {
-        refDbObj.enums[typeName] = [];
+
+      if (gQlJsonSchemaDocumentNode.name != null) {
+
+        const typeName = gQlJsonSchemaDocumentNode.name.value;
+        // table
+        if (gQlJsonSchemaDocumentNode.kind === 'ObjectTypeDefinition') {
+          // create tableObject in dbObject
+          refDbObj.tables[typeName] = {
+            name: typeName,
+            isDbModel: false,
+            schemaName: 'public',
+            constraints: {}
+          };
+        } else if (gQlJsonSchemaDocumentNode.kind === 'EnumTypeDefinition') {
+          refDbObj.enums[typeName] = [];
+        }
+
       }
 
     });
