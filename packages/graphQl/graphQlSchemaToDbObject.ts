@@ -55,6 +55,7 @@ const GQL_JSON_PARSER = {
     // create blank objects for all tables and enums (needed for validation of relationships)
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
 
+      // If e.g. kind === 'TypeExtensionDefinition' there is no name
       if (gQlJsonSchemaDocumentNode.name != null) {
 
         const typeName = gQlJsonSchemaDocumentNode.name.value;
