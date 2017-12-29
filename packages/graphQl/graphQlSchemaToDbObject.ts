@@ -73,7 +73,6 @@ const GQL_JSON_PARSER = {
         // convention: enums are global
         GQL_JSON_PARSER.EnumTypeDefinition(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj);
       }
-
     });
 
     // SECOND round:
@@ -92,6 +91,11 @@ const GQL_JSON_PARSER = {
     const dbDirective = gQlSchemaDocumentNode.directives.filter((directive) => {
       return (directive.kind === 'Directive' && directive.name.value === 'table');
     })[0];
+
+    // ignore if not a table definition
+    if (dbDirective == null) {
+      return;
+    }
 
     const schemaAndTableName = dbDirective.arguments.reduce((result, argument) => {
       result.schemaName = (argument.name.value === 'schemaName') ? argument.value.value : result.schemaName;

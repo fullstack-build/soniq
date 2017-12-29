@@ -12,6 +12,14 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   testDefault: String @type(name: "Date") @default(expression: "now()")
 }
 
+type AdditionPayload {
+  sum: Int!
+}
+
+extend type Query {
+  add(a: Int! b: Int!): AdditionPayload
+}
+
 enum Gender {
   male
   female
