@@ -1,10 +1,11 @@
-type User @table {
+#type User @table @check(notGenericAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'"){
+type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
   id: ID! @isUnique
-  email: String @isUnique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build") @check(notGenreicAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'")
+  email: String @isUnique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
   gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: JSON @schema(name: "userPayload")
+  payload: JSON
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "bla")
@@ -15,3 +16,5 @@ enum Gender {
   male
   female
 }
+
+

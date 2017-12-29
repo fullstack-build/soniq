@@ -274,8 +274,9 @@ class FullstackOneCore implements IFullstackOneCore {
           this.dbPoolObj.end();
         }
 
-        const knownNodes = this.knownNodeIds.length;
-        const connectionsPerInstance = configDB.general.totalMax / knownNodes - 1; // reserve one for setup
+        const knownNodes: number = this.knownNodeIds.length;
+        // reserve one for setup connection
+        const connectionsPerInstance: number = Math.floor((configDB.general.totalMax / knownNodes - 1));
 
         // create general connection pool
         const generalDbWithAppNameAndMaxConnections = {

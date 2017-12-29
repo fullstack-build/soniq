@@ -1,13 +1,22 @@
 import * as _ from 'lodash';
 
-import { IDbObject, IDbRelation } from '../core/IDbObject';
+import { IDbObject, IMaxTwoRelations, IDbRelation } from '../core/IDbObject';
+
+interface IExposedNames {
+  [name: string]: {
+    schemaName: string;
+    tableName: string;
+  };
+}
+
+// store all exposed GQl names and their underlying tables
+const exposedNamesToTables: IExposedNames = {};
 
 export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject => {
   const dbObject: IDbObject = {
-    tables: {},
-    relations: {},
+    schemas: {},
     enums: {},
-    views: []
+    relations: {}
   };
   parseGraphQlJsonNode(graphQlJsonSchema, dbObject);
   // return copy instead of ref
@@ -51,26 +60,23 @@ function parseGraphQlJsonNode(
 const GQL_JSON_PARSER = {
   // iterate over all type definitions
   Document: (gQlSchemaNode, dbObjectNode, refDbObj) => {
-    // FIRST:
+
+    // FIRST round:
     // create blank objects for all tables and enums (needed for validation of relationships)
+    // but don't continue recursively
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
-      const typeName = gQlJsonSchemaDocumentNode.name.value;
-      // table
+      // type
       if (gQlJsonSchemaDocumentNode.kind === 'ObjectTypeDefinition') {
-        // create tableObject in dbObject
-        refDbObj.tables[typeName] = {
-          name: typeName,
-          isDbModel: false,
-          schemaName: 'public',
-          constraints: {}
-        };
+        GQL_JSON_PARSER.ObjectTypeDefinition(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj, false);
+
       } else if (gQlJsonSchemaDocumentNode.kind === 'EnumTypeDefinition') {
-        refDbObj.enums[typeName] = [];
+        // convention: enums are global
+        GQL_JSON_PARSER.EnumTypeDefinition(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj);
       }
 
     });
 
-    // SECOND:
+    // SECOND round:
     // parse all documents recursively
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
       parseGraphQlJsonNode(gQlJsonSchemaDocumentNode, dbObjectNode, refDbObj);
@@ -78,12 +84,49 @@ const GQL_JSON_PARSER = {
   },
 
   // parse Type Definitions
-  ObjectTypeDefinition: (gQlSchemaDocumentNode, dbObjectNode, refDbObj) => {
-    // get table name from typeDefinition
-    const tableName = gQlSchemaDocumentNode.name.value;
+  ObjectTypeDefinition: (gQlSchemaDocumentNode, dbObjectNode, refDbObj, continueRecursively: boolean = true) => {
 
+    const typeName = gQlSchemaDocumentNode.name.value;
+
+    // find table directive
+    const dbDirective = gQlSchemaDocumentNode.directives.filter((directive) => {
+      return (directive.kind === 'Directive' && directive.name.value === 'table');
+    })[0];
+
+    const schemaAndTableName = dbDirective.arguments.reduce((result, argument) => {
+      result.schemaName = (argument.name.value === 'schemaName') ? argument.value.value : result.schemaName;
+      result.tableName = (argument.name.value === 'tableName') ? argument.value.value : result.tableName;
+      return result;
+    },                                                      { schemaName: null, tableName: null });
+
+    const schemaName  = schemaAndTableName.schemaName || 'public';
+    const tableName   = schemaAndTableName.tableName || typeName;
+
+    // find or create schema
+    refDbObj.schemas[schemaName] = refDbObj.schemas[schemaName] || {
+      tables:{},
+      views: []
+    };
+
+    // find or create table in schema
     // and save ref to tableObject for recursion
-    const refDbObjectCurrentTable = dbObjectNode.tables[tableName];
+    const refDbObjectCurrentTable = refDbObj.schemas[schemaName].tables[tableName] = refDbObj.schemas[schemaName].tables[tableName] || {
+      schemaName,
+      name: tableName,
+      description: null,
+      constraints: {}
+    };
+
+    // add exposed name to list with reference to underlying table
+    exposedNamesToTables[typeName] = {
+      schemaName: refDbObjectCurrentTable.schemaName,
+      tableName: refDbObjectCurrentTable.name
+    };
+
+    // stop here in first round
+    if (!continueRecursively) {
+      return;
+    }
 
     // parse ObjectType properties
     Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
@@ -104,18 +147,95 @@ const GQL_JSON_PARSER = {
   },
 
   // parse EnumType
-  EnumTypeDefinition: (
-    gQlEnumTypeDefinitionNode,
-    dbObjectNode,
-    refDbObj
-  ) => {
+  EnumTypeDefinition: (gQlEnumTypeDefinitionNode,
+                       dbObjectNode,
+                       refDbObj) => {
     const enumName = gQlEnumTypeDefinitionNode.name.value;
     const enumValues = gQlEnumTypeDefinitionNode.values.reduce((values, gQlEnumTypeDefinitionNodeValue) => {
       values.push(gQlEnumTypeDefinitionNodeValue.name.value);
       return values;
     },                                                         []);
 
+    // convention enums are DB wide
     dbObjectNode.enums[enumName] = enumValues;
+  },
+
+  // parse Directive
+  Directive: (gQlDirectiveNode,
+              dbObjectNode,
+              refDbObj,
+              refDbObjectCurrentTable,
+              refDbObjectCurrentTableColumn) => {
+    const directiveKind = gQlDirectiveNode.name.value;
+    switch (directiveKind) {
+      case 'table':
+        // nothing to do here -> has been done in ObjectTypeDefinition
+        break;
+      case 'isUnique':
+
+        addConstraint('UNIQUE',
+                      gQlDirectiveNode,
+                      dbObjectNode,
+                      refDbObj,
+                      refDbObjectCurrentTable,
+                      refDbObjectCurrentTableColumn);
+        break;
+      case 'check': // native PG check constraint
+        // iterate over all constraints
+        gQlDirectiveNode.arguments.forEach((argument) => {
+          addConstraint('CHECK',
+                        argument,
+                        dbObjectNode,
+                        refDbObj,
+                        refDbObjectCurrentTable,
+                        refDbObjectCurrentTableColumn);
+        });
+        break;
+      case 'validate': // validate constraint
+
+        // iterate over all constraints
+        gQlDirectiveNode.arguments.forEach((argument) => {
+          addConstraint('validate',
+                        argument,
+                        dbObjectNode,
+                        refDbObj,
+                        refDbObjectCurrentTable,
+                        refDbObjectCurrentTableColumn);
+        });
+        break;
+      case 'computed': // mark as computed
+        dbObjectNode.type = 'computed';
+        break;
+      case 'custom': // mark as customResolver
+        dbObjectNode.type = 'customResolver';
+        break;
+      case 'type': // override type with PG native type
+        const customType = _.get(gQlDirectiveNode, 'arguments[0].value.value');
+        // detect known PG types
+        switch (customType) {
+          case 'Date':
+            dbObjectNode.type = 'date';
+            break;
+          default:
+            dbObjectNode.type = 'customType';
+            dbObjectNode.customType = customType;
+            break;
+        }
+        break;
+      case 'default': // set default value
+        setDefaultValueForColumn(gQlDirectiveNode,
+                                 dbObjectNode,
+                                 refDbObj,
+                                 refDbObjectCurrentTable,
+                                 refDbObjectCurrentTableColumn);
+        break;
+      default:
+        process.stderr.write(
+          'GraphQL.parser.error.unknown.directive.kind: ' +
+          refDbObjectCurrentTable.name + '.' + refDbObjectCurrentTableColumn.name + '.' + directiveKind + '\n',
+        );
+        break;
+    }
   },
 
   // parse FieldDefinition Definitions
@@ -126,29 +246,25 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTable,
   ) => {
     // create columns object if not set already
-    dbObjectNode.columns = dbObjectNode.columns || [];
-
-    const newField = {
-      constraintNames: []
-    };
-    // add new column ref to dbObject
-    // newField will now update data in the dbObject through this ref
-    dbObjectNode.columns.push(newField);
+    dbObjectNode.columns = dbObjectNode.columns || {};
 
     // check if column is relation
-    if (
-      _.get(gQlFieldDefinitionNode, 'directives[0].name.value') === 'relation'
-    ) {
+    if (_.get(gQlFieldDefinitionNode, 'directives[0].name.value') === 'relation') {
       // handle relation
      relationBuilderHelper(
         gQlFieldDefinitionNode,
         dbObjectNode,
         refDbObj,
-        refDbObjectCurrentTable,
-        newField,
+        refDbObjectCurrentTable
       );
     } else {
       // handle normal column
+
+      const newField = {
+        name: null,
+        type: null,
+        description: null
+      };
 
       // parse FieldDefinition properties
       Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
@@ -184,7 +300,12 @@ const GQL_JSON_PARSER = {
           );
         }
       });
+
+      // add new column ref to dbObject
+      // newField will now update data in the dbObject through this ref
+      dbObjectNode.columns[newField.name] = newField;
     }
+
   },
 
   // parse Name kind
@@ -210,17 +331,20 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTableColumn,
   ) => {
     const columnType = gQlSchemaNode.name.value.toLocaleLowerCase();
-    let dbType = 'varchar';
-    let customType = null;
+    dbObjectNode.type = 'varchar';
     // types
     // GraphQl: http://graphql.org/graphql-js/basic-types/
     // PG: https://www.postgresql.org/docs/current/static/datatype.html
     switch (columnType) {
       case 'id':
         // set type to uuid
-        dbType = 'uuid';
+        dbObjectNode.type = 'uuid';
+        dbObjectNode.defaultValue = {
+          isExpression: true,
+          value: 'uuid_generate_v4()'
+        };
         // add new PK constraint
-        addConstraint('primaryKey',
+        addConstraint('PRIMARY KEY',
                       gQlSchemaNode,
                       dbObjectNode,
                       refDbObj,
@@ -228,19 +352,19 @@ const GQL_JSON_PARSER = {
                       refDbObjectCurrentTableColumn);
         break;
       case 'string':
-        dbType = 'varchar';
+        dbObjectNode.type = 'varchar';
         break;
       case 'int':
-        dbType = 'int';
+        dbObjectNode.type = 'int';
         break;
       case 'float':
-        dbType = 'float8';
+        dbObjectNode.type = 'float8';
         break;
       case 'boolean':
-        dbType = 'bool';
+        dbObjectNode.type = 'bool';
         break;
       case 'json':
-        dbType = 'jsonb';
+        dbObjectNode.type = 'jsonb';
         break;
       default:
         // check dynamic types
@@ -250,8 +374,8 @@ const GQL_JSON_PARSER = {
         const typeEnumIndex = enumNamesInLowerCase.indexOf(columnType);
         if (typeEnumIndex !== -1) {
           // enum
-          dbType = 'enum';
-          customType = enumNames[typeEnumIndex];
+          dbObjectNode.type = 'enum';
+          dbObjectNode.customType = enumNames[typeEnumIndex];
         } else {
           // unknown type
           process.stderr.write(
@@ -260,10 +384,6 @@ const GQL_JSON_PARSER = {
         }
         break;
     }
-
-    // set column name
-    dbObjectNode.type = dbType;
-    dbObjectNode.customType = customType;
 
   },
 
@@ -308,80 +428,6 @@ const GQL_JSON_PARSER = {
     dbObjectNode.defaultValue = {};
   },
 
-  // parse Directive
-  Directive: (
-    gQlDirectiveNode,
-    dbObjectNode,
-    refDbObj,
-    refDbObjectCurrentTable,
-    refDbObjectCurrentTableColumn,
-  ) => {
-    const directiveKind = gQlDirectiveNode.name.value;
-    switch (directiveKind) {
-      case 'table':
-        dbObjectNode.isDbModel = true;
-        break;
-      case 'isUnique':
-
-        addConstraint('unique',
-                      gQlDirectiveNode,
-                      dbObjectNode,
-                      refDbObj,
-                      refDbObjectCurrentTable,
-                      refDbObjectCurrentTableColumn);
-        break;
-      case 'check': // native PG check constraint
-        // iterate over all constraints
-        gQlDirectiveNode.arguments.forEach((argument) => {
-          addConstraint('check',
-                        argument,
-                        dbObjectNode,
-                        refDbObj,
-                        refDbObjectCurrentTable,
-                        refDbObjectCurrentTableColumn);
-        });
-        break;
-      case 'validate': // validate constraint
-
-        // iterate over all constraints
-        gQlDirectiveNode.arguments.forEach((argument) => {
-          addConstraint('validate',
-                        argument,
-                        dbObjectNode,
-                        refDbObj,
-                        refDbObjectCurrentTable,
-                        refDbObjectCurrentTableColumn);
-        });
-        break;
-      case 'computed': // mark as computed
-        dbObjectNode.type = 'computed';
-        break;
-      case 'custom': // mark as customResolver
-        dbObjectNode.type = 'customResolver';
-        break;
-      case 'schema': // additional jscon schema validation
-        dbObjectNode.schemaName = _.get(gQlDirectiveNode, 'arguments[0].value.value');
-        break;
-      case 'type': // override type with PG native type
-        dbObjectNode.type = 'customType';
-        dbObjectNode.customType = _.get(gQlDirectiveNode, 'arguments[0].value.value');
-        break;
-      case 'default': // set default value
-        setDefaultValueForColumn(gQlDirectiveNode,
-                                 dbObjectNode,
-                                 refDbObj,
-                                 refDbObjectCurrentTable,
-                                 refDbObjectCurrentTableColumn);
-        break;
-      default:
-        process.stderr.write(
-          'GraphQL.parser.error.unknown.directive.kind: ' +
-          refDbObjectCurrentTable.name + '.' + refDbObjectCurrentTableColumn.name + '.' + directiveKind + '\n',
-        );
-        break;
-    }
-  },
-
   // parse Argument
   Argument: (
     gQlNode,
@@ -413,44 +459,52 @@ function setDefaultValueForColumn(gQlSchemaNode,
 
 }
 
-function addConstraint(constraintType,
+function addConstraint(pConstraintType,
                        gQlSchemaNode,
                        dbObjectNode,
                        refDbObj,
                        refDbObjectCurrentTable,
                        refDbObjectCurrentTableColumn) {
 
+  let constraintType = pConstraintType;
   let constraintName  = null;
   let options         = {};
+  let linkToColumn    = null;
   switch (constraintType) {
-    case 'unique':
+    case 'not_null':
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_not_null`;
+      // link this constraint to a column
+      linkToColumn  = refDbObjectCurrentTableColumn.name;
+      break;
+    case 'UNIQUE':
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_key`;
       // named unique constraint - override
       if (gQlSchemaNode.arguments[0] != null && gQlSchemaNode.arguments[0].name.value === 'name') {
         const namedConstraintName = gQlSchemaNode.arguments[0].value.value;
         constraintName = `${refDbObjectCurrentTable.name}_${namedConstraintName}_key`;
       }
+      // link this constraint to a column
+      linkToColumn  = refDbObjectCurrentTableColumn.name;
       break;
-    case 'primaryKey':
+    case 'PRIMARY KEY':
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_pkey`;
+      // link this constraint to a column
+      linkToColumn  = refDbObjectCurrentTableColumn.name;
       break;
-    case 'not_null':
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_notnull`;
-      break;
-    case 'check':
+    case 'CHECK':
       const checkName = gQlSchemaNode.name.value;
       options = {
         param1: gQlSchemaNode.value.value
       };
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${checkName}_check`;
+      constraintName = `${refDbObjectCurrentTable.name}_${checkName}_check`;
       break;
     case 'validate':
+      constraintType = 'CHECK'; // validate turns into check
       const validateType = gQlSchemaNode.name.value;
       options = {
-        param1: validateType,
-        param2: gQlSchemaNode.value.value
+        param1: `_meta.validate('${validateType}'::text, (${refDbObjectCurrentTableColumn.name})::text, '${gQlSchemaNode.value.value}'::text)`
       };
-      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${validateType}_validator`;
+      constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${validateType}_check`;
     break;
   }
 
@@ -459,13 +513,22 @@ function addConstraint(constraintType,
     const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
       type: constraintType,
       options,
-      columns: []
     };
-    // add column name to constraint
-    constraint.columns.push(refDbObjectCurrentTableColumn.name);
 
-    // add constraint to field
-    refDbObjectCurrentTableColumn.constraintNames.push(constraintName);
+    // link constraint to field
+    if (linkToColumn != null) {
+
+      // create columns field if not available
+      constraint.columns = constraint.columns || [];
+
+      // add column name to constraint
+      constraint.columns.push(refDbObjectCurrentTableColumn.name);
+
+      // add constraint to field
+      refDbObjectCurrentTableColumn.constraintNames = refDbObjectCurrentTableColumn.constraintNames || [];
+      refDbObjectCurrentTableColumn.constraintNames.push(constraintName);
+    }
+
   }
 
 }
@@ -474,33 +537,25 @@ function relationBuilderHelper(
   gQlDirectiveNode,
   dbObjectNode,
   refDbObj,
-  refDbObjectCurrentTable,
-  refDbObjectCurrentTableColumn,
+  refDbObjectCurrentTable
 ) {
-  // create relation
-  const relation: IDbRelation = {
-    name: null,
-    schemaName: 'public', // for now everything is public
-    tableName: refDbObjectCurrentTable.name,
-    virtualColumnName: gQlDirectiveNode.name.value,
-    columnName: null,
-    type: null,
-    onDelete: null,
-    onUpdate: null,
-    // Name of the association
-    description: null,
-    // joins to
-    reference: {
-      schemaName: 'public', // for now everything is public
-      tableName: null,
-      columnName: 'id' // convention: always reference ID pk
-    }
-  };
 
   // find the right directive
   const relationDirective = gQlDirectiveNode.directives.filter((directive) => {
     return (directive.name.value === 'relation');
   })[0];
+
+  let relationName            = null;
+  let relationType            = null;
+  const relationSchemaName    = refDbObjectCurrentTable.schemaName;
+  const relationTableName     = refDbObjectCurrentTable.name;
+  const virtualColumnName     = gQlDirectiveNode.name.value;
+  let relationOnUpdate        = null;
+  let relationOnDelete        = null;
+  let referencedExposedName   = null;
+  let referencedSchemaName    = null;
+  let referencedTableName     = null;
+  const referencedColumnName  = 'id'; // fk convention: always points to id
 
   // iterate arguments
   relationDirective.arguments.map((argument) => {
@@ -508,86 +563,198 @@ function relationBuilderHelper(
     const argumentValue = argument.value.value;
     switch (argumentName) {
       case 'name':
-        relation.name = argument.value.value;
+        relationName = argument.value.value;
+      break;
+      case 'onUpdate':
+        switch (argumentValue.toLocaleLowerCase()) {
+          case 'restrict':
+            relationOnUpdate = 'RESTRICT';
+            break;
+          case 'cascade':
+            relationOnUpdate = 'CASCADE';
+            break;
+          case 'set null':
+            relationOnUpdate = 'SET NULL';
+            break;
+          case 'set default':
+            relationOnUpdate = 'SET DEFAULT';
+            break;
+        }
       break;
       case 'onDelete':
         switch (argumentValue.toLocaleLowerCase()) {
           case 'restrict':
-            relation.onDelete = 'restrict';
+            relationOnDelete = 'RESTRICT';
             break;
           case 'cascade':
-            relation.onDelete = 'cascade';
+            relationOnDelete = 'CASCADE';
             break;
           case 'set null':
-            relation.onDelete = 'set NULL';
+            relationOnDelete = 'SET NULL';
             break;
           case 'set default':
-            relation.onDelete = 'set DEFAULT';
+            relationOnDelete = 'SET DEFAULT';
             break;
         }
-        break;
-      case 'onUpdate':
-        switch (argumentValue.toLocaleLowerCase()) {
-          case 'restrict':
-            relation.onUpdate = 'restrict';
-            break;
-          case 'cascade':
-            relation.onUpdate = 'cascade';
-            break;
-          case 'set null':
-            relation.onUpdate = 'set NULL';
-            break;
-          case 'set default':
-            relation.onUpdate = 'set DEFAULT';
-            break;
-        }
-        break;
+      break;
     }
 
     ((node) => {
       if (node.type.kind === 'NamedType') {
-        relation.type = 'ONE';
-        relation.reference.tableName = _.get(gQlDirectiveNode, 'type.name.value');
+        relationType = 'ONE';
+        referencedExposedName = _.get(gQlDirectiveNode, 'type.name.value');
       } else if (
         node.type.kind === 'NonNullType' &&
         node.type.type.kind === 'NamedType'
       ) {
-        relation.type = 'ONE';
-        relation.reference.tableName = _.get(gQlDirectiveNode, 'type.type.name.value');
+        relationType = 'ONE';
+        referencedExposedName = _.get(gQlDirectiveNode, 'type.type.name.value');
       } else if (
         node.type.kind === 'NonNullType' &&
         node.type.type.kind === 'ListType' &&
         node.type.type.type.kind === 'NonNullType' &&
         node.type.type.type.type.kind === 'NamedType'
       ) {
-        relation.type = 'MANY';
-        relation.reference.tableName = _.get(gQlDirectiveNode, 'type.type.type.type.name.value');
+        relationType = 'MANY';
+        referencedExposedName = _.get(gQlDirectiveNode, 'type.type.type.type.name.value');
       }
     })(gQlDirectiveNode);
   });
 
   // check if relation table exists
-  if (refDbObj.tables[relation.reference.tableName] == null) {
+  if (refDbObj.schemas[relationSchemaName].tables[relationTableName] == null ||
+    exposedNamesToTables[referencedExposedName] == null) {
 
     process.stderr.write(
-      'GraphQL.parser.error.unknown.relation.table: ' +
-      relation.tableName + '.' + relation.virtualColumnName + ' ' + relation.reference.tableName + '\n'
+      'GraphQL.parser.error.unknown.relation.table: ' + relationName + ':' + referencedExposedName + '\n'
     );
   } else {
 
-    // fk column naming convention: {name}_{foreignTableName}_{foreignFieldName}
-    relation.columnName = `${relation.virtualColumnName}_${relation.reference.tableName}_${relation.reference.columnName}`;
+    // get actual referenced table
+    referencedSchemaName  = exposedNamesToTables[referencedExposedName].schemaName;
+    referencedTableName   = exposedNamesToTables[referencedExposedName].tableName;
 
-    // update column information, save link to relation information
-    // set relation name
-    refDbObjectCurrentTableColumn.name = relation.virtualColumnName;
-    // mark column as relation
-    refDbObjectCurrentTableColumn.type = 'relation';
-    // set relation name for column
-    refDbObjectCurrentTableColumn.relationName = relation.name;
-    // create relation in dbObject if not set yet and push relation into array
-    refDbObj.relations[relation.name] = refDbObj.relations[relation.name] || [];
-    refDbObj.relations[relation.name].push(relation);
+    const relations = _getOrCreateEmptyRelation(refDbObj, relationName);
+    const orderedRelations = relations.reduce((result: any, relation: IDbRelation) => {
+        // take either the first empty one, or for the current schema and table
+        if (
+          (relation.type == null && result.thisRelation == null)
+          ||
+          (relation.schemaName === relationSchemaName && relation.tableName === relationTableName)
+        ) {
+          result.thisRelation = relation;
+        } else {
+          result.otherRelation = relation;
+        }
+        return result;
+      },                                      { thisRelation: null, otherRelation: null });
+    const thisRelation  = orderedRelations.thisRelation;
+    const otherRelation = orderedRelations.otherRelation;
+
+    // check if empty => more then one relation in GraphQl Error
+    if (thisRelation == null) {
+      process.stderr.write(
+        'GraphQL.parser.error.relation.too.many: ' + relationName + '\n',
+      );
+      return;
+    }
+
+    // fill current relation
+    thisRelation.type               = relationType;
+    thisRelation.schemaName         = relationSchemaName;
+    thisRelation.tableName          = relationTableName;
+    thisRelation.columnName         = (relationType === 'ONE') ?
+                                        _referencingColumnNameHelper(virtualColumnName,
+                                                                     referencedSchemaName,
+                                                                     referencedTableName,
+                                                                     referencedColumnName)
+                                        : thisRelation.columnName;
+    thisRelation.virtualColumnName  = virtualColumnName;
+    thisRelation.onUpdate           = relationOnUpdate;
+    thisRelation.onDelete           = relationOnDelete;
+    // thisRelation.description        = null;
+    thisRelation.reference.schemaName = referencedSchemaName;
+    thisRelation.reference.tableName  = referencedTableName;
+    thisRelation.reference.columnName = (relationType === 'MANY') ? null : referencedColumnName;
+
+    // "invent" other side of relation if still empty
+    // if other part of relation exists in GraphQL, it will get overridden with the actual data
+    if (otherRelation.type == null) {
+      // assume other side of relation is the opposite
+      const referencedType = (relationType === 'ONE') ? 'MANY' : 'ONE';
+      otherRelation.type               = referencedType;
+      otherRelation.schemaName         = referencedSchemaName;
+      otherRelation.tableName          = referencedTableName;
+      otherRelation.columnName         = (referencedType === 'ONE') ?
+                                          _referencingColumnNameHelper(virtualColumnName,
+                                                                       relationSchemaName,
+                                                                       relationTableName,
+                                                                       referencedColumnName)
+                                          : otherRelation.columnName;
+      // "invent" virtual column name by making plural (maybe a library later for real plurals)
+      otherRelation.virtualColumnName  = relationTableName.toLowerCase() + 's';
+      // otherRelation.onUpdate           = null; // can't be "invented"
+      // otherRelation.onDelete           = null; // can't be "invented"
+      // otherRelation.description        = null;
+      otherRelation.reference.schemaName = relationSchemaName;
+      otherRelation.reference.tableName  = relationTableName;
+      otherRelation.reference.columnName = (referencedType === 'MANY') ? null : otherRelation.reference.columnName;
+    }
+
+    // adjust for MANY:MANY
+    if (thisRelation.type === 'MANY' && otherRelation.type === 'MANY') {
+
+      thisRelation.reference.columnName = referencedColumnName;
+      thisRelation.columnName = _referencingColumnNameHelper(thisRelation.virtualColumnName,
+                                                             thisRelation.reference.schemaName,
+                                                             thisRelation.reference.tableName,
+                                                             thisRelation.reference.columnName, true);
+
+      otherRelation.reference.columnName = referencedColumnName;
+      otherRelation.columnName = _referencingColumnNameHelper(otherRelation.virtualColumnName,
+                                                              otherRelation.reference.schemaName,
+                                                              otherRelation.reference.tableName,
+                                                              otherRelation.reference.columnName, true);
+
+    }
 
   }
+
+  // fk column naming convention: {name}_{foreignTableName}_{foreignFieldName}
+  function _referencingColumnNameHelper(pVirtualColumnName: string,
+                                        pReferencedSchemaName: string,
+                                        pReferencedTableName: string,
+                                        pReferencedColumnName: string,
+                                        pIsArray: boolean = false) {
+    return (!pIsArray) ? `${pVirtualColumnName}Id` : `${pVirtualColumnName}IdsArray`;
+  }
+
+  function _getOrCreateEmptyRelation(pRefDbObj: IDbObject, pRelationName: string): IMaxTwoRelations {
+
+    const emptyRelation: IDbRelation = {
+      name:              pRelationName,
+      type:              null,
+      schemaName:        null,
+      tableName:         null,
+      columnName:        null,
+      virtualColumnName: null,
+      onUpdate:          null,
+      onDelete:          null,
+      description:       null,
+      reference: {
+        schemaName: null,
+        tableName:  null,
+        columnName: null
+      }
+    };
+
+    // create relation in dbObject if it doesn't exist yet
+    if (pRefDbObj.relations[pRelationName] == null) {
+      pRefDbObj.relations[pRelationName] = [_.cloneDeep(emptyRelation), _.cloneDeep(emptyRelation)];
+    }
+
+    // return relation reference
+    return pRefDbObj.relations[pRelationName];
+  }
+
 }

@@ -4,7 +4,7 @@ type Post @table {
   content: String
   owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "cascade")
   ownerSecret: String
-  titleImage: File @relation(name: "TitleImage")
+  titleImage: PrivateFile @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")
   contributorSecret: String
 }

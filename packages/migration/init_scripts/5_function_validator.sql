@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION _meta.validate(type text, value text, parameter text) RETURNS bool AS $$
 
   var validator = require('validator');
-  // parsse if parameter is json
+  // parse if parameter is json
   try {
     parameter = JSON.parse(parameter);
   } catch (e) {}
@@ -13,7 +13,7 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION _meta.sanitize(type text, value text, parameter text) RETURNS text AS $$
 
   var validator = require('validator');
-  // parsse if parameter is json
+  // parse if parameter is json
   try {
     parameter = JSON.parse(parameter);
   } catch (e) {}

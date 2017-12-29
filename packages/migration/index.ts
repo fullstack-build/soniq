@@ -18,21 +18,38 @@ export namespace migration {
       // emit event
       this.emit('schema.dbObject.migration.saved');*/
 
+      // tslint:disable-next-line:no-console
+      console.log(JSON.stringify($one.getDbObject(), null, 2));
+
+      // tslint:disable-next-line:no-console
+      console.log('############### dbObjectFromPG:');
       const dbObjectFromPg = await pgToDbObject($one);
       // tslint:disable-next-line:no-console
-      // console.log('dbObjectFromPG:', JSON.stringify(dbObjectFromPg, null, 2));
-
-      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
+      console.log(JSON.stringify(dbObjectFromPg, null, 2));
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console
-      // console.log(sqlStatements.join('\n'));
+      console.log('############### UP:');
+      // tslint:disable-next-line:no-console
+      console.log(sqlStatements.up.join('\n'));
+      // tslint:disable-next-line:no-console
+      console.log('############### DOWN:');
+      // copy, so we can reverse it without destroying original
+      const downMigrations = sqlStatements.down.slice(0);
+      // tslint:disable-next-line:no-console
+      console.log(downMigrations.reverse().join('\n'));
+
+      // tslint:disable-next-line:no-console
+      console.log('############### DELTA:');
+      // tslint:disable-next-line:no-console
+      console.log(createDeltaSQLFromTwoDbObjects(dbObjectFromPg, $one.getDbObject()).join('\n'));
 
       // emit event
       // this.emit('schema.dbObject.migration.up.executed');
 
+      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
       // tslint:disable-next-line:no-console
-      // console.log(viewSqlStatements.join('\n'));
+      console.log(viewSqlStatements.join('\n'));
 
       // display result sql in terminal
       // this.logger.debug(sqlStatements.join('\n'));
@@ -45,27 +62,74 @@ export namespace migration {
       // this.emit('schema.load.error');
     }
   }
+
+  export function createDeltaSQLFromTwoDbObjects(dbObjectOld: FullstackOne.IDbObject, dbObjectNew: FullstackOne.IDbObject) {
+    const migrationOld = createSqlFromDbObject(dbObjectOld);
+    const migrationNew = createSqlFromDbObject(dbObjectNew);
+
+    let deltaSqlCommands = [];
+
+    // find all that are in old but not in new -> run down
+    const deltaInOldNotInNew = Object.entries(migrationOld.up).filter((entry) => {
+      return (!migrationNew.up.includes(entry[1]));
+    });
+
+    // collect down migrations
+    deltaSqlCommands.push('-- down');
+    const downMigrations = [];
+    Object.values(deltaInOldNotInNew).forEach((delta) => {
+      const deltaIndex = delta[0];
+      const downMigration = migrationOld.down[deltaIndex];
+      downMigrations.push(downMigration);
+    });
+    // run down migrations reversed
+    downMigrations.reverse();
+    deltaSqlCommands = deltaSqlCommands.concat(downMigrations);
+
+    // find all that are in new but not in old -> ups
+    const deltaInNewNotInOld = Object.entries(migrationNew.up).filter((entry) => {
+      return (!migrationOld.up.includes(entry[1]));
+    });
+
+    // collect down migrations
+    deltaSqlCommands.push('-- up');
+    Object.values(deltaInNewNotInOld).forEach((delta) => {
+      const deltaIndex = delta[0];
+      const upMigration = migrationNew.up[deltaIndex];
+      deltaSqlCommands.push(upMigration);
+    });
+
+    return deltaSqlCommands;
+  }
+
   export function createSqlFromDbObject(
     dbObject: FullstackOne.IDbObject,
-  ): string[] {
-    const sqlCommands: string[] = [];
+  ): {up: string[], down: string[]} {
+    const sqlCommands: {up: string[], down: string[]} = {
+      up: [],
+      down: []
+    };
 
     // iterate over enums
     Object.entries(dbObject.enums).map((enumTypeArray) => {
       createSqlForEnumObject(sqlCommands, enumTypeArray[0], enumTypeArray[1]);
     });
 
-    // iterate over database tables
-    Object.values(dbObject.tables).map((tableObject) => {
-      // only parse those with isDbModel = true
-      if (!!tableObject.isDbModel) {
+    // iterate over database schemas
+    Object.entries(dbObject.schemas).map((schemaEntry) => {
+      createSqlFromSchemaObject(sqlCommands, schemaEntry[0]);
+
+      // iterate over database tables
+      Object.values(schemaEntry[1].tables).map((tableObject) => {
         createSqlFromTableObject(sqlCommands, tableObject);
-      }
+      });
+
     });
 
     // iterate over database relations
-    sqlCommands.push(`-- relations:`);
-    Object.values(dbObject.relations).map((relation) => {
+    sqlCommands.up.push(`-- relations:`);
+    sqlCommands.down.push(`-- relations:`);
+    Object.values(dbObject.relations).map((relation: [FullstackOne.IDbRelation]) => {
 
       // write error for many-to-many
       if (relation[0].type === 'MANY' && relation[1] != null && relation[1].type === 'MANY') {
@@ -75,7 +139,7 @@ export namespace migration {
           'Many to many relations are not yet supported by the query builder. Create a through table instead.\n'
         );
 
-        createSqlManyToManyRelation(sqlCommands, relation[0], relation[1]);
+        createSqlManyToManyRelation(sqlCommands, relation);
       } else {
 
         if (relation[0].type === 'ONE' && relation[1] != null && relation[1].type === 'ONE') {
@@ -87,13 +151,8 @@ export namespace migration {
           );
         }
 
-        // check if both relation tables exists
-        if (dbObject.tables[relation[0].tableName] != null) {
-          createSqlRelation(sqlCommands, relation[0]);
-        }
-        if (relation[1] != null && dbObject.tables[relation[1].tableName] != null) {
-          createSqlRelation(sqlCommands, relation[1]);
-        }
+        // create one:many / one:one relation
+        createRelation(sqlCommands, relation);
       }
 
     });
@@ -102,19 +161,39 @@ export namespace migration {
   }
 
   function createSqlForEnumObject(sqlCommands, enumTypeName, enumTypeValue) {
-    sqlCommands.push(`-- enum types:`);
-    sqlCommands.push(`CREATE TYPE "${enumTypeName}" AS ENUM ('${enumTypeValue.join('\',\'')}');`);
+    sqlCommands.up.push(`-- enum types:`);
+    sqlCommands.up.push(`CREATE TYPE "${enumTypeName}" AS ENUM ('${enumTypeValue.join('\',\'')}');`);
+
+    sqlCommands.down.push(`-- enum types:`);
+    sqlCommands.down.push(`DROP TYPE "${enumTypeName}";`);
+  }
+
+  function createSqlFromSchemaObject(sqlCommands, schemaName: string) {
+
+    // avoid dropping or createing public schema
+    if (schemaName !== 'public') {
+      // create schema statement
+      sqlCommands.up.push(`-- schema ${schemaName}:`);
+      sqlCommands.up.push(`CREATE SCHEMA "${schemaName}";`);
+
+      sqlCommands.down.push(`-- schema ${schemaName}:`);
+      sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
+    }
+
   }
 
   // http://www.postgresqltutorial.com/postgresql-alter-table/
   function createSqlFromTableObject(sqlCommands, tableObject: any) {
     const tableName = `"${tableObject.schemaName}"."${tableObject.name}"`;
     // create table statement
-    sqlCommands.push(`-- table ${tableName}:`);
-    sqlCommands.push(`CREATE TABLE ${tableName}();`);
+    sqlCommands.up.push(`-- table ${tableName}:`);
+    sqlCommands.up.push(`CREATE TABLE ${tableName}();`);
+
+    sqlCommands.down.push(`-- table ${tableName}:`);
+    sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableName};`);
 
     // create column statements
-    for (const columnObject of tableObject.columns) {
+    for (const columnObject of Object.values(tableObject.columns)) {
       if (columnObject.type === 'computed') {
         // ignore computed
       } else if (columnObject.type === 'customResolver') {
@@ -132,10 +211,15 @@ export namespace migration {
         }
 
         // create column statement
-        sqlCommands.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" varchar;`);
+        sqlCommands.up.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" varchar;`);
+        sqlCommands.down.push(`ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${columnObject.name}" CASCADE;`);
+
         // set column type
-        sqlCommands.push(
+        sqlCommands.up.push(
           `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE ${type} USING "${columnObject.name}"::${type};`
+        );
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE varchar USING "${columnObject.name}"::varchar;`
         );
       }
 
@@ -143,20 +227,27 @@ export namespace migration {
       if (columnObject.defaultValue != null) {
         if (columnObject.defaultValue.isExpression) {
           // set default - expression
-          sqlCommands.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT  ${columnObject.defaultValue.value};`
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT ${columnObject.defaultValue.value};`
+          );
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
           );
         } else {
           // set default - value
-          sqlCommands.push(
+          sqlCommands.up.push(
             `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT '${columnObject.defaultValue.value}';`
+          );
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
           );
         }
       }
     }
 
     // generate constraints for column
-    sqlCommands.push(`-- constraints for ${tableName}:`);
+    sqlCommands.up.push(`-- constraints for ${tableName}:`);
+    sqlCommands.down.push(`-- constraints for ${tableName}:`);
     createSqlColumnConstraints(sqlCommands, tableName, tableObject);
   }
 
@@ -166,44 +257,57 @@ export namespace migration {
     Object.entries(tableObject.constraints).forEach((constraint) => {
       const constraintName = constraint[0];
       const constraintDefinition = constraint[1];
-      const columnNamesAsStr = constraintDefinition.columns.map(columnName => `"${columnName}"`).join(',');
+      const columnNamesAsStr = (Array.isArray(constraintDefinition.columns)) ?
+                                constraintDefinition.columns.map(columnName => `"${columnName}"`).join(',') : null;
 
       switch (constraintDefinition.type) {
-        case 'primaryKey':
+        case 'not_nullable':
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
+          );
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} DROP NOT NULL;`
+          );
+          break;
+        case 'PRIMARY KEY':
+          /* moved to graphQlSchemaToDbObject -> expression
           // convention: all PKs are generated uuidv4
           constraintDefinition.columns.forEach((columnName) => {
             sqlCommands.push(
               `ALTER TABLE ${tableName} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
             );
           });
+          */
 
-          // make PK
-          sqlCommands.push(
-            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
-          );
+          // make sure column names for constraint are set
+          if (columnNamesAsStr != null) {
+            sqlCommands.up.push(
+              `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
+            );
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
+            );
+          }
           break;
-        case 'not_null':
-          sqlCommands.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
-          );
+        case 'UNIQUE':
+          // make sure column names for constraint are set
+          if (columnNamesAsStr != null) {
+            sqlCommands.up.push(
+              `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
+            );
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
+            );
+          }
           break;
-        case 'unique':
-          sqlCommands.push(
-            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
-          );
-          break;
-        case 'validate':
-          const validatorName  = constraintDefinition.options.param1;
-          const validatorParam = (constraintDefinition.options.param2 != null) ? constraintDefinition.options.param2 : '';
-          sqlCommands.push(
-            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}"` +
-            ` CHECK (_meta.validate(${columnNamesAsStr}, '${validatorName}', '${validatorParam}'));`
-          );
-          break;
-        case 'check':
+        case 'CHECK':
           const checkExpression = constraintDefinition.options.param1;
-          sqlCommands.push(
+          sqlCommands.up.push(
             `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (${checkExpression});`
+          );
+
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
           );
           break;
       }
@@ -212,54 +316,88 @@ export namespace migration {
     return sqlCommands;
   }
 
-  function createSqlRelation(sqlCommands, relationObject: FullstackOne.IDbRelation) {
+  function createRelation(sqlCommands, relationObject: [FullstackOne.IDbRelation]) {
 
-    // ignore the 'MANY' side
-    if (relationObject.type !== 'MANY') {
-      const tableName = `"${relationObject.schemaName}"."${relationObject.tableName}"`;
+    relationObject.map(createSqlRelation);
 
-      // create column for FK // convention: uuid
-      sqlCommands.push(
-        `ALTER TABLE ${tableName} ADD COLUMN "${relationObject.columnName}" uuid;`
-      );
+    function createSqlRelation(oneRelation: FullstackOne.IDbRelation) {
 
-      // add foreign key
-      const constraintName = `fk_${relationObject.name}`;
-      // first we need to drop a possible existing one, in order to update onUpdate and onDelete
-      let constraintStatement = `ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}", `;
-      // and add a new version with all attributes
-      constraintStatement += `ADD CONSTRAINT "${constraintName}" FOREIGN KEY ("${relationObject.columnName}") ` +
-        `REFERENCES "${relationObject.reference.schemaName}"."${relationObject.reference.tableName}"("${relationObject.reference.columnName}")`;
+      // ignore the 'MANY' side
+      if (oneRelation.type !== 'MANY') {
+        const tableName = `"${oneRelation.schemaName}"."${oneRelation.tableName}"`;
 
-      // check onUpdate and onDelete
-      if (relationObject.onDelete != null) {
-        constraintStatement += ` ON DELETE ${relationObject.onDelete}`;
+        // create column for FK // convention: uuid
+        sqlCommands.up.push(
+          `ALTER TABLE ${tableName} ADD COLUMN "${oneRelation.columnName}" uuid;`
+        );
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${oneRelation.columnName}" CASCADE;`
+        );
+
+        // add foreign key
+        const constraintName = `fk_${oneRelation.name}`;
+        // drop constraint is needed for up and down
+        const downConstraintStatement = `ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}"`;
+        // first we need to drop a possible existing one, in order to update onUpdate and onDelete
+        let upConstraintStatement = `${downConstraintStatement}, `;
+        // and add a new version with all attributes
+        upConstraintStatement += `ADD CONSTRAINT "${constraintName}" FOREIGN KEY ("${oneRelation.columnName}") ` +
+          `REFERENCES "${oneRelation.reference.schemaName}"."${oneRelation.reference.tableName}"("${oneRelation.reference.columnName}")`;
+
+        // check onUpdate and onDelete
+        if (oneRelation.onDelete != null) {
+          upConstraintStatement += ` ON DELETE ${oneRelation.onDelete}`;
+        }
+        if (oneRelation.onUpdate != null) {
+          upConstraintStatement += ` ON UPDATE ${oneRelation.onUpdate}`;
+        }
+
+        sqlCommands.up.push(
+          upConstraintStatement + ';'
+        );
+        sqlCommands.down.push(
+          downConstraintStatement + ';'
+        );
+
+        sqlCommands.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS '${JSON.stringify(relationObject)}';`);
+        sqlCommands.down.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS NULL;`);
       }
-      if (relationObject.onUpdate != null) {
-        constraintStatement += ` ON UPDATE ${relationObject.onUpdate}`;
-      }
-
-      sqlCommands.push(
-        constraintStatement + ';'
-      );
     }
+
   }
 
-  function createSqlManyToManyRelation(sqlCommands, relation1: FullstackOne.IDbRelation, relation2: FullstackOne.IDbRelation) {
+  function createSqlManyToManyRelation(sqlCommands, relationObject: [FullstackOne.IDbRelation]) {
+
+    const relation1: FullstackOne.IDbRelation = relationObject[0];
+    const relation2: FullstackOne.IDbRelation = relationObject[1];
 
     // create fk column 1
     const tableName1 = `"${relation1.schemaName}"."${relation1.tableName}"`;
-    sqlCommands.push(
-      `ALTER TABLE ${tableName1} ` +
-      `ADD COLUMN "${relation1.columnName}" uuid[];`
+    sqlCommands.up.push(
+      `ALTER TABLE ${tableName1} ADD COLUMN "${relation1.columnName}" uuid[];`
     );
+    sqlCommands.down.push(
+      `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${relation1.columnName}" CASCADE;`
+    );
+
+    // add comment with meta information
+    sqlCommands.up.push(`COMMENT ON COLUMN ${tableName1}."${relation1.columnName}" IS '${JSON.stringify(relation1)}';`);
+    // has to be exact same id in both -> empty
+    sqlCommands.down.push(`COMMENT ON COLUMN ${tableName1}."${relation1.columnName}" IS NULL;`);
 
     // create fk column 2
     const tableName2 = `"${relation2.schemaName}"."${relation2.tableName}"`;
-    sqlCommands.push(
-      `ALTER TABLE ${tableName2} ` +
-      `ADD COLUMN "${relation2.columnName}" uuid[];`
+    sqlCommands.up.push(
+      `ALTER TABLE ${tableName2} ADD COLUMN "${relation2.columnName}" uuid[];`
     );
+    sqlCommands.down.push(
+      `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${relation2.columnName}" CASCADE;`
+    );
+
+    // add comment with meta information
+    sqlCommands.up.push(`COMMENT ON COLUMN ${tableName2}."${relation2.columnName}" IS '${JSON.stringify(relation2)}';`);
+    // has to be exact same id in both -> empty
+    sqlCommands.down.push(`COMMENT ON COLUMN ${tableName2}."${relation2.columnName}" IS NULL;`);
 
     // todo create trigger to check consistency and cascading
 
