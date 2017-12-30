@@ -17,7 +17,7 @@ type AdditionPayload {
 }
 
 extend type Query {
-  add(a: Int! b: Int!): AdditionPayload
+  add(a: Int! b: Int!): AdditionPayload @custom(resolver: "test")
 }
 
 enum Gender {

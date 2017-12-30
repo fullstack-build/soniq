@@ -4,7 +4,7 @@ export = [
     type: 'READ',
     table: 'User',
     fields: [
-      'id', 'firstLetterOfUserName', 'payload'
+      'id', 'firstLetterOfUserName', 'payload', 'stripeAccount'
     ],
     expressions: [{
       name: 'Anyone',

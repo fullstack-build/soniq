@@ -44,6 +44,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   const expressionsByName = arrayToNamedArray(expressions);
   const queries = [];
   const mutations = [];
+  const customFields = {};
 
   const filteredPermissions = mergeDeletePermissions(permissions);
 
@@ -137,8 +138,48 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       let fieldAlreadyAddedAsSpecialType = false;
 
+      const customDirectiveIndex = findDirectiveIndex(field, 'custom');
       const computedDirectiveIndex = findDirectiveIndex(field, 'computed');
       const relationDirectiveIndex = findDirectiveIndex(field, 'relation');
+
+      // field is expression
+      if (customDirectiveIndex !== -1) {
+        const customDirective = field.directives[customDirectiveIndex];
+
+        const resolverName = getArgumentByName(customDirective, 'resolver').value.value;
+        const paramsNode = getArgumentByName(customDirective, 'params');
+        let params = {};
+
+        if (paramsNode != null) {
+          params = parseObjectArgument(paramsNode);
+        }
+
+        const fieldKey = `${tableName}_${fieldName}`;
+
+        // Add field to custom fields for resolving it seperate
+        customFields[fieldKey] = {
+          type: 'Field',
+          typeName: tableName,
+          fieldName,
+          resolver: resolverName,
+          params
+        };
+
+        // SQL expression returns always NULL for custom fields, to initialise them
+        const fieldSql = `NULL::text AS "${fieldName}"`;
+
+        fieldAlreadyAddedAsSpecialType = true;
+        view.fields.push({
+          name: fieldName,
+          expression: fieldSql
+        });
+
+        // This field cannot be set with a generated mutation
+        filterFieldsForMutation.push(fieldName);
+
+        // Add native fields to gQlTypes
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+      }
 
       // field is expression
       if (computedDirectiveIndex !== -1) {
@@ -172,7 +213,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           expression: fieldSql
         });
 
-        // This field cannot be set with a mutation
+        // This field cannot be set with a generated mutation
         filterFieldsForMutation.push(fieldName);
 
         // Add native fields to gQlTypes
@@ -354,6 +395,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     views,
     gQlTypes,
     queries,
-    mutations
+    mutations,
+    customFields
   };
 };

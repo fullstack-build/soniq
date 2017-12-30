@@ -2,6 +2,7 @@ import { IPermissions, IExpressions } from '../interfaces';
 
 import classifyUserDefinitions from './classifyUserDefinitions';
 import createPublicSchema from './createPublicSchema';
+import getCustomOperations from './getCustomOperations';
 
 import {
   parse,
@@ -11,7 +12,11 @@ import {
 export function runtimeParser(userSchema: any, permissions: IPermissions, expressions: IExpressions): any {
 
   const classification = classifyUserDefinitions(userSchema);
-  const { document, views, gQlTypes, queries, mutations } = createPublicSchema(classification, permissions, expressions);
+  const { document, views, gQlTypes, queries, mutations, customFields } = createPublicSchema(classification, permissions, expressions);
+
+  const { customQueries, customMutations } = getCustomOperations(classification);
+
+  // console.log(customQueries, customMutations, customFields)
 
   // console.log('doc', JSON.stringify(document, null, 2));
 
@@ -22,10 +27,10 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
   console.log(print(document));
   console.log('>');
   console.log('> ===================================================');
-  console.log('>'); */
+  console.log('>'); // */
   // console.log('> Views:', JSON.stringify(views, null, 2));
   // console.log('> Views:', JSON.stringify(views, null, 2));
 
-  return { document, views, gQlTypes, queries, mutations };
+  return { document, views, gQlTypes, queries, mutations, customFields, customQueries, customMutations };
 
 }
