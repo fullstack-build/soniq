@@ -29,6 +29,7 @@ export namespace graphQl {
   let dbObject: any;
   let mutations: any;
   let queries: any;
+  let customOperations: any;
 
   export const bootGraphQl = async ($one) => {
 
@@ -74,10 +75,16 @@ export namespace graphQl {
       queries = combinedSchemaInformation.queries;
       mutations = combinedSchemaInformation.mutations;
 
+      customOperations = {
+        fields: combinedSchemaInformation.customFields,
+        queries: combinedSchemaInformation.customQueries,
+        mutations: combinedSchemaInformation.customMutations
+      };
+
       dbObject.views = combinedSchemaInformation.views;
 
       // add endpoints
-      addEndpoints($one);
+      await addEndpoints($one);
 
       return dbObject;
 
@@ -102,14 +109,18 @@ export namespace graphQl {
     return { ...gQlJsonSchema };
   };
 
-  const addEndpoints = ($one) => {
+  const addEndpoints = async ($one) => {
     const graphQlConfig = $one.getConfig('graphql');
 
     const gqlRouter = new KoaRouter();
 
+    // Load resolvers
+    const resolversPattern = $one.ENVIRONMENT.path + graphQlConfig.resolversPattern;
+    const resolversObject = await helper.requireFilesByGlobPatternAsObject(resolversPattern);
+
     const schema = makeExecutableSchema({
 			typeDefs: gQlRuntimeSchema,
-			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations),
+			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject),
 		});
 
     const gQlParam = (ctx) => {

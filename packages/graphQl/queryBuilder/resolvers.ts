@@ -26,7 +26,7 @@ const graphqlTypeJson = require('graphql-type-json');
 
 /* ======================================================= */
 
-export function getResolvers(gQlTypes, dbObject, queries, mutations) {
+export function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -155,12 +155,50 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations) {
     };
   });
 
+  // Add custom queries to queryResolvers
+  Object.values(customOperations.queries).forEach((operation) => {
+    if (resolversObject[operation.resolver] == null) {
+      throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Query "${operation.name}".`);
+    }
+
+    queryResolvers[operation.name] = (obj, args, context, info) => {
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+    };
+  });
+
+  // Add custom mutations to mutationResolvers
+  Object.values(customOperations.mutations).forEach((operation) => {
+    if (resolversObject[operation.resolver] == null) {
+      throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Mutation "${operation.name}".`);
+    }
+
+    mutationResolvers[operation.name] = (obj, args, context, info) => {
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+    };
+  });
+
   const resolvers = {
     // Add JSON Scalar
     JSON: graphqlTypeJson,
     Query: queryResolvers,
     Mutation: mutationResolvers
   };
+
+  // Add custom field resolvers to resolvers object
+  Object.values(customOperations.fields).forEach((operation) => {
+    if (resolversObject[operation.resolver] == null) {
+      // tslint:disable-next-line:max-line-length
+      throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Field "${operation.fieldName}" in Type "${operation.typeName}".`);
+    }
+
+    if (resolvers[operation.typeName] == null) {
+      resolvers[operation.typeName] = {};
+    }
+
+    resolvers[operation.typeName][operation.fieldName] = (obj, args, context, info) => {
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+    };
+  });
 
   return resolvers;
 }

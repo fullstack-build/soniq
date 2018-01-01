@@ -8,7 +8,7 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   payload: JSON
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
-  stripeAccount: String @custom(resolver: "bla")
+  stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
 }
 
@@ -17,7 +17,7 @@ type AdditionPayload {
 }
 
 extend type Query {
-  add(a: Int! b: Int!): AdditionPayload @custom(resolver: "test")
+  add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
 }
 
 enum Gender {

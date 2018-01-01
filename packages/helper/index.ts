@@ -43,4 +43,28 @@ export namespace helper {
       throw err;
     }
   };
+
+  export const requireFilesByGlobPatternAsObject = async (pattern: string) => {
+    try {
+      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+
+      const requiredFiles = {};
+      files.map((filePath) => {
+        let requiredFileContent: any = null;
+        try {
+          const requiredFile = require(filePath);
+          const name = filePath.split('/').pop().split('.ts')[0];
+          requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
+
+          requiredFiles[name] = requiredFileContent;
+        } catch (err) {
+          throw err;
+        }
+      });
+
+      return requiredFiles;
+    } catch (err) {
+      throw err;
+    }
+  };
 }
