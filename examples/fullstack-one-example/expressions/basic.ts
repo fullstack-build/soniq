@@ -3,8 +3,8 @@ export = [
     name: 'Owner',
     returnType: 'Boolean',
     generate: (context, params): string => {
-      const field = params.field || 'owner_User_id';
-      return `"${context.table}"."${field}" = (public."current_user"()).id`;
+      const field = params.field || 'ownerId';
+      return `"${context.table}"."${field}" = (_meta."current_user"()).id`;
     },
   }, {
     name: 'Authenticated',

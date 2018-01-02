@@ -226,7 +226,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
-        const relationFieldName = fieldName + '_' + getRelationForeignTable(field) + '_id';
+        const relationFieldName = fieldName + 'Id';
 
         gQlTypes[tableName].relationByField[fieldName] = {
           relationName,
@@ -249,7 +249,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         }
         fieldAlreadyAddedAsSpecialType = true;
 
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + '_' + getRelationForeignTable(field) + '_id');
+        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + 'Id');
       }
 
       // add all normal fields (if not already added)
