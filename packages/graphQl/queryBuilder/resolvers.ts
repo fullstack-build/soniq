@@ -187,8 +187,8 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   // Add custom field resolvers to resolvers object
   Object.values(customOperations.fields).forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
-      // tslint:disable-next-line:max-line-length
-      throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Field "${operation.fieldName}" in Type "${operation.typeName}".`);
+      throw new Error(`The custom resolver "${operation.resolver}" is not defined.` +
+      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.typeName}".`);
     }
 
     if (resolvers[operation.typeName] == null) {

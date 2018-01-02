@@ -220,7 +220,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
     });
 
     // Add custom query to main query
-    sql += ` (${sqlQuery})`;
+    sql += ` ${sqlQuery}`;
   }
 
   return {

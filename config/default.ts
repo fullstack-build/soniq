@@ -10,5 +10,8 @@ export = {
     permissionsPattern: '/permissions/*.ts',
     expressionsPattern: '/expressions/*.ts',
     resolversPattern: '/resolvers/*.ts'
+  },
+  db: {
+    viewSchema: 'graphql'
   }
 };
