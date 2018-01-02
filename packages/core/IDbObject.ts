@@ -44,6 +44,12 @@ export interface IDbObject {
   relations: {
     [name: string]: IMaxTwoRelations;
   };
+  exposedNames?: {
+    [name: string]: {
+      schemaName: string;
+      tableName: string;
+    }
+  };
 }
 
 export interface IMaxTwoRelations extends Array<IDbRelation> {

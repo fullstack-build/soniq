@@ -2,21 +2,12 @@ import * as _ from 'lodash';
 
 import { IDbObject, IMaxTwoRelations, IDbRelation } from '../core/IDbObject';
 
-interface IExposedNames {
-  [name: string]: {
-    schemaName: string;
-    tableName: string;
-  };
-}
-
-// store all exposed GQl names and their underlying tables
-const exposedNamesToTables: IExposedNames = {};
-
 export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject => {
   const dbObject: IDbObject = {
     schemas: {},
     enums: {},
-    relations: {}
+    relations: {},
+    exposedNames: {}
   };
   parseGraphQlJsonNode(graphQlJsonSchema, dbObject);
   // return copy instead of ref
@@ -122,7 +113,7 @@ const GQL_JSON_PARSER = {
     };
 
     // add exposed name to list with reference to underlying table
-    exposedNamesToTables[typeName] = {
+    refDbObj.exposedNames[typeName] = {
       schemaName: refDbObjectCurrentTable.schemaName,
       tableName: refDbObjectCurrentTable.name
     };
@@ -627,7 +618,7 @@ function relationBuilderHelper(
 
   // check if relation table exists
   if (refDbObj.schemas[relationSchemaName].tables[relationTableName] == null ||
-    exposedNamesToTables[referencedExposedName] == null) {
+    refDbObj.exposedNames[referencedExposedName] == null) {
 
     process.stderr.write(
       'GraphQL.parser.error.unknown.relation.table: ' + relationName + ':' + referencedExposedName + '\n'
@@ -635,8 +626,8 @@ function relationBuilderHelper(
   } else {
 
     // get actual referenced table
-    referencedSchemaName  = exposedNamesToTables[referencedExposedName].schemaName;
-    referencedTableName   = exposedNamesToTables[referencedExposedName].tableName;
+    referencedSchemaName  = refDbObj.exposedNames[referencedExposedName].schemaName;
+    referencedTableName   = refDbObj.exposedNames[referencedExposedName].tableName;
 
     const relations = _getOrCreateEmptyRelation(refDbObj, relationName);
     const orderedRelations = relations.reduce((result: any, relation: IDbRelation) => {

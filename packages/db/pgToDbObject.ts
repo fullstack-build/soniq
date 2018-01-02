@@ -329,8 +329,8 @@ function addCheck(constraintRow, refDbObjectCurrentTable): void {
 
 function relationBuilderHelper(dbObject, constraint) {
 
-  let relationPayloadOne = null;
-  let relationPayloadMany = null;
+  let relationPayloadOne: any = {};
+  let relationPayloadMany: any = {};
   try {
     const relationPayload = JSON.parse(constraint.comment);
 
