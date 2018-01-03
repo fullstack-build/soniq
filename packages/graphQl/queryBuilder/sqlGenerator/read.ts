@@ -57,6 +57,7 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
         firstType = {
           typeName,
           viewName: gQlType.types[typeName].viewName,
+          viewSchemaName: gQlType.types[typeName].viewSchemaName,
           tableName: gQlType.types[typeName].tableName,
           localName: localNameByType[typeName]
         };
@@ -65,6 +66,7 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
         joinTypes.push({
           typeName,
           viewName: gQlType.types[typeName].viewName,
+          viewSchemaName: gQlType.types[typeName].viewSchemaName,
           tableName: gQlType.types[typeName].tableName,
           localName: localNameByType[typeName]
         });
@@ -75,12 +77,13 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
   // Join views with FULL OUTER JOIN to get all rows a user can see
   const joins = joinTypes.map((value, key) => {
     // Each joined view gets a local alias name and is required to match the id
-    return `FULL OUTER JOIN "${value.viewName}" AS "${value.localName}" on "${firstType.localName}".id = "${value.localName}".id`;
+    return `FULL OUTER JOIN "${value.viewSchemaName}"."${value.viewName}"` +
+    ` AS "${value.localName}" on "${firstType.localName}".id = "${value.localName}".id`;
   });
 
   // The combined views describe the table.
   // The first View will also get a local alias name
-  return `"${firstType.viewName}" AS "${firstType.localName}" ${joins.join(' ')}`;
+  return `"${firstType.viewSchemaName}"."${firstType.viewName}" AS "${firstType.localName}" ${joins.join(' ')}`;
 }
 
 // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
@@ -138,7 +141,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
           const fieldIdExpression = getFieldExpression(relation.columnName, typeNames, gQlType, localNameByType);
 
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, fieldIdExpression);
+          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there

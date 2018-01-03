@@ -21,7 +21,7 @@ function resolveCreateMutation(query, mutation) {
   }).join(', ');
 
   // Build insert query
-  return { sql: `INSERT INTO "${mutation.viewName}" (${f}) VALUES (${v}) RETURNING id`,
+  return { sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${f}) VALUES (${v}) RETURNING id`,
     values,
     mutation,
     id: query.args.input.id
@@ -52,7 +52,7 @@ function resolveUpdateMutation(query, mutation) {
   values.push(entityId);
 
   // Build update by id query
-  return { sql: `UPDATE "${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length} RETURNING id`,
+  return { sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length} RETURNING id`,
     values,
     mutation,
     id: query.args.input.id
@@ -61,7 +61,7 @@ function resolveUpdateMutation(query, mutation) {
 
 function resolveDeleteMutation(query, mutation) {
   // Build delete by id query
-  return { sql: `DELETE FROM "${mutation.viewName}" WHERE id = $1 RETURNING id`,
+  return { sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1 RETURNING id`,
     values: [query.args.input.id],
     mutation,
     id: query.args.input.id

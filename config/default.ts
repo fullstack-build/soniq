@@ -12,6 +12,6 @@ export = {
     resolversPattern: '/resolvers/*.ts'
   },
   db: {
-    viewSchema: 'graphql'
+    viewSchemaName: 'graphql'
   }
 };

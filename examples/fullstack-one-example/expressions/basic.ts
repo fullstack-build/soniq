@@ -4,7 +4,7 @@ export = [
     returnType: 'Boolean',
     generate: (context, params): string => {
       const field = params.field || 'ownerId';
-      return `"${context.table}"."${field}" = (_meta."current_user"()).id`;
+      return `${context.table}."${field}" = (_meta."current_user"()).id`;
     },
   }, {
     name: 'Authenticated',
@@ -28,7 +28,7 @@ export = [
     name: 'FirstNOfField',
     returnType: 'String',
     generate: (context, params): string => {
-      return `(substring("${context.table}"."${params.field}" from 1 for ${params.n || 1}) || '.')`;
+      return `(substring(${context.table}."${params.field}" from 1 for ${params.n || 1}) || '.')`;
     },
   },
 ];

@@ -7,7 +7,7 @@ export default (permissions) => {
     if (permission.type === 'DELETE') {
       if (deleteExpressionsByTableName[permission.table] == null) {
         deleteExpressionsByTableName[permission.table] = {
-          tableName: permission.table,
+          gqlTypeName: permission.gqlTypeName,
           expressions: {}
         };
       }
@@ -24,7 +24,7 @@ export default (permissions) => {
     const permission = {
       name: 'GeneratedDeleteView',
       type: 'DELETE',
-      table: value.tableName,
+      gqlTypeName: value.gqlTypeName,
       fields: ['id'],
       expressions: []
     };

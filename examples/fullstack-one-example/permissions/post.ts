@@ -2,7 +2,7 @@ export = [
   {
     name: 'Public',
     type: 'READ',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id', 'title', 'content', 'owner',
     ],
@@ -13,7 +13,7 @@ export = [
   {
     name: 'Owner',
     type: 'READ',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id', 'title', 'content', 'owner', 'ownerSecret',
     ],
@@ -24,7 +24,7 @@ export = [
   {
     name: 'Owner',
     type: 'CREATE',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id', 'title', 'content', 'ownerSecret', 'owner'
     ],
@@ -35,7 +35,7 @@ export = [
   {
     name: 'Owner',
     type: 'UPDATE',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id', 'title', 'content', 'ownerSecret',
     ],
@@ -46,7 +46,7 @@ export = [
   {
     name: 'Owner',
     type: 'DELETE',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id',
     ],
@@ -57,7 +57,7 @@ export = [
   {
     name: 'Admin',
     type: 'DELETE',
-    table: 'Post',
+    gqlTypeName: 'Post',
     fields: [
       'id',
     ],

@@ -2,7 +2,7 @@ export = [
   {
     name: 'Author',
     type: 'READ',
-    table: 'User',
+    gqlTypeName: 'User',
     fields: [
       'id', 'firstLetterOfUserName', 'payload', 'stripeAccount'
     ],
@@ -12,7 +12,7 @@ export = [
   }, {
     type: 'READ',
     name: 'Me',
-    table: 'User',
+    gqlTypeName: 'User',
     fields: [
       'id', 'firstLetterOfUserName', 'username', 'email', 'posts',
     ],
@@ -25,7 +25,7 @@ export = [
   }, {
     type: 'UPDATE',
     name: 'Me',
-    table: 'User',
+    gqlTypeName: 'User',
     fields: [
       'id', 'username', 'email', 'payload'
     ],
