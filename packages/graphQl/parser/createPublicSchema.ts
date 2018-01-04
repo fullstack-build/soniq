@@ -181,32 +181,36 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
       if (jsonDirectiveIndex !== -1) {
 
-        if (view.type === 'READ' && jsonFields[fieldName] != null) {
-          fieldAlreadyAddedAsSpecialType = true;
+        if (view.type === 'READ') {
+          if (jsonFields[fieldName] != null) {
+            fieldAlreadyAddedAsSpecialType = true;
 
-          jsonFields[fieldName].sort((a, b) => {
-            if (a.split(JSON_SPLIT).length > b.split(JSON_SPLIT).length) {
-              return -1;
-            }
-            if (a.split(JSON_SPLIT).length < b.split(JSON_SPLIT).length) {
-              return 1;
-            }
-            return 0;
-          });
+            jsonFields[fieldName].sort((a, b) => {
+              if (a.split(JSON_SPLIT).length > b.split(JSON_SPLIT).length) {
+                return -1;
+              }
+              if (a.split(JSON_SPLIT).length < b.split(JSON_SPLIT).length) {
+                return 1;
+              }
+              return 0;
+            });
 
-          const matchObject = {};
+            const matchObject = {};
 
-          Object.values(jsonFields[fieldName]).forEach((viewFieldName) => {
-            _.set(matchObject, viewFieldName, true);
-          });
+            Object.values(jsonFields[fieldName]).forEach((viewFieldName) => {
+              _.set(matchObject, viewFieldName, true);
+            });
 
-          const jsonExpression = getJsonObjectBuilderExpression(matchObject, fieldName, tableName);
+            const jsonExpression = getJsonObjectBuilderExpression(matchObject, fieldName, tableName);
 
-          dbView.fields.push({
-            name: fieldName,
-            expression: jsonExpression
-          });
-          gQlTypes[gqlTypeName].types[viewName.toUpperCase()].jsonFieldNames.push(fieldName);
+            dbView.fields.push({
+              name: fieldName,
+              expression: jsonExpression
+            });
+            gQlTypes[gqlTypeName].types[viewName.toUpperCase()].jsonFieldNames.push(fieldName);
+          }
+        } else {
+          field.type.name.value = field.type.name.value + 'Input';
         }
       }
 

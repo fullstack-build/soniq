@@ -26,6 +26,16 @@ type Payload {
   secret: Int
 }
 
+input PayloadDataInput {
+  title: String!
+  content: String!
+}
+
+input PayloadInput {
+  data: PayloadDataInput!
+  secret: Int!
+}
+
 #type Adress {
 #  city: String
 #  street: String
