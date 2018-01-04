@@ -11,6 +11,7 @@ export interface IDbObject {
             [name: string]:
               {
                 name: string;
+                oldName?: string;
                 description?: string;
                 type: 'computed' | 'customResolver' | 'varchar' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
                 customType?: string;
