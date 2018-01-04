@@ -40,7 +40,7 @@ returns void as $$
 
     // Grab modules worth auto-loading at context start and let them cache
     const query = 'SELECT module, source FROM _meta.plv8_js_modules WHERE autoload = true';
-    plv8.execute(query).forEach(function(row) {
+    plv8.execute(query).forEach( function(row) {
         load(row.module, row.source);
     });
 $$ LANGUAGE plv8 IMMUTABLE STRICT;

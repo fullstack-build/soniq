@@ -79,9 +79,9 @@ const GQL_JSON_PARSER = {
     const typeName = gQlSchemaDocumentNode.name.value;
 
     // find table directive
-    const dbDirective = gQlSchemaDocumentNode.directives.filter((directive) => {
+    const dbDirective = gQlSchemaDocumentNode.directives.find((directive) => {
       return (directive.kind === 'Directive' && directive.name.value === 'table');
-    })[0];
+    });
 
     // ignore if not a table definition
     if (dbDirective == null) {
@@ -217,6 +217,10 @@ const GQL_JSON_PARSER = {
             break;
         }
         break;
+      case 'migrate':
+        // add special miration
+        addMigration(gQlDirectiveNode, dbObjectNode);
+        break;
       case 'default': // set default value
         setDefaultValueForColumn(gQlDirectiveNode,
                                  dbObjectNode,
@@ -225,9 +229,17 @@ const GQL_JSON_PARSER = {
                                  refDbObjectCurrentTableColumn);
         break;
       default:
+        let pathToDirective = '';
+        if (refDbObjectCurrentTable != null && refDbObjectCurrentTable.name) {
+         pathToDirective = refDbObjectCurrentTable.name;
+        }
+        if (refDbObjectCurrentTableColumn != null && refDbObjectCurrentTableColumn.name) {
+          pathToDirective += '.' + refDbObjectCurrentTableColumn.name;
+        }
+
         process.stderr.write(
           'GraphQL.parser.error.unknown.directive.kind: ' +
-          refDbObjectCurrentTable.name + '.' + refDbObjectCurrentTableColumn.name + '.' + directiveKind + '\n',
+              pathToDirective + '.' + directiveKind + '\n',
         );
         break;
     }
@@ -536,9 +548,9 @@ function relationBuilderHelper(
 ) {
 
   // find the right directive
-  const relationDirective = gQlDirectiveNode.directives.filter((directive) => {
+  const relationDirective = gQlDirectiveNode.directives.find((directive) => {
     return (directive.name.value === 'relation');
-  })[0];
+  });
 
   let relationName            = null;
   let relationType            = null;
@@ -750,6 +762,20 @@ function relationBuilderHelper(
 
     // return relation reference
     return pRefDbObj.relations[pRelationName];
+  }
+
+}
+
+function addMigration(gQlDirectiveNode, dbObjectNode) {
+
+  const oldNameArgument = gQlDirectiveNode.arguments.find((argument) => {
+    return (argument.name.value.toLowerCase() === 'oldname');
+  });
+
+  const oldName = (oldNameArgument != null) ? oldNameArgument.value.value : null;
+
+  if (dbObjectNode != null && oldName != null) {
+    dbObjectNode.oldName = oldName;
   }
 
 }

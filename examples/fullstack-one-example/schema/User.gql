@@ -5,7 +5,7 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: JSON
+  payload: JSON @migrate(oldName: "payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
@@ -20,7 +20,7 @@ extend type Query {
   add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
 }
 
-enum Gender {
+enum Gender{
   male
   female
 }

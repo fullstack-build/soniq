@@ -3,10 +3,14 @@ import createViewsFromDbObject from './createViewsFromDbObject';
 import getRelationForeignTable from '../graphQl/parser/getRelationForeignTable';
 import { pgToDbObject } from '../db/pgToDbObject';
 
-export namespace migration {
+const DELETED_PREFIX = '_deleted:';
 
-  export async function createMigration() {
+export namespace migration {
+  let createDrop = false;
+
+  export async function createMigration(pCreateDrop: boolean = false) {
     const $one = FullstackOne.getInstance();
+    createDrop = pCreateDrop;
 
     try {
       // write parsed schema into migrations folder
@@ -75,13 +79,14 @@ export namespace migration {
     });
 
     // collect down migrations
-    deltaSqlCommands.push('-- down');
+    deltaSqlCommands.push('-- DOWN');
     const downMigrations = [];
     Object.values(deltaInOldNotInNew).forEach((delta) => {
       const deltaIndex = delta[0];
       const downMigration = migrationOld.down[deltaIndex];
       downMigrations.push(downMigration);
     });
+
     // run down migrations reversed
     downMigrations.reverse();
     deltaSqlCommands = deltaSqlCommands.concat(downMigrations);
@@ -92,14 +97,64 @@ export namespace migration {
     });
 
     // collect down migrations
-    deltaSqlCommands.push('-- up');
+    deltaSqlCommands.push('-- UP');
     Object.values(deltaInNewNotInOld).forEach((delta) => {
       const deltaIndex = delta[0];
       const upMigration = migrationNew.up[deltaIndex];
       deltaSqlCommands.push(upMigration);
     });
 
-    return deltaSqlCommands;
+    // remove unnecessary commands for renamed columns, tables and schemas
+    let filteredDeltaSqlCommands = [...deltaSqlCommands];
+    deltaSqlCommands.forEach((statement) => {
+      // column
+      if (
+        statement.indexOf('ALTER TABLE') !== -1 &&
+        statement.indexOf('RENAME COLUMN TO') !== -1 &&
+        statement.indexOf(DELETED_PREFIX) === -1) {
+        // tslint:disable-next-line:no-console
+        console.error('## COLUMN');
+
+        const myRegexp = /ALTER TABLE .* RENAME COLUMN "(.*)" TO "(.*)"+/g;
+        const match = myRegexp.exec(statement);
+        const oldName = match[1];
+        const newName = match[2];
+
+        if (oldName != null && newName != null) {
+          filteredDeltaSqlCommands = deltaSqlCommands.filter((subStatement) => {
+            return (
+              subStatement.indexOf(`ADD COLUMN "${newName}"`) === -1
+              &&
+              subStatement.indexOf(`ALTER COLUMN "${oldName}" TYPE varchar`) === -1
+              &&
+              subStatement.indexOf(`RENAME COLUMN "${oldName}" TO "${DELETED_PREFIX}${oldName}"`) === -1
+              &&
+              subStatement.indexOf(`DROP COLUMN IF EXISTS "${oldName}"`) === -1
+            );
+          });
+
+          // check if anything was removed, if not => remove rename colums -> done already
+          if (deltaSqlCommands.length === filteredDeltaSqlCommands.length) {
+            filteredDeltaSqlCommands = filteredDeltaSqlCommands.filter(e => e !== statement);
+          }
+
+        }
+      } else if (
+        statement.indexOf('ALTER TABLE') !== -1 &&
+        statement.indexOf('RENAME TO') !== -1 &&
+        statement.indexOf(DELETED_PREFIX) === -1) { // table
+
+        const myRegexp = /ALTER TABLE "(.*)" RENAME TO "(.*)"+/g;
+        const match = myRegexp.exec(statement);
+        const oldName = `"${match[1]}"`;
+        const newName = match[2];
+        // tslint:disable-next-line:no-console
+        console.error('## TABLE', oldName, newName);
+
+      }
+    });
+
+    return filteredDeltaSqlCommands;
   }
 
   export function createSqlFromDbObject(
@@ -177,20 +232,41 @@ export namespace migration {
       sqlCommands.up.push(`CREATE SCHEMA "${schemaName}";`);
 
       sqlCommands.down.push(`-- schema ${schemaName}:`);
-      sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
+      if (createDrop) {
+        sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
+      } else { // create rename instead
+        sqlCommands.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
+      }
     }
 
   }
 
   // http://www.postgresqltutorial.com/postgresql-alter-table/
   function createSqlFromTableObject(sqlCommands, tableObject: any) {
-    const tableName = `"${tableObject.schemaName}"."${tableObject.name}"`;
+    const tableNameWithSchema = `"${tableObject.schemaName}"."${tableObject.name}"`;
     // create table statement
-    sqlCommands.up.push(`-- table ${tableName}:`);
-    sqlCommands.up.push(`CREATE TABLE ${tableName}();`);
+    sqlCommands.up.push(`-- table ${tableNameWithSchema}:`);
+    sqlCommands.up.push(`CREATE TABLE ${tableNameWithSchema}();`);
 
-    sqlCommands.down.push(`-- table ${tableName}:`);
-    sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableName};`);
+    sqlCommands.down.push(`-- table ${tableNameWithSchema}:`);
+    if (createDrop) {
+      sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchema};`);
+    } else { // create rename instead, ignore if already renamed
+      if (tableObject.name.indexOf(DELETED_PREFIX) !== 0) {
+        sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME TO "${DELETED_PREFIX}${tableObject.name}";`);
+      } else {
+        sqlCommands.down.push(`-- Table ${tableObject.name} was already renamed instead of deleted.`);
+      }
+    }
+
+    // create rename statement
+    if (tableObject.oldName != null) {
+      const tableNameInDB = (createDrop) ? `${DELETED_PREFIX}${tableObject.name}` : tableObject.oldName;
+      const tableNameWithSchemaInDB = `"${tableObject.schemaName}"."${tableNameInDB}"`;
+
+      sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchemaInDB} RENAME TO "${tableObject.name}";`);
+      sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME TO "${tableNameInDB}";`);
+    }
 
     // create column statements
     for (const columnObject of Object.values(tableObject.columns)) {
@@ -211,16 +287,33 @@ export namespace migration {
         }
 
         // create column statement
-        sqlCommands.up.push(`ALTER TABLE ${tableName} ADD COLUMN "${columnObject.name}" varchar;`);
-        sqlCommands.down.push(`ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${columnObject.name}" CASCADE;`);
+        sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${columnObject.name}" varchar;`);
+        if (createDrop) {
+
+          sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${columnObject.name}" CASCADE;`);
+        } else { // create rename instead
+
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnObject.name}" TO "${DELETED_PREFIX}${columnObject.name}";`
+          );
+        }
 
         // set column type
         sqlCommands.up.push(
-          `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE ${type} USING "${columnObject.name}"::${type};`
+          `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" TYPE ${type} USING "${columnObject.name}"::${type};`
         );
         sqlCommands.down.push(
-          `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" TYPE varchar USING "${columnObject.name}"::varchar;`
+          `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" TYPE varchar USING "${columnObject.name}"::varchar;`
         );
+
+        // create rename statement
+        if (columnObject.oldName != null) {
+          const columnNameInDB = (createDrop) ? `${DELETED_PREFIX}${columnObject.name}` : columnObject.oldName;
+
+          sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnNameInDB}" TO "${columnObject.name}";`);
+          sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnObject.name}" TO "${columnObject.OldName}";`);
+        }
+
       }
 
       // add default values
@@ -228,27 +321,27 @@ export namespace migration {
         if (columnObject.defaultValue.isExpression) {
           // set default - expression
           sqlCommands.up.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT ${columnObject.defaultValue.value};`
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" SET DEFAULT ${columnObject.defaultValue.value};`
           );
           sqlCommands.down.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
           );
         } else {
           // set default - value
           sqlCommands.up.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" SET DEFAULT '${columnObject.defaultValue.value}';`
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" SET DEFAULT '${columnObject.defaultValue.value}';`
           );
           sqlCommands.down.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
           );
         }
       }
     }
 
     // generate constraints for column
-    sqlCommands.up.push(`-- constraints for ${tableName}:`);
-    sqlCommands.down.push(`-- constraints for ${tableName}:`);
-    createSqlColumnConstraints(sqlCommands, tableName, tableObject);
+    sqlCommands.up.push(`-- constraints for ${tableNameWithSchema}:`);
+    sqlCommands.down.push(`-- constraints for ${tableNameWithSchema}:`);
+    createSqlColumnConstraints(sqlCommands, tableNameWithSchema, tableObject);
   }
 
   function createSqlColumnConstraints(sqlCommands, tableName, tableObject) {

@@ -1,6 +1,8 @@
 // https://www.alberton.info/postgresql_meta_info.html
 import { IDbObject, IDbRelation } from '../core/IDbObject';
 
+const DELETED_PREFIX = '_deleted:';
+
 export async function pgToDbObject($one): Promise<IDbObject> {
   const dbObject: IDbObject = {
     schemas: {},
@@ -39,16 +41,20 @@ async function iterateAndAddSchemas(dbClient, dbObject): Promise<void> {
     // iterate all tables
     for (const row of Object.values(dbTables.rows)) {
       const schemaName = row.schema_name;
-      // create schema objects for each schema
-      dbObject.schemas[schemaName] = {
-        tables:{},
-        views: []
-      };
 
-      // iterate enum types
-      await iterateEnumTypes(dbClient, dbObject, schemaName);
-      // iterate tables
-      await iterateAndAddTables(dbClient, dbObject, schemaName);
+      // ignore deleted schemas
+      if (schemaName.indexOf(DELETED_PREFIX) !== 0) {
+        // create schema objects for each schema
+        dbObject.schemas[schemaName] = {
+          tables:{},
+          views: []
+        };
+
+        // iterate enum types
+        await iterateEnumTypes(dbClient, dbObject, schemaName);
+        // iterate tables
+        await iterateAndAddTables(dbClient, dbObject, schemaName);
+      }
     }
 
   } catch (err) {
@@ -162,11 +168,18 @@ async function iterateAndAddColumns(dbClient, dbObject, schemaName, tableName): 
 
       // create new column and keep reference for later
       const columnName = column.column_name;
-      const newColumn: any = currentTable.columns[columnName] = {
+      const newColumn: any = {
         name: columnName,
         description: null,
         type
       };
+
+      // add new column to dbObject if its not marked as deleted
+      if (columnName.indexOf(DELETED_PREFIX) !== 0) {
+        currentTable.columns[columnName] = newColumn;
+      } else {
+        continue;
+      }
 
       // defaut value
       if (column.column_default !== null) {
@@ -334,12 +347,12 @@ function relationBuilderHelper(dbObject, constraint) {
   try {
     const relationPayload = JSON.parse(constraint.comment);
 
-    relationPayloadOne = relationPayload.filter((relation) => {
+    relationPayloadOne = relationPayload.find((relation) => {
       return (relation.type === 'ONE');
-    })[0];
-    relationPayloadMany = relationPayload.filter((relation) => {
+    });
+    relationPayloadMany = relationPayload.find((relation) => {
       return (relation.type === 'MANY');
-    })[0];
+    });
 
   } catch (err) {
     // ignore empty payload -> fallback in code below

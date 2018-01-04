@@ -54,7 +54,6 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     const tableName = permission.table;
     // todo: CAN BE NULL => check and throw exception
     const table = tables[tableName];
-    // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
     let viewName = tableName + '_' + permission.name;
     if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
