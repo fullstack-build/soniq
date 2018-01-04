@@ -10,7 +10,42 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
+
+  #type: UserType
+  #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
+  #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
 }
+
+#type Adress {
+#  city: String
+#  street: String
+#  fullname: String
+#}
+
+#type Location {
+#  lgt: Int
+#  long: Int
+#}
+
+#type Personal {
+#  size: Int
+#  location: Location
+#}
+
+#type UserPayload {
+#  address: Address
+#  personal: Personal
+#}
+
+#type PrivatePayload {
+#  brithday: String
+#  address: String
+#}
+
+#type BusinessPayload {
+#  company: String
+#  address: String
+#}
 
 type AdditionPayload {
   sum: Int!
@@ -18,6 +53,11 @@ type AdditionPayload {
 
 extend type Query {
   add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
+}
+
+enum UserType {
+  private
+  business
 }
 
 enum Gender {

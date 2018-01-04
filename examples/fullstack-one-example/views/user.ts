@@ -35,5 +35,31 @@ export = [
         field: 'id',
       },
     }],
-  },
+  }/*, {
+    type: 'CREATE',
+    name: 'Private',
+    gqlTypeName: 'User',
+    fields: [
+      'id', 'username', 'email', 'type', 'privatePayload.data'
+    ],
+    expressions: [{
+      name: 'Type',
+      params: {
+        value: 'private',
+      },
+    }],
+  }, {
+    type: 'CREATE',
+    name: 'Business',
+    gqlTypeName: 'User',
+    fields: [
+      'id', 'username', 'email', 'type', 'businessPayload'
+    ],
+    expressions: [{
+      name: 'Type',
+      params: {
+        value: 'business',
+      },
+    }],
+  }*/
 ];

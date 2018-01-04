@@ -208,6 +208,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
         if (customSqlQuery.values[index] == null) {
           throw new Error(`Requested value "param(${index})" in custom SQL query is not defined: "${customSqlQuery.text}"`);
         }
+        // Hallo
 
         // Push current value to output value array
         const value = customSqlQuery.values[index];
@@ -238,8 +239,10 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
   // Get the relation from dbObject
   const relationConnections = dbObject.relations[relation.relationName];
 
+  const relationConnectionsArray = Object.values(relationConnections);
+
   // Determine which relation is the foreign one to get the correct columnName
-  const foreignRelation = relationConnections[0].tableName === relation.tableName ? relationConnections[1] : relationConnections[0];
+  const foreignRelation = relationConnectionsArray[0].tableName === relation.tableName ? relationConnectionsArray[1] : relationConnectionsArray[0];
 
   // Match will filter for the correct results (e.g. "Post.owner_User_id = User.id")
   const match = {
