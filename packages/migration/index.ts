@@ -1,6 +1,5 @@
 import * as FullstackOne from '../core';
 import createViewsFromDbObject from './createViewsFromDbObject';
-import getRelationForeignTable from '../graphQl/parser/getRelationForeignTable';
 import { pgToDbObject } from '../db/pgToDbObject';
 
 const DELETED_PREFIX = '_deleted:';

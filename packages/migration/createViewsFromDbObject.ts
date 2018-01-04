@@ -8,13 +8,14 @@ const operationMapper = {
 
 export default (dbObject, applicationUserName, includePrivileges) => {
   const statements = [];
+  const viewSchemas = {};
   statements.push('-- views');
 
   if (includePrivileges === true) {
-    Object.values(dbObject.tables).forEach((table) => {
-      if (table.isDbModel === true) {
-        statements.push(`REVOKE ALL PRIVILEGES ON "${table.name}" FROM ${applicationUserName};`);
-      }
+    Object.values(dbObject.schemas).forEach((schema) => {
+      Object.values(schema.tables).forEach((table) => {
+        statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
+      });
     });
   }
 
@@ -29,14 +30,20 @@ export default (dbObject, applicationUserName, includePrivileges) => {
       security = ' WITH (security_barrier)';
     }
 
-    statements.push(`DROP VIEW IF EXISTS "${view.name}";`);
+    viewSchemas[view.viewSchemaName] = view.viewSchemaName;
+
+    statements.push(`DROP VIEW IF EXISTS "${view.viewSchemaName}"."${view.viewName}";`);
     // tslint:disable-next-line:max-line-length
-    statements.push(`CREATE VIEW "${view.name}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${view.tableName}" WHERE ${view.expressions.join(' OR ')};`);
+    statements.push(`CREATE VIEW "${view.viewSchemaName}"."${view.viewName}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${view.schemaName}"."${view.tableName}" WHERE ${view.expressions.join(' OR ')};`);
 
     if (includePrivileges === true) {
       statements.push(`REVOKE ALL PRIVILEGES ON "${view.name}" FROM ${applicationUserName};`);
       statements.push(`GRANT ${operationMapper[view.operation]} ON "${view.name}" TO ${applicationUserName};`);
     }
+  });
+
+  Object.values(viewSchemas).forEach((schemaName) => {
+    statements.unshift(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
   });
 
   return statements;

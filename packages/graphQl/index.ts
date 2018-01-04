@@ -67,7 +67,7 @@ export namespace graphQl {
       // emit event
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
-      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions);
+      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions, dbObject, $one);
 
       gQlRuntimeDocument = combinedSchemaInformation.document;
       gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);

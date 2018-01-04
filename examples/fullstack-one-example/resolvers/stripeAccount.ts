@@ -1,4 +1,9 @@
 
-export default async (obj, args, context, info, f1) => {
-  return 'This is Stripe ' + Math.random();
+export default (obj, args, context, info, $one) => {
+
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+        resolve('This is Stripe ' + Math.random());
+    }, 100);
+  });
 };

@@ -9,10 +9,16 @@ import {
   print,
 } from 'graphql';
 
-export function runtimeParser(userSchema: any, permissions: IPermissions, expressions: IExpressions): any {
+export function runtimeParser(userSchema: any, permissions: IPermissions, expressions: IExpressions, dbObject, $one): any {
 
   const classification = classifyUserDefinitions(userSchema);
-  const { document, views, gQlTypes, queries, mutations, customFields } = createPublicSchema(classification, permissions, expressions);
+  const {
+    document,
+    views, gQlTypes,
+    queries,
+    mutations,
+    customFields
+  } = createPublicSchema(classification, permissions, expressions, dbObject, $one);
 
   const { customQueries, customMutations } = getCustomOperations(classification);
 

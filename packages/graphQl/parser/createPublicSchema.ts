@@ -6,7 +6,7 @@ import {
 import findDirectiveIndex from './findDirectiveIndex';
 import getArgumentByName from './getArgumentByName';
 import getBasicSchema from './getBasicSchema';
-import getRelationForeignTable from './getRelationForeignTable';
+import getRelationForeignGqlTypeName from './getRelationForeignGqlTypeName';
 import getRelationType from './getRelationType';
 import parseObjectArgument from './parseObjectArgument';
 import arrayToNamedArray from './arrayToNamedArray';
@@ -22,7 +22,7 @@ import { log } from 'util';
 import { introspectionQuery } from 'graphql';
 import { graphiqlKoa } from 'apollo-server-koa/dist/koaApollo';
 
-export default (classification: any, permissions: IPermissions, expressions: IExpressions) => {
+export default (classification: any, permissions: IPermissions, expressions: IExpressions, dbObject, $one) => {
 
   const {
     tables,
@@ -45,22 +45,30 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   const queries = [];
   const mutations = [];
   const customFields = {};
+  const viewSchemaName = $one.getConfig('db').viewSchemaName;
 
   const filteredPermissions = mergeDeletePermissions(permissions);
+
+  // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', JSON.stringify(dbObject.exposedNames, null, 2));
 
   // iterate over permissions
   // each permission will become a view
   Object.values(filteredPermissions).forEach((permission) => {
-    const tableName = permission.table;
-    // todo: CAN BE NULL => check and throw exception
-    const table = tables[tableName];
+    const gqlTypeName = permission.gqlTypeName;
+    // console.log('>>>>>', gqlTypeName, permission);
+    // TODO: CAN BE NULL => check and throw exception
+    const table = tables[gqlTypeName];
+    const nativeTable = dbObject.exposedNames[gqlTypeName];
+    const tableName = nativeTable.tableName;
+    const schemaName = nativeTable.schemaName;
+    // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
-    let viewName = tableName + '_' + permission.name;
+    let viewName = gqlTypeName + '_' + permission.name;
     if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
       viewName = permission.type.toLocaleLowerCase() + '_' + viewName;
     }
     if (permission.type === 'DELETE') {
-      viewName = permission.type.toLocaleLowerCase() + '_' + tableName;
+      viewName = permission.type.toLocaleLowerCase() + '_' + gqlTypeName;
     }
     tableView.name.value = viewName;
 
@@ -69,8 +77,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     }
 
     const view: any = {
+      gqlTypeName,
       tableName,
-      name: viewName,
+      schemaName,
+      viewName,
+      viewSchemaName,
       type: 'VIEW',
       fields: [],
       expressions: [],
@@ -79,10 +90,14 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     };
 
     // Create gQl Type for Table if it not already exists
-    if (gQlTypes[tableName] == null) {
-      gQlTypes[tableName] = {
-        name: tableName,
+    if (gQlTypes[gqlTypeName] == null) {
+      gQlTypes[gqlTypeName] = {
+        name: gqlTypeName,
+        gqlTypeName,
         tableName,
+        schemaName,
+        viewName,
+        viewSchemaName,
         fieldNames: [],
         typeNames: [],
         types: {},
@@ -91,17 +106,18 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     }
 
     // Add current type to list
-    gQlTypes[tableName].types[viewName.toUpperCase()] = {
+    gQlTypes[gqlTypeName].types[viewName.toUpperCase()] = {
       viewName,
+      viewSchemaName,
       typeName: viewName.toUpperCase(),
-      tableName,
+      gqlTypeName,
       fields: [],
       operation: permission.type,
       nativeFieldNames: []
     };
 
     if (permission.type === 'READ') {
-      gQlTypes[tableName].typeNames.push(viewName.toUpperCase());
+      gQlTypes[gqlTypeName].typeNames.push(viewName.toUpperCase());
     } else {
       tableView.kind = 'GraphQLInputObjectType';
     }
@@ -112,11 +128,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       const fieldName = field.name.value;
       const isIncluded = permission.fields.indexOf(fieldName) >= 0;
 
-      if (isIncluded && gQlTypes[tableName].fieldNames.indexOf(fieldName) < 0) {
-        gQlTypes[tableName].fieldNames.push(fieldName);
+      if (isIncluded && gQlTypes[gqlTypeName].fieldNames.indexOf(fieldName) < 0) {
+        gQlTypes[gqlTypeName].fieldNames.push(fieldName);
       }
 
-      gQlTypes[tableName].types[viewName.toUpperCase()].fields.push(fieldName);
+      gQlTypes[gqlTypeName].types[viewName.toUpperCase()].fields.push(fieldName);
 
       return isIncluded;
     });
@@ -153,12 +169,12 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           params = parseObjectArgument(paramsNode);
         }
 
-        const fieldKey = `${tableName}_${fieldName}`;
+        const fieldKey = `${gqlTypeName}_${fieldName}`;
 
         // Add field to custom fields for resolving it seperate
         customFields[fieldKey] = {
           type: 'Field',
-          typeName: tableName,
+          typeName: gqlTypeName,
           fieldName,
           resolver: resolverName,
           params
@@ -177,7 +193,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         filterFieldsForMutation.push(fieldName);
 
         // Add native fields to gQlTypes
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is expression
@@ -193,13 +209,18 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         }
 
         if (expressionsByName[expressionName] == null) {
-          throw new Error('Expression `' + expressionName + '` does not exist. You used it in table `' + permission.table + '`.');
+          throw new Error('Expression `' + expressionName + '` does not exist. You used it in table `' + permission.gqlTypeName + '`.');
         }
 
         const expressionContext = {
-          table: permission.table,
+          gqlTypeName: permission.gqlTypeName,
+          table: `"${schemaName}"."${tableName}"`,
+          tableName,
+          schemaName,
           field: fieldName,
-          view: viewName,
+          view: `"${viewSchemaName}"."${viewName}"`,
+          viewName,
+          viewSchemaName
         };
 
         const fieldExpression = expressionsByName[expressionName].generate(expressionContext, params);
@@ -216,7 +237,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         filterFieldsForMutation.push(fieldName);
 
         // Add native fields to gQlTypes
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is relation
@@ -225,11 +246,16 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
-        const relationFieldName = fieldName + '_' + getRelationForeignTable(field) + '_id';
+        const relationFieldName = fieldName + 'Id';
 
-        gQlTypes[tableName].relationByField[fieldName] = {
+        const foreignGqlTypeName = getRelationForeignGqlTypeName(field);
+        const foreignNativeTable = dbObject.exposedNames[foreignGqlTypeName];
+
+        gQlTypes[gqlTypeName].relationByField[fieldName] = {
           relationName,
-          foreignTableName: getRelationForeignTable(field),
+          foreignGqlTypeName,
+          foreignTableName: foreignNativeTable.tableName,
+          foreignSchemaName: foreignNativeTable.schemaName,
           relationType: getRelationType(field),
           columnName: relationFieldName
         };
@@ -248,7 +274,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         }
         fieldAlreadyAddedAsSpecialType = true;
 
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + '_' + getRelationForeignTable(field) + '_id');
+        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + 'Id');
       }
 
       // add all normal fields (if not already added)
@@ -257,7 +283,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           name: fieldName,
           expression: `"${fieldName}"`
         });
-        gQlTypes[tableName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
     });
 
@@ -272,14 +298,19 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     // creates SQL expressions for permission
     Object.values(permission.expressions).forEach((expression) => {
       if (expressionsByName[expression.name] == null) {
-        throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + permission.table + '`.');
+        throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + permission.gqlTypeName + '`.');
       }
       // todo check if returnType is a boolean
 
       const expressionContext = {
-        table: permission.table,
+        gqlTypeName: permission.gqlTypeName,
+        table: `"${schemaName}"."${tableName}"`,
+        tableName,
+        schemaName,
         field: null,
-        view: viewName,
+        view: `"${viewSchemaName}"."${viewName}"`,
+        viewName,
+        viewSchemaName
       };
 
       const expressionSql = expressionsByName[expression.name].generate(expressionContext, expression.params || {});
@@ -311,7 +342,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       graphQlDocument.definitions.push(tableView);
 
-      let returnType = tableName;
+      let returnType = gqlTypeName;
 
       if (permission.type === 'DELETE') {
         returnType = 'ID';
@@ -322,8 +353,9 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         type: permission.type,
         inputType: viewName,
         returnType,
-        typesEnumName: (tableName + '_TYPES').toUpperCase(),
-        viewName
+        typesEnumName: (gqlTypeName + '_TYPES').toUpperCase(),
+        viewName,
+        viewSchemaName
       });
     }
 
@@ -336,9 +368,9 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   Object.values(gQlTypes).forEach((gQlType) => {
     // console.log('>>>>>>', JSON.stringify(gQlType, null, 2))
 
-    const tableName = gQlType.tableName;
-    const typesEnumName = (tableName + '_TYPES').toUpperCase();
-    const table = tables[gQlType.tableName];
+    const gqlTypeName = gQlType.gqlTypeName;
+    const typesEnumName = (gqlTypeName + '_TYPES').toUpperCase();
+    const table = tables[gQlType.gqlTypeName];
     // new object: GraphQL definition for fusionView
     // const tableView = { ...table };
     const tableView = JSON.parse(JSON.stringify(table));
@@ -375,9 +407,9 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     graphQlDocument.definitions.push(tableView);
 
     queries.push({
-      name: tableName.toString().toLowerCase() + 's',
-      type: tableName,
-      typesEnumName: (tableName + '_TYPES').toUpperCase()
+      name: gqlTypeName.toString().toLowerCase() + 's',
+      type: gqlTypeName,
+      typesEnumName: (gqlTypeName + '_TYPES').toUpperCase()
     });
 
     /* Object.keys(gQlType.types).forEach((view, index) => {
