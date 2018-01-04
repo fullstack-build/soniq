@@ -9,20 +9,47 @@ export function getLocalName(counter) {
   return `_local_${counter}_`;
 }
 
+export function getJsonMerge(jsonFields) {
+  if (jsonFields.length < 1) {
+    return `jsonb_build_object()`;
+  }
+  if (jsonFields.length < 2) {
+    return jsonFields.pop();
+  }
+  const jsonField = jsonFields.pop();
+
+  return `jsonb_merge(${jsonField}, ${getJsonMerge(jsonFields)})`;
+}
+
 // A Table can consist of multiple Views. So each field needs to be combined with COALESCE to one.
 export function getFieldExpression(name, typeNames, gQlType, localNameByType) {
   const fields = [];
+  // Put here any instead of boolean because ts lint sucks! Just WTF!?
+  let isJson: any = false;
 
   // Get fields per View/Type. Not every field exists in every View/Type
   Object.values(typeNames).forEach((typeName) => {
     if (gQlType.types[typeName] != null && gQlType.types[typeName].nativeFieldNames.indexOf(name) >= 0 && localNameByType[typeName] != null) {
       fields.push(`"${localNameByType[typeName]}"."${name}"`);
+    } else {
+      if (gQlType.types[typeName] != null && gQlType.types[typeName].jsonFieldNames.indexOf(name) >= 0 && localNameByType[typeName] != null) {
+        isJson = true;
+        fields.push(`"${localNameByType[typeName]}"."${name}"`);
+      }
     }
   });
 
   // ID can never be null. All other fields can.
-  if (name !== 'id') {
+  if (name !== 'id' && isJson !== true) {
     fields.push('null');
+  }
+
+  if (isJson === true) {
+    const jsonFields = fields.map((field) => {
+      return `COALESCE(${field}, jsonb_build_object())`;
+    });
+
+    return getJsonMerge(jsonFields);
   }
 
   return `COALESCE(${fields.join(', ')})`;
@@ -208,7 +235,6 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
         if (customSqlQuery.values[index] == null) {
           throw new Error(`Requested value "param(${index})" in custom SQL query is not defined: "${customSqlQuery.text}"`);
         }
-        // Hallo
 
         // Push current value to output value array
         const value = customSqlQuery.values[index];

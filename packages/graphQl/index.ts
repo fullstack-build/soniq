@@ -14,14 +14,14 @@ import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/resolvers';
 
 // import interfaces
-import { IPermissions, IExpressions } from './interfaces';
+import { IViews, IExpressions } from './interfaces';
 import { parseGraphQlJsonSchemaToDbObject } from './graphQlSchemaToDbObject';
 
 export namespace graphQl {
 
   let gQlSchema: any;
   let gQlJsonSchema: any;
-  let permissions: IPermissions;
+  let views: IViews;
   let expressions: IExpressions;
   let gQlRuntimeSchema: string;
   let gQlRuntimeDocument: any;
@@ -54,9 +54,9 @@ export namespace graphQl {
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbObject`);
 
       // load permissions
-      const permissionsPattern = $one.ENVIRONMENT.path + graphQlConfig.permissionsPattern;
-      const permissionsArray = await helper.requireFilesByGlobPattern(permissionsPattern);
-      permissions = [].concat.apply([], permissionsArray);
+      const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
+      const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
+      views = [].concat.apply([], viewsArray);
       // emit event
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
@@ -67,7 +67,7 @@ export namespace graphQl {
       // emit event
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
-      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, permissions, expressions, dbObject, $one);
+      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbObject, $one);
 
       gQlRuntimeDocument = combinedSchemaInformation.document;
       gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
@@ -81,7 +81,16 @@ export namespace graphQl {
         mutations: combinedSchemaInformation.customMutations
       };
 
-      dbObject.views = combinedSchemaInformation.views;
+      Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
+        if (dbObject.schemas[dbView.viewSchemaName] == null) {
+          dbObject.schemas[dbView.viewSchemaName] = {
+            tables: {},
+            views: {}
+          };
+        }
+        dbObject.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
+      });
+      // dbObject.views = combinedSchemaInformation.views;
 
       // add endpoints
       await addEndpoints($one);

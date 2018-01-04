@@ -1,4 +1,4 @@
-import { IPermissions, IExpressions } from '../interfaces';
+import { IViews, IExpressions } from '../interfaces';
 
 import classifyUserDefinitions from './classifyUserDefinitions';
 import createPublicSchema from './createPublicSchema';
@@ -9,12 +9,13 @@ import {
   print,
 } from 'graphql';
 
-export function runtimeParser(userSchema: any, permissions: IPermissions, expressions: IExpressions, dbObject, $one): any {
+export function runtimeParser(userSchema: any, permissions: IViews, expressions: IExpressions, dbObject, $one): any {
 
   const classification = classifyUserDefinitions(userSchema);
   const {
     document,
-    views, gQlTypes,
+    dbViews,
+    gQlTypes,
     queries,
     mutations,
     customFields
@@ -37,6 +38,6 @@ export function runtimeParser(userSchema: any, permissions: IPermissions, expres
   // console.log('> Views:', JSON.stringify(views, null, 2));
   // console.log('> Views:', JSON.stringify(views, null, 2));
 
-  return { document, views, gQlTypes, queries, mutations, customFields, customQueries, customMutations };
+  return { document, dbViews, gQlTypes, queries, mutations, customFields, customQueries, customMutations };
 
 }

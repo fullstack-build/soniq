@@ -4,7 +4,7 @@ export = [
     type: 'READ',
     gqlTypeName: 'User',
     fields: [
-      'id', 'firstLetterOfUserName', 'payload', 'stripeAccount'
+      'id', 'firstLetterOfUserName', 'stripeAccount', 'payload.data.title', 'payload.secret'
     ],
     expressions: [{
       name: 'Anyone',
@@ -14,7 +14,7 @@ export = [
     name: 'Me',
     gqlTypeName: 'User',
     fields: [
-      'id', 'firstLetterOfUserName', 'username', 'email', 'posts',
+      'id', 'firstLetterOfUserName', 'username', 'email', 'posts', 'payload.data.content'
     ],
     expressions: [{
       name: 'Owner',
@@ -27,7 +27,7 @@ export = [
     name: 'Me',
     gqlTypeName: 'User',
     fields: [
-      'id', 'username', 'email', 'payload'
+      'id', 'username', 'email'
     ],
     expressions: [{
       name: 'Owner',

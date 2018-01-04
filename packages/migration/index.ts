@@ -22,13 +22,13 @@ export namespace migration {
       this.emit('schema.dbObject.migration.saved');*/
 
       // tslint:disable-next-line:no-console
-      console.log(JSON.stringify($one.getDbObject(), null, 2));
+      // console.log(JSON.stringify($one.getDbObject(), null, 2));
 
       // tslint:disable-next-line:no-console
       console.log('############### dbObjectFromPG:');
       const dbObjectFromPg = await pgToDbObject($one);
       // tslint:disable-next-line:no-console
-      console.log(JSON.stringify(dbObjectFromPg, null, 2));
+      // console.log(JSON.stringify(dbObjectFromPg, null, 2));
 
       const sqlStatements = await createSqlFromDbObject($one.getDbObject());
       // tslint:disable-next-line:no-console

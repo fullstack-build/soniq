@@ -5,7 +5,7 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: JSON @migrate(oldName: "payloadOld")
+  payload: Payload @json
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
@@ -14,6 +14,16 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
+}
+
+type PayloadData {
+  title: String
+  content: String
+}
+
+type Payload {
+  data: PayloadData
+  secret: Int
 }
 
 #type Adress {
