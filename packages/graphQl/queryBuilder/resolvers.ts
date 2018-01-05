@@ -121,8 +121,9 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           } else {
             // Create a match to search for the new created or updated entity
             const match = {
+              type: 'SIMPLE',
               foreignFieldName: 'id',
-              idExpression: `'${mutationQuery.id}'::uuid`
+              fieldExpression: `'${mutationQuery.id}'::uuid`
             };
 
             // Generate sql query for response-data of the mutation

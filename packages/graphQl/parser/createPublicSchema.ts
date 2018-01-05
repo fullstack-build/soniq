@@ -303,6 +303,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
+        const relationConnections = dbObject.relations[relationName];
+
+        const relationConnectionsArray = Object.values(relationConnections);
+
+        // Determine which relation is the foreign one to get the correct columnName
+        const foreignRelation = relationConnectionsArray[0].tableName === tableName ? relationConnectionsArray[1] : relationConnectionsArray[0];
+
+        // Determine which relation is the own one to get the correct columnName
+        const ownRelation = relationConnectionsArray[0].tableName === tableName ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
         const relationFieldName = fieldName + 'Id';
 
         const foreignGqlTypeName = getRelationForeignGqlTypeName(field);
@@ -313,25 +323,26 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
           foreignGqlTypeName,
           foreignTableName: foreignNativeTable.tableName,
           foreignSchemaName: foreignNativeTable.schemaName,
-          relationType: getRelationType(field),
+          relationType: ownRelation.type,
           columnName: relationFieldName
         };
 
         // This field cannot be set with a mutation
         filterFieldsForMutation.push(fieldName);
 
-        if (getRelationType(field) === 'ONE') {
+        if (ownRelation.columnName != null) {
           dbView.fields.push({
             name: fieldName,
-            expression: `"${relationFieldName}"`
+            expression: `"${ownRelation.columnName}"`
           });
 
           // Add relation-field-name to GQL Input for mutating it
-          addIdFieldsForMutation.push(relationFieldName);
-        }
-        fieldAlreadyAddedAsSpecialType = true;
+          addIdFieldsForMutation.push(ownRelation.columnName);
 
-        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + 'Id');
+          gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(ownRelation.columnName);
+        }
+
+        fieldAlreadyAddedAsSpecialType = true;
       }
 
       // add all normal fields (if not already added)

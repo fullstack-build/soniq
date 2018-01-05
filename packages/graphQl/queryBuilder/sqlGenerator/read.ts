@@ -168,7 +168,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
           const fieldIdExpression = getFieldExpression(relation.columnName, typeNames, gQlType, localNameByType);
 
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression);
+          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression, typeNames, gQlType, localNameByType);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -181,7 +181,8 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
         if (relation.relationType === 'MANY') {
           // A many relation just needs to match by it's idExpression
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression);
+          // tslint:disable-next-line:max-line-length
+          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression, typeNames, gQlType, localNameByType);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -211,7 +212,12 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
   if (match != null) {
     const exp = getFieldExpression(match.foreignFieldName, typeNames, gQlType, localNameByType);
-    sql += ` WHERE ${exp} = ${match.idExpression}`;
+
+    if (match.type !== 'ARRAY') {
+      sql += ` WHERE ${exp} = ${match.fieldExpression}`;
+    } else {
+      sql += ` WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`;
+    }
   }
 
   // Check if a custom sql statement exists
@@ -261,7 +267,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
 }
 
 // Resolves a relation of a column/field to a new Subquery
-export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression) {
+export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression, typeNames, gQlType, localNameByType) {
   // Get the relation from dbObject
   const relationConnections = dbObject.relations[relation.relationName];
 
@@ -270,9 +276,13 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
   // Determine which relation is the foreign one to get the correct columnName
   const foreignRelation = relationConnectionsArray[0].tableName === relation.tableName ? relationConnectionsArray[1] : relationConnectionsArray[0];
 
+  // Determine which relation is the own one to get the correct columnName
+  const ownRelation = relationConnectionsArray[0].tableName === relation.tableName ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
   // Match will filter for the correct results (e.g. "Post.owner_User_id = User.id")
   const match = {
-    idExpression: matchIdExpression,
+    type: 'SIMPLE',
+    fieldExpression: matchIdExpression,
     foreignFieldName: 'id'
   };
 
@@ -283,11 +293,24 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
     // A ONE relation will respond a single object
     return rowToJson(c, query, gQlTypes, dbObject, values, match);
   } else {
-    // If this is the MANY part/column/field of the relation we need to match by its foreignColumnName
-    match.foreignFieldName = foreignRelation.columnName;
+    // check if this is a many to many relation
+    if (foreignRelation.type === 'MANY') {
+      const arrayMatch = {
+        type: 'ARRAY',
+        fieldExpression: getFieldExpression(ownRelation.columnName, typeNames, gQlType, localNameByType),
+        foreignFieldName: 'id'
+      };
 
-    // A MANY relation will respond an array of objects
-    return jsonAgg(c, query, gQlTypes, dbObject, values, match);
+      return jsonAgg(c, query, gQlTypes, dbObject, values, arrayMatch);
+    } else {
+
+      // If this is the MANY part/column/field of the relation we need to match by its foreignColumnName
+      match.foreignFieldName = foreignRelation.columnName;
+
+      // A MANY relation will respond an array of objects
+      return jsonAgg(c, query, gQlTypes, dbObject, values, match);
+
+    }
   }
 }
 
