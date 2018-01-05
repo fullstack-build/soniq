@@ -16,6 +16,7 @@ import getTypenamesField from './getTypenamesField';
 import convertToInputType from './convertToInputType';
 import mergeDeleteViews from './mergeDeleteViews';
 import createIdField from './createIdField';
+import createIdArrayField from './createIdArrayField';
 import createScalar from './createScalar';
 import getJsonObjectBuilderExpression from './getJsonObjectBuilderExpression';
 import { log } from 'util';
@@ -168,6 +169,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
     const filterFieldsForMutation = [];
     const addIdFieldsForMutation = [];
+    const addIdArrayFieldsForMutation = [];
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
@@ -337,7 +339,13 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
           });
 
           // Add relation-field-name to GQL Input for mutating it
-          addIdFieldsForMutation.push(ownRelation.columnName);
+          if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+            // In case of ManyToMany it's an array
+            addIdArrayFieldsForMutation.push(ownRelation.columnName);
+          } else {
+            // In case of ManyToOne it is an id
+            addIdFieldsForMutation.push(ownRelation.columnName);
+          }
 
           gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(ownRelation.columnName);
         }
@@ -398,6 +406,11 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     // Add relation fields for mutations
     Object.values(addIdFieldsForMutation).forEach((fieldName) => {
       tableView.fields.push(createIdField(fieldName));
+    });
+
+    // Add relation array fields for mutations
+    Object.values(addIdArrayFieldsForMutation).forEach((fieldName) => {
+      tableView.fields.push(createIdArrayField(fieldName));
     });
 
     // Add view to GraphQl graphQlDocument

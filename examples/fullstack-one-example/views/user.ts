@@ -27,7 +27,7 @@ export = [
     name: 'Me',
     gqlTypeName: 'User',
     fields: [
-      'id', 'username', 'email', 'payload'
+      'id', 'username', 'email', 'payload', 'postContributions'
     ],
     expressions: [{
       name: 'Owner',
