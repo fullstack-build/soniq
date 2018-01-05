@@ -129,6 +129,12 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     }
 
     const jsonFields = {};
+    const filterFieldsForMutation = [];
+
+    if (view.type ===  'CREATE' && view.fields.indexOf('id') < 0) {
+      view.fields.push('id');
+      filterFieldsForMutation.push('id');
+    }
 
     // filter required dbViews
     // only allow fields with positive view views
@@ -167,7 +173,6 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       }
     });
 
-    const filterFieldsForMutation = [];
     const addIdFieldsForMutation = [];
     const addIdArrayFieldsForMutation = [];
 
@@ -175,6 +180,10 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     Object.values(tableView.fields).forEach((field) => {
       const fieldName = field.name.value;
       let fieldAlreadyAddedAsSpecialType = false;
+
+      if (fieldName === 'id' && view.type === 'CREATE' && field.type.kind === 'NonNullType') {
+        field.type = field.type.type;
+      }
 
       const jsonDirectiveIndex = findDirectiveIndex(field, 'json');
       const customDirectiveIndex = findDirectiveIndex(field, 'custom');

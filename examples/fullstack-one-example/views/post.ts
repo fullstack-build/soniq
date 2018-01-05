@@ -26,7 +26,7 @@ export = [
     type: 'CREATE',
     gqlTypeName: 'Post',
     fields: [
-      'id', 'title', 'content', 'ownerSecret', 'owner'
+      'title', 'content', 'ownerSecret', 'owner'
     ],
     expressions: [{
       name: 'Owner',
