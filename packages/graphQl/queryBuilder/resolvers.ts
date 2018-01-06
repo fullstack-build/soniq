@@ -42,11 +42,11 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to queryResolvers
     queryResolvers[query.name] = async (obj, args, context, info) => {
 
-        // Get a client from pool
-        const client = await pool.connect();
-
         // Generate select sql query
         const selectQuery = queryResolver(obj, args, context, info);
+
+        // Get a client from pool
+        const client = await pool.connect();
 
         try {
           // Begin transaction
@@ -92,11 +92,11 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to mutationResolvers
     mutationResolvers[mutation.name] = async (obj, args, context, info) => {
 
-        // Get a client from pool
-        const client = await pool.connect();
-
         // Generate mutation sql query
         const mutationQuery = mutationResolver(obj, args, context, info);
+
+        // Get a client from pool
+        const client = await pool.connect();
 
         try {
           // Begin transaction
@@ -119,10 +119,17 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           if (mutationQuery.mutation.type === 'DELETE') {
             returnData = rows[0].id;
           } else {
+            let entityId = mutationQuery.id;
+
+            if (mutationQuery.mutation.type === 'CREATE') {
+              entityId = rows[0].id;
+            }
+
             // Create a match to search for the new created or updated entity
             const match = {
+              type: 'SIMPLE',
               foreignFieldName: 'id',
-              idExpression: `'${mutationQuery.id}'::uuid`
+              fieldExpression: `'${entityId}'::uuid`
             };
 
             // Generate sql query for response-data of the mutation

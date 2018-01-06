@@ -1,6 +1,6 @@
 import {
   IExpressions,
-  IPermissions
+  IViews
 } from '../interfaces';
 
 import findDirectiveIndex from './findDirectiveIndex';
@@ -14,15 +14,20 @@ import getQueryArguments from './getQueryArguments';
 import getTypesEnum from './getTypesEnum';
 import getTypenamesField from './getTypenamesField';
 import convertToInputType from './convertToInputType';
-import mergeDeletePermissions from './mergeDeletePermissions';
+import mergeDeleteViews from './mergeDeleteViews';
 import createIdField from './createIdField';
+import createIdArrayField from './createIdArrayField';
 import createScalar from './createScalar';
+import getJsonObjectBuilderExpression from './getJsonObjectBuilderExpression';
 import { log } from 'util';
+import { _ } from 'lodash';
 
 import { introspectionQuery } from 'graphql';
 import { graphiqlKoa } from 'apollo-server-koa/dist/koaApollo';
 
-export default (classification: any, permissions: IPermissions, expressions: IExpressions, dbObject, $one) => {
+const JSON_SPLIT = '.';
+
+export default (classification: any, views: IViews, expressions: IExpressions, dbObject, $one) => {
 
   const {
     tables,
@@ -40,22 +45,22 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
   graphQlDocument.definitions.push(createScalar('JSON'));
 
   const gQlTypes: any = {};
-  const views = [];
+  const dbViews = [];
   const expressionsByName = arrayToNamedArray(expressions);
   const queries = [];
   const mutations = [];
   const customFields = {};
   const viewSchemaName = $one.getConfig('db').viewSchemaName;
 
-  const filteredPermissions = mergeDeletePermissions(permissions);
+  const filteredViews = mergeDeleteViews(views);
 
   // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', JSON.stringify(dbObject.exposedNames, null, 2));
 
-  // iterate over permissions
-  // each permission will become a view
-  Object.values(filteredPermissions).forEach((permission) => {
-    const gqlTypeName = permission.gqlTypeName;
-    // console.log('>>>>>', gqlTypeName, permission);
+  // iterate over views
+  // each view will become a view
+  Object.values(filteredViews).forEach((view) => {
+    const gqlTypeName = view.gqlTypeName;
+    // console.log('>>>>>', gqlTypeName, view);
     // TODO: CAN BE NULL => check and throw exception
     const table = tables[gqlTypeName];
     const nativeTable = dbObject.exposedNames[gqlTypeName];
@@ -63,20 +68,20 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     const schemaName = nativeTable.schemaName;
     // const tableView = { ... table };
     const tableView = JSON.parse(JSON.stringify(table));
-    let viewName = gqlTypeName + '_' + permission.name;
-    if (permission.type === 'CREATE' || permission.type === 'UPDATE') {
-      viewName = permission.type.toLocaleLowerCase() + '_' + viewName;
+    let viewName = gqlTypeName + '_' + view.name;
+    if (view.type === 'CREATE' || view.type === 'UPDATE') {
+      viewName = view.type.toLocaleLowerCase() + '_' + viewName;
     }
-    if (permission.type === 'DELETE') {
-      viewName = permission.type.toLocaleLowerCase() + '_' + gqlTypeName;
+    if (view.type === 'DELETE') {
+      viewName = view.type.toLocaleLowerCase() + '_' + gqlTypeName;
     }
     tableView.name.value = viewName;
 
-    if (permission.type === 'UPDATE' && permission.fields.indexOf('id') < 0) {
-      throw new Error('A update permission is required to include field "id". Please check permission "' + permission.name + '".');
+    if (view.type === 'UPDATE' && view.fields.indexOf('id') < 0) {
+      throw new Error('A update view is required to include field "id". Please check view "' + view.name + '".');
     }
 
-    const view: any = {
+    const dbView: any = {
       gqlTypeName,
       tableName,
       schemaName,
@@ -85,8 +90,8 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       type: 'VIEW',
       fields: [],
       expressions: [],
-      operation: permission.type,
-      permission
+      operation: view.type,
+      view
     };
 
     // Create gQl Type for Table if it not already exists
@@ -112,21 +117,44 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       typeName: viewName.toUpperCase(),
       gqlTypeName,
       fields: [],
-      operation: permission.type,
-      nativeFieldNames: []
+      operation: view.type,
+      nativeFieldNames: [],
+      jsonFieldNames: []
     };
 
-    if (permission.type === 'READ') {
+    if (view.type === 'READ') {
       gQlTypes[gqlTypeName].typeNames.push(viewName.toUpperCase());
     } else {
       tableView.kind = 'GraphQLInputObjectType';
     }
 
-    // filter required views
-    // only allow fields with positive permissions
+    const jsonFields = {};
+    const filterFieldsForMutation = [];
+
+    if (view.type ===  'CREATE' && view.fields.indexOf('id') < 0) {
+      view.fields.push('id');
+      filterFieldsForMutation.push('id');
+    }
+
+    // filter required dbViews
+    // only allow fields with positive view views
     tableView.fields = tableView.fields.filter((field) => {
       const fieldName = field.name.value;
-      const isIncluded = permission.fields.indexOf(fieldName) >= 0;
+      let isIncluded = view.fields.indexOf(fieldName) >= 0;
+
+      if (!isIncluded && view.type === 'READ') {
+        Object.values(view.fields).forEach((viewFieldName) => {
+          if (viewFieldName.startsWith(`${fieldName}${JSON_SPLIT}`)) {
+            isIncluded = true;
+
+            if (jsonFields[fieldName] == null) {
+              jsonFields[fieldName] = [];
+            }
+
+            jsonFields[fieldName].push(viewFieldName);
+          }
+        });
+      }
 
       if (isIncluded && gQlTypes[gqlTypeName].fieldNames.indexOf(fieldName) < 0) {
         gQlTypes[gqlTypeName].fieldNames.push(fieldName);
@@ -137,7 +165,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       return isIncluded;
     });
 
-    // new object: each table leads to 0..n views based on permissions
+    // new object: each table leads to 0..n dbViews based on views
     // rename table to view
     Object.values(tableView.directives).forEach((directive) => {
       if (directive.name.value === 'table') {
@@ -145,17 +173,57 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       }
     });
 
-    const filterFieldsForMutation = [];
     const addIdFieldsForMutation = [];
+    const addIdArrayFieldsForMutation = [];
 
     // Get fields and it's expressions
     Object.values(tableView.fields).forEach((field) => {
       const fieldName = field.name.value;
       let fieldAlreadyAddedAsSpecialType = false;
 
+      if (fieldName === 'id' && view.type === 'CREATE' && field.type.kind === 'NonNullType') {
+        field.type = field.type.type;
+      }
+
+      const jsonDirectiveIndex = findDirectiveIndex(field, 'json');
       const customDirectiveIndex = findDirectiveIndex(field, 'custom');
       const computedDirectiveIndex = findDirectiveIndex(field, 'computed');
       const relationDirectiveIndex = findDirectiveIndex(field, 'relation');
+
+      if (jsonDirectiveIndex !== -1) {
+
+        if (view.type === 'READ') {
+          if (jsonFields[fieldName] != null) {
+            fieldAlreadyAddedAsSpecialType = true;
+
+            jsonFields[fieldName].sort((a, b) => {
+              if (a.split(JSON_SPLIT).length > b.split(JSON_SPLIT).length) {
+                return -1;
+              }
+              if (a.split(JSON_SPLIT).length < b.split(JSON_SPLIT).length) {
+                return 1;
+              }
+              return 0;
+            });
+
+            const matchObject = {};
+
+            Object.values(jsonFields[fieldName]).forEach((viewFieldName) => {
+              _.set(matchObject, viewFieldName, true);
+            });
+
+            const jsonExpression = getJsonObjectBuilderExpression(matchObject, fieldName, tableName);
+
+            dbView.fields.push({
+              name: fieldName,
+              expression: jsonExpression
+            });
+            gQlTypes[gqlTypeName].types[viewName.toUpperCase()].jsonFieldNames.push(fieldName);
+          }
+        } else {
+          field.type.name.value = field.type.name.value + 'Input';
+        }
+      }
 
       // field is expression
       if (customDirectiveIndex !== -1) {
@@ -184,7 +252,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         const fieldSql = `NULL::text AS "${fieldName}"`;
 
         fieldAlreadyAddedAsSpecialType = true;
-        view.fields.push({
+        dbView.fields.push({
           name: fieldName,
           expression: fieldSql
         });
@@ -209,11 +277,11 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         }
 
         if (expressionsByName[expressionName] == null) {
-          throw new Error('Expression `' + expressionName + '` does not exist. You used it in table `' + permission.gqlTypeName + '`.');
+          throw new Error('Expression `' + expressionName + '` does not exist. You used it in table `' + view.gqlTypeName + '`.');
         }
 
         const expressionContext = {
-          gqlTypeName: permission.gqlTypeName,
+          gqlTypeName: view.gqlTypeName,
           table: `"${schemaName}"."${tableName}"`,
           tableName,
           schemaName,
@@ -228,7 +296,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         const fieldSql = `(${fieldExpression}) AS "${fieldName}"`;
 
         fieldAlreadyAddedAsSpecialType = true;
-        view.fields.push({
+        dbView.fields.push({
           name: fieldName,
           expression: fieldSql
         });
@@ -246,6 +314,16 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
         const relationName = getArgumentByName(relationDirective, 'name').value.value;
 
+        const relationConnections = dbObject.relations[relationName];
+
+        const relationConnectionsArray = Object.values(relationConnections);
+
+        // Determine which relation is the foreign one to get the correct columnName
+        const foreignRelation = relationConnectionsArray[0].tableName === tableName ? relationConnectionsArray[1] : relationConnectionsArray[0];
+
+        // Determine which relation is the own one to get the correct columnName
+        const ownRelation = relationConnectionsArray[0].tableName === tableName ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
         const relationFieldName = fieldName + 'Id';
 
         const foreignGqlTypeName = getRelationForeignGqlTypeName(field);
@@ -256,30 +334,37 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
           foreignGqlTypeName,
           foreignTableName: foreignNativeTable.tableName,
           foreignSchemaName: foreignNativeTable.schemaName,
-          relationType: getRelationType(field),
+          relationType: ownRelation.type,
           columnName: relationFieldName
         };
 
         // This field cannot be set with a mutation
         filterFieldsForMutation.push(fieldName);
 
-        if (getRelationType(field) === 'ONE') {
-          view.fields.push({
+        if (ownRelation.columnName != null) {
+          dbView.fields.push({
             name: fieldName,
-            expression: `"${relationFieldName}"`
+            expression: `"${ownRelation.columnName}"`
           });
 
           // Add relation-field-name to GQL Input for mutating it
-          addIdFieldsForMutation.push(relationFieldName);
-        }
-        fieldAlreadyAddedAsSpecialType = true;
+          if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+            // In case of ManyToMany it's an array
+            addIdArrayFieldsForMutation.push(ownRelation.columnName);
+          } else {
+            // In case of ManyToOne it is an id
+            addIdFieldsForMutation.push(ownRelation.columnName);
+          }
 
-        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName + 'Id');
+          gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(ownRelation.columnName);
+        }
+
+        fieldAlreadyAddedAsSpecialType = true;
       }
 
       // add all normal fields (if not already added)
       if (!fieldAlreadyAddedAsSpecialType) {
-        view.fields.push({
+        dbView.fields.push({
           name: fieldName,
           expression: `"${fieldName}"`
         });
@@ -288,22 +373,22 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
     });
 
     // Add _typenames field into READ Views
-    if (permission.type === 'READ') {
-      view.fields.push({
+    if (view.type === 'READ') {
+      dbView.fields.push({
         name: '_typenames',
         expression: `ARRAY['${viewName.toUpperCase()}'] AS _typenames`
       });
     }
 
-    // creates SQL expressions for permission
-    Object.values(permission.expressions).forEach((expression) => {
+    // creates SQL expressions for view
+    Object.values(view.expressions).forEach((expression) => {
       if (expressionsByName[expression.name] == null) {
-        throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + permission.gqlTypeName + '`.');
+        throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + view.gqlTypeName + '`.');
       }
       // todo check if returnType is a boolean
 
       const expressionContext = {
-        gqlTypeName: permission.gqlTypeName,
+        gqlTypeName: view.gqlTypeName,
         table: `"${schemaName}"."${tableName}"`,
         tableName,
         schemaName,
@@ -315,7 +400,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       const expressionSql = expressionsByName[expression.name].generate(expressionContext, expression.params || {});
 
-      view.expressions.push(expressionSql);
+      dbView.expressions.push(expressionSql);
     });
 
     // filter input fields
@@ -332,8 +417,13 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       tableView.fields.push(createIdField(fieldName));
     });
 
+    // Add relation array fields for mutations
+    Object.values(addIdArrayFieldsForMutation).forEach((fieldName) => {
+      tableView.fields.push(createIdArrayField(fieldName));
+    });
+
     // Add view to GraphQl graphQlDocument
-    if (permission.type === 'CREATE' || permission.type === 'UPDATE' || permission.type === 'DELETE') {
+    if (view.type === 'CREATE' || view.type === 'UPDATE' || view.type === 'DELETE') {
       // console.log('!!!!!!!!!!!!!!!!!!!!!!!!', JSON.stringify(tableView, null, 2))
 
       // const inputTypes = convertToInputType(tableView, otherDefinitions);
@@ -344,13 +434,13 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
       let returnType = gqlTypeName;
 
-      if (permission.type === 'DELETE') {
+      if (view.type === 'DELETE') {
         returnType = 'ID';
       }
 
       mutations.push({
         name: viewName.toString(),
-        type: permission.type,
+        type: view.type,
         inputType: viewName,
         returnType,
         typesEnumName: (gqlTypeName + '_TYPES').toUpperCase(),
@@ -359,12 +449,12 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
       });
     }
 
-    // Add view to views
-    views.push(view);
+    // Add dbView to dbViews
+    dbViews.push(dbView);
 
   });
 
-  // build GraphQL gQlTypes based on DB views
+  // build GraphQL gQlTypes based on DB dbViews
   Object.values(gQlTypes).forEach((gQlType) => {
     // console.log('>>>>>>', JSON.stringify(gQlType, null, 2))
 
@@ -389,7 +479,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
         field.arguments = getQueryArguments(foreignTypesEnumName);
       }
 
-      // Remove NonNullType because a field can be NULL if a user has no permissions
+      // Remove NonNullType because a field can be NULL if a user has no views
       if (field.type.kind === 'NonNullType') {
         field.type = field.type.type;
       }
@@ -423,7 +513,7 @@ export default (classification: any, permissions: IPermissions, expressions: IEx
 
   return {
     document: graphQlDocument,
-    views,
+    dbViews,
     gQlTypes,
     queries,
     mutations,

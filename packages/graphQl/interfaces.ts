@@ -10,19 +10,19 @@ export interface IExpressions {
   [index: number]: IExpression;
 }
 
-export interface IPermissionExpression {
+export interface IViewExpression {
   name: string;
   params ?: any;
 }
 
-export interface IPermission {
+export interface IView {
   type: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE';
   name: string;
-  table: string;
+  gqlTypeName: string;
   fields: string[];
-  expressions: IPermissionExpression[];
+  expressions: IViewExpression[];
 }
 
-export interface IPermissions {
-  [index: number]: IPermission;
+export interface IViews {
+  [index: number]: IView;
 }

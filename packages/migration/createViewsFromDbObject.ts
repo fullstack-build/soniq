@@ -1,4 +1,3 @@
-
 const operationMapper = {
   CREATE: 'INSERT',
   READ: 'SELECT',
@@ -20,26 +19,28 @@ export default (dbObject, applicationUserName, includePrivileges) => {
   }
 
   // todo @Dustin: Can be null if relation table was not found
-  Object.values(dbObject.views).forEach((view) => {
-    let security = '';
-    const fieldSelects = view.fields.map((field) => {
-      return field.expression;
+  Object.values(dbObject.schemas).forEach((schema) => {
+    Object.values(schema.views).forEach((dbView) => {
+      let security = '';
+      const fieldSelects = dbView.fields.map((field) => {
+        return field.expression;
+      });
+
+      if (dbView.operation === 'READ') {
+        security = ' WITH (security_barrier)';
+      }
+
+      viewSchemas[dbView.viewSchemaName] = dbView.viewSchemaName;
+
+      statements.push(`DROP VIEW IF EXISTS "${dbView.viewSchemaName}"."${dbView.viewName}";`);
+      // tslint:disable-next-line:max-line-length
+      statements.push(`CREATE VIEW "${dbView.viewSchemaName}"."${dbView.viewName}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${dbView.schemaName}"."${dbView.tableName}" WHERE ${dbView.expressions.join(' OR ')};`);
+
+      if (includePrivileges === true) {
+        statements.push(`REVOKE ALL PRIVILEGES ON "${dbView.name}" FROM ${applicationUserName};`);
+        statements.push(`GRANT ${operationMapper[dbView.operation]} ON "${dbView.name}" TO ${applicationUserName};`);
+      }
     });
-
-    if (view.operation === 'READ') {
-      security = ' WITH (security_barrier)';
-    }
-
-    viewSchemas[view.viewSchemaName] = view.viewSchemaName;
-
-    statements.push(`DROP VIEW IF EXISTS "${view.viewSchemaName}"."${view.viewName}";`);
-    // tslint:disable-next-line:max-line-length
-    statements.push(`CREATE VIEW "${view.viewSchemaName}"."${view.viewName}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${view.schemaName}"."${view.tableName}" WHERE ${view.expressions.join(' OR ')};`);
-
-    if (includePrivileges === true) {
-      statements.push(`REVOKE ALL PRIVILEGES ON "${view.name}" FROM ${applicationUserName};`);
-      statements.push(`GRANT ${operationMapper[view.operation]} ON "${view.name}" TO ${applicationUserName};`);
-    }
   });
 
   Object.values(viewSchemas).forEach((schemaName) => {

@@ -7,7 +7,7 @@ export = {
     endpoint:           '/graphql',
     graphiQlEndpoint:   '/graphiql',
     schemaPattern:      '/schema/*.gql',
-    permissionsPattern: '/permissions/*.ts',
+    viewsPattern: '/views/*.ts',
     expressionsPattern: '/expressions/*.ts',
     resolversPattern: '/resolvers/*.ts'
   },

@@ -5,12 +5,67 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   gender: Gender!
   username: String
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
-  payload: JSON @migrate(oldName: "payloadOld")
+  payload: Payload @json
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
+
+  #type: UserType
+  #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
+  #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
 }
+
+type PayloadData {
+  title: String
+  content: String
+}
+
+type Payload {
+  data: PayloadData
+  secret: Int
+}
+
+input PayloadDataInput {
+  title: String!
+  content: String!
+}
+
+input PayloadInput {
+  data: PayloadDataInput!
+  secret: Int!
+}
+
+#type Adress {
+#  city: String
+#  street: String
+#  fullname: String
+#}
+
+#type Location {
+#  lgt: Int
+#  long: Int
+#}
+
+#type Personal {
+#  size: Int
+#  location: Location
+#}
+
+#type UserPayload {
+#  address: Address
+#  personal: Personal
+#}
+
+#type PrivatePayload {
+#  brithday: String
+#  address: String
+#}
+
+#type BusinessPayload {
+#  company: String
+#  address: String
+#}
 
 type AdditionPayload {
   sum: Int!
@@ -20,7 +75,12 @@ extend type Query {
   add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
 }
 
-enum Gender{
+enum UserType {
+  private
+  business
+}
+
+enum Gender {
   male
   female
 }
