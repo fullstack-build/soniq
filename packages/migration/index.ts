@@ -250,7 +250,7 @@ export namespace migration {
         createSqlFromSchemaObject(sqlCommands, schemaName, schemaDefinition);
 
         // iterate over database tables
-        if (schemaDefinition != null) {
+        if (schemaDefinition != null && schemaDefinition.tables != null) {
           const tables = _getActionAndValuesFromNode(schemaDefinition.tables).node;
           Object.entries(tables).map((tableEntry) => {
             const tableName = tableEntry[0];
