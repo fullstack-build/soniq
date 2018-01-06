@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { IDbObject, IMaxTwoRelations, IDbRelation } from '../core/IDbObject';
+import { IDbObject, IDbRelation } from '../core/IDbObject';
 
 export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject => {
   const dbObject: IDbObject = {
@@ -362,7 +362,7 @@ const GQL_JSON_PARSER = {
         dbObjectNode.type = 'varchar';
         break;
       case 'int':
-        dbObjectNode.type = 'int';
+        dbObjectNode.type = 'int4';
         break;
       case 'float':
         dbObjectNode.type = 'float8';
@@ -534,6 +534,8 @@ function addConstraint(pConstraintType,
       // add constraint to field
       refDbObjectCurrentTableColumn.constraintNames = refDbObjectCurrentTableColumn.constraintNames || [];
       refDbObjectCurrentTableColumn.constraintNames.push(constraintName);
+      // keep them sorted for better comparison of objects
+      refDbObjectCurrentTableColumn.constraintNames.sort();
     }
 
   }
@@ -546,6 +548,23 @@ function relationBuilderHelper(
   refDbObj,
   refDbObjectCurrentTable
 ) {
+
+  const emptyRelation: IDbRelation = {
+    name:              null,
+    type:              null,
+    schemaName:        null,
+    tableName:         null,
+    columnName:        null,
+    virtualColumnName: null,
+    onUpdate:          null,
+    onDelete:          null,
+    description:       null,
+    reference: {
+      schemaName: null,
+      tableName:  null,
+      columnName: null
+    }
+  };
 
   // find the right directive
   const relationDirective = gQlDirectiveNode.directives.find((directive) => {
@@ -641,22 +660,13 @@ function relationBuilderHelper(
     referencedSchemaName  = refDbObj.exposedNames[referencedExposedName].schemaName;
     referencedTableName   = refDbObj.exposedNames[referencedExposedName].tableName;
 
-    const relations = _getOrCreateEmptyRelation(refDbObj, relationName);
-    const orderedRelations = relations.reduce((result: any, relation: IDbRelation) => {
-        // take either the first empty one, or for the current schema and table
-        if (
-          (relation.type == null && result.thisRelation == null)
-          ||
-          (relation.schemaName === relationSchemaName && relation.tableName === relationTableName)
-        ) {
-          result.thisRelation = relation;
-        } else {
-          result.otherRelation = relation;
-        }
-        return result;
-      },                                      { thisRelation: null, otherRelation: null });
-    const thisRelation  = orderedRelations.thisRelation;
-    const otherRelation = orderedRelations.otherRelation;
+    // get or create new relations and keep reference for later
+    const relations = refDbObj.relations[relationName] = refDbObj.relations[relationName] || {
+      [relationTableName]: _.cloneDeep(emptyRelation),
+      [referencedTableName]: _.cloneDeep(emptyRelation)
+    };
+    const thisRelation  = relations[relationTableName];
+    const otherRelation = relations[referencedTableName];
 
     // check if empty => more then one relation in GraphQl Error
     if (thisRelation == null) {
@@ -667,6 +677,7 @@ function relationBuilderHelper(
     }
 
     // fill current relation
+    thisRelation.name               = relationName;
     thisRelation.type               = relationType;
     thisRelation.schemaName         = relationSchemaName;
     thisRelation.tableName          = relationTableName;
@@ -689,6 +700,7 @@ function relationBuilderHelper(
     if (otherRelation.type == null) {
       // assume other side of relation is the opposite
       const referencedType = (relationType === 'ONE') ? 'MANY' : 'ONE';
+      otherRelation.name               = relationName;
       otherRelation.type               = referencedType;
       otherRelation.schemaName         = referencedSchemaName;
       otherRelation.tableName          = referencedTableName;
@@ -734,34 +746,6 @@ function relationBuilderHelper(
                                         pReferencedColumnName: string,
                                         pIsArray: boolean = false) {
     return (!pIsArray) ? `${pVirtualColumnName}Id` : `${pVirtualColumnName}IdsArray`;
-  }
-
-  function _getOrCreateEmptyRelation(pRefDbObj: IDbObject, pRelationName: string): IMaxTwoRelations {
-
-    const emptyRelation: IDbRelation = {
-      name:              pRelationName,
-      type:              null,
-      schemaName:        null,
-      tableName:         null,
-      columnName:        null,
-      virtualColumnName: null,
-      onUpdate:          null,
-      onDelete:          null,
-      description:       null,
-      reference: {
-        schemaName: null,
-        tableName:  null,
-        columnName: null
-      }
-    };
-
-    // create relation in dbObject if it doesn't exist yet
-    if (pRefDbObj.relations[pRelationName] == null) {
-      pRefDbObj.relations[pRelationName] = [_.cloneDeep(emptyRelation), _.cloneDeep(emptyRelation)];
-    }
-
-    // return relation reference
-    return pRefDbObj.relations[pRelationName];
   }
 
 }

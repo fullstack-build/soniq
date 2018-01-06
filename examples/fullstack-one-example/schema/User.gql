@@ -24,5 +24,3 @@ enum Gender{
   male
   female
 }
-
-

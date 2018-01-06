@@ -314,6 +314,9 @@ function addConstraint(constraintType,
 
   currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
   currentColumnRef.constraintNames.push(constraintName);
+  // keep them sorted for better comparison of objects
+  currentColumnRef.constraintNames.sort();
+
 }
 
 function addCheck(constraintRow, refDbObjectCurrentTable): void {
@@ -407,10 +410,15 @@ function relationBuilderHelper(dbObject, constraint) {
   };
 
   // add relation to dbObject
-  dbObject.relations[constraintName] = [relationOne, relationMany];
+  dbObject.relations[constraintName] = {
+    [relationOne.tableName]: relationOne,
+    [relationMany.tableName]: relationMany
+  };
 
   // remove FK column
-  delete dbObject.schemas[relationOne.schemaName].tables[relationOne.tableName].columns[dbObject.relations[constraintName][0].columnName];
+  delete dbObject.schemas[relationOne.schemaName]
+    .tables[relationOne.tableName]
+      .columns[dbObject.relations[constraintName][relationOne.tableName].columnName];
 
 }
 
@@ -439,8 +447,8 @@ function manyToManyRelationBuilderHelper(dbObject, columnDescribingRelation, sch
   };
 
   // create relation object if not available
-  dbObject.relations[mtmPayload.name] = dbObject.relations[mtmPayload.name] || [];
-  dbObject.relations[mtmPayload.name].push(newRelation);
+  dbObject.relations[mtmPayload.name] = dbObject.relations[mtmPayload.name] || {};
+  dbObject.relations[mtmPayload.name][newRelation.tableName] = newRelation;
 
   // remove FK column
   delete dbObject.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
