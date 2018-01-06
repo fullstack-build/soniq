@@ -406,12 +406,6 @@ export namespace migration {
         if (action === 'add') {
           // create column statement
           sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${columnName}" varchar;`);
-
-          // set column type
-          sqlCommands.up.push(
-            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE ${type} USING "${columnName}"::${type};`
-          );
-
         } else if (action === 'remove') {
           // drop or rename
           if (createDrop) {
@@ -421,6 +415,14 @@ export namespace migration {
               `ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnName}" TO "${DELETED_PREFIX}${columnName}";`
             );
           }
+        }
+
+        // for every column that should not be removed
+        if (action == null || action === 'add') {
+          // set or change column type
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE ${type} USING "${columnName}"::${type};`
+          );
         }
 
       }
