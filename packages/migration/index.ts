@@ -1,497 +1,604 @@
-import * as FullstackOne from '../core';
-import createViewsFromDbObject from './createViewsFromDbObject';
-import { pgToDbObject } from '../db/pgToDbObject';
+import * as _ from 'lodash';
+import * as deepmerge from 'deepmerge';
 
-const DELETED_PREFIX = '_deleted:';
+import * as F1 from '../core';
+import createViewsFromDbObject from './createViewsFromDbObject';
 
 export namespace migration {
-  let createDrop = false;
+  const ACTION_KEY: string = '$$action$$';
+  const DELETED_PREFIX: string = '_deleted:';
+  let renameInsteadOfDrop: boolean = true;
+  let dbObjectFrom: F1.IDbObject = null;
+  let dbObjectTo: F1.IDbObject = null;
+  let deltaDbObject: F1.IDbObject = null;
 
-  export async function createMigration(pCreateDrop: boolean = false) {
-    const $one = FullstackOne.getInstance();
-    createDrop = pCreateDrop;
+  export function createMigrationSqlFromTwoDbObjects(pDbObjectFrom: F1.IDbObject,
+                                                     pDbObjectTo: F1.IDbObject,
+                                                     pRenameInsteadOfDrop: boolean = true): string[] {
 
-    try {
-      // write parsed schema into migrations folder
-      /*await graphQlHelper.writeTableObjectIntoMigrationsFolder(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        tableObjects,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.saved');*/
+    renameInsteadOfDrop = pRenameInsteadOfDrop;
 
-      // tslint:disable-next-line:no-console
-      // console.log(JSON.stringify($one.getDbObject(), null, 2));
+    // crete copy of objects
+    // new
+    dbObjectFrom = _.cloneDeep(pDbObjectFrom);
+    // remove views and exposed names
+    delete dbObjectFrom.exposedNames;
 
-      // tslint:disable-next-line:no-console
-      console.log('############### dbObjectFromPG:');
-      const dbObjectFromPg = await pgToDbObject($one);
-      // tslint:disable-next-line:no-console
-      // console.log(JSON.stringify(dbObjectFromPg, null, 2));
+    // old
+    dbObjectTo = _.cloneDeep(pDbObjectTo);
+    // remove views and exposed names
+    delete dbObjectTo.exposedNames;
 
-      const sqlStatements = await createSqlFromDbObject($one.getDbObject());
-      // tslint:disable-next-line:no-console
-      console.log('############### UP:');
-      // tslint:disable-next-line:no-console
-      console.log(sqlStatements.up.join('\n'));
-      // tslint:disable-next-line:no-console
-      console.log('############### DOWN:');
-      // copy, so we can reverse it without destroying original
-      const downMigrations = sqlStatements.down.slice(0);
-      // tslint:disable-next-line:no-console
-      console.log(downMigrations.reverse().join('\n'));
+    const deltaDbObjectRemove: any = _removeEmptyObjects(_difference(dbObjectFrom, dbObjectTo));
+    const deltaDbObjectRemoveWithActions = _addToEveryNote(deltaDbObjectRemove, ACTION_KEY, { remove:true });
+    const deltaDbObjectAdd: any = _removeEmptyObjects(_difference(dbObjectTo, dbObjectFrom));
+    const deltaDbObjectAddWithAction = _addToEveryNote(deltaDbObjectAdd, ACTION_KEY, { add:true });
 
-      // tslint:disable-next-line:no-console
-      console.log('############### DELTA:');
-      // tslint:disable-next-line:no-console
-      console.log(createDeltaSQLFromTwoDbObjects(dbObjectFromPg, $one.getDbObject()).join('\n'));
+    // use deepmerge instead of _.merge.
+    // _.merge does some crazy shit -> confuses references
+    deltaDbObject = deepmerge(deltaDbObjectRemoveWithActions, deltaDbObjectAddWithAction);
 
-      // emit event
-      // this.emit('schema.dbObject.migration.up.executed');
+    return createSqlFromDeltaDbObject();
+  }
 
-      const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
-      // tslint:disable-next-line:no-console
-      console.log(viewSqlStatements.join('\n'));
+  function _getActionAndValuesFromNode(node): {action: string, node: any} {
+    const actionObj = (node != null) ? node[ACTION_KEY] : null;
+    let action = null;
 
-      // display result sql in terminal
-      // this.logger.debug(sqlStatements.join('\n'));
-    } catch (err) {
-
-      // tslint:disable-next-line:no-console
-      console.log('err', err);
-      // this.logger.warn('loadFilesByGlobPattern error', err);
-      // emit event
-      // this.emit('schema.load.error');
+    if (actionObj == null) {
+      action = null;
+    } else if (actionObj.add != null && actionObj.remove == null) {
+      action = 'add';
+    } else if (actionObj.add == null && actionObj.remove != null) {
+      action = 'remove';
     }
+    // remove action from obj
+    if (actionObj != null) {
+      delete node[ACTION_KEY];
+    }
+
+    return {
+      action,
+      node
+    };
   }
 
-  export function createDeltaSQLFromTwoDbObjects(dbObjectOld: FullstackOne.IDbObject, dbObjectNew: FullstackOne.IDbObject) {
-    const migrationOld = createSqlFromDbObject(dbObjectOld);
-    const migrationNew = createSqlFromDbObject(dbObjectNew);
-
-    let deltaSqlCommands = [];
-
-    // find all that are in old but not in new -> run down
-    const deltaInOldNotInNew = Object.entries(migrationOld.up).filter((entry) => {
-      return (!migrationNew.up.includes(entry[1]));
-    });
-
-    // collect down migrations
-    deltaSqlCommands.push('-- DOWN');
-    const downMigrations = [];
-    Object.values(deltaInOldNotInNew).forEach((delta) => {
-      const deltaIndex = delta[0];
-      const downMigration = migrationOld.down[deltaIndex];
-      downMigrations.push(downMigration);
-    });
-
-    // run down migrations reversed
-    downMigrations.reverse();
-    deltaSqlCommands = deltaSqlCommands.concat(downMigrations);
-
-    // find all that are in new but not in old -> ups
-    const deltaInNewNotInOld = Object.entries(migrationNew.up).filter((entry) => {
-      return (!migrationOld.up.includes(entry[1]));
-    });
-
-    // collect down migrations
-    deltaSqlCommands.push('-- UP');
-    Object.values(deltaInNewNotInOld).forEach((delta) => {
-      const deltaIndex = delta[0];
-      const upMigration = migrationNew.up[deltaIndex];
-      deltaSqlCommands.push(upMigration);
-    });
-
-    // remove unnecessary commands for renamed columns, tables and schemas
-    let filteredDeltaSqlCommands = [...deltaSqlCommands];
-    deltaSqlCommands.forEach((statement) => {
-      // column
-      if (
-        statement.indexOf('ALTER TABLE') !== -1 &&
-        statement.indexOf('RENAME COLUMN TO') !== -1 &&
-        statement.indexOf(DELETED_PREFIX) === -1) {
-        // tslint:disable-next-line:no-console
-        console.error('## COLUMN');
-
-        const myRegexp = /ALTER TABLE .* RENAME COLUMN "(.*)" TO "(.*)"+/g;
-        const match = myRegexp.exec(statement);
-        const oldName = match[1];
-        const newName = match[2];
-
-        if (oldName != null && newName != null) {
-          filteredDeltaSqlCommands = deltaSqlCommands.filter((subStatement) => {
-            return (
-              subStatement.indexOf(`ADD COLUMN "${newName}"`) === -1
-              &&
-              subStatement.indexOf(`ALTER COLUMN "${oldName}" TYPE varchar`) === -1
-              &&
-              subStatement.indexOf(`RENAME COLUMN "${oldName}" TO "${DELETED_PREFIX}${oldName}"`) === -1
-              &&
-              subStatement.indexOf(`DROP COLUMN IF EXISTS "${oldName}"`) === -1
-            );
-          });
-
-          // check if anything was removed, if not => remove rename colums -> done already
-          if (deltaSqlCommands.length === filteredDeltaSqlCommands.length) {
-            filteredDeltaSqlCommands = filteredDeltaSqlCommands.filter(e => e !== statement);
-          }
-
-        }
-      } else if (
-        statement.indexOf('ALTER TABLE') !== -1 &&
-        statement.indexOf('RENAME TO') !== -1 &&
-        statement.indexOf(DELETED_PREFIX) === -1) { // table
-
-        const myRegexp = /ALTER TABLE "(.*)" RENAME TO "(.*)"+/g;
-        const match = myRegexp.exec(statement);
-        const oldName = `"${match[1]}"`;
-        const newName = match[2];
-        // tslint:disable-next-line:no-console
-        console.error('## TABLE', oldName, newName);
-
-      }
-    });
-
-    return filteredDeltaSqlCommands;
-  }
-
-  export function createSqlFromDbObject(
-    dbObject: FullstackOne.IDbObject,
-  ): {up: string[], down: string[]} {
-    const sqlCommands: {up: string[], down: string[]} = {
+  function createSqlFromDeltaDbObject(): string[] {
+    const sqlCommands = {
       up: [],
       down: []
     };
 
-    // iterate over enums
-    Object.entries(dbObject.enums).map((enumTypeArray) => {
-      createSqlForEnumObject(sqlCommands, enumTypeArray[0], enumTypeArray[1]);
-    });
-
-    // iterate over database schemas
-    Object.entries(dbObject.schemas).map((schemaEntry) => {
-      createSqlFromSchemaObject(sqlCommands, schemaEntry[0]);
-
-      // iterate over database tables
-      Object.values(schemaEntry[1].tables).map((tableObject) => {
-        createSqlFromTableObject(sqlCommands, tableObject);
+    // create enum types first
+    if (deltaDbObject.enums != null) {
+      Object.entries(deltaDbObject.enums).map((enumTypeArray) => {
+        // ignore actions
+        if (enumTypeArray[0] !== ACTION_KEY) {
+          createSqlForEnumObject(sqlCommands, enumTypeArray[0], enumTypeArray[1]);
+        }
       });
+    }
 
-    });
+    if (deltaDbObject.schemas != null) {
+      const schemas = _getActionAndValuesFromNode(deltaDbObject.schemas).node;
+      // iterate over database schemas
+      Object.entries(schemas).map((schemaEntry) => {
+
+        const schemaName = schemaEntry[0];
+        const schemaDefinition = schemaEntry[1];
+
+        createSqlFromSchemaObject(sqlCommands, schemaName, schemaDefinition);
+
+        // iterate over database tables
+        if (schemaDefinition != null && schemaDefinition.tables != null) {
+          const tables = _getActionAndValuesFromNode(schemaDefinition.tables).node;
+          Object.entries(tables).map((tableEntry) => {
+            const tableName = tableEntry[0];
+            const tableObject = tableEntry[1];
+            createSqlFromTableObject(sqlCommands, schemaName, tableName, tableObject);
+          });
+        }
+      });
+    }
 
     // iterate over database relations
-    sqlCommands.up.push(`-- relations:`);
-    sqlCommands.down.push(`-- relations:`);
-    Object.values(dbObject.relations).map((relation: [FullstackOne.IDbRelation]) => {
+    if (deltaDbObject.relations != null) {
+      const relations = _getActionAndValuesFromNode(deltaDbObject.relations).node;
 
-      // write error for many-to-many
-      if (relation[0].type === 'MANY' && relation[1] != null && relation[1].type === 'MANY') {
-        process.stdout.write(
-          'migration.relation.unsupported.type: ' +
-          `${relation[0].name}: ${relation[0].tableName}:${relation[1].tableName} => MANY:MANY` + '\n' +
-          'Many to many relations are not yet supported by the query builder. Create a through table instead.\n'
-        );
+      Object.values(relations).map((
+        relationObj: { [tableName: string]: F1.IDbRelation }
+      ) => {
+        const relationDefinition: F1.IDbRelation[] = Object.values(_getActionAndValuesFromNode(relationObj).node);
 
-        createSqlManyToManyRelation(sqlCommands, relation);
-      } else {
-
-        if (relation[0].type === 'ONE' && relation[1] != null && relation[1].type === 'ONE') {
+        // write error for many-to-many
+        if (relationDefinition[0].type === 'MANY' && relationDefinition[1] != null && relationDefinition[1].type === 'MANY') {
           process.stdout.write(
-            'migration.relation.type.hint: ' +
-            `${relation[0].name}: ${relation[0].tableName}:${relation[1].tableName} => ONE:ONE` + '\n' +
-            'Try to avoid using one to one relations.' +
-            'Consider combining both entities into one, using JSON type instead or pointing only in one direction.\n'
+            'migration.relation.unsupported.type: ' +
+            `${relationDefinition[0].name}: ${relationDefinition[0].tableName}:${relationDefinition[1].tableName} => MANY:MANY` + '\n' +
+            'Many to many relations are not yet supported by the query builder. Create a through table instead.\n'
           );
+
+          createSqlManyToManyRelation(sqlCommands, relationDefinition);
+        } else {
+
+          if (relationDefinition[0].type === 'ONE' && relationDefinition[1] != null && relationDefinition[1].type === 'ONE') {
+            process.stdout.write(
+              'migration.relation.type.hint: ' +
+              `${relationDefinition[0].name}: ${relationDefinition[0].tableName}:${relationDefinition[1].tableName} => ONE:ONE` + '\n' +
+              'Try to avoid using one to one relations.' +
+              'Consider combining both entities into one, using JSON type instead or pointing only in one direction.\n'
+            );
+          }
+
+          // create one:many / one:one relation
+          createRelation(sqlCommands, relationDefinition);
         }
+      });
+    }
 
-        // create one:many / one:one relation
-        createRelation(sqlCommands, relation);
-      }
-
-    });
-
-    return sqlCommands;
+    // return down statemens reversed and before up statements
+    return sqlCommands.down.reverse().concat(sqlCommands.up);
   }
 
   function createSqlForEnumObject(sqlCommands, enumTypeName, enumTypeValue) {
-    sqlCommands.up.push(`-- enum types:`);
-    sqlCommands.up.push(`CREATE TYPE "${enumTypeName}" AS ENUM ('${enumTypeValue.join('\',\'')}');`);
+    const { action, node } = _getActionAndValuesFromNode(enumTypeValue);
+    const enumValues = Object.values(node);
 
-    sqlCommands.down.push(`-- enum types:`);
-    sqlCommands.down.push(`DROP TYPE "${enumTypeName}";`);
+    if (action === 'add') {
+      sqlCommands.up.push(`CREATE TYPE "${enumTypeName}" AS ENUM ('${enumValues.join('\',\'')}');`);
+    } else if (action === 'remove') {
+      sqlCommands.down.push(`DROP TYPE "${enumTypeName}";`);
+    }
   }
 
-  function createSqlFromSchemaObject(sqlCommands, schemaName: string) {
+  function createSqlFromSchemaObject(sqlCommands, schemaName: string, schemDefinition: any) {
+
+    const { action, node } = _getActionAndValuesFromNode(schemDefinition);
 
     // avoid dropping or createing public schema
     if (schemaName !== 'public') {
-      // create schema statement
-      sqlCommands.up.push(`-- schema ${schemaName}:`);
-      sqlCommands.up.push(`CREATE SCHEMA "${schemaName}";`);
 
-      sqlCommands.down.push(`-- schema ${schemaName}:`);
-      if (createDrop) {
-        sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
-      } else { // create rename instead
-        sqlCommands.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
+      if (action === 'add') {
+        // create schema statement
+        sqlCommands.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
+      } else if (action === 'remove') {
+        // drop or rename schema
+        if (!renameInsteadOfDrop) {
+          sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
+        } else { // create rename instead
+          sqlCommands.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
+        }
       }
     }
 
   }
 
   // http://www.postgresqltutorial.com/postgresql-alter-table/
-  function createSqlFromTableObject(sqlCommands, tableObject: any) {
-    const tableNameWithSchema = `"${tableObject.schemaName}"."${tableObject.name}"`;
-    // create table statement
-    sqlCommands.up.push(`-- table ${tableNameWithSchema}:`);
-    sqlCommands.up.push(`CREATE TABLE ${tableNameWithSchema}();`);
+  function createSqlFromTableObject(sqlCommands, schemaName, tableName, tableObject: any) {
+    const { action, node } = _getActionAndValuesFromNode(tableObject);
 
-    sqlCommands.down.push(`-- table ${tableNameWithSchema}:`);
-    if (createDrop) {
-      sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchema};`);
-    } else { // create rename instead, ignore if already renamed
-      if (tableObject.name.indexOf(DELETED_PREFIX) !== 0) {
-        sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME TO "${DELETED_PREFIX}${tableObject.name}";`);
-      } else {
-        sqlCommands.down.push(`-- Table ${tableObject.name} was already renamed instead of deleted.`);
+    const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
+
+    // only if table needs to be created
+    if (tableObject.name != null) {
+      if (action === 'add') {
+        // create table statement
+        sqlCommands.up.push(`CREATE TABLE ${tableNameWithSchema}();`);
+      } else if (action === 'remove') {
+        // create or rename table
+        if (!renameInsteadOfDrop) {
+          sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchema};`);
+        } else { // create rename instead, ignore if already renamed
+          if (tableObject.name.indexOf(DELETED_PREFIX) !== 0) {
+            sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME TO "${DELETED_PREFIX}${tableObject.name}";`);
+          } else {
+            sqlCommands.down.push(`-- Table ${tableNameWithSchema} was already renamed instead of deleted.`);
+          }
+        }
       }
     }
 
-    // create rename statement
-    if (tableObject.oldName != null) {
-      const tableNameInDB = (createDrop) ? `${DELETED_PREFIX}${tableObject.name}` : tableObject.oldName;
-      const tableNameWithSchemaInDB = `"${tableObject.schemaName}"."${tableNameInDB}"`;
-
-      sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchemaInDB} RENAME TO "${tableObject.name}";`);
-      sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME TO "${tableNameInDB}";`);
-    }
-
-    // create column statements
-    for (const columnObject of Object.values(tableObject.columns)) {
-      if (columnObject.type === 'computed') {
-        // ignore computed
-      } else if (columnObject.type === 'customResolver') {
-        // ignore custom
-      } else if (columnObject.type === 'relation') {
-        // ignore relations
-      } else {
-
-        let type = columnObject.type;
-        // is type an enum/custom?
-        if (type === 'enum') {
-          type = `"${columnObject.customType}"`;
-        } else if (type === 'customType') {
-          type = `${columnObject.customType}`;
-        }
-
-        // create column statement
-        sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${columnObject.name}" varchar;`);
-        if (createDrop) {
-
-          sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${columnObject.name}" CASCADE;`);
-        } else { // create rename instead
-
-          sqlCommands.down.push(
-            `ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnObject.name}" TO "${DELETED_PREFIX}${columnObject.name}";`
-          );
-        }
-
-        // set column type
-        sqlCommands.up.push(
-          `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" TYPE ${type} USING "${columnObject.name}"::${type};`
-        );
-        sqlCommands.down.push(
-          `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" TYPE varchar USING "${columnObject.name}"::varchar;`
-        );
-
-        // create rename statement
-        if (columnObject.oldName != null) {
-          const columnNameInDB = (createDrop) ? `${DELETED_PREFIX}${columnObject.name}` : columnObject.oldName;
-
-          sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnNameInDB}" TO "${columnObject.name}";`);
-          sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnObject.name}" TO "${columnObject.OldName}";`);
-        }
-
-      }
-
-      // add default values
-      if (columnObject.defaultValue != null) {
-        if (columnObject.defaultValue.isExpression) {
-          // set default - expression
-          sqlCommands.up.push(
-            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" SET DEFAULT ${columnObject.defaultValue.value};`
-          );
-          sqlCommands.down.push(
-            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
-          );
-        } else {
-          // set default - value
-          sqlCommands.up.push(
-            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" SET DEFAULT '${columnObject.defaultValue.value}';`
-          );
-          sqlCommands.down.push(
-            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnObject.name}" DROP DEFAULT;`
-          );
-        }
+    // iterate columns
+    if (tableObject.columns != null) {
+      const columns = _getActionAndValuesFromNode(tableObject.columns).node;
+      for (const columnObject of Object.entries(columns)) {
+        const columnName = columnObject[0];
+        const columnDefinition = columnObject[1];
+        createSqlFromColumnObject(sqlCommands, schemaName, tableName, columnName, columnDefinition);
       }
     }
 
     // generate constraints for column
-    sqlCommands.up.push(`-- constraints for ${tableNameWithSchema}:`);
-    sqlCommands.down.push(`-- constraints for ${tableNameWithSchema}:`);
-    createSqlColumnConstraints(sqlCommands, tableNameWithSchema, tableObject);
-  }
-
-  function createSqlColumnConstraints(sqlCommands, tableName, tableObject) {
-
-    // constraints
-    Object.entries(tableObject.constraints).forEach((constraint) => {
-      const constraintName = constraint[0];
-      const constraintDefinition = constraint[1];
-      const columnNamesAsStr = (Array.isArray(constraintDefinition.columns)) ?
-                                constraintDefinition.columns.map(columnName => `"${columnName}"`).join(',') : null;
-
-      switch (constraintDefinition.type) {
-        case 'not_nullable':
-          sqlCommands.up.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
-          );
-          sqlCommands.down.push(
-            `ALTER TABLE ${tableName} ALTER COLUMN ${columnNamesAsStr} DROP NOT NULL;`
-          );
-          break;
-        case 'PRIMARY KEY':
-          /* moved to graphQlSchemaToDbObject -> expression
-          // convention: all PKs are generated uuidv4
-          constraintDefinition.columns.forEach((columnName) => {
-            sqlCommands.push(
-              `ALTER TABLE ${tableName} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
-            );
-          });
-          */
-
-          // make sure column names for constraint are set
-          if (columnNamesAsStr != null) {
-            sqlCommands.up.push(
-              `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
-            );
-            sqlCommands.down.push(
-              `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
-            );
-          }
-          break;
-        case 'UNIQUE':
-          // make sure column names for constraint are set
-          if (columnNamesAsStr != null) {
-            sqlCommands.up.push(
-              `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
-            );
-            sqlCommands.down.push(
-              `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
-            );
-          }
-          break;
-        case 'CHECK':
-          const checkExpression = constraintDefinition.options.param1;
-          sqlCommands.up.push(
-            `ALTER TABLE ${tableName} ADD CONSTRAINT "${constraintName}" CHECK (${checkExpression});`
-          );
-
-          sqlCommands.down.push(
-            `ALTER TABLE ${tableName} DROP CONSTRAINT "${constraintName}";`
-          );
-          break;
+    if (tableObject.constraints != null) {
+      const constraints = _getActionAndValuesFromNode(tableObject.constraints).node;
+      for (const constraintObject of Object.entries(constraints)) {
+        const constraintName = constraintObject[0];
+        const constraintDefinition = constraintObject[1];
+        createSqlFromConstraintObject(sqlCommands, schemaName, tableName, constraintName, constraintDefinition);
       }
-    });
+    }
 
-    return sqlCommands;
   }
 
-  function createRelation(sqlCommands, relationObject: [FullstackOne.IDbRelation]) {
+  function createSqlFromColumnObject(sqlCommands, schemaName, tableName, columnName, columnObject: any) {
+    const { action, node } = _getActionAndValuesFromNode(columnObject);
+
+    const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
+
+    if (node.type === 'computed') {
+      // ignore computed
+    } else if (node.type === 'customResolver') {
+      // ignore custom
+    } else if (node.type === 'relation') {
+      // ignore relations
+    } else {
+
+      let type = node.type;
+      // is type an enum/custom?
+      if (type === 'enum') {
+        type = `"${node.customType}"`;
+      } else if (type === 'customType') {
+        type = `${node.customType}`;
+      }
+      // mandatory column data is set
+      if (columnName != null && type != null) {
+
+        if (action === 'add') {
+          // create column statement
+          sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${columnName}" varchar;`);
+        } else if (action === 'remove') {
+
+          // check if rename or remove
+          // console.error('###');
+
+          // drop or rename
+          if (!renameInsteadOfDrop) {
+            sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${columnName}" CASCADE;`);
+          } else { // create rename instead
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${columnName}" TO "${DELETED_PREFIX}${columnName}";`
+            );
+          }
+        }
+
+        // for every column that should not be removed
+        if (action == null || action === 'add') {
+          // set or change column type
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE ${type} USING "${columnName}"::${type};`
+          );
+        }
+
+      }
+
+    }
+
+    // add default values
+    if (node.defaultValue != null) {
+      if (node.defaultValue.isExpression) {
+        // set default - expression
+        if (action === 'add') {
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT ${node.defaultValue.value};`
+          );
+        }  else if (action === 'remove') {
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" DROP DEFAULT;`
+          );
+        }
+      } else {
+        // set default - value
+        if (action === 'add') {
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT '${node.defaultValue.value}';`
+          );
+        }  else if (action === 'remove') {
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" DROP DEFAULT;`
+          );
+        }
+      }
+    }
+
+  }
+
+  function createSqlFromConstraintObject(sqlCommands, schemaName, tableName, constraintName, constraintObject) {
+    const { action, node } = _getActionAndValuesFromNode(constraintObject);
+
+    const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
+
+    const columnsObj = _getActionAndValuesFromNode(node.columns).node;
+    const columnNamesAsStr = (node.columns != null) ?
+      Object.values(columnsObj).map(columnName => `"${columnName}"`).join(',') : null;
+
+    switch (node.type) {
+      case 'not_null':
+        if (columnNamesAsStr != null) {
+          if (action === 'add') {
+            sqlCommands.up.push(
+              `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`
+            );
+          } else if (action === 'remove') {
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableNameWithSchema} ALTER COLUMN ${columnNamesAsStr} DROP NOT NULL;`
+            );
+          }
+        }
+        break;
+      case 'PRIMARY KEY':
+        /* moved to graphQlSchemaToDbObject -> expression
+				// convention: all PKs are generated uuidv4
+				node.columns.forEach((columnName) => {
+					sqlCommands.up.push(
+						`ALTER TABLE ${tableName} ALTER COLUMN "${columnName}" SET DEFAULT uuid_generate_v4();`
+					);
+				});
+				*/
+
+        // make sure column names for constraint are set
+        if (columnNamesAsStr != null) {
+          if (action === 'add') {
+            sqlCommands.up.push(
+              `ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" PRIMARY KEY (${columnNamesAsStr});`
+            );
+          } else if (action === 'remove') {
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT "${constraintName}";`
+            );
+          }
+        }
+        break;
+      case 'UNIQUE':
+        // make sure column names for constraint are set
+        if (columnNamesAsStr != null) {
+          if (action === 'add') {
+            sqlCommands.up.push(
+              `ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`
+            );
+          } else if (action === 'remove') {
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT "${constraintName}";`
+            );
+          }
+        }
+        break;
+      case 'CHECK':
+        const checkExpression = node.options.param1;
+        if (action === 'add') {
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" CHECK (${checkExpression});`
+          );
+        } else if (action === 'remove') {
+          sqlCommands.down.push(
+            `ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT "${constraintName}";`
+          );
+        }
+        break;
+    }
+
+  }
+
+  function createRelation(sqlCommands, relationObject: F1.IDbRelation[]) {
 
     relationObject.map(createSqlRelation);
+    function createSqlRelation(oneRelation: F1.IDbRelation) {
 
-    function createSqlRelation(oneRelation: FullstackOne.IDbRelation) {
+      const { action, node } = _getActionAndValuesFromNode(oneRelation);
 
       // ignore the 'MANY' side
-      if (oneRelation.type !== 'MANY') {
-        const tableName = `"${oneRelation.schemaName}"."${oneRelation.tableName}"`;
+      if (node.type === 'ONE') {
+        const tableName = `"${node.schemaName}"."${node.tableName}"`;
 
         // create column for FK // convention: uuid
-        sqlCommands.up.push(
-          `ALTER TABLE ${tableName} ADD COLUMN "${oneRelation.columnName}" uuid;`
-        );
-        sqlCommands.down.push(
-          `ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${oneRelation.columnName}" CASCADE;`
-        );
+        if (action === 'add') {
+          sqlCommands.up.push(
+            `ALTER TABLE ${tableName} ADD COLUMN "${node.columnName}" uuid;`
+          );
+        } else if (action === 'remove') {
+          // drop or rename column
+          if (!renameInsteadOfDrop) {
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${node.columnName}" CASCADE;`
+            );
+          } else {
+            sqlCommands.down.push(
+              `ALTER TABLE ${tableName} RENAME COLUMN "${node.columnName}" TO "${DELETED_PREFIX}${node.columnName}";`
+            );
+          }
+        }
 
         // add foreign key
-        const constraintName = `fk_${oneRelation.name}`;
+        const constraintName = `fk_${node.name}`;
         // drop constraint is needed for up and down
         const downConstraintStatement = `ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}"`;
         // first we need to drop a possible existing one, in order to update onUpdate and onDelete
         let upConstraintStatement = `${downConstraintStatement}, `;
         // and add a new version with all attributes
-        upConstraintStatement += `ADD CONSTRAINT "${constraintName}" FOREIGN KEY ("${oneRelation.columnName}") ` +
-          `REFERENCES "${oneRelation.reference.schemaName}"."${oneRelation.reference.tableName}"("${oneRelation.reference.columnName}")`;
+        upConstraintStatement += `ADD CONSTRAINT "${constraintName}" FOREIGN KEY ("${node.columnName}") ` +
+          `REFERENCES "${node.reference.schemaName}"."${node.reference.tableName}"("${node.reference.columnName}")`;
 
         // check onUpdate and onDelete
-        if (oneRelation.onDelete != null) {
-          upConstraintStatement += ` ON DELETE ${oneRelation.onDelete}`;
+        if (node.onDelete != null) {
+          upConstraintStatement += ` ON DELETE ${node.onDelete}`;
         }
-        if (oneRelation.onUpdate != null) {
-          upConstraintStatement += ` ON UPDATE ${oneRelation.onUpdate}`;
+        if (node.onUpdate != null) {
+          upConstraintStatement += ` ON UPDATE ${node.onUpdate}`;
         }
 
-        sqlCommands.up.push(
-          upConstraintStatement + ';'
-        );
-        sqlCommands.down.push(
-          downConstraintStatement + ';'
-        );
-
-        sqlCommands.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS '${JSON.stringify(relationObject)}';`);
-        sqlCommands.down.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS NULL;`);
+        if (action === 'add') {
+          sqlCommands.up.push(
+            upConstraintStatement + ';'
+          );
+          sqlCommands.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS '${JSON.stringify(relationObject)}';`);
+        } else if (action === 'remove') {
+          sqlCommands.down.push(
+            downConstraintStatement + ';'
+          );
+          // drop or rename column
+          if (!renameInsteadOfDrop) {
+            sqlCommands.down.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS NULL;`);
+          }
+        }
       }
     }
 
   }
 
-  function createSqlManyToManyRelation(sqlCommands, relationObject: [FullstackOne.IDbRelation]) {
+  function createSqlManyToManyRelation(sqlCommands, relationObject: F1.IDbRelation[]) {
 
-    const relation1: FullstackOne.IDbRelation = relationObject[0];
-    const relation2: FullstackOne.IDbRelation = relationObject[1];
+    const relation1 = _getActionAndValuesFromNode(relationObject[0]);
+    const actionRelation1 = relation1.action;
+    const definitionRelation1 = relation1.node;
+    const relation2 = _getActionAndValuesFromNode(relationObject[1]);
+    const actionRelation2 = relation2.action;
+    const definitionRelation2 = relation2.node;
 
-    // create fk column 1
-    const tableName1 = `"${relation1.schemaName}"."${relation1.tableName}"`;
-    sqlCommands.up.push(
-      `ALTER TABLE ${tableName1} ADD COLUMN "${relation1.columnName}" uuid[];`
-    );
-    sqlCommands.down.push(
-      `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${relation1.columnName}" CASCADE;`
-    );
+    // relation 1
+    const tableName1 = `"${definitionRelation1.schemaName}"."${definitionRelation1.tableName}"`;
+    if (actionRelation1 === 'add') {
+      // create fk column 1
+      sqlCommands.up.push(
+        `ALTER TABLE ${tableName1} ADD COLUMN "${definitionRelation1.columnName}" uuid[];`
+      );
 
-    // add comment with meta information
-    sqlCommands.up.push(`COMMENT ON COLUMN ${tableName1}."${relation1.columnName}" IS '${JSON.stringify(relation1)}';`);
-    // has to be exact same id in both -> empty
-    sqlCommands.down.push(`COMMENT ON COLUMN ${tableName1}."${relation1.columnName}" IS NULL;`);
+      // add comment with meta information
+      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName1}."${definitionRelation1.columnName}" IS '${JSON.stringify(definitionRelation1)}';`);
 
-    // create fk column 2
-    const tableName2 = `"${relation2.schemaName}"."${relation2.tableName}"`;
-    sqlCommands.up.push(
-      `ALTER TABLE ${tableName2} ADD COLUMN "${relation2.columnName}" uuid[];`
-    );
-    sqlCommands.down.push(
-      `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${relation2.columnName}" CASCADE;`
-    );
+    } else if (actionRelation1 === 'remove') {
 
-    // add comment with meta information
-    sqlCommands.up.push(`COMMENT ON COLUMN ${tableName2}."${relation2.columnName}" IS '${JSON.stringify(relation2)}';`);
-    // has to be exact same id in both -> empty
-    sqlCommands.down.push(`COMMENT ON COLUMN ${tableName2}."${relation2.columnName}" IS NULL;`);
+      // drop or rename column
+      if (!renameInsteadOfDrop) {
+        // remove fk column 1
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${definitionRelation1.columnName}" CASCADE;`
+        );
+        // remove meta information
+        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName1}."${definitionRelation1.columnName}" IS NULL;`);
+      } else { // create rename instead
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName1} RENAME COLUMN "${definitionRelation1.columnName}" TO "${DELETED_PREFIX}${definitionRelation1.columnName}";`
+        );
+      }
+
+    }
+
+    // relation2
+    const tableName2 = `"${definitionRelation2.schemaName}"."${definitionRelation2.tableName}"`;
+    if (actionRelation2 === 'add') {
+      // create fk column 2
+      sqlCommands.up.push(
+        `ALTER TABLE ${tableName2} ADD COLUMN "${definitionRelation2.columnName}" uuid[];`
+      );
+
+      // add comment with meta information
+      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName2}."${definitionRelation2.columnName}" IS '${JSON.stringify(definitionRelation2)}';`);
+
+    } else if (actionRelation2 === 'remove') {
+      // drop or rename column
+      if (!renameInsteadOfDrop) {
+        // remove fk column 2
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${definitionRelation2.columnName}" CASCADE;`
+        );
+
+        // remove meta information
+        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName2}."${definitionRelation2.columnName}" IS NULL;`);
+      } else { // create rename instead
+        sqlCommands.down.push(
+          `ALTER TABLE ${tableName2} RENAME COLUMN "${definitionRelation2.columnName}" TO "${DELETED_PREFIX}${definitionRelation2.columnName}";`
+        );
+      }
+    }
 
     // todo create trigger to check consistency and cascading
-
   }
+}
+
+/**
+ * Helper
+ */
+
+/**
+ * Deep diff between two object, using lodash
+ * @param  {Object} obj Object compared
+ * @param  {Object} base  Object to compare with
+ * @param  {boolean} ignoreValue  Ignore different string, number and boolean values
+ * @return {Object}        Return a new object who represent the diff
+ */
+function _difference(obj: {}, base: {}, ignoreValue: boolean = false) {
+  function changes(pObj, pBase) {
+    return _.transform(pObj, (result, value, key) => {
+      let thisValue = value;
+      // ignore different string, number and boolean values
+      if (!!ignoreValue) {
+        // ignoring done by replacing old value with new value
+        if (typeof thisValue === 'string' || typeof thisValue === 'number' || typeof thisValue === 'boolean') {
+          thisValue = pBase[key];
+        }
+      }
+      // deep equal
+      if (!_.isEqual(thisValue, pBase[key])) {
+        result[key] = (_.isObject(thisValue) && _.isObject(pBase[key])) ? changes(thisValue, pBase[key]) : thisValue;
+      }
+    });
+  }
+  return changes(obj, base);
+}
+
+/**
+ * Deep add key and value to last node
+ * @param  {Object} obj Object compared
+ * @param  {string} addKey  key that should be added
+ * @param  {any} addValue  value that should be added
+ * @return {Object}        Return a new object who represent the diff
+ */
+function _addToLastNote(obj: {}, addKey: string, addValue: any) {
+  function nested(pObj) {
+    return _.transform(pObj, (result, value, key) => {
+      // check if object has children
+      const hasChildren = (Object.values(pObj).find((thisVal) => {
+        return _.isObject(thisVal);
+      }) != null);
+      // add to last node
+      if (!hasChildren) {
+        result[addKey] = addValue;
+      }
+      // recursion
+      result[key] = (_.isObject(value)) ? nested(value) : value;
+    });
+  }
+  return nested(obj);
+}
+
+/**
+ * Deep add key and value to every node
+ * @param  {Object} obj Object compared
+ * @param  {string} addKey  key that should be added
+ * @param  {any} addValue  value that should be added
+ * @return {Object}        Return a new object who represent the diff
+ */
+function _addToEveryNote(obj: {}, addKey: string, addValue: any) {
+  function nested(pObj) {
+    return _.transform(pObj, (result, value, key) => {
+      // add to very "object" node
+      result[addKey] = addValue;
+      // recursion
+      result[key] = (_.isObject(value)) ? nested(value) : value;
+    });
+  }
+  return nested(obj);
+}
+
+/**
+ * Deep removal of empty objects, using lodash
+ * @param  {Object} obj Object to be cleaned
+ * @return {Object}        Return a new cleaned up object
+ */
+function _removeEmptyObjects(obj: {}) {
+  return _(obj)
+  .pickBy(_.isObject) // pick objects only
+  .mapValues(_removeEmptyObjects) // call only for object values
+  .omitBy(_.isEmpty) // remove all empty objects
+  .assign(_.omitBy(obj, _.isObject)) // assign back primitive values
+  .value();
 }

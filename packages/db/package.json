@@ -10,6 +10,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "deepmerge": "^2.0.1",
     "pg": "^7.4.0"
   },
   "devDependencies": {

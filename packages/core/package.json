@@ -15,13 +15,12 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^2.0.0",
+    "debug-logger": "^0.4.1",
     "dotenv": "^4.0.0",
+    "eventemitter2": "^5.0.0",
     "fast-glob": "^1.0.1",
     "koa": "^2.4.1",
-    "nodejs-dashboard": "^0.4.3",
-    "debug-logger": "^0.4.1",
     "le_node": "^1.7.1",
-    "tracer": "^0.8.11",
-    "eventemitter2": "^5.0.0"
+    "tracer": "^0.8.11"
   }
 }

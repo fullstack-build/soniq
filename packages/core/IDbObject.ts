@@ -1,7 +1,7 @@
 export interface IDbObject {
-  schemas: {
+  schemas?: {
     [name: string]: {
-      tables: {
+      tables?: {
         [name: string]: {
           schemaName: string;
           name: string;
@@ -23,7 +23,7 @@ export interface IDbObject {
                 relationName?: string;
               }
           }      ;
-          constraints: {
+          constraints?: {
             [name: string]: {
               type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK' | 'validate';
               name: string;
@@ -36,14 +36,16 @@ export interface IDbObject {
           };
         };
       };
-      views: any;
+      views?: any;
     }
   };
-  enums: {
+  enums?: {
     [name: string]: [string];
   };
-  relations: {
-    [name: string]: IMaxTwoRelations;
+  relations?: {
+    [name: string]: {
+      [tableName: string]: IDbRelation;
+    };
   };
   exposedNames?: {
     [name: string]: {
@@ -53,10 +55,10 @@ export interface IDbObject {
   };
 }
 
-export interface IMaxTwoRelations extends Array<IDbRelation> {
+/*export interface IMaxTwoRelations extends Array<IDbRelation> {
   0: IDbRelation;
   1: IDbRelation;
-}
+}*/
 
 export interface IDbRelation {
   name: string;

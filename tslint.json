@@ -6,6 +6,7 @@
   ],
   "jsRules": {},
   "rules": {
+    "align": [true, "parameters", "statements"],
     "no-namespace": false,
     "object-literal-sort-keys": false,
     "max-line-length": [true, 150],

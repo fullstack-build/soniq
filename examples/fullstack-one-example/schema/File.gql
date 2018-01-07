@@ -3,5 +3,5 @@ type PrivateFile @table(schemaName: "private", tableName: "File") {
   id: ID! @isUnique
   url: String
   container: String @isUnique(name: "FileSource")
-  fileName: String @isUnique(name: "FileSource")
+  fileName: String! @isUnique(name: "FileSource")
 }
