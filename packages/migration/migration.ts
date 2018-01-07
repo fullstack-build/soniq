@@ -34,7 +34,7 @@ export async function getMigrationsUp(
     );
 
     const databaseObject = require(relevantMigartionFilePath);
-    return createSqlFromDbObject(databaseObject);
+    return createSqlFromDeltaDbObject(databaseObject);
   } catch (err) {
     throw err;
   }

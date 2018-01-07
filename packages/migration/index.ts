@@ -1,202 +1,45 @@
 import * as _ from 'lodash';
 import * as deepmerge from 'deepmerge';
 
-import * as FullstackOne from '../core';
+import * as F1 from '../core';
 import createViewsFromDbObject from './createViewsFromDbObject';
-import { pgToDbObject } from '../db/pgToDbObject';
-
-const ACTION_KEY = '$$action$$';
-const DELETED_PREFIX = '_deleted:';
 
 export namespace migration {
-  let createDrop = false;
+  const ACTION_KEY: string = '$$action$$';
+  const DELETED_PREFIX: string = '_deleted:';
+  let renameInsteadOfDrop: boolean = true;
+  let dbObjectFrom: F1.IDbObject = null;
+  let dbObjectTo: F1.IDbObject = null;
+  let deltaDbObject: F1.IDbObject = null;
 
-  export async function createMigration(pCreateDrop: boolean = false) {
-    const $one = FullstackOne.getInstance();
-    createDrop = pCreateDrop;
+  export function createMigrationSqlFromTwoDbObjects(pDbObjectFrom: F1.IDbObject,
+                                                     pDbObjectTo: F1.IDbObject,
+                                                     pRenameInsteadOfDrop: boolean = true): string[] {
 
-    try {
-      // write parsed schema into migrations folder
-      /*await graphQlHelper.writeTableObjectIntoMigrationsFolder(
-        `${this.ENVIRONMENT.path}/migrations/`,
-        tableObjects,
-        optionalMigrationId,
-      );
-      // emit event
-      this.emit('schema.dbObject.migration.saved');*/
-
-      // tslint:disable-next-line:no-console
-      // console.log(JSON.stringify($one.getDbObject(), null, 2));
-
-      // tslint:disable-next-line:no-console
-      // console.log('############### dbObjectFromPG:');
-      const dbObjectFromPg = await pgToDbObject($one);
-      // tslint:disable-next-line:no-console
-      // console.log(JSON.stringify(dbObjectFromPg, null, 2));
-
-      // const sqlStatements = await createSqlFromDbObject($one.getDbObject());
-      /*
-      // tslint:disable-next-line:no-console
-      console.log('############### UP:');
-      // tslint:disable-next-line:no-console
-      console.log(sqlStatements.up.join('\n'));
-      // tslint:disable-next-line:no-console
-      console.log('############### DOWN:');
-      // copy, so we can reverse it without destroying original
-      const downMigrations = sqlStatements.down.slice(0);
-      // tslint:disable-next-line:no-console
-      console.log(downMigrations.reverse().join('\n'));
-
-      // tslint:disable-next-line:no-console
-      console.log('############### DELTA:');
-      // tslint:disable-next-line:no-console
-      console.log(createDeltaSQLFromTwoDbObjects(dbObjectFromPg, $one.getDbObject()).join('\n'));
-*/
-      // tslint:disable-next-line:no-console
-      console.log('############### DELTA:');
-      const deltaMigrations = createDeltaSqlFromTwoDbObjects($one.getDbObject(), dbObjectFromPg);
-      // tslint:disable-next-line:no-console
-      console.log(deltaMigrations.join('\n'));
-
-      // emit event
-      // this.emit('schema.dbObject.migration.up.executed');
-
-      // const viewSqlStatements = createViewsFromDbObject($one.getDbObject(), 'appuserhugo', false);
-      // tslint:disable-next-line:no-console
-      // console.log(viewSqlStatements.join('\n'));
-
-      // display result sql in terminal
-      // this.logger.debug(sqlStatements.join('\n'));
-    } catch (err) {
-
-      // tslint:disable-next-line:no-console
-      console.log('err', err);
-      // this.logger.warn('loadFilesByGlobPattern error', err);
-      // emit event
-      // this.emit('schema.load.error');
-    }
-  }
-
-  export function createDeltaSqlFromTwoDbObjects(pDbObjectNew: FullstackOne.IDbObject,
-                                                 pDbObjectOld: FullstackOne.IDbObject): string[] {
+    renameInsteadOfDrop = pRenameInsteadOfDrop;
 
     // crete copy of objects
     // new
-    const dbObjectNew = _.cloneDeep(pDbObjectNew);
-    // remove views
-    delete dbObjectNew.views;
-    delete dbObjectNew.exposedNames;
-    // old
-    const dbObjectOld = _.cloneDeep(pDbObjectOld);
+    dbObjectFrom = _.cloneDeep(pDbObjectFrom);
     // remove views and exposed names
-    delete dbObjectOld.views;
-    delete dbObjectOld.exposedNames;
+    delete dbObjectFrom.exposedNames;
 
-    const deltaDbObjectRemove: any = _removeEmptyObjects(_difference(dbObjectOld, dbObjectNew));
+    // old
+    dbObjectTo = _.cloneDeep(pDbObjectTo);
+    // remove views and exposed names
+    delete dbObjectTo.exposedNames;
+
+    const deltaDbObjectRemove: any = _removeEmptyObjects(_difference(dbObjectFrom, dbObjectTo));
     const deltaDbObjectRemoveWithActions = _addToEveryNote(deltaDbObjectRemove, ACTION_KEY, { remove:true });
-    const deltaDbObjectAdd: any = _removeEmptyObjects(_difference(dbObjectNew, dbObjectOld));
+    const deltaDbObjectAdd: any = _removeEmptyObjects(_difference(dbObjectTo, dbObjectFrom));
     const deltaDbObjectAddWithAction = _addToEveryNote(deltaDbObjectAdd, ACTION_KEY, { add:true });
 
     // use deepmerge instead of _.merge.
     // _.merge does some crazy shit -> confuses references
-    const deltaDbObjFinal = deepmerge(deltaDbObjectRemoveWithActions, deltaDbObjectAddWithAction);
+    deltaDbObject = deepmerge(deltaDbObjectRemoveWithActions, deltaDbObjectAddWithAction);
 
-    const sqlCommands = createSqlFromDbObject(deltaDbObjFinal, pDbObjectOld);
-
-    return sqlCommands;
+    return createSqlFromDeltaDbObject();
   }
-
-  /*
-  export function OLDcreateDeltaSQLFromTwoDbObjects(dbObjectOld: FullstackOne.IDbObject, dbObjectNew: FullstackOne.IDbObject) {
-    const migrationOld = createSqlFromDbObject(dbObjectOld);
-    const migrationNew = createSqlFromDbObject(dbObjectNew);
-
-    let deltaSqlCommands = [];
-
-    // find all that are in old but not in new -> run down
-    const deltaInOldNotInNew = Object.entries(migrationOld.up).filter((entry) => {
-      return (!migrationNew.up.includes(entry[1]));
-    });
-
-    // collect down migrations
-    deltaSqlCommands.push('-- DOWN');
-    const downMigrations = [];
-    Object.values(deltaInOldNotInNew).forEach((delta) => {
-      const deltaIndex = delta[0];
-      const downMigration = migrationOld.down[deltaIndex];
-      downMigrations.push(downMigration);
-    });
-
-    // run down migrations reversed
-    downMigrations.reverse();
-    deltaSqlCommands = deltaSqlCommands.concat(downMigrations);
-
-    // find all that are in new but not in old -> ups
-    const deltaInNewNotInOld = Object.entries(migrationNew.up).filter((entry) => {
-      return (!migrationOld.up.includes(entry[1]));
-    });
-
-    // collect down migrations
-    deltaSqlCommands.push('-- UP');
-    Object.values(deltaInNewNotInOld).forEach((delta) => {
-      const deltaIndex = delta[0];
-      const upMigration = migrationNew.up[deltaIndex];
-      deltaSqlCommands.push(upMigration);
-    });
-
-    // remove unnecessary commands for renamed columns, tables and schemas
-    let filteredDeltaSqlCommands = [...deltaSqlCommands];
-    deltaSqlCommands.forEach((statement) => {
-      // column
-      if (
-        statement.indexOf('ALTER TABLE') !== -1 &&
-        statement.indexOf('RENAME COLUMN TO') !== -1 &&
-        statement.indexOf(DELETED_PREFIX) === -1) {
-        // tslint:disable-next-line:no-console
-        console.error('## COLUMN');
-
-        const myRegexp = /ALTER TABLE .* RENAME COLUMN "(.*)" TO "(.*)"+/g;
-        const match = myRegexp.exec(statement);
-        const oldName = match[1];
-        const newName = match[2];
-
-        if (oldName != null && newName != null) {
-          filteredDeltaSqlCommands = deltaSqlCommands.filter((subStatement) => {
-            return (
-              subStatement.indexOf(`ADD COLUMN "${newName}"`) === -1
-              &&
-              subStatement.indexOf(`ALTER COLUMN "${oldName}" TYPE varchar`) === -1
-              &&
-              subStatement.indexOf(`RENAME COLUMN "${oldName}" TO "${DELETED_PREFIX}${oldName}"`) === -1
-              &&
-              subStatement.indexOf(`DROP COLUMN IF EXISTS "${oldName}"`) === -1
-            );
-          });
-
-          // check if anything was removed, if not => remove rename colums -> done already
-          if (deltaSqlCommands.length === filteredDeltaSqlCommands.length) {
-            filteredDeltaSqlCommands = filteredDeltaSqlCommands.filter(e => e !== statement);
-          }
-
-        }
-      } else if (
-        statement.indexOf('ALTER TABLE') !== -1 &&
-        statement.indexOf('RENAME TO') !== -1 &&
-        statement.indexOf(DELETED_PREFIX) === -1) { // table
-
-        const myRegexp = /ALTER TABLE "(.*)" RENAME TO "(.*)"+/g;
-        const match = myRegexp.exec(statement);
-        const oldName = `"${match[1]}"`;
-        const newName = match[2];
-        // tslint:disable-next-line:no-console
-        console.error('## TABLE', oldName, newName);
-
-      }
-    });
-
-    return filteredDeltaSqlCommands;
-  }
-  */
 
   function _getActionAndValuesFromNode(node): {action: string, node: any} {
     const actionObj = (node != null) ? node[ACTION_KEY] : null;
@@ -220,18 +63,15 @@ export namespace migration {
     };
   }
 
-  export function createSqlFromDbObject(
-    deltaDbObj: FullstackOne.IDbObject,
-    currentDbObject: FullstackOne.IDbObject
-  ): string[] {
+  function createSqlFromDeltaDbObject(): string[] {
     const sqlCommands = {
       up: [],
       down: []
     };
 
     // create enum types first
-    if (deltaDbObj.enums != null) {
-      Object.entries(deltaDbObj.enums).map((enumTypeArray) => {
+    if (deltaDbObject.enums != null) {
+      Object.entries(deltaDbObject.enums).map((enumTypeArray) => {
         // ignore actions
         if (enumTypeArray[0] !== ACTION_KEY) {
           createSqlForEnumObject(sqlCommands, enumTypeArray[0], enumTypeArray[1]);
@@ -239,8 +79,8 @@ export namespace migration {
       });
     }
 
-    if (deltaDbObj.schemas != null) {
-      const schemas = _getActionAndValuesFromNode(deltaDbObj.schemas).node;
+    if (deltaDbObject.schemas != null) {
+      const schemas = _getActionAndValuesFromNode(deltaDbObject.schemas).node;
       // iterate over database schemas
       Object.entries(schemas).map((schemaEntry) => {
 
@@ -262,13 +102,13 @@ export namespace migration {
     }
 
     // iterate over database relations
-    if (deltaDbObj.relations != null) {
-      const relations = _getActionAndValuesFromNode(deltaDbObj.relations).node;
+    if (deltaDbObject.relations != null) {
+      const relations = _getActionAndValuesFromNode(deltaDbObject.relations).node;
 
       Object.values(relations).map((
-        relationObj: { [tableName: string]: FullstackOne.IDbRelation }
+        relationObj: { [tableName: string]: F1.IDbRelation }
       ) => {
-        const relationDefinition: FullstackOne.IDbRelation[] = Object.values(_getActionAndValuesFromNode(relationObj).node);
+        const relationDefinition: F1.IDbRelation[] = Object.values(_getActionAndValuesFromNode(relationObj).node);
 
         // write error for many-to-many
         if (relationDefinition[0].type === 'MANY' && relationDefinition[1] != null && relationDefinition[1].type === 'MANY') {
@@ -323,7 +163,7 @@ export namespace migration {
         sqlCommands.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
       } else if (action === 'remove') {
         // drop or rename schema
-        if (createDrop) {
+        if (!renameInsteadOfDrop) {
           sqlCommands.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
         } else { // create rename instead
           sqlCommands.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
@@ -346,7 +186,7 @@ export namespace migration {
         sqlCommands.up.push(`CREATE TABLE ${tableNameWithSchema}();`);
       } else if (action === 'remove') {
         // create or rename table
-        if (createDrop) {
+        if (!renameInsteadOfDrop) {
           sqlCommands.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchema};`);
         } else { // create rename instead, ignore if already renamed
           if (tableObject.name.indexOf(DELETED_PREFIX) !== 0) {
@@ -407,8 +247,12 @@ export namespace migration {
           // create column statement
           sqlCommands.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${columnName}" varchar;`);
         } else if (action === 'remove') {
+
+          // check if rename or remove
+          // console.error('###');
+
           // drop or rename
-          if (createDrop) {
+          if (!renameInsteadOfDrop) {
             sqlCommands.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${columnName}" CASCADE;`);
           } else { // create rename instead
             sqlCommands.down.push(
@@ -534,10 +378,10 @@ export namespace migration {
 
   }
 
-  function createRelation(sqlCommands, relationObject: FullstackOne.IDbRelation[]) {
+  function createRelation(sqlCommands, relationObject: F1.IDbRelation[]) {
 
     relationObject.map(createSqlRelation);
-    function createSqlRelation(oneRelation: FullstackOne.IDbRelation) {
+    function createSqlRelation(oneRelation: F1.IDbRelation) {
 
       const { action, node } = _getActionAndValuesFromNode(oneRelation);
 
@@ -552,7 +396,7 @@ export namespace migration {
           );
         } else if (action === 'remove') {
           // drop or rename column
-          if (createDrop) {
+          if (!renameInsteadOfDrop) {
             sqlCommands.down.push(
               `ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${node.columnName}" CASCADE;`
             );
@@ -591,7 +435,7 @@ export namespace migration {
             downConstraintStatement + ';'
           );
           // drop or rename column
-          if (createDrop) {
+          if (!renameInsteadOfDrop) {
             sqlCommands.down.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS NULL;`);
           }
         }
@@ -600,7 +444,7 @@ export namespace migration {
 
   }
 
-  function createSqlManyToManyRelation(sqlCommands, relationObject: FullstackOne.IDbRelation[]) {
+  function createSqlManyToManyRelation(sqlCommands, relationObject: F1.IDbRelation[]) {
 
     const relation1 = _getActionAndValuesFromNode(relationObject[0]);
     const actionRelation1 = relation1.action;
@@ -623,7 +467,7 @@ export namespace migration {
     } else if (actionRelation1 === 'remove') {
 
       // drop or rename column
-      if (createDrop) {
+      if (!renameInsteadOfDrop) {
         // remove fk column 1
         sqlCommands.down.push(
           `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${definitionRelation1.columnName}" CASCADE;`
@@ -651,7 +495,7 @@ export namespace migration {
 
     } else if (actionRelation2 === 'remove') {
       // drop or rename column
-      if (createDrop) {
+      if (!renameInsteadOfDrop) {
         // remove fk column 2
         sqlCommands.down.push(
           `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${definitionRelation2.columnName}" CASCADE;`

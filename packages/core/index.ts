@@ -22,7 +22,7 @@ export { IFullstackOneCore, IEnvironmentInformation, IDbObject, IDbRelation };
 import { helper } from '../helper';
 export { helper } from '../helper';
 import { Events, IEventEmitter } from './events';
-import { DbClient, DbPool, PgClient, PgPool } from '../db';
+import { DbClient, DbPool, PgClient, PgPool, PgToDbObject } from '../db';
 import { Logger } from './logger';
 import { graphQl } from '../graphQl/index';
 import { migration } from '../migration/index';
@@ -169,8 +169,22 @@ class FullstackOneCore implements IFullstackOneCore {
     return this.dbPoolObj.pool;
   }
 
-  public runMigration() {
-    migration.createMigration();
+  public async runMigration() {
+
+    try {
+      const migrateFromDbObject = await (new PgToDbObject()).getPgDbObject();
+      const migrateToDbObject   = this.getDbObject();
+      const sqlMigrations       = migration.createMigrationSqlFromTwoDbObjects(migrateFromDbObject, migrateToDbObject, false);
+      // console.error('**', migrateFromDbObject);
+      // console.error('##', migrateToDbObject);
+      // console.log('############### DELTA:');
+      // console.log(sqlMigrations);
+    } catch (err) {
+      // console.error('ERR', err);
+    }
+
+    /*const dbMigration = new DbMigrarion(false);
+    dbMigration.createMigration();*/
   }
 
   /**

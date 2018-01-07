@@ -204,6 +204,9 @@ const GQL_JSON_PARSER = {
       case 'custom': // mark as customResolver
         dbObjectNode.type = 'customResolver';
         break;
+      case 'json': // embedded json types -> jsonb
+          dbObjectNode.type = 'jsonb';
+          break;
       case 'type': // override type with PG native type
         const customType = _.get(gQlDirectiveNode, 'arguments[0].value.value');
         // detect known PG types
@@ -219,7 +222,7 @@ const GQL_JSON_PARSER = {
         break;
       case 'migrate':
         // add special miration
-        addMigration(gQlDirectiveNode, dbObjectNode);
+        addMigration(gQlDirectiveNode, dbObjectNode, refDbObj);
         break;
       case 'default': // set default value
         setDefaultValueForColumn(gQlDirectiveNode,
@@ -512,7 +515,7 @@ function addConstraint(pConstraintType,
         param1: `_meta.validate('${validateType}'::text, (${refDbObjectCurrentTableColumn.name})::text, '${gQlSchemaNode.value.value}'::text)`
       };
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${validateType}_check`;
-    break;
+      break;
   }
 
   // create new constraint if name was set
@@ -590,7 +593,7 @@ function relationBuilderHelper(
     switch (argumentName) {
       case 'name':
         relationName = argument.value.value;
-      break;
+        break;
       case 'onUpdate':
         switch (argumentValue.toLocaleLowerCase()) {
           case 'restrict':
@@ -606,7 +609,7 @@ function relationBuilderHelper(
             relationOnUpdate = 'SET DEFAULT';
             break;
         }
-      break;
+        break;
       case 'onDelete':
         switch (argumentValue.toLocaleLowerCase()) {
           case 'restrict':
@@ -622,7 +625,7 @@ function relationBuilderHelper(
             relationOnDelete = 'SET DEFAULT';
             break;
         }
-      break;
+        break;
     }
 
     ((node) => {
@@ -750,10 +753,9 @@ function relationBuilderHelper(
 
 }
 
-function addMigration(gQlDirectiveNode, dbObjectNode) {
-
+function addMigration(gQlDirectiveNode, dbObjectNode, refDbObj) {
   const oldNameArgument = gQlDirectiveNode.arguments.find((argument) => {
-    return (argument.name.value.toLowerCase() === 'oldname');
+    return (argument.name.value.toLowerCase() === 'from');
   });
 
   const oldName = (oldNameArgument != null) ? oldNameArgument.value.value : null;
