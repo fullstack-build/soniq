@@ -1,2 +1,3 @@
 - Update Permession is required to have column `id`
 - Delete Permission can only have column `id`
+- Application pg-user is not allowed to call `txid_current()` !VERY IMPORTANT!
