@@ -1,6 +1,7 @@
 export interface IDbObject {
   schemas?: {
     [name: string]: {
+      name: string;
       tables?: {
         [name: string]: {
           schemaName: string;
@@ -54,11 +55,6 @@ export interface IDbObject {
     }
   };
 }
-
-/*export interface IMaxTwoRelations extends Array<IDbRelation> {
-  0: IDbRelation;
-  1: IDbRelation;
-}*/
 
 export interface IDbRelation {
   name: string;

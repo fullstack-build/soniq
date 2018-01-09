@@ -99,6 +99,7 @@ const GQL_JSON_PARSER = {
 
     // find or create schema
     refDbObj.schemas[schemaName] = refDbObj.schemas[schemaName] || {
+      name: schemaName,
       tables:{},
       views: []
     };
@@ -759,6 +760,7 @@ function addMigration(gQlDirectiveNode, dbObjectNode, refDbObj) {
   });
 
   const oldName = (oldNameArgument != null) ? oldNameArgument.value.value : null;
+  const newName = dbObjectNode.name;
 
   if (dbObjectNode != null && oldName != null) {
     dbObjectNode.oldName = oldName;

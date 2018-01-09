@@ -54,7 +54,8 @@ export class PgToDbObject extends F1.AbstractPackage {
         if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
           // create schema objects for each schema
           this.dbObject.schemas[schemaName] = {
-            tables:{},
+            name: schemaName,
+            tables: {},
             views: []
           };
 

@@ -174,11 +174,12 @@ class FullstackOneCore implements IFullstackOneCore {
     try {
       const migrateFromDbObject = await (new PgToDbObject()).getPgDbObject();
       const migrateToDbObject   = this.getDbObject();
-      const sqlMigrations       = migration.createMigrationSqlFromTwoDbObjects(migrateFromDbObject, migrateToDbObject, false);
+      const sqlMigrations       = migration.createMigrationSqlFromTwoDbObjects(migrateFromDbObject, migrateToDbObject, true);
       // console.error('**', migrateFromDbObject);
       // console.error('##', migrateToDbObject);
       // console.log('############### DELTA:');
-      // console.log(sqlMigrations);
+      // console.log(sqlMigrations.join('\n'));
+
     } catch (err) {
       // console.error('ERR', err);
     }
