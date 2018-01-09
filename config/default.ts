@@ -13,5 +13,6 @@ export = {
   },
   db: {
     viewSchemaName: 'graphql'
-  }
+  },
+  securePassword: {}
 };
