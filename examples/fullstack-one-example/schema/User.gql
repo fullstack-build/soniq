@@ -14,6 +14,7 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
+  files: [File] @relation(name: "FileOwner")
 }
 
 type PayloadData {

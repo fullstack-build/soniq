@@ -4,6 +4,7 @@ import { IDbObject, IDbRelation } from '../core/IDbObject';
 
 export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject => {
   const dbObject: IDbObject = {
+    version: 1.0,
     schemas: {},
     enums: {},
     relations: {},
@@ -388,10 +389,7 @@ const GQL_JSON_PARSER = {
           dbObjectNode.type = 'enum';
           dbObjectNode.customType = enumNames[typeEnumIndex];
         } else {
-          // unknown type
-          process.stderr.write(
-            'GraphQL.parser.error.unknown.field.type: ' + refDbObjectCurrentTable.name + '.' + columnType + '\n',
-          );
+          // unknown type, probably a nested document (jsonb)
         }
         break;
     }
@@ -672,10 +670,11 @@ function relationBuilderHelper(
     const thisRelation  = relations[relationTableName];
     const otherRelation = relations[referencedTableName];
 
-    // check if empty => more then one relation in GraphQl Error
-    if (thisRelation == null) {
+    // check if empty => more then one relation in GraphQl Error, maybe same name for different relations
+    if (thisRelation == null || otherRelation == null) {
       process.stderr.write(
-        'GraphQL.parser.error.relation.too.many: ' + relationName + '\n',
+        'GraphQL.parser.error.relation.too.many: ' + relationName +
+        ' Make sure to use unique relation names for different relations and use the same name on both sides of the relation. \n',
       );
       return;
     }

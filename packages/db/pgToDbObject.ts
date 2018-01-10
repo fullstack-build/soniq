@@ -9,6 +9,7 @@ export class PgToDbObject extends F1.AbstractPackage {
   private readonly DELETED_PREFIX = '_deleted:';
   private dbClient = this.$one.getDbSetupClient();
   private readonly dbObject: IDbObject = {
+    version: 1.0,
     schemas: {},
     enums: {},
     relations: {}

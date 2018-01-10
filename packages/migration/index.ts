@@ -11,7 +11,7 @@ export namespace migration {
   let renameInsteadOfDrop: boolean = true;
   let dbObjectFrom: F1.IDbObject = null;
   let dbObjectTo: F1.IDbObject = null;
-  let deltaDbObject: F1.IDbObject = null;
+  let migrationDbObject: F1.IDbObject = null;
 
   export function createMigrationSqlFromTwoDbObjects(pDbObjectFrom: F1.IDbObject,
                                                      pDbObjectTo: F1.IDbObject,
@@ -30,57 +30,56 @@ export namespace migration {
     // remove views and exposed names
     delete dbObjectTo.exposedNames;
 
-    const deltaDbObjectRemove: any = _removeEmptyObjects(_difference(dbObjectFrom, dbObjectTo));
-    const deltaDbObjectRemoveWithActions = _addToEveryNode(deltaDbObjectRemove, ACTION_KEY, { remove: true });
-    const deltaDbObjectAdd: any = _removeEmptyObjects(_difference(dbObjectTo, dbObjectFrom));
-    const deltaDbObjectAddWithAction = _addToEveryNode(deltaDbObjectAdd, ACTION_KEY, { add: true });
+    const deltaDbObjectRemove: any            = _removeEmptyObjects(_difference(dbObjectFrom, dbObjectTo));
+    const deltaDbObjectRemoveWithActions: any = _addToEveryNode(deltaDbObjectRemove, ACTION_KEY, { remove: true });
+    const deltaDbObjectAdd: any               = _removeEmptyObjects(_difference(dbObjectTo, dbObjectFrom));
+    const deltaDbObjectAddWithAction: any     = _addToEveryNode(deltaDbObjectAdd, ACTION_KEY, { add: true });
 
     // use deepmerge instead of _.merge.
     // _.merge does some crazy shit -> confuses references
-    deltaDbObject = _cleanUpDeltaDbObject(deepmerge(deltaDbObjectRemoveWithActions, deltaDbObjectAddWithAction));
+    migrationDbObject = _cleanUpDeltaDbObject(deepmerge(deltaDbObjectRemoveWithActions, deltaDbObjectAddWithAction));
 
     // remove graphql // todo
-    delete deltaDbObject.schemas.graphql;
+    delete migrationDbObject.schemas.graphql;
 
-    // console.error(JSON.stringify(deltaDbObject, null, 2));
+    // console.log(JSON.stringify(migrationDbObject, null, 2));
+    // console.error('RENAME relations, rename schemas');
     return createSqlFromDeltaDbObject();
   }
 
-  function _cleanUpDeltaDbObject(obj: F1.IDbObject): F1.IDbObject {
+  function _cleanUpDeltaDbObject(pMigrationDbObject: F1.IDbObject): F1.IDbObject {
 
     // iterate schemas
 
-    const schemasNode = _splitActionFromNode(obj.schemas).node;
-    if (schemasNode != null) {
-      Object.entries(schemasNode).map((schema) => {
+    if (pMigrationDbObject.schemas != null) {
+      Object.entries(pMigrationDbObject.schemas).map((schema) => {
         const schemaName = schema[0];
-        const schemaNode = _splitActionFromNode(schema[1]).node;
-        _cleanNodesMarkedAddAndRemove(schemaName, schemasNode);
+        const schemaDef = schema[1];
+        _cleanNodesMarkedAddAndRemove(schemaName, pMigrationDbObject.schemas);
 
         // iterate tables
-        const tablesNode = _splitActionFromNode(schemaNode.tables).node;
-        if (tablesNode != null) {
-          Object.entries(tablesNode).map((table) => {
+        if (schemaDef.tables != null) {
+          Object.entries(schemaDef.tables).map((table) => {
             const tableName = table[0];
-            const tableNode = _splitActionFromNode(table[1]).node;
-            _cleanNodesMarkedAddAndRemove(tableName, tablesNode);
+            const tableDef = table[1];
+
+            _cleanNodesMarkedAddAndRemove(tableName, schemaDef.tables);
 
             // rename table?
-            if (tableNode.oldName != null) {
-              _combineRenamedNodes(tableNode.oldName, tableName, tablesNode);
+            if (tableDef.oldName != null) {
+              _combineRenamedNodes(tableDef.oldName, tableName, schemaDef.tables);
             }
 
             // iterate columns
-            const columnsNode = _splitActionFromNode(tableNode.columns).node;
-            if (columnsNode != null) {
-              Object.entries(columnsNode).map((column) => {
+            if (tableDef.columns != null) {
+              Object.entries(tableDef.columns).map((column) => {
                 const columnName = column[0];
-                const columnNode = _splitActionFromNode(column[1]).node;
-                _cleanNodesMarkedAddAndRemove(columnName, columnsNode);
+                const columnDef = column[1];
+                _cleanNodesMarkedAddAndRemove(columnName, tableDef.columns);
 
                 // rename column?
-                if (columnNode.oldName != null) {
-                  _combineRenamedNodes(columnNode.oldName, columnName, columnsNode);
+                if (columnDef.oldName != null) {
+                  _combineRenamedNodes(columnDef.oldName, columnName, tableDef.columns);
                 }
 
               });
@@ -88,17 +87,16 @@ export namespace migration {
 
           });
         }
-
       });
-    }
+     }
 
     function _combineRenamedNodes(oldName, newName, parent) {
 
-      const nodeFrom  = _splitActionFromNode(parent[oldName]).node;
-      const nodeTo    = _splitActionFromNode(parent[newName]).node;
+      const nodeFrom  = parent[oldName];
+      const nodeTo    = parent[newName];
 
-      // check that original still exists
-      if (nodeTo != null && nodeFrom != null) {
+      // check that original still exists and both are not the same (e.g. oldName = name)
+      if (nodeTo != null && nodeFrom != null && nodeTo !== nodeFrom) {
         // find differences (e.g. new columns), keep new and old name
         const renameObj = _difference(nodeTo, nodeFrom);
 
@@ -109,9 +107,15 @@ export namespace migration {
 
         renameObj.name = nodeTo.name;
         renameObj.oldName = nodeTo.oldName;
+
         // save merged as the new one
         parent[newName] = renameObj;
+        // remove old object that shall be renamed
+        delete parent[oldName];
 
+        /**
+         * Rename constraints (for tables)
+         */
         // check if node (is a table and) has constraints
         if (renameObj.constraints != null) {
           const fromConstraints = nodeFrom.constraints;
@@ -122,13 +126,13 @@ export namespace migration {
             // iterate from constraints
             const fromConstraintsNode = _splitActionFromNode(fromConstraints).node;
             Object.entries(fromConstraintsNode).map((fromConstraintEntry) => {
-              const fromConstraintName = fromConstraintEntry[0];
+              const fromConstraintName            = fromConstraintEntry[0];
               // clean constraint definition
               const fromConstraintDefinition      = _splitActionFromNode(fromConstraintEntry[1]).node;
               const fromConstraintDefinitionClean = _removeFromEveryNode(fromConstraintDefinition, ACTION_KEY);
 
               // create to constraint name
-              const toConstraintName        = fromConstraintName.replace(renameObj.oldName, renameObj.name);
+              const toConstraintName            = fromConstraintName.replace(renameObj.oldName, renameObj.name);
               // clean constraint definition
               const toConstraintDefinition      = _splitActionFromNode(toConstraints[toConstraintName]).node;
               const toConstraintDefinitionClean = _removeFromEveryNode(toConstraintDefinition, ACTION_KEY);
@@ -153,8 +157,53 @@ export namespace migration {
           }
         }
 
-        // remove old object that shall be renamed
-        delete parent[oldName];
+        /**
+         * Rename relations (for tables)
+         */
+        if (pMigrationDbObject.relations) {
+          const newTableName = nodeTo.name;
+          const oldTableName = nodeTo.oldName;
+
+          // iterate relations
+          const relationForTable = {};
+          Object.values(pMigrationDbObject.relations).map((relationsObj) => {
+            // iterate both sides of the relation
+            Object.values(relationsObj).map((sideOfRelation) => {
+              // find relations for this table
+              if (sideOfRelation.schemaName === nodeTo.schemaName &&
+                (sideOfRelation.tableName === newTableName || sideOfRelation.tableName === oldTableName)) {
+                relationForTable[sideOfRelation.name] = relationForTable[sideOfRelation.name] || {};
+                relationForTable[sideOfRelation.name][sideOfRelation.tableName] = sideOfRelation;
+              }
+            });
+          });
+
+          // iterate found relations
+          Object.values(relationForTable).map((relationObj) => {
+            // shallow clone (so that we can remove the name for comparison
+            const newRelation = { ... relationObj[nodeTo.name] };
+            const oldRelation = { ... relationObj[nodeTo.oldName] };
+
+            // rename relation if both constraints are similar (without comparing table name)
+            delete newRelation.tableName;
+            delete oldRelation.tableName;
+            if (JSON.stringify(oldRelation) !== JSON.stringify(newRelation)) {
+              const relationName = newRelation.name;
+              // remove old part of relation
+              delete pMigrationDbObject.relations[relationName][oldTableName];
+
+              // replace new part of relation with rename object
+              pMigrationDbObject.relations[relationName][newTableName] = {
+                ...newRelation,
+                tableName: newTableName, // restore table name
+                [ACTION_KEY]: {
+                  rename: true
+                }
+              };
+            }
+          });
+
+        }
       }
     }
 
@@ -162,7 +211,7 @@ export namespace migration {
       const node = parent[nodeName];
       // remove all where action add and remove are both set
       if (node[ACTION_KEY] != null && node[ACTION_KEY].add === true && node[ACTION_KEY].remove === true) {
-        delete parent[nodeName];
+        delete parent[nodeName][ACTION_KEY];
       }
     }
 
@@ -217,7 +266,7 @@ export namespace migration {
     }
     return nested(obj);*/
 
-    return obj;
+    return pMigrationDbObject;
   }
 
   function _splitActionFromNode(node): {action: string, node: any} {
@@ -252,8 +301,8 @@ export namespace migration {
     };
 
     // create enum types first
-    if (deltaDbObject.enums != null) {
-      Object.entries(deltaDbObject.enums).map((enumTypeArray) => {
+    if (migrationDbObject.enums != null) {
+      Object.entries(migrationDbObject.enums).map((enumTypeArray) => {
         // ignore actions
         if (enumTypeArray[0] !== ACTION_KEY) {
           createSqlForEnumObject(sqlCommands, enumTypeArray[0], enumTypeArray[1]);
@@ -261,8 +310,8 @@ export namespace migration {
       });
     }
 
-    if (deltaDbObject.schemas != null) {
-      const schemas = _splitActionFromNode(deltaDbObject.schemas).node;
+    if (migrationDbObject.schemas != null) {
+      const schemas = _splitActionFromNode(migrationDbObject.schemas).node;
       // iterate over database schemas
       Object.entries(schemas).map((schemaEntry) => {
 
@@ -284,8 +333,8 @@ export namespace migration {
     }
 
     // iterate over database relations
-    if (deltaDbObject.relations != null) {
-      const relations = _splitActionFromNode(deltaDbObject.relations).node;
+    if (migrationDbObject.relations != null) {
+      const relations = _splitActionFromNode(migrationDbObject.relations).node;
 
       Object.values(relations).map((
         relationObj: { [tableName: string]: F1.IDbRelation }
@@ -357,6 +406,7 @@ export namespace migration {
 
   // http://www.postgresqltutorial.com/postgresql-alter-table/
   function createSqlFromTableObject(sqlCommands, schemaName, tableName, tableDefinition: any) {
+
     const { action, node } = _splitActionFromNode(tableDefinition);
 
     // use the current table name, otherwise name of node
@@ -540,7 +590,7 @@ export namespace migration {
             );
           } else if (action === 'remove') {
             sqlCommands.down.push(
-              `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT "${constraintName}";`
+              `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`
             );
           }
         }
@@ -562,7 +612,7 @@ export namespace migration {
             );
           } else if (action === 'remove') {
             sqlCommands.down.push(
-              `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT "${constraintName}";`
+              `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`
             );
           }
         }
@@ -582,7 +632,7 @@ export namespace migration {
           );
         } else if (action === 'remove') {
           sqlCommands.down.push(
-            `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT "${constraintName}";`
+            `ALTER TABLE ${tableNameWithSchemaDown} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`
           );
         }
         // rename constraint
@@ -603,6 +653,25 @@ export namespace migration {
 
       // ignore the 'MANY' side
       if (node.type === 'ONE') {
+
+        // check if both sides of relation exist, ignore relation otherwise
+        // todo redundant => combine into function
+        if (migrationDbObject.schemas[node.schemaName] == null ||
+            migrationDbObject.schemas[node.schemaName].tables[node.tableName] == null) {
+          process.stdout.write(
+            'migration.relation.missing.table: ' +
+            `${node.name}: ${node.schemaName}.${node.tableName} not found` + '\n'
+          );
+          return;
+        } else if (migrationDbObject.schemas[node.reference.schemaName] == null ||
+                   migrationDbObject.schemas[node.reference.schemaName].tables[node.reference.tableName] == null) {
+          process.stdout.write(
+            'migration.relation.missing.table: ' +
+            `${node.name}: ${node.reference.schemaName}.${node.reference.tableName} not found` + '\n'
+          );
+          return;
+        }
+
         const tableName = `"${node.schemaName}"."${node.tableName}"`;
 
         // create column for FK // convention: uuid
@@ -626,7 +695,7 @@ export namespace migration {
         // add foreign key
         const constraintName = `fk_${node.name}`;
         // drop constraint is needed for up and down
-        const downConstraintStatement = `ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}"`;
+        const downConstraintStatement = `ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE`;
         // first we need to drop a possible existing one, in order to update onUpdate and onDelete
         let upConstraintStatement = `${downConstraintStatement}, `;
         // and add a new version with all attributes
@@ -645,7 +714,8 @@ export namespace migration {
           sqlCommands.up.push(
             upConstraintStatement + ';'
           );
-          sqlCommands.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS '${JSON.stringify(relationObject)}';`);
+          const nodeClean = _removeFromEveryNode(node, ACTION_KEY);
+          sqlCommands.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS '${JSON.stringify(nodeClean)}';`);
         } else if (action === 'remove') {
           sqlCommands.down.push(
             downConstraintStatement + ';'
@@ -664,21 +734,59 @@ export namespace migration {
 
     const relation1 = _splitActionFromNode(relationObject[0]);
     const actionRelation1 = relation1.action;
-    const definitionRelation1 = relation1.node;
+    const nodeRelation1 = relation1.node;
+    const nodeRelation1Clean = _removeFromEveryNode(nodeRelation1, ACTION_KEY);
     const relation2 = _splitActionFromNode(relationObject[1]);
     const actionRelation2 = relation2.action;
-    const definitionRelation2 = relation2.node;
+    const nodeRelation2 = relation2.node;
+    const nodeRelation2Clean = _removeFromEveryNode(nodeRelation2, ACTION_KEY);
+
+    // check if both sides of relation exist, ignore relation otherwise
+    // todo redundant => combine into function
+    if (migrationDbObject.schemas[nodeRelation1Clean.schemaName] == null ||
+      migrationDbObject.schemas[nodeRelation1Clean.schemaName].tables[nodeRelation1Clean.tableName] == null) {
+      process.stdout.write(
+        'migration.relation.missing.table: ' +
+        `${nodeRelation1Clean.name}: ${nodeRelation1Clean.schemaName}.${nodeRelation1Clean.tableName} not found` + '\n'
+      );
+      return;
+    } else if (migrationDbObject.schemas[nodeRelation1Clean.reference.schemaName] == null ||
+      migrationDbObject.schemas[nodeRelation1Clean.reference.schemaName].tables[nodeRelation1Clean.reference.tableName] == null) {
+      process.stdout.write(
+        'migration.relation.missing.table: ' +
+        `${nodeRelation1Clean.name}: ${nodeRelation1Clean.reference.schemaName}.${nodeRelation1Clean.reference.tableName} not found` + '\n'
+      );
+      return;
+    }
+
+    // check if both sides of relation exist, ignore relation otherwise
+    // todo redundant => combine into function
+    if (migrationDbObject.schemas[nodeRelation2Clean.schemaName] == null ||
+      migrationDbObject.schemas[nodeRelation2Clean.schemaName].tables[nodeRelation2Clean.tableName] == null) {
+      process.stdout.write(
+        'migration.relation.missing.table: ' +
+        `${nodeRelation2Clean.name}: ${nodeRelation2Clean.schemaName}.${nodeRelation2Clean.tableName} not found` + '\n'
+      );
+      return;
+    } else if (migrationDbObject.schemas[nodeRelation2Clean.reference.schemaName] == null ||
+      migrationDbObject.schemas[nodeRelation2Clean.reference.schemaName].tables[nodeRelation2Clean.reference.tableName] == null) {
+      process.stdout.write(
+        'migration.relation.missing.table: ' +
+        `${nodeRelation2Clean.name}: ${nodeRelation2Clean.reference.schemaName}.${nodeRelation2Clean.reference.tableName} not found` + '\n'
+      );
+      return;
+    }
 
     // relation 1
-    const tableName1 = `"${definitionRelation1.schemaName}"."${definitionRelation1.tableName}"`;
+    const tableName1 = `"${nodeRelation1.schemaName}"."${nodeRelation1.tableName}"`;
     if (actionRelation1 === 'add') {
       // create fk column 1
       sqlCommands.up.push(
-        `ALTER TABLE ${tableName1} ADD COLUMN "${definitionRelation1.columnName}" uuid[];`
+        `ALTER TABLE ${tableName1} ADD COLUMN "${nodeRelation1.columnName}" uuid[];`
       );
 
       // add comment with meta information
-      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName1}."${definitionRelation1.columnName}" IS '${JSON.stringify(definitionRelation1)}';`);
+      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName1}."${nodeRelation1.columnName}" IS '${JSON.stringify(nodeRelation1Clean)}';`);
 
     } else if (actionRelation1 === 'remove') {
 
@@ -686,42 +794,42 @@ export namespace migration {
       if (!renameInsteadOfDrop) {
         // remove fk column 1
         sqlCommands.down.push(
-          `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${definitionRelation1.columnName}" CASCADE;`
+          `ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${nodeRelation1.columnName}" CASCADE;`
         );
         // remove meta information
-        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName1}."${definitionRelation1.columnName}" IS NULL;`);
+        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName1}."${nodeRelation1.columnName}" IS NULL;`);
       } else { // create rename instead
         sqlCommands.down.push(
-          `ALTER TABLE ${tableName1} RENAME COLUMN "${definitionRelation1.columnName}" TO "${DELETED_PREFIX}${definitionRelation1.columnName}";`
+          `ALTER TABLE ${tableName1} RENAME COLUMN "${nodeRelation1.columnName}" TO "${DELETED_PREFIX}${nodeRelation1.columnName}";`
         );
       }
 
     }
 
     // relation2
-    const tableName2 = `"${definitionRelation2.schemaName}"."${definitionRelation2.tableName}"`;
+    const tableName2 = `"${nodeRelation2.schemaName}"."${nodeRelation2.tableName}"`;
     if (actionRelation2 === 'add') {
       // create fk column 2
       sqlCommands.up.push(
-        `ALTER TABLE ${tableName2} ADD COLUMN "${definitionRelation2.columnName}" uuid[];`
+        `ALTER TABLE ${tableName2} ADD COLUMN "${nodeRelation2.columnName}" uuid[];`
       );
 
       // add comment with meta information
-      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName2}."${definitionRelation2.columnName}" IS '${JSON.stringify(definitionRelation2)}';`);
+      sqlCommands.up.push(`COMMENT ON COLUMN ${tableName2}."${nodeRelation2.columnName}" IS '${JSON.stringify(nodeRelation2Clean)}';`);
 
     } else if (actionRelation2 === 'remove') {
       // drop or rename column
       if (!renameInsteadOfDrop) {
         // remove fk column 2
         sqlCommands.down.push(
-          `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${definitionRelation2.columnName}" CASCADE;`
+          `ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${nodeRelation2.columnName}" CASCADE;`
         );
 
         // remove meta information
-        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName2}."${definitionRelation2.columnName}" IS NULL;`);
+        sqlCommands.down.push(`COMMENT ON COLUMN ${tableName2}."${nodeRelation2.columnName}" IS NULL;`);
       } else { // create rename instead
         sqlCommands.down.push(
-          `ALTER TABLE ${tableName2} RENAME COLUMN "${definitionRelation2.columnName}" TO "${DELETED_PREFIX}${definitionRelation2.columnName}";`
+          `ALTER TABLE ${tableName2} RENAME COLUMN "${nodeRelation2.columnName}" TO "${DELETED_PREFIX}${nodeRelation2.columnName}";`
         );
       }
     }
@@ -815,7 +923,9 @@ function _removeFromEveryNode(obj: {}, removeKey: string) {
   function nested(pObj) {
     return _.transform(pObj, (result, value, key) => {
       // remove from every node
-      delete value[removeKey];
+      if (value != null) {
+        delete value[removeKey];
+      }
       // recursion
       result[key] = (_.isObject(value)) ? nested(value) : value;
     });
