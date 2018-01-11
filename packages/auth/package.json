@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "jsonwebtoken": "^8.1.0",
-    "secure-password": "^3.0.0"
+    "sodium-native": "^2.1.3"
   },
   "devDependencies": {}
 }
