@@ -5,4 +5,5 @@ type PrivateFile @table(schemaName: "private", tableName: "File") @migrate(from:
   container: String @isUnique(name: "FileSource")
   fileName: String! @isUnique(name: "FileSource")
   test: String
+  owner: User @relation(name: "FileOwner")
 }

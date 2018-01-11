@@ -1,11 +1,14 @@
 export interface IDbObject {
+  version: number;
   schemas?: {
     [name: string]: {
       name: string;
+      oldName?: string;
       tables?: {
         [name: string]: {
           schemaName: string;
           name: string;
+          oldName?: string;
           exposedNames?: [string];
           description?: string;
           columns: {
@@ -23,7 +26,7 @@ export interface IDbObject {
                 constraintNames?: [string];
                 relationName?: string;
               }
-          }      ;
+          };
           constraints?: {
             [name: string]: {
               type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK' | 'validate';
