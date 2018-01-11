@@ -14,5 +14,7 @@ export = {
   db: {
     viewSchemaName: 'graphql'
   },
-  securePassword: {}
+  auth: {
+    sodium: {}
+  }
 };

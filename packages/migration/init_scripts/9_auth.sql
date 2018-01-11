@@ -179,7 +179,7 @@ BEGIN
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
     v_user_token := crypt(encode(digest(v_payload, 'sha256'), 'hex'), gen_salt('bf', v_bf_iter_count));
         
-    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'provider', i_provider,'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_max_age_in_seconds);
+    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'provider', i_provider,'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_max_age_in_seconds, 'provider', i_provider);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
@@ -514,7 +514,7 @@ BEGIN
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
     v_user_token := crypt(encode(digest(v_payload, 'sha256'), 'hex'), gen_salt('bf', v_bf_iter_count));
         
-    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds);
+    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'password');
 END;
 $$ LANGUAGE plpgsql;
 
@@ -643,7 +643,7 @@ BEGIN
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
     v_user_token := crypt(encode(digest(v_payload, 'sha256'), 'hex'), gen_salt('bf', v_bf_iter_count));
         
-    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'hash', v_pw_hash, 'sec', v_user_token_temp_secret);
+    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'password');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
