@@ -26,6 +26,7 @@ import { DbClient, DbPool, PgClient, PgPool, PgToDbObject } from '../db';
 import { Logger } from './logger';
 import { graphQl } from '../graphQl/index';
 import { migration } from '../migration/index';
+import { Auth } from '../auth';
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -56,6 +57,7 @@ class FullstackOneCore implements IFullstackOneCore {
   private APP: Koa;
   private dbObject: IDbObject;
   private knownNodeIds: [string];
+  private auth;
 
   constructor() {
 
@@ -126,6 +128,11 @@ class FullstackOneCore implements IFullstackOneCore {
       // return copy instead of a ref
       return { ... this.CONFIG[pModuleName] };
     }
+  }
+
+  // return auth instance for Module
+  public getAuthInstance() {
+    return this.auth;
   }
 
   // return Logger instance for Module
@@ -238,6 +245,9 @@ class FullstackOneCore implements IFullstackOneCore {
 
       // start server
       await this.startServer();
+
+      // Load Auth
+      this.auth = new Auth();
 
       // boot GraphQL and add endpoints
       this.dbObject = await graphQl.bootGraphQl(this);

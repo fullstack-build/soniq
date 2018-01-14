@@ -4,13 +4,13 @@ export = [
     returnType: 'Boolean',
     generate: (context, params): string => {
       const field = params.field || 'ownerId';
-      return `${context.table}."${field}" = (_meta."current_user"()).id`;
+      return `${context.table}."${field}" = (_meta."current_user_id"())`;
     },
   }, {
     name: 'Authenticated',
     returnType: 'Boolean',
     generate: (context, params): string => {
-      return `(public."current_user"()).id IS NOT NULL`;
+      return `(_meta."current_user_id"()) IS NOT NULL`;
     },
   }, {
     name: 'Admin',

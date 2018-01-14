@@ -134,12 +134,16 @@ export namespace graphQl {
 
     const gQlParam = (ctx) => {
 
-      const userId = ctx.cookies.get('userId', { signed: false }) || 0;
+      // const userId = ctx.cookies.get('userId', { signed: false }) || 0;
+
+      // tslint:disable-next-line:no-console
+      console.log('>>>> BEFORE RESOLVE >>>>', ctx.state.accessToken);
 
       return {
         schema,
         context: {
-          userId
+          // userId,
+          accessToken: ctx.state.accessToken
         }
       };
     };

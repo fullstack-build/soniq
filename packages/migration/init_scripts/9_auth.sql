@@ -499,7 +499,7 @@ BEGIN
 
     v_meta := jsonb_build_object('salt', encode(gen_random_bytes(16), 'hex'), 'memlimit', 67108864, 'opslimit', 2, 'algorithm', 2, 'hashBytes', 128);
 
-    v_providers := jsonb_build_object('password', jsonb_build_object('hash', v_pw_hash, 'meta', v_meta));
+    v_providers := jsonb_build_object('local', jsonb_build_object('hash', v_pw_hash, 'meta', v_meta));
 
     v_password := jsonb_build_object('providers', v_providers, 'totalLogoutTimeout', 0, 'invalidTokens', to_jsonb(ARRAY[]::BIGINT[]));
     
@@ -514,7 +514,7 @@ BEGIN
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
     v_user_token := crypt(encode(digest(v_payload, 'sha256'), 'hex'), gen_salt('bf', v_bf_iter_count));
         
-    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'password');
+    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'local');
 END;
 $$ LANGUAGE plpgsql;
 
@@ -627,10 +627,10 @@ BEGIN
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
 
     IF v_auth_field_tenant IS NULL THEN
-        v_query := $tok$SELECT %I->'providers'->'password'->>'hash', id FROM %I.%I WHERE %I = %L$tok$;
+        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L$tok$;
         EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_hash, v_user_id;
     ELSE
-        v_query := $tok$SELECT %I->'providers'->'password'->>'hash', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
+        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
         EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_hash, v_user_id;
     END IF;
 
@@ -643,7 +643,7 @@ BEGIN
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
     v_user_token := crypt(encode(digest(v_payload, 'sha256'), 'hex'), gen_salt('bf', v_bf_iter_count));
         
-    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'password');
+    RETURN jsonb_build_object('userToken', v_user_token, 'userId', v_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'local');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 

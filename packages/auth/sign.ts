@@ -1,11 +1,13 @@
 
 import { sha256, sha512 } from './crypto';
-import { jwt } from 'jsonwebtoken';
+// tslint:disable-next-line:no-var-requires
+const jwt = require('jsonwebtoken');
 
 const requiredSecrets = {
   jwt: 'AUTH_JWT_SECRET',
   admin: 'AUTH_ADMIN_SECRET',
-  providers: 'AUTH_PROVIDERS_SECRET'
+  providers: 'AUTH_PROVIDERS_SECRET',
+  cookie: 'AUTH_COOKIE_SECRET'
 };
 
 const secrets: any = {};
@@ -30,6 +32,10 @@ export function getProviderSignature(provider, userIdentifier) {
   const payload = `${provider}:${userIdentifier}:${secrets.admin}`;
 
   return sha512(payload);
+}
+
+export function getCookieSecret() {
+  return secrets.cookie;
 }
 
 export function signJwt(payload, expiresIn) {

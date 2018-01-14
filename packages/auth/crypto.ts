@@ -1,4 +1,7 @@
-import { sodium } from 'sodium-native';
+// tslint:disable-next-line:import-name
+// import sodium from 'sodium-native';
+// tslint:disable-next-line:no-var-requires
+const sodium = require('sodium-native');
 
 // tslint:disable-next-line:no-var-requires
 const crypto = require('crypto');

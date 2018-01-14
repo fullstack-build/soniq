@@ -33,6 +33,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
 
   const f1 = getInstance();
   const pool = f1.getDbPool();
+  const auth = f1.getAuthInstance();
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -53,9 +54,13 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('BEGIN');
 
           // Set current user for permissions
-          if (context.userId != null) {
+          /*if (context.userId != null) {
             // await client.setCurrentUser();
             await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
+          }*/
+          if (context.accessToken != null) {
+            // await client.setCurrentUser();
+            await auth.setUser(client, context.accessToken);
           }
 
           // tslint:disable-next-line:no-console
@@ -103,8 +108,12 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('BEGIN');
 
           // Set current user for permissions
-          if (context.userId != null) {
+          /*if (context.userId != null) {
             await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
+          }*/
+          if (context.accessToken != null) {
+            // await client.setCurrentUser();
+            await auth.setUser(client, context.accessToken);
           }
 
           // tslint:disable-next-line:no-console
