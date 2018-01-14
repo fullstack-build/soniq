@@ -1,9 +1,9 @@
-function getTypenamesArgument(typesEnumName) {
+function getViewnamesArgument(viewsEnumName) {
   return {
       kind: 'InputValueDefinition',
       name: {
         kind: 'Name',
-        value: 'typenames'
+        value: 'viewnames'
       },
       type: {
         kind: 'ListType',
@@ -13,7 +13,7 @@ function getTypenamesArgument(typesEnumName) {
             kind: 'NamedType',
             name: {
               kind: 'Name',
-              value: typesEnumName
+              value: viewsEnumName
             }
           }
         }
@@ -44,11 +44,11 @@ function getInputArgument(inputType) {
     };
 }
 
-export default (typesEnumName, inputType) => {
+export default (viewsEnumName, inputType) => {
 
   const args = [
     getInputArgument(inputType),
-    getTypenamesArgument(typesEnumName)
+    getViewnamesArgument(viewsEnumName)
   ];
 
   return args;

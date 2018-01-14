@@ -501,7 +501,7 @@ BEGIN
 
     v_providers := jsonb_build_object('local', jsonb_build_object('hash', v_pw_hash, 'meta', v_meta));
 
-    v_password := jsonb_build_object('providers', v_providers, 'totalLogoutTimeout', 0, 'invalidTokens', to_jsonb(ARRAY[]::BIGINT[]));
+    v_password := jsonb_build_object('providers', v_providers, 'totalLogoutTimestamp', 0, 'invalidTokens', to_jsonb(ARRAY[]::BIGINT[]));
     
     IF v_auth_field_tenant IS NULL THEN
         EXECUTE format('INSERT INTO %I.%I(%I, %I) VALUES(%L, %L) RETURNING id', v_auth_table_schema, v_auth_table, v_auth_field_username, v_auth_field_password, i_username, v_password) INTO v_user_id;

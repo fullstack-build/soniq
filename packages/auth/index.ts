@@ -52,7 +52,11 @@ export class Auth extends F1.AbstractPackage {
     try {
       lData = await this.register(username, tenant);
 
-      lData = await this.setPassword(lData.token, provider, password, userIdentifier);
+      await this.setPassword(lData.accessToken, provider, password, userIdentifier);
+
+      lData = await this.login(username, tenant, provider, password, userIdentifier);
+
+      return lData;
     } catch (err) {
       throw new Error('User does exist or password is invalid.');
     }
@@ -69,7 +73,7 @@ export class Auth extends F1.AbstractPackage {
 
       await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
 
-      const result = await client.query('SELECT _meta.register_user($1, $2, $3) AS payload', [username, tenant]);
+      const result = await client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
       const payload = result.rows[0].payload;
 
       const ret = {
@@ -290,7 +294,7 @@ export class Auth extends F1.AbstractPackage {
     authRouter.use(koaSession(this.authConfig.oAuth.cookie, this.$one.getApp()));
 
     authRouter.use(passport.initialize());
-    authRouter.use(passport.session());
+    // authRouter.use(passport.session());
 
     this.$one.getApp().use(async (ctx, next) => {
       if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
@@ -335,6 +339,23 @@ export class Auth extends F1.AbstractPackage {
       }
 
       ctx.body = { success };
+    });
+
+    authRouter.post('/auth/register', async (ctx) => {
+      if (ctx.request.body.username == null) {
+        ctx.response.status = 400;
+        ctx.body = { success: false, error: '"username" is required.' };
+        return;
+      }
+
+      try {
+        const lData = await this.register(ctx.request.body.username, ctx.request.body.tenant || 'default');
+
+        ctx.body = Object.assign({}, lData, { success: true });
+      } catch (err) {
+        ctx.response.status = 400;
+        ctx.body = { success: false, error: 'May this user already exists.' };
+      }
     });
 
     authRouter.post('/auth/local/login', async (ctx) => {
@@ -420,19 +441,19 @@ export class Auth extends F1.AbstractPackage {
     authRouter.get('/auth/oAuthFailure', async (ctx) => {
       const message = {
         err: 'ERROR_AUTH',
-        accessToken: null
+        data: null
       };
 
-      ctx.body = oAuthCallback(message, this.authConfig.oAuth.origins);
+      ctx.body = oAuthCallback(message, this.authConfig.oAuth.frontendOrigins);
     });
 
     authRouter.get('/auth/oAuthSuccess/:data', async (ctx) => {
       const message = {
-        err: null,
-        data: JSON.parse(ctx.params.data)
+          err: null,
+          data: JSON.parse(ctx.params.data)
       };
 
-      ctx.body = oAuthCallback(message, this.authConfig.oAuth.origins);
+      ctx.body = oAuthCallback(message, this.authConfig.oAuth.frontendOrigins);
     });
 
     Object.keys(this.authConfig.oAuth.providers).forEach((key) => {
@@ -442,18 +463,40 @@ export class Auth extends F1.AbstractPackage {
       const callbackURL = serverApiAddress + callbackPath;
       const providerConfig = Object.assign({}, provider.config, { callbackURL });
 
-      passport.use(new provider.strategy(provider.config), async (accessToken, refreshToken, profile, cb) => {
+      const providerOptions = Object.assign({ scope: ['email'] }, provider.options, { session: false });
+
+      passport.use(new provider.strategy(providerConfig, async (accessToken, refreshToken, profile, cb) => {
         try {
-          const lData = await this.loginOrRegister(profile.email, provider.tenant || 'default', provider.name, provider.name, profile.id);
+          let email = profile.email || profile._json.email;
+          if (email == null && profile.emails != null && profile.emails[0] != null && profile.emails[0].value != null) {
+            email = profile.emails[0].value;
+          }
+
+          if (profile == null || email == null || profile.id == null) {
+            throw new Error('Email or id is missing!');
+          }
+
+          const lData = await this.loginOrRegister(email, provider.tenant || 'default', provider.name, provider.name, profile.id);
           cb(null, lData);
         } catch (err) {
           cb(err);
         }
-      });
+      }));
 
-      authRouter.get('/auth/oAuth/' + key, passport.authenticate(provider.name));
+      authRouter.get('/auth/oAuth/' + key, passport.authenticate(provider.name, providerOptions));
 
-      authRouter.get(callbackPath, passport.authenticate(provider.name, { failureRedirect: '/auth/oAuthFailure' }), (ctx) => {
+      const errorCatcher = async (ctx, next) => {
+        try {
+          await next();
+        } catch (err) {
+          // tslint:disable-next-line:no-console
+          console.error(err);
+          ctx.redirect('/auth/oAuthFailure');
+        }
+      };
+
+      // tslint:disable-next-line:max-line-length
+      authRouter.get(callbackPath, errorCatcher, passport.authenticate(provider.name, { failureRedirect: '/auth/oAuthFailure', session: false }), (ctx) => {
         ctx.redirect('/auth/oAuthSuccess/' + encodeURIComponent(JSON.stringify(ctx.state.user)));
       });
     });

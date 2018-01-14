@@ -3,7 +3,7 @@ function getTypenamesArgument(typesEnumName) {
       kind: 'InputValueDefinition',
       name: {
         kind: 'Name',
-        value: 'typenames'
+        value: 'viewnames'
       },
       type: {
         kind: 'ListType',

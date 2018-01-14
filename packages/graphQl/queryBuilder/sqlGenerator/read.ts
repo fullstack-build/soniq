@@ -22,19 +22,19 @@ export function getJsonMerge(jsonFields) {
 }
 
 // A Table can consist of multiple Views. So each field needs to be combined with COALESCE to one.
-export function getFieldExpression(name, typeNames, gQlType, localNameByType) {
+export function getFieldExpression(name, viewNames, gQlType, localNameByType) {
   const fields = [];
   // Put here any instead of boolean because ts lint sucks! Just WTF!?
   let isJson: any = false;
 
   // Get fields per View/Type. Not every field exists in every View/Type
-  Object.values(typeNames).forEach((typeName) => {
-    if (gQlType.types[typeName] != null && gQlType.types[typeName].nativeFieldNames.indexOf(name) >= 0 && localNameByType[typeName] != null) {
-      fields.push(`"${localNameByType[typeName]}"."${name}"`);
+  Object.values(viewNames).forEach((viewName) => {
+    if (gQlType.views[viewName] != null && gQlType.views[viewName].nativeFieldNames.indexOf(name) >= 0 && localNameByType[viewName] != null) {
+      fields.push(`"${localNameByType[viewName]}"."${name}"`);
     } else {
-      if (gQlType.types[typeName] != null && gQlType.types[typeName].jsonFieldNames.indexOf(name) >= 0 && localNameByType[typeName] != null) {
+      if (gQlType.views[viewName] != null && gQlType.views[viewName].jsonFieldNames.indexOf(name) >= 0 && localNameByType[viewName] != null) {
         isJson = true;
-        fields.push(`"${localNameByType[typeName]}"."${name}"`);
+        fields.push(`"${localNameByType[viewName]}"."${name}"`);
       }
     }
   });
@@ -55,47 +55,47 @@ export function getFieldExpression(name, typeNames, gQlType, localNameByType) {
   return `COALESCE(${fields.join(', ')})`;
 }
 
-// Combines _typenames of the views to return something like _typenames: [POST_OWNER, POST_AUTHOR]
-export function getTypeNamesSelect(typeNames, gQlType, localNameByType) {
+// Combines _viewnames of the views to return something like _viewnames: [POST_OWNER, POST_AUTHOR]
+export function getTypeNamesSelect(viewNames, gQlType, localNameByType) {
   const fields = [];
 
-  Object.values(typeNames).forEach((typeName) => {
-    if (gQlType.types[typeName] != null && localNameByType[typeName] != null) {
-      fields.push(`"${localNameByType[typeName]}"."_typenames"`);
+  Object.values(viewNames).forEach((viewName) => {
+    if (gQlType.views[viewName] != null && localNameByType[viewName] != null) {
+      fields.push(`"${localNameByType[viewName]}"."_viewnames"`);
     }
   });
 
-  return fields.join(' || ') + ' _typenames';
+  return fields.join(' || ') + ' _viewnames';
 }
 
 // Create FROM expression for query (or subquery)
-export function getFromExpression(typeNames, gQlType, localNameByType) {
+export function getFromExpression(viewNames, gQlType, localNameByType) {
   const joinTypes = [];
   let isFirstSet = false;
   let firstType: any;
 
-  // Walk through types/views to get all views which have been requested by input typenames: [...]
-  Object.values(typeNames).forEach((typeName) => {
-    // We are only interested in views/types which are requested
-    if (gQlType.types[typeName] != null && localNameByType[typeName] != null) {
+  // Walk through views/views to get all views which have been requested by input viewnames: [...]
+  Object.values(viewNames).forEach((viewName) => {
+    // We are only interested in views/views which are requested
+    if (gQlType.views[viewName] != null && localNameByType[viewName] != null) {
       if (!isFirstSet) {
         // The first view will get loaded over the FROM expression
         isFirstSet = true;
         firstType = {
-          typeName,
-          viewName: gQlType.types[typeName].viewName,
-          viewSchemaName: gQlType.types[typeName].viewSchemaName,
-          tableName: gQlType.types[typeName].tableName,
-          localName: localNameByType[typeName]
+          viewName,
+          nativeViewName: gQlType.views[viewName].viewName,
+          viewSchemaName: gQlType.views[viewName].viewSchemaName,
+          tableName: gQlType.views[viewName].tableName,
+          localName: localNameByType[viewName]
         };
       } else {
         // All other views need to be joined.
         joinTypes.push({
-          typeName,
-          viewName: gQlType.types[typeName].viewName,
-          viewSchemaName: gQlType.types[typeName].viewSchemaName,
-          tableName: gQlType.types[typeName].tableName,
-          localName: localNameByType[typeName]
+          viewName,
+          nativeViewName: gQlType.views[viewName].viewName,
+          viewSchemaName: gQlType.views[viewName].viewSchemaName,
+          tableName: gQlType.views[viewName].tableName,
+          localName: localNameByType[viewName]
         });
       }
     }
@@ -104,13 +104,13 @@ export function getFromExpression(typeNames, gQlType, localNameByType) {
   // Join views with FULL OUTER JOIN to get all rows a user can see
   const joins = joinTypes.map((value, key) => {
     // Each joined view gets a local alias name and is required to match the id
-    return `FULL OUTER JOIN "${value.viewSchemaName}"."${value.viewName}"` +
+    return `FULL OUTER JOIN "${value.viewSchemaName}"."${value.nativeViewName}"` +
     ` AS "${value.localName}" on "${firstType.localName}".id = "${value.localName}".id`;
   });
 
   // The combined views describe the table.
   // The first View will also get a local alias name
-  return `"${firstType.viewSchemaName}"."${firstType.viewName}" AS "${firstType.localName}" ${joins.join(' ')}`;
+  return `"${firstType.viewSchemaName}"."${firstType.nativeViewName}" AS "${firstType.localName}" ${joins.join(' ')}`;
 }
 
 // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
@@ -118,17 +118,17 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   // Get the tableName from the nested query object
   const tableName = Object.keys(query.fieldsByTypeName)[0];
 
-  // Get gQlType (Includes informations about the types/views/columns/fields of the current table)
+  // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
   const gQlType = gQlTypes[tableName];
 
-  // Get all typeNames of the current table as array of strings
-  let typeNames = gQlType.typeNames.map((type) => {
+  // Get all viewNames of the current table as array of strings
+  let viewNames = gQlType.viewNames.map((type) => {
     return type;
   });
 
-  // If the user has defined some typeNames in the query overwrite default typeNames
-  if (query.args != null && query.args.typenames != null) {
-    typeNames = query.args.typenames;
+  // If the user has defined some viewNames in the query overwrite default viewNames
+  if (query.args != null && query.args.viewnames != null) {
+    viewNames = query.args.viewnames;
   }
 
   let customSqlQuery = null;
@@ -145,8 +145,8 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   let counter = c;
 
   // Generate local alias names for each view (e.g. "_local_12_")
-  Object.values(typeNames).forEach((typeName) => {
-    localNameByType[typeName] = getLocalName(counter);
+  Object.values(viewNames).forEach((viewName) => {
+    localNameByType[viewName] = getLocalName(counter);
     counter += 1;
   });
 
@@ -154,21 +154,21 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   const fieldSelect = [];
 
   // The expression to get the current entity-id for matching with relations
-  const idExpression = getFieldExpression('id', typeNames, gQlType, localNameByType);
+  const idExpression = getFieldExpression('id', viewNames, gQlType, localNameByType);
 
   // Walk through all requested fields to generate the selected fields and their expressions
   Object.values(fields).forEach((field) => {
-    if (field.name !== '_typenames') {
+    if (field.name !== '_viewnames') {
       if (gQlType.relationByField[field.name] != null) {
 
         // If the field is a relation we need to resolve it with a subquery
         const relation = gQlType.relationByField[field.name];
         if (relation.relationType === 'ONE') {
           // A ONE relation has a certain fieldIdExpression like "ownerUserId"
-          const fieldIdExpression = getFieldExpression(relation.columnName, typeNames, gQlType, localNameByType);
+          const fieldIdExpression = getFieldExpression(relation.columnName, viewNames, gQlType, localNameByType);
 
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression, typeNames, gQlType, localNameByType);
+          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression, viewNames, gQlType, localNameByType);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -182,7 +182,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
           // A many relation just needs to match by it's idExpression
           // Resolve the field with a subquery which loads the related data
           // tslint:disable-next-line:max-line-length
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression, typeNames, gQlType, localNameByType);
+          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression, viewNames, gQlType, localNameByType);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -193,17 +193,17 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
         }
 
       } else {
-        // If the field is not a relation nor _typenames it can simply be combined from all views to one field with alias
-        fieldSelect.push(`${getFieldExpression(field.name, typeNames, gQlType, localNameByType)} "${field.name}"`);
+        // If the field is not a relation nor _viewnames it can simply be combined from all views to one field with alias
+        fieldSelect.push(`${getFieldExpression(field.name, viewNames, gQlType, localNameByType)} "${field.name}"`);
       }
     } else {
-      // For fieldName is _typenames a special expression is required to combine all types of the views per row
-      fieldSelect.push(getTypeNamesSelect(typeNames, gQlType, localNameByType));
+      // For fieldName is _viewnames a special expression is required to combine all views of the views per row
+      fieldSelect.push(getTypeNamesSelect(viewNames, gQlType, localNameByType));
     }
   });
 
   // Get the view combination (Join of Views)
-  const fromExpression = getFromExpression(typeNames, gQlType, localNameByType);
+  const fromExpression = getFromExpression(viewNames, gQlType, localNameByType);
 
   // Combine the field select expressions with the from expression to one SQL query
   let sql = `SELECT ${fieldSelect.join(', \n')} FROM ${fromExpression}`;
@@ -211,7 +211,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
   // When the query needs to match a field add a WHERE clause
   // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
   if (match != null) {
-    const exp = getFieldExpression(match.foreignFieldName, typeNames, gQlType, localNameByType);
+    const exp = getFieldExpression(match.foreignFieldName, viewNames, gQlType, localNameByType);
 
     if (match.type !== 'ARRAY') {
       sql += ` WHERE ${exp} = ${match.fieldExpression}`;
@@ -251,7 +251,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
       },
       // Gets a correct expression for a field e.g.: "COALESCE("_local_4_"."title", "_local_5_"."title", null)"
       field: (name) => {
-        return getFieldExpression(name, typeNames, gQlType, localNameByType);
+        return getFieldExpression(name, viewNames, gQlType, localNameByType);
       }
     });
 
@@ -267,7 +267,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
 }
 
 // Resolves a relation of a column/field to a new Subquery
-export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression, typeNames, gQlType, localNameByType) {
+export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression, viewNames, gQlType, localNameByType) {
   // Get the relation from dbObject
   const relationConnections = dbObject.relations[relation.relationName];
 
@@ -297,7 +297,7 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
     if (foreignRelation.type === 'MANY') {
       const arrayMatch = {
         type: 'ARRAY',
-        fieldExpression: getFieldExpression(ownRelation.columnName, typeNames, gQlType, localNameByType),
+        fieldExpression: getFieldExpression(ownRelation.columnName, viewNames, gQlType, localNameByType),
         foreignFieldName: 'id'
       };
 

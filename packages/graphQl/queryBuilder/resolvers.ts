@@ -204,14 +204,14 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   Object.values(customOperations.fields).forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(`The custom resolver "${operation.resolver}" is not defined.` +
-      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.typeName}".`);
+      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`);
     }
 
-    if (resolvers[operation.typeName] == null) {
-      resolvers[operation.typeName] = {};
+    if (resolvers[operation.gqlTypeName] == null) {
+      resolvers[operation.gqlTypeName] = {};
     }
 
-    resolvers[operation.typeName][operation.fieldName] = (obj, args, context, info) => {
+    resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
       return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
     };
   });

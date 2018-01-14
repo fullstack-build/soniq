@@ -1,3 +1,6 @@
+import { Strategy } from 'passport-facebook';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+
 export = {
   core: {
     namespace: 'f1'
@@ -24,19 +27,31 @@ export = {
         signed: true
       },
       providers: {
-        /*facebook: {
+        facebook: {
           name: 'facebook',
           tenant: 'default',
-          strategy: FacebookStrategy,
+          strategy: Strategy,
           config: {
-            clientID: FACEBOOK_APP_ID,
-            clientSecret: FACEBOOK_APP_SECRET
+            clientID: 2045088022395430,
+            clientSecret: 'ad5b17b47d056393b687c20b64fea2b5',
+            profileFields: ['id', 'email']
           }
-        }*/
+        },
+        google: {
+          name: 'google',
+          tenant: 'default',
+          strategy: GoogleStrategy,
+          config: {
+            clientID: '24830444193-hoqu3rnqie6078upl25dp6dircdq4c8c.apps.googleusercontent.com',
+            clientSecret: '1tf3kDvh2UkNdaF68HA3lS_F',
+            profileFields: ['id', 'email']
+          }
+        }
       },
       frontendOrigins: [
-        'localhost:8000'
-      ]
+        'http://localhost:3000'
+      ],
+      serverApiAddress: 'http://localhost:3000'
     },
     cookie: {
       name: 'access_token',

@@ -1,27 +1,27 @@
 
-export default (permissions) => {
+export default (views) => {
   const newPermissions = [];
   const deleteExpressionsByTableName: any = {};
 
-  Object.values(permissions).forEach((permission) => {
-    if (permission.type === 'DELETE') {
-      if (deleteExpressionsByTableName[permission.table] == null) {
-        deleteExpressionsByTableName[permission.table] = {
-          gqlTypeName: permission.gqlTypeName,
+  Object.values(views).forEach((view) => {
+    if (view.type === 'DELETE') {
+      if (deleteExpressionsByTableName[view.table] == null) {
+        deleteExpressionsByTableName[view.table] = {
+          gqlTypeName: view.gqlTypeName,
           expressions: {}
         };
       }
-      Object.values(permission.expressions).forEach((expression) => {
+      Object.values(view.expressions).forEach((expression) => {
         const key = JSON.stringify(expression);
-        deleteExpressionsByTableName[permission.table].expressions[key] = expression;
+        deleteExpressionsByTableName[view.table].expressions[key] = expression;
       });
     } else {
-      newPermissions.push(permission);
+      newPermissions.push(view);
     }
   });
 
   Object.values(deleteExpressionsByTableName).forEach((value) => {
-    const permission = {
+    const view = {
       name: 'GeneratedDeleteView',
       type: 'DELETE',
       gqlTypeName: value.gqlTypeName,
@@ -30,10 +30,10 @@ export default (permissions) => {
     };
 
     Object.values(value.expressions).forEach((expression) => {
-      permission.expressions.push(expression);
+      view.expressions.push(expression);
     });
 
-    newPermissions.push(permission);
+    newPermissions.push(view);
   });
 
   return newPermissions;
