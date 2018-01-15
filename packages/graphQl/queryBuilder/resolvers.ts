@@ -120,6 +120,10 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
           const { rows } = await client.query(mutationQuery.sql, mutationQuery.values);
 
+          if (rows.length < 1) {
+            throw new Error('No rows affected by this mutation. Either the entity does not exist or you are not permitted.');
+          }
+
           let returnData;
 
           // When mutationType is DELETE just return the id. Otherwise query for the new data.
