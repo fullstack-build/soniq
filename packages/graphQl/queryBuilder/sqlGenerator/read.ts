@@ -131,26 +131,23 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
   // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
   const gQlType = gQlTypes[tableName];
 
-  let typeViewNames = gQlType.viewNames;
+  let viewNames = gQlType.viewNames;
   if (isAuthenticated !== true) {
-    typeViewNames = gQlType.noAuthViewNames;
+    viewNames = gQlType.noAuthViewNames.slice();
   }
-
-  // Get all viewNames of the current table as array of strings
-  let viewNames = typeViewNames.map((type) => {
-    return type;
-  });
 
   // If the user has defined some viewNames in the query overwrite default viewNames
   if (query.args != null && query.args.viewnames != null) {
-    if (isAuthenticated !== true) {
-      const ret = includesAuthView(query.args.viewnames, gQlType.noAuthViewNames);
-      if (ret != null) {
-        throw new Error(`You need to be authenticated to access view [${ret}]`);
-      }
-    }
-
     viewNames = query.args.viewnames;
+  }
+
+  const authView = includesAuthView(viewNames, gQlType.noAuthViewNames);
+  let authRequired = authView != null;
+
+  if (isAuthenticated !== true) {
+    if (authView != null) {
+      throw new Error(`You need to be authenticated to access view [${authView}]`);
+    }
   }
 
   let customSqlQuery = null;
@@ -197,6 +194,9 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
           // So we need to take the counter from there
           counter = ret.counter;
 
+          // pass down authRequired
+          authRequired = authRequired || ret.authRequired;
+
           // Add the new subquery into fields select of the current query
           fieldSelect.push(ret.sql);
         }
@@ -210,6 +210,9 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
           counter = ret.counter;
+
+          // pass down authRequired
+          authRequired = authRequired || ret.authRequired;
 
           // Add the new subquery into fields select of the current query
           fieldSelect.push(ret.sql);
@@ -285,7 +288,8 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
   return {
     sql: `${sql}`,
     counter,
-    values
+    values,
+    authRequired
   };
 }
 
@@ -352,6 +356,7 @@ export function rowToJson(c, query, gQlTypes, dbObject, values, isAuthenticated,
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
   counter = ret.counter;
+  const authRequired = ret.authRequired;
 
   // Wrap the Table Select around row_to_json to generate an JSON objects
   // It will be named as localTableName (e.g. "_local_1_")
@@ -361,7 +366,8 @@ export function rowToJson(c, query, gQlTypes, dbObject, values, isAuthenticated,
   return {
     sql,
     counter,
-    values
+    values,
+    authRequired
   };
 }
 
@@ -379,6 +385,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, m
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
   counter = ret.counter;
+  const authRequired = ret.authRequired;
 
   // Wrap the Table Select around json_agg and row_to_json to generate an JSON array of objects
   // It will be named as localTableName (e.g. "_local_1_")
@@ -389,7 +396,8 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, m
   return {
     sql,
     counter,
-    values
+    values,
+    authRequired
   };
 }
 
@@ -403,9 +411,10 @@ export function getQueryResolver(gQlTypes, dbObject) {
     const {
       sql,
       counter,
-      values
+      values,
+      authRequired
     } = jsonAgg(0, query, gQlTypes, dbObject, [], isAuthenticated, match);
 
-    return { sql: `SELECT ${sql}`, values, query };
+    return { sql: `SELECT ${sql}`, values, query, authRequired };
   };
 }

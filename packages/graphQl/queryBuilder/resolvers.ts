@@ -58,7 +58,8 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('BEGIN');
 
           // Set current user for permissions
-          if (context.accessToken != null) {
+          if (context.accessToken != null && selectQuery.authRequired) {
+            context.ctx.state.authRequired = true;
             await auth.setUser(client, context.accessToken);
           }
 
@@ -102,6 +103,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
         }
         // Generate mutation sql query
         const mutationQuery = mutationResolver(obj, args, context, info);
+        context.ctx.state.includesMutation = true;
 
         // Get a client from pool
         const client = await pool.connect();
