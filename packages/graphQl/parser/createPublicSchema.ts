@@ -105,6 +105,8 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         viewSchemaName,
         fieldNames: [],
         viewNames: [],
+        authViewNames: [],
+        noAuthViewNames: [],
         views: {},
         relationByField: {}
       };
@@ -124,6 +126,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
     if (view.type === 'READ') {
       gQlTypes[gqlTypeName].viewNames.push(viewName.toUpperCase());
+      gQlTypes[gqlTypeName].noAuthViewNames.push(viewName.toUpperCase());
     } else {
       tableView.kind = 'GraphQLInputObjectType';
     }
@@ -288,7 +291,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
           field: fieldName,
           view: `"${viewSchemaName}"."${viewName}"`,
           viewName,
-          viewSchemaName
+          viewSchemaName,
+          currentUserId: () => {
+            gQlTypes[gqlTypeName].authViewNames.push(viewName.toUpperCase());
+            const viewIndex = gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName.toUpperCase());
+            if (viewIndex >= 0) {
+              gQlTypes[gqlTypeName].noAuthViewNames.splice(viewIndex, 1);
+            }
+
+            return '_meta.current_user_id()';
+          }
         };
 
         const fieldExpression = expressionsByName[expressionName].generate(expressionContext, params);
@@ -385,7 +397,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       if (expressionsByName[expression.name] == null) {
         throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + view.gqlTypeName + '`.');
       }
-      // todo check if returnType is a boolean
+      // TODO: check if returnType is a boolean
 
       const expressionContext = {
         gqlTypeName: view.gqlTypeName,
@@ -395,7 +407,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         field: null,
         view: `"${viewSchemaName}"."${viewName}"`,
         viewName,
-        viewSchemaName
+        viewSchemaName,
+        currentUserId: () => {
+          gQlTypes[gqlTypeName].authViewNames.push(viewName.toUpperCase());
+          const viewIndex = gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName.toUpperCase());
+          if (viewIndex >= 0) {
+            gQlTypes[gqlTypeName].noAuthViewNames.splice(viewIndex, 1);
+          }
+
+          return '_meta.current_user_id()';
+        }
       };
 
       const expressionSql = expressionsByName[expression.name].generate(expressionContext, expression.params || {});

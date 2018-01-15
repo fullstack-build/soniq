@@ -9,6 +9,16 @@ export function getLocalName(counter) {
   return `_local_${counter}_`;
 }
 
+export function includesAuthView(viewNames, noAuthViewNames) {
+  let ret = null;
+  viewNames.forEach((viewName) => {
+    if (noAuthViewNames.indexOf(viewName) < 0) {
+      ret = viewName;
+    }
+  });
+  return ret;
+}
+
 export function getJsonMerge(jsonFields) {
   if (jsonFields.length < 1) {
     return `jsonb_build_object()`;
@@ -114,20 +124,32 @@ export function getFromExpression(viewNames, gQlType, localNameByType) {
 }
 
 // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
+export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticated, match) {
   // Get the tableName from the nested query object
   const tableName = Object.keys(query.fieldsByTypeName)[0];
 
   // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
   const gQlType = gQlTypes[tableName];
 
+  let typeViewNames = gQlType.viewNames;
+  if (isAuthenticated !== true) {
+    typeViewNames = gQlType.noAuthViewNames;
+  }
+
   // Get all viewNames of the current table as array of strings
-  let viewNames = gQlType.viewNames.map((type) => {
+  let viewNames = typeViewNames.map((type) => {
     return type;
   });
 
   // If the user has defined some viewNames in the query overwrite default viewNames
   if (query.args != null && query.args.viewnames != null) {
+    if (isAuthenticated !== true) {
+      const ret = includesAuthView(query.args.viewnames, gQlType.noAuthViewNames);
+      if (ret != null) {
+        throw new Error(`You need to be authenticated to access view [${ret}]`);
+      }
+    }
+
     viewNames = query.args.viewnames;
   }
 
@@ -168,7 +190,8 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
           const fieldIdExpression = getFieldExpression(relation.columnName, viewNames, gQlType, localNameByType);
 
           // Resolve the field with a subquery which loads the related data
-          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values, fieldIdExpression, viewNames, gQlType, localNameByType);
+          const ret = resolveRelation(counter, field, relation, gQlTypes, dbObject, values,
+                                      fieldIdExpression, viewNames, gQlType, localNameByType, isAuthenticated);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -182,7 +205,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
           // A many relation just needs to match by it's idExpression
           // Resolve the field with a subquery which loads the related data
           // tslint:disable-next-line:max-line-length
-          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression, viewNames, gQlType, localNameByType);
+          const ret = resolveRelation(counter, field, gQlType.relationByField[field.name], gQlTypes, dbObject, values, idExpression, viewNames, gQlType, localNameByType, isAuthenticated);
 
           // The resolveRelation() function can also increase the counter because it may loads relations
           // So we need to take the counter from there
@@ -267,7 +290,8 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, match) {
 }
 
 // Resolves a relation of a column/field to a new Subquery
-export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression, viewNames, gQlType, localNameByType) {
+export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, matchIdExpression,
+                                viewNames, gQlType, localNameByType, isAuthenticated) {
   // Get the relation from dbObject
   const relationConnections = dbObject.relations[relation.relationName];
 
@@ -291,7 +315,7 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
     match.foreignFieldName = 'id';
 
     // A ONE relation will respond a single object
-    return rowToJson(c, query, gQlTypes, dbObject, values, match);
+    return rowToJson(c, query, gQlTypes, dbObject, values, isAuthenticated, match);
   } else {
     // check if this is a many to many relation
     if (foreignRelation.type === 'MANY') {
@@ -301,21 +325,21 @@ export function resolveRelation(c, query, relation, gQlTypes, dbObject, values, 
         foreignFieldName: 'id'
       };
 
-      return jsonAgg(c, query, gQlTypes, dbObject, values, arrayMatch);
+      return jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, arrayMatch);
     } else {
 
       // If this is the MANY part/column/field of the relation we need to match by its foreignColumnName
       match.foreignFieldName = foreignRelation.columnName;
 
       // A MANY relation will respond an array of objects
-      return jsonAgg(c, query, gQlTypes, dbObject, values, match);
+      return jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, match);
 
     }
   }
 }
 
 // Generates an object from a select query (This is needed for ONE relations like loading a owner of a post)
-export function rowToJson(c, query, gQlTypes, dbObject, values, match) {
+export function rowToJson(c, query, gQlTypes, dbObject, values, isAuthenticated, match) {
   // Counter is to generate unique local aliases for all Tables (Joins of Views)
   let counter = c;
   // Generate new local alias (e.g. "_local_1_")
@@ -323,7 +347,7 @@ export function rowToJson(c, query, gQlTypes, dbObject, values, match) {
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject, values, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject, values, isAuthenticated, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
@@ -342,7 +366,7 @@ export function rowToJson(c, query, gQlTypes, dbObject, values, match) {
 }
 
 // Generates Array of Objects from a select query
-export function jsonAgg(c, query, gQlTypes, dbObject, values, match) {
+export function jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, match) {
   // Counter is to generate unique local aliases for all Tables (Joins of Views)
   let counter = c;
   // Generate new local alias (e.g. "_local_1_")
@@ -350,7 +374,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, match) {
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject,values, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject,values, isAuthenticated, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there
@@ -370,7 +394,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, match) {
 }
 
 export function getQueryResolver(gQlTypes, dbObject) {
-  return (obj, args, context, info, match = null) =>  {
+  return (obj, args, context, info, isAuthenticated, match = null) =>  {
 
     // Use PostGraphile parser to get nested query objeect
     const query = parseResolveInfo(info);
@@ -380,7 +404,7 @@ export function getQueryResolver(gQlTypes, dbObject) {
       sql,
       counter,
       values
-    } = jsonAgg(0, query, gQlTypes, dbObject, [], match);
+    } = jsonAgg(0, query, gQlTypes, dbObject, [], isAuthenticated, match);
 
     return { sql: `SELECT ${sql}`, values, query };
   };

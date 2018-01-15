@@ -43,8 +43,12 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to queryResolvers
     queryResolvers[query.name] = async (obj, args, context, info) => {
 
+        let isAuthenticated = false;
+        if (context.accessToken != null) {
+          isAuthenticated = true;
+        }
         // Generate select sql query
-        const selectQuery = queryResolver(obj, args, context, info);
+        const selectQuery = queryResolver(obj, args, context, info, isAuthenticated);
 
         // Get a client from pool
         const client = await pool.connect();
@@ -54,12 +58,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('BEGIN');
 
           // Set current user for permissions
-          /*if (context.userId != null) {
-            // await client.setCurrentUser();
-            await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
-          }*/
           if (context.accessToken != null) {
-            // await client.setCurrentUser();
             await auth.setUser(client, context.accessToken);
           }
 
@@ -97,6 +96,10 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to mutationResolvers
     mutationResolvers[mutation.name] = async (obj, args, context, info) => {
 
+        let isAuthenticated = false;
+        if (context.accessToken != null) {
+          isAuthenticated = true;
+        }
         // Generate mutation sql query
         const mutationQuery = mutationResolver(obj, args, context, info);
 
@@ -106,13 +109,8 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
         try {
           // Begin transaction
           await client.query('BEGIN');
-
           // Set current user for permissions
-          /*if (context.userId != null) {
-            await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
-          }*/
           if (context.accessToken != null) {
-            // await client.setCurrentUser();
             await auth.setUser(client, context.accessToken);
           }
 
@@ -142,7 +140,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
             };
 
             // Generate sql query for response-data of the mutation
-            const returnQuery = queryResolver(obj, args, context, info, match);
+            const returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
 
             // tslint:disable-next-line:no-console
             console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
