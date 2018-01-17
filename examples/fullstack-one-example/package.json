@@ -8,7 +8,7 @@
   },
   "main": "main.ts",
   "scripts": {
-    "start": "ts-node .",
+    "start": "AUTH_JWT_SECRET=thisisasecretforjwt AUTH_ADMIN_SECRET=boss AUTH_PROVIDERS_SECRET=providersecret AUTH_COOKIE_SECRET=cookiesecret42 ts-node .",
     "dev": "nodemon --exec \"ts-node --inspect .\"",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"

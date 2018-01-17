@@ -33,6 +33,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
 
   const f1 = getInstance();
   const pool = f1.getDbPool();
+  const auth = f1.getAuthInstance();
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -42,8 +43,12 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to queryResolvers
     queryResolvers[query.name] = async (obj, args, context, info) => {
 
+        let isAuthenticated = false;
+        if (context.accessToken != null) {
+          isAuthenticated = true;
+        }
         // Generate select sql query
-        const selectQuery = queryResolver(obj, args, context, info);
+        const selectQuery = queryResolver(obj, args, context, info, isAuthenticated);
 
         // Get a client from pool
         const client = await pool.connect();
@@ -53,9 +58,9 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('BEGIN');
 
           // Set current user for permissions
-          if (context.userId != null) {
-            // await client.setCurrentUser();
-            await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
+          if (context.accessToken != null && selectQuery.authRequired) {
+            context.ctx.state.authRequired = true;
+            await auth.setUser(client, context.accessToken);
           }
 
           // tslint:disable-next-line:no-console
@@ -92,8 +97,13 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     // Add async resolver function to mutationResolvers
     mutationResolvers[mutation.name] = async (obj, args, context, info) => {
 
+        let isAuthenticated = false;
+        if (context.accessToken != null) {
+          isAuthenticated = true;
+        }
         // Generate mutation sql query
         const mutationQuery = mutationResolver(obj, args, context, info);
+        context.ctx.state.includesMutation = true;
 
         // Get a client from pool
         const client = await pool.connect();
@@ -101,10 +111,9 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
         try {
           // Begin transaction
           await client.query('BEGIN');
-
           // Set current user for permissions
-          if (context.userId != null) {
-            await client.query(`SET LOCAL jwt.claims.user_id TO '${context.userId}'`);
+          if (context.accessToken != null) {
+            await auth.setUser(client, context.accessToken);
           }
 
           // tslint:disable-next-line:no-console
@@ -112,6 +121,10 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
 
           // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
           const { rows } = await client.query(mutationQuery.sql, mutationQuery.values);
+
+          if (rows.length < 1) {
+            throw new Error('No rows affected by this mutation. Either the entity does not exist or you are not permitted.');
+          }
 
           let returnData;
 
@@ -133,7 +146,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
             };
 
             // Generate sql query for response-data of the mutation
-            const returnQuery = queryResolver(obj, args, context, info, match);
+            const returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
 
             // tslint:disable-next-line:no-console
             console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
@@ -195,14 +208,14 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   Object.values(customOperations.fields).forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(`The custom resolver "${operation.resolver}" is not defined.` +
-      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.typeName}".`);
+      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`);
     }
 
-    if (resolvers[operation.typeName] == null) {
-      resolvers[operation.typeName] = {};
+    if (resolvers[operation.gqlTypeName] == null) {
+      resolvers[operation.gqlTypeName] = {};
     }
 
-    resolvers[operation.typeName][operation.fieldName] = (obj, args, context, info) => {
+    resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
       return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
     };
   });

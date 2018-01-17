@@ -1,9 +1,9 @@
-function getTypenamesField(typesEnumName) {
+function getViewnamesField(typesEnumName) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
-      value: '_typenames'
+      value: '_viewnames'
     },
     arguments: [],
     type: {
@@ -28,5 +28,5 @@ function getTypenamesField(typesEnumName) {
 
 export default (typesEnumName) => {
 
-  return getTypenamesField(typesEnumName);
+  return getViewnamesField(typesEnumName);
 };

@@ -139,21 +139,40 @@ export namespace graphQl {
 			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject),
 		});
 
-    const gQlParam = (ctx) => {
+    const setCacheHeaders = async (ctx, next) => {
+      await next();
+      let cacheHeader = 'no-store';
+      // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
+      // || (ctx.body != null && ctx.body.errors != null && ctx.body.errors.length > 0)
+      if (ctx.state.includesMutation === true) {
+        cacheHeader = 'no-store';
+      } else {
+        if (ctx.state.authRequired === true) {
+          cacheHeader = 'privat, max-age=600';
+        } else {
+          cacheHeader = 'public, max-age=600';
+        }
+      }
 
-      const userId = ctx.cookies.get('userId', { signed: false }) || 0;
+      ctx.set('Cache-Control', cacheHeader);
+    };
+
+    const gQlParam = (ctx) => {
+      ctx.state.authRequired = false;
+      ctx.state.includesMutation = false;
 
       return {
         schema,
         context: {
-          userId
+          ctx,
+          accessToken: ctx.state.accessToken
         }
       };
     };
 
     // koaBody is needed just for POST.
-    gqlRouter.post('/graphql', koaBody(), graphqlKoa(gQlParam));
-    gqlRouter.get('/graphql', graphqlKoa(gQlParam));
+    gqlRouter.post('/graphql', koaBody(), setCacheHeaders, graphqlKoa(gQlParam));
+    gqlRouter.get('/graphql', setCacheHeaders, graphqlKoa(gQlParam));
 
     gqlRouter.get(graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: graphQlConfig.endpoint }));
 

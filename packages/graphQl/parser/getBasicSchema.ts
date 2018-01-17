@@ -2,14 +2,14 @@ import getQueryArguments from './getQueryArguments';
 import getMutationArguments from './getMutationArguments';
 import createSqlQueryInput from './createSqlQueryInput';
 
-function getMutation(name, inputType, typesEnumName, returnType) {
+function getMutation(name, inputType, viewsEnumName, returnType) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
       value: name,
     },
-    arguments: getMutationArguments(typesEnumName, inputType),
+    arguments: getMutationArguments(viewsEnumName, inputType),
     type: {
       kind: 'NamedType',
       name: {
@@ -21,14 +21,14 @@ function getMutation(name, inputType, typesEnumName, returnType) {
   };
 }
 
-function getQuery(name, type, typesEnumName) {
+function getQuery(name, type, viewsEnumName) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
       value: name,
     },
-    arguments: getQueryArguments(typesEnumName),
+    arguments: getQueryArguments(viewsEnumName),
     type: {
       kind: 'NonNullType',
       type: {
@@ -53,12 +53,12 @@ export default (queries, mutations) => {
 
   const queryFields = [];
   Object.values(queries).forEach((query) => {
-    queryFields.push(getQuery(query.name, query.type, query.typesEnumName));
+    queryFields.push(getQuery(query.name, query.type, query.viewsEnumName));
   });
 
   const mutationFields = [];
   Object.values(mutations).forEach((mutation) => {
-    mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.typesEnumName, mutation.returnType));
+    mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.viewsEnumName, mutation.returnType));
   });
 
   const definitions = [];

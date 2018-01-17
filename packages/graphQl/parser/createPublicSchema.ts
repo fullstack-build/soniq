@@ -11,8 +11,8 @@ import getRelationType from './getRelationType';
 import parseObjectArgument from './parseObjectArgument';
 import arrayToNamedArray from './arrayToNamedArray';
 import getQueryArguments from './getQueryArguments';
-import getTypesEnum from './getTypesEnum';
-import getTypenamesField from './getTypenamesField';
+import getViewsEnum from './getViewsEnum';
+import getViewnamesField from './getViewnamesField';
 import convertToInputType from './convertToInputType';
 import mergeDeleteViews from './mergeDeleteViews';
 import createIdField from './createIdField';
@@ -104,14 +104,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         viewName,
         viewSchemaName,
         fieldNames: [],
-        typeNames: [],
-        types: {},
+        viewNames: [],
+        authViewNames: [],
+        noAuthViewNames: [],
+        views: {},
         relationByField: {}
       };
     }
 
     // Add current type to list
-    gQlTypes[gqlTypeName].types[viewName.toUpperCase()] = {
+    gQlTypes[gqlTypeName].views[viewName.toUpperCase()] = {
       viewName,
       viewSchemaName,
       typeName: viewName.toUpperCase(),
@@ -123,7 +125,8 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     };
 
     if (view.type === 'READ') {
-      gQlTypes[gqlTypeName].typeNames.push(viewName.toUpperCase());
+      gQlTypes[gqlTypeName].viewNames.push(viewName.toUpperCase());
+      gQlTypes[gqlTypeName].noAuthViewNames.push(viewName.toUpperCase());
     } else {
       tableView.kind = 'GraphQLInputObjectType';
     }
@@ -160,7 +163,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         gQlTypes[gqlTypeName].fieldNames.push(fieldName);
       }
 
-      gQlTypes[gqlTypeName].types[viewName.toUpperCase()].fields.push(fieldName);
+      gQlTypes[gqlTypeName].views[viewName.toUpperCase()].fields.push(fieldName);
 
       return isIncluded;
     });
@@ -218,7 +221,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
               name: fieldName,
               expression: jsonExpression
             });
-            gQlTypes[gqlTypeName].types[viewName.toUpperCase()].jsonFieldNames.push(fieldName);
+            gQlTypes[gqlTypeName].views[viewName.toUpperCase()].jsonFieldNames.push(fieldName);
           }
         } else {
           field.type.name.value = field.type.name.value + 'Input';
@@ -242,7 +245,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         // Add field to custom fields for resolving it seperate
         customFields[fieldKey] = {
           type: 'Field',
-          typeName: gqlTypeName,
+          gqlTypeName,
           fieldName,
           resolver: resolverName,
           params
@@ -261,7 +264,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         filterFieldsForMutation.push(fieldName);
 
         // Add native fields to gQlTypes
-        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].views[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is expression
@@ -288,7 +291,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
           field: fieldName,
           view: `"${viewSchemaName}"."${viewName}"`,
           viewName,
-          viewSchemaName
+          viewSchemaName,
+          currentUserId: () => {
+            gQlTypes[gqlTypeName].authViewNames.push(viewName.toUpperCase());
+            const viewIndex = gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName.toUpperCase());
+            if (viewIndex >= 0) {
+              gQlTypes[gqlTypeName].noAuthViewNames.splice(viewIndex, 1);
+            }
+
+            return '_meta.current_user_id()';
+          }
         };
 
         const fieldExpression = expressionsByName[expressionName].generate(expressionContext, params);
@@ -305,7 +317,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         filterFieldsForMutation.push(fieldName);
 
         // Add native fields to gQlTypes
-        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].views[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
 
       // field is relation
@@ -359,7 +371,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
             addIdFieldsForMutation.push(ownRelation.columnName);
           }
 
-          gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(ownRelation.columnName);
+          gQlTypes[gqlTypeName].views[viewName.toUpperCase()].nativeFieldNames.push(ownRelation.columnName);
         }
 
         fieldAlreadyAddedAsSpecialType = true;
@@ -371,15 +383,15 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
           name: fieldName,
           expression: `"${fieldName}"`
         });
-        gQlTypes[gqlTypeName].types[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
+        gQlTypes[gqlTypeName].views[viewName.toUpperCase()].nativeFieldNames.push(fieldName);
       }
     });
 
-    // Add _typenames field into READ Views
+    // Add _viewnames field into READ Views
     if (view.type === 'READ') {
       dbView.fields.push({
-        name: '_typenames',
-        expression: `ARRAY['${viewName.toUpperCase()}'] AS _typenames`
+        name: '_viewnames',
+        expression: `ARRAY['${viewName.toUpperCase()}'] AS _viewnames`
       });
     }
 
@@ -388,7 +400,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       if (expressionsByName[expression.name] == null) {
         throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + view.gqlTypeName + '`.');
       }
-      // todo check if returnType is a boolean
+      // TODO: check if returnType is a boolean
 
       const expressionContext = {
         gqlTypeName: view.gqlTypeName,
@@ -398,7 +410,16 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         field: null,
         view: `"${viewSchemaName}"."${viewName}"`,
         viewName,
-        viewSchemaName
+        viewSchemaName,
+        currentUserId: () => {
+          gQlTypes[gqlTypeName].authViewNames.push(viewName.toUpperCase());
+          const viewIndex = gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName.toUpperCase());
+          if (viewIndex >= 0) {
+            gQlTypes[gqlTypeName].noAuthViewNames.splice(viewIndex, 1);
+          }
+
+          return '_meta.current_user_id()';
+        }
       };
 
       const expressionSql = expressionsByName[expression.name].generate(expressionContext, expression.params || {});
@@ -446,7 +467,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         type: view.type,
         inputType: viewName,
         returnType,
-        typesEnumName: (gqlTypeName + '_TYPES').toUpperCase(),
+        viewsEnumName: (gqlTypeName + '_VIEWS').toUpperCase(),
         viewName,
         viewSchemaName
       });
@@ -462,7 +483,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     // console.log('>>>>>>', JSON.stringify(gQlType, null, 2))
 
     const gqlTypeName = gQlType.gqlTypeName;
-    const typesEnumName = (gqlTypeName + '_TYPES').toUpperCase();
+    const viewsEnumName = (gqlTypeName + '_VIEWS').toUpperCase();
     const table = tables[gQlType.gqlTypeName];
     // new object: GraphQL definition for fusionView
     // const tableView = { ...table };
@@ -478,7 +499,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     // Add arguments to relation fields
     tableView.fields = tableView.fields.map((field, key) => {
       if (gQlType.relationByField[field.name.value]) {
-        const foreignTypesEnumName = (gQlType.relationByField[field.name.value].foreignTableName + '_TYPES').toUpperCase();
+        const foreignTypesEnumName = (gQlType.relationByField[field.name.value].foreignTableName + '_VIEWS').toUpperCase();
         field.arguments = getQueryArguments(foreignTypesEnumName);
       }
 
@@ -490,11 +511,11 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       return field;
     });
 
-    // Add _typenames field to type
-    tableView.fields.push(getTypenamesField(typesEnumName));
+    // Add _viewnames field to type
+    tableView.fields.push(getViewnamesField(viewsEnumName));
 
-    // Add types-enum definition of table to graphQlDocument
-    graphQlDocument.definitions.push(getTypesEnum(typesEnumName, gQlType.typeNames));
+    // Add views-enum definition of table to graphQlDocument
+    graphQlDocument.definitions.push(getViewsEnum(viewsEnumName, gQlType.viewNames));
 
     // Add table type to graphQlDocument
     graphQlDocument.definitions.push(tableView);
@@ -502,10 +523,10 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     queries.push({
       name: gqlTypeName.toString().toLowerCase() + 's',
       type: gqlTypeName,
-      typesEnumName: (gqlTypeName + '_TYPES').toUpperCase()
+      viewsEnumName: (gqlTypeName + '_VIEWS').toUpperCase()
     });
 
-    /* Object.keys(gQlType.types).forEach((view, index) => {
+    /* Object.keys(gQlType.views).forEach((view, index) => {
 
     })); */
   });

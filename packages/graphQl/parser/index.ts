@@ -9,7 +9,7 @@ import {
   print,
 } from 'graphql';
 
-export function runtimeParser(userSchema: any, permissions: IViews, expressions: IExpressions, dbObject, $one): any {
+export function runtimeParser(userSchema: any, views: IViews, expressions: IExpressions, dbObject, $one): any {
 
   const classification = classifyUserDefinitions(userSchema);
   const {
@@ -19,7 +19,7 @@ export function runtimeParser(userSchema: any, permissions: IViews, expressions:
     queries,
     mutations,
     customFields
-  } = createPublicSchema(classification, permissions, expressions, dbObject, $one);
+  } = createPublicSchema(classification, views, expressions, dbObject, $one);
 
   const { customQueries, customMutations } = getCustomOperations(classification);
 
