@@ -156,7 +156,7 @@ class FullstackOneCore implements IFullstackOneCore {
   // return DB object
   public getDbObject(): IDbObject {
     // return copy instead of ref
-    return { ...this.dbObject };
+    return _.cloneDeep(this.dbObject);
   }
 
   // return DB setup connection
@@ -177,15 +177,16 @@ class FullstackOneCore implements IFullstackOneCore {
       const sqlMigrations       = migration.createMigrationSqlFromTwoDbObjects(migrateFromDbObject, migrateToDbObject, true);
       // console.error('**', migrateFromDbObject);
       // console.error('##', migrateToDbObject);
-      // console.log('############### DELTA:');
-      // console.log(sqlMigrations.join('\n'));
+      // tslint:disable-next-line:no-console
+      console.log('############### DELTA:');
+      // tslint:disable-next-line:no-console
+      console.log(sqlMigrations.join('\n'));
 
     } catch (err) {
-      // console.error('ERR', err);
+      // tslint:disable-next-line:no-console
+      console.error('ERR', err);
     }
 
-    /*const dbMigration = new DbMigrarion(false);
-    dbMigration.createMigration();*/
   }
 
   /**

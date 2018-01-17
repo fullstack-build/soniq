@@ -1,9 +1,9 @@
 #type User @table @check(notGenericAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'"){
 type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
-  id: ID! @isUnique
-  email: String @isUnique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
+  id: ID! @unique
+  email: String @unique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
   gender: Gender!
-  username: String
+  username: JSON
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
@@ -14,8 +14,8 @@ type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.bu
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
-  files: [File] @relation(name: "FileOwner")
 }
+
 
 type PayloadData {
   title: String

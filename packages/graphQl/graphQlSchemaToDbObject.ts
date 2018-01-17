@@ -12,7 +12,7 @@ export const parseGraphQlJsonSchemaToDbObject = (graphQlJsonSchema): IDbObject =
   };
   parseGraphQlJsonNode(graphQlJsonSchema, dbObject);
   // return copy instead of ref
-  return { ...dbObject };
+  return _.cloneDeep(dbObject);
 };
 
 // refDbObjectCurrentTable:
@@ -151,10 +151,14 @@ const GQL_JSON_PARSER = {
     const enumValues = gQlEnumTypeDefinitionNode.values.reduce((values, gQlEnumTypeDefinitionNodeValue) => {
       values.push(gQlEnumTypeDefinitionNodeValue.name.value);
       return values;
-    },                                                         []);
+    }, []);
 
-    // convention enums are DB wide
-    dbObjectNode.enums[enumName] = enumValues;
+    // convention enums are DB wide (keep values from previous round if already set)
+    dbObjectNode.enums[enumName] = dbObjectNode.enums[enumName] || {
+      name: enumName,
+      values: enumValues,
+      columns: {}
+    };
   },
 
   // parse Directive
@@ -168,7 +172,7 @@ const GQL_JSON_PARSER = {
       case 'table':
         // nothing to do here -> has been done in ObjectTypeDefinition
         break;
-      case 'isUnique':
+      case 'unique':
 
         addConstraint('UNIQUE',
                       gQlDirectiveNode,
@@ -342,12 +346,12 @@ const GQL_JSON_PARSER = {
     refDbObjectCurrentTable,
     refDbObjectCurrentTableColumn,
   ) => {
-    const columnType = gQlSchemaNode.name.value.toLocaleLowerCase();
+    const columnTypeLowerCase = gQlSchemaNode.name.value.toLocaleLowerCase();
     dbObjectNode.type = 'varchar';
     // types
     // GraphQl: http://graphql.org/graphql-js/basic-types/
     // PG: https://www.postgresql.org/docs/current/static/datatype.html
-    switch (columnType) {
+    switch (columnTypeLowerCase) {
       case 'id':
         // set type to uuid
         dbObjectNode.type = 'uuid';
@@ -381,13 +385,24 @@ const GQL_JSON_PARSER = {
       default:
         // check dynamic types
         // enum?
-        const enumNames = Object.keys(refDbObj.enums);
-        const enumNamesInLowerCase = enumNames.map(enumName => enumName.toLowerCase());
-        const typeEnumIndex = enumNamesInLowerCase.indexOf(columnType);
-        if (typeEnumIndex !== -1) {
+        const foundEnum = Object.values(refDbObj.enums).find((enumObj) => {
+          return (enumObj.name.toLowerCase() === columnTypeLowerCase);
+        });
+        if (foundEnum != null) {
           // enum
           dbObjectNode.type = 'enum';
-          dbObjectNode.customType = enumNames[typeEnumIndex];
+          dbObjectNode.customType = foundEnum.name;
+
+          // add column name to enum columns list
+          if (refDbObjectCurrentTable.schemaName != null && refDbObjectCurrentTable.tableName != null && refDbObjectCurrentTable.columnName != null) {
+            const enumColumnName = `${refDbObjectCurrentTable.schemaName}.${refDbObjectCurrentTable.name}.${refDbObjectCurrentTableColumn.name}`;
+
+            foundEnum.columns[enumColumnName] = {
+              schemaName: refDbObjectCurrentTable.schemaName,
+              tableName:  refDbObjectCurrentTable.name,
+              columnName: refDbObjectCurrentTableColumn.name
+            };
+          }
         } else {
           // unknown type, probably a nested document (jsonb)
         }
@@ -511,7 +526,7 @@ function addConstraint(pConstraintType,
       constraintType = 'CHECK'; // validate turns into check
       const validateType = gQlSchemaNode.name.value;
       options = {
-        param1: `_meta.validate('${validateType}'::text, (${refDbObjectCurrentTableColumn.name})::text, '${gQlSchemaNode.value.value}'::text)`
+        param1: `_meta.validate('${validateType}'::text, ("${refDbObjectCurrentTableColumn.name}")::text, '${gQlSchemaNode.value.value}'::text)`
       };
       constraintName = `${refDbObjectCurrentTable.name}_${refDbObjectCurrentTableColumn.name}_${validateType}_check`;
       break;
@@ -662,13 +677,16 @@ function relationBuilderHelper(
     referencedSchemaName  = refDbObj.exposedNames[referencedExposedName].schemaName;
     referencedTableName   = refDbObj.exposedNames[referencedExposedName].tableName;
 
+    const thisRelationName        = `${relationSchemaName}.${relationTableName}`;
+    const referencedRelationName  = `${referencedSchemaName}.${referencedTableName}`;
+
     // get or create new relations and keep reference for later
     const relations = refDbObj.relations[relationName] = refDbObj.relations[relationName] || {
-      [relationTableName]: _.cloneDeep(emptyRelation),
-      [referencedTableName]: _.cloneDeep(emptyRelation)
+      [thisRelationName]:     _.cloneDeep(emptyRelation),
+      [referencedRelationName]: _.cloneDeep(emptyRelation)
     };
-    const thisRelation  = relations[relationTableName];
-    const otherRelation = relations[referencedTableName];
+    const thisRelation  = relations[thisRelationName];
+    const otherRelation = relations[referencedRelationName];
 
     // check if empty => more then one relation in GraphQl Error, maybe same name for different relations
     if (thisRelation == null || otherRelation == null) {
@@ -720,7 +738,7 @@ function relationBuilderHelper(
       // otherRelation.description        = null;
       otherRelation.reference.schemaName = relationSchemaName;
       otherRelation.reference.tableName  = relationTableName;
-      otherRelation.reference.columnName = (referencedType === 'MANY') ? null : otherRelation.reference.columnName;
+      otherRelation.reference.columnName = (referencedType === 'MANY') ? null : otherRelation.reference.columnName || 'id'; // fallback is 'id'
     }
 
     // adjust for MANY:MANY
@@ -760,9 +778,22 @@ function addMigration(gQlDirectiveNode, dbObjectNode, refDbObj) {
 
   const oldName = (oldNameArgument != null) ? oldNameArgument.value.value : null;
   const newName = dbObjectNode.name;
-
+  // add oldName to dbObject node
   if (dbObjectNode != null && oldName != null) {
     dbObjectNode.oldName = oldName;
+  }
+
+  // check if node has schemaName (= table), if so, check for oldSchemaName
+  if (dbObjectNode.schemaName != null) {
+    const oldSchemaNameArgument = gQlDirectiveNode.arguments.find((argument) => {
+      return (argument.name.value.toLowerCase() === 'fromschema');
+    });
+    const oldSchemaName = (oldSchemaNameArgument != null) ? oldSchemaNameArgument.value.value : null;
+
+    // add oldSchemaName to dbObject node
+    if (dbObjectNode != null && oldSchemaName != null) {
+      dbObjectNode.oldSchemaName = oldSchemaName;
+    }
   }
 
 }

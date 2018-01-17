@@ -328,6 +328,9 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
         const foreignGqlTypeName = getRelationForeignGqlTypeName(field);
         const foreignNativeTable = dbObject.exposedNames[foreignGqlTypeName];
+        if (foreignNativeTable == null) {
+          throw new Error(`Unable to find database table for name GraphQL type name '${foreignGqlTypeName}'.`);
+        }
 
         gQlTypes[gqlTypeName].relationByField[fieldName] = {
           relationName,

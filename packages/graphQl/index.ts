@@ -50,50 +50,57 @@ export namespace graphQl {
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
 
       dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
+
       // emit event
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbObject`);
 
-      // load permissions
-      const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
-      const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
-      views = [].concat.apply([], viewsArray);
-      // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
+      // load permissions and expressions and generate views and put them into schemas
+      try {
 
-      // load expressions
-      const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
-      const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
-      expressions = [].concat.apply([], expressionsArray);
-      // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
+        // load permissions
+        const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
+        const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
+        views = [].concat.apply([], viewsArray);
+        // emit event
+        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
-      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbObject, $one);
+        // load expressions
+        const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
+        const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
+        expressions = [].concat.apply([], expressionsArray);
+        // emit event
+        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
-      gQlRuntimeDocument = combinedSchemaInformation.document;
-      gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
-      gQlTypes = combinedSchemaInformation.gQlTypes;
-      queries = combinedSchemaInformation.queries;
-      mutations = combinedSchemaInformation.mutations;
+        const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbObject, $one);
 
-      customOperations = {
-        fields: combinedSchemaInformation.customFields,
-        queries: combinedSchemaInformation.customQueries,
-        mutations: combinedSchemaInformation.customMutations
-      };
+        gQlRuntimeDocument = combinedSchemaInformation.document;
+        gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
+        gQlTypes = combinedSchemaInformation.gQlTypes;
+        queries = combinedSchemaInformation.queries;
+        mutations = combinedSchemaInformation.mutations;
 
-      Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
-        if (dbObject.schemas[dbView.viewSchemaName] == null) {
-          dbObject.schemas[dbView.viewSchemaName] = {
-            tables: {},
-            views: {}
-          };
-        }
-        dbObject.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
-      });
-      // dbObject.views = combinedSchemaInformation.views;
+        customOperations = {
+          fields: combinedSchemaInformation.customFields,
+          queries: combinedSchemaInformation.customQueries,
+          mutations: combinedSchemaInformation.customMutations
+        };
 
-      // add endpoints
-      await addEndpoints($one);
+        Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
+          if (dbObject.schemas[dbView.viewSchemaName] == null) {
+            dbObject.schemas[dbView.viewSchemaName] = {
+              tables: {},
+              views: {}
+            };
+          }
+          dbObject.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
+        });
+
+        // add endpoints
+        await addEndpoints($one);
+
+      } catch (err) {
+        throw err;
+      }
 
       return dbObject;
 

@@ -74,27 +74,47 @@ export class PgToDbObject extends F1.AbstractPackage {
   }
 
   private async iterateEnumTypes(schemaName): Promise<void> {
-    // iterate ENUM Types
+    // iterate ENUM Types with columns its used in
     const { rows } =  await this.dbClient.query(
       `SELECT
-      n.nspname as enum_schema,
-      t.typname as enum_name,
-      array_to_json(array_agg(e.enumlabel)) as enum_values
-    FROM
-      pg_type t
-    JOIN
-      pg_enum e on t.oid = e.enumtypid
-    JOIN
-      pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-    WHERE
-      n.nspname = $1
-    GROUP BY
-      n.nspname, t.typname;`, [schemaName]);
+        n.nspname as enum_schema,
+        t.typname as enum_name,
+        array_to_json(array_agg(e.enumlabel)) as enum_values,
+        c.table_schema as used_schema,
+        c.table_name as used_table,
+        c.column_name as used_column
+      FROM
+        pg_type t
+      JOIN
+        pg_enum e on t.oid = e.enumtypid
+      JOIN
+        pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      FULL JOIN
+       information_schema.columns c ON c.udt_name = t.typname
+      WHERE
+        n.nspname = $1
+      GROUP BY
+        n.nspname, t.typname, c.table_schema, c.table_name, c.column_name;`, [schemaName]);
 
     // iterate all tables
     for (const row of Object.values(rows)) {
       const enumName = row.enum_name;
-      this.dbObject.enums[enumName] = row.enum_values;
+
+      // reuse existing enum (for multiple columns using same enum)
+      const thisEnums = this.dbObject.enums[enumName] = this.dbObject.enums[enumName] || {
+        name: enumName,
+        values: row.enum_values,
+        columns: {}
+      };
+      // add column to enum if used
+      if (row.used_schema != null && row.used_table != null && row.used_column != null) {
+        const enumColumnName = `${row.used_schema}.${row.used_table}.${row.used_column}`;
+        thisEnums.columns[enumColumnName] = {
+          schemaName: row.used_schema,
+          tableName:  row.used_table,
+          columnName: row.used_column
+        };
+      }
     }
   }
 
@@ -225,7 +245,9 @@ export class PgToDbObject extends F1.AbstractPackage {
               this.manyToManyRelationBuilderHelper(column, schemaName, tableName, mtmRelationPayload);
             }
           } catch (err) {
-            // ignore error
+            process.stderr.write(
+              'PgToDbObject.error.mtmrelation.payload.parsing.error: ' + err + '\n',
+            );
           }
         }
 
@@ -356,8 +378,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     let relationPayloadOne: any = {};
     let relationPayloadMany: any = {};
     try {
-      const relationPayload = JSON.parse(constraint.comment);
-
+      const relationPayload = Object.values(JSON.parse(constraint.comment));
       relationPayloadOne = relationPayload.find((relation) => {
         return (relation.type === 'ONE');
       });
@@ -367,19 +388,16 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     } catch (err) {
       // ignore empty payload -> fallback in code below
+      process.stderr.write(
+        'PgToDbObject.error.relation.payload.parsing.error: ' + err + '\n',
+      );
     }
 
     const constraintName = relationPayloadOne.name || relationPayloadMany.name || constraint.constraint_name.replace('fk_', '');
 
-    const constraintOneVirtualName = (relationPayloadOne != null) ?
-      relationPayloadOne.virtualColumnName : constraint.column_name.split(':')[0];
-
-    // if not available, "invent" virtual column name by making plural (maybe a library later for real plurals)
-    const constraintManyVirtualName = (relationPayloadMany != null) ?
-      relationPayloadMany.virtualColumnName : constraint.table_name.toLowerCase() + 's';
-
     const onUpdate = (constraint.on_update !== 'NO ACTION') ? constraint.on_update : null;
     const onDelete = (constraint.on_delete !== 'NO ACTION') ? constraint.on_delete : null;
+
     // create relation: one
     const relationOne: IDbRelation = {
       name: constraintName,
@@ -387,7 +405,7 @@ export class PgToDbObject extends F1.AbstractPackage {
       schemaName: constraint.schema_name,
       tableName: constraint.table_name,
       columnName: constraint.column_name,
-      virtualColumnName: constraintOneVirtualName,
+      virtualColumnName: relationPayloadOne && relationPayloadOne.virtualColumnName,
       onUpdate,
       onDelete,
       // Name of the association
@@ -407,7 +425,7 @@ export class PgToDbObject extends F1.AbstractPackage {
       schemaName: constraint.references_schema_name,
       tableName: constraint.references_table_name,
       columnName: null,
-      virtualColumnName: constraintManyVirtualName,
+      virtualColumnName: relationPayloadMany && relationPayloadMany.virtualColumnName,
       onUpdate: null,
       onDelete: null,
       // Name of the association
@@ -420,16 +438,20 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
     };
 
+    // relations names
+    const relationOneName = `${relationOne.schemaName}.${relationOne.tableName}`;
+    const relationManyName = `${relationMany.schemaName}.${relationMany.tableName}`;
+
     // add relation to dbObject
     this.dbObject.relations[constraintName] = {
-      [relationOne.tableName]: relationOne,
-      [relationMany.tableName]: relationMany
+      [relationOneName]: relationOne,
+      [relationManyName]: relationMany
     };
 
     // remove FK column
     delete this.dbObject.schemas[relationOne.schemaName]
       .tables[relationOne.tableName]
-      .columns[this.dbObject.relations[constraintName][relationOne.tableName].columnName];
+      .columns[this.dbObject.relations[constraintName][relationOneName].columnName];
 
   }
 
@@ -444,7 +466,7 @@ export class PgToDbObject extends F1.AbstractPackage {
       schemaName,
       tableName,
       columnName: columnDescribingRelation.column_name,
-      virtualColumnName: mtmPayload.virtualColumnName,
+      virtualColumnName: mtmPayload && mtmPayload.virtualColumnName,
       onUpdate: null,
       onDelete: null,
       // Name of the association
@@ -457,9 +479,12 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
     };
 
+    // relations names
+    const relationSideName = `${newRelation.schemaName}.${newRelation.tableName}`;
+
     // create relation object if not available
     this.dbObject.relations[mtmPayload.name] = this.dbObject.relations[mtmPayload.name] || {};
-    this.dbObject.relations[mtmPayload.name][newRelation.tableName] = newRelation;
+    this.dbObject.relations[mtmPayload.name][relationSideName] = newRelation;
 
     // remove FK column
     delete this.dbObject.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];

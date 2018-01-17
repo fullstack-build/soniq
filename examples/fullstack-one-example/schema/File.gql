@@ -1,9 +1,8 @@
 #type File @table {
-type PrivateFile @table(schemaName: "private", tableName: "File") @migrate(from:"FileOld") {
-  id: ID! @isUnique
+type PrivateFile @table(schemaName: "private", tableName: "File") @migrate(from:"FileOld" fromSchema: "privateOld") {
+  id: ID! @unique
   url: String
-  container: String @isUnique(name: "FileSource")
-  fileName: String! @isUnique(name: "FileSource")
-  test: String
-  owner: User @relation(name: "FileOwner")
+  container: String @unique(name: "FileSource")
+  fileName: String! @unique(name: "FileSource")
+  owner: User! @relation(name: "FileOwner", onDelete: "restrict", onUpdate: "cascade")
 }
