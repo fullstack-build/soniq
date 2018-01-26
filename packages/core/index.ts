@@ -15,14 +15,14 @@ export { AbstractPackage };
 import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
-import { IDbObject, IDbRelation } from './IDbObject';
-export { IFullstackOneCore, IEnvironmentInformation, IDbObject, IDbRelation };
+import { IDbMeta, IDbRelation } from './IDbMeta';
+export { IFullstackOneCore, IEnvironmentInformation, IDbMeta, IDbRelation };
 
 // fullstack-one imports
 import { helper } from '../helper';
 export { helper } from '../helper';
 import { Events, IEventEmitter } from './events';
-import { DbClient, DbPool, PgClient, PgPool, PgToDbObject } from '../db';
+import { DbClient, DbPool, PgClient, PgPool, PgToDbMeta } from '../db';
 import { Logger } from './logger';
 import { graphQl } from '../graphQl/index';
 import { migration } from '../migration/index';
@@ -55,7 +55,7 @@ class FullstackOneCore implements IFullstackOneCore {
   private dbPoolObj: DbPool;
   private server: http.Server;
   private APP: Koa;
-  private dbObject: IDbObject;
+  private dbMeta: IDbMeta;
   private knownNodeIds: [string];
   private auth;
 
@@ -161,9 +161,9 @@ class FullstackOneCore implements IFullstackOneCore {
   }
 
   // return DB object
-  public getDbObject(): IDbObject {
+  public getDbMeta(): IDbMeta {
     // return copy instead of ref
-    return _.cloneDeep(this.dbObject);
+    return _.cloneDeep(this.dbMeta);
   }
 
   // return DB setup connection
@@ -179,11 +179,9 @@ class FullstackOneCore implements IFullstackOneCore {
   public async runMigration() {
 
     try {
-      const migrateFromDbObject = await (new PgToDbObject()).getPgDbObject();
-      const migrateToDbObject   = this.getDbObject();
-      const sqlMigrations       = migration.createMigrationSqlFromTwoDbObjects(migrateFromDbObject, migrateToDbObject, true);
-      // console.error('**', migrateFromDbObject);
-      // console.error('##', migrateToDbObject);
+      const fromDbMeta = await (new PgToDbMeta()).getPgDbMeta();
+      const toDbMeta   = this.getDbMeta();
+      const sqlMigrations       = migration.createMigrationSqlFromTwoDbMetaObjects(fromDbMeta, toDbMeta, true);
       // tslint:disable-next-line:no-console
       console.log('############### DELTA:');
       // tslint:disable-next-line:no-console
@@ -251,8 +249,8 @@ class FullstackOneCore implements IFullstackOneCore {
       this.auth = new Auth();
 
       // boot GraphQL and add endpoints
-      this.dbObject = await graphQl.bootGraphQl(this);
-      this.emit('dbObject.set');
+      this.dbMeta = await graphQl.bootGraphQl(this);
+      this.emit('dbMeta.set');
 
       // execute book scripts
       await this.executeBootScripts();

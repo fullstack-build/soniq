@@ -1,4 +1,4 @@
-export interface IDbObject {
+export interface IDbMeta {
   version: number;
   schemas?: {
     [name: string]: {

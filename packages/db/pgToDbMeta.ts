@@ -1,14 +1,14 @@
 import * as deepmerge from 'deepmerge';
 
 import * as F1 from '../core';
-import { IDbObject, IDbRelation } from '../core/IDbObject';
+import { IDbMeta, IDbRelation } from '../core/IDbMeta';
 
 // https://www.alberton.info/postgresql_meta_info.html
-export class PgToDbObject extends F1.AbstractPackage {
+export class PgToDbMeta extends F1.AbstractPackage {
 
   private readonly DELETED_PREFIX = '_deleted:';
   private dbClient = this.$one.getDbSetupClient();
-  private readonly dbObject: IDbObject = {
+  private readonly dbMeta: IDbMeta = {
     version: 1.0,
     schemas: {},
     enums: {},
@@ -20,12 +20,12 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   }
 
-  public async getPgDbObject(): Promise<IDbObject> {
+  public async getPgDbMeta(): Promise<IDbMeta> {
     try {
 
       await this.iterateAndAddSchemas();
       // return copy instead of ref
-      return deepmerge({}, this.dbObject);
+      return deepmerge({}, this.dbMeta);
     } catch (err) {
       throw err;
     }
@@ -54,7 +54,7 @@ export class PgToDbObject extends F1.AbstractPackage {
         // ignore deleted schemas
         if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
           // create schema objects for each schema
-          this.dbObject.schemas[schemaName] = {
+          this.dbMeta.schemas[schemaName] = {
             name: schemaName,
             tables: {},
             views: []
@@ -101,7 +101,7 @@ export class PgToDbObject extends F1.AbstractPackage {
       const enumName = row.enum_name;
 
       // reuse existing enum (for multiple columns using same enum)
-      const thisEnums = this.dbObject.enums[enumName] = this.dbObject.enums[enumName] || {
+      const thisEnums = this.dbMeta.enums[enumName] = this.dbMeta.enums[enumName] || {
         name: enumName,
         values: row.enum_values,
         columns: {}
@@ -134,7 +134,7 @@ export class PgToDbObject extends F1.AbstractPackage {
         const tableName = row.table_name;
 
         // create new table object
-        this.dbObject.schemas[schemaName].tables[tableName] = {
+        this.dbMeta.schemas[schemaName].tables[tableName] = {
           name: tableName,
           schemaName,
           description: null,
@@ -145,13 +145,13 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
 
       // iterate tables and add columns - relates on tables existing
-      for (const tableName of Object.keys(this.dbObject.schemas[schemaName].tables)) {
+      for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
         // add columns to table
         await this.iterateAndAddColumns(schemaName, tableName);
       }
 
       // iterate tables and add constraints - relates on tables and columns existing
-      for (const tableName of Object.keys(this.dbObject.schemas[schemaName].tables)) {
+      for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
         // add constraints to table
         await this.iterateAndAddConstraints(schemaName, tableName);
       }
@@ -165,7 +165,7 @@ export class PgToDbObject extends F1.AbstractPackage {
   private async iterateAndAddColumns(schemaName, tableName): Promise<void> {
 
     // keep reference to current table
-    const currentTable = this.dbObject.schemas[schemaName].tables[tableName];
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     try {
 
@@ -204,7 +204,7 @@ export class PgToDbObject extends F1.AbstractPackage {
           type
         };
 
-        // add new column to dbObject if its not marked as deleted
+        // add new column to dbMeta if its not marked as deleted
         if (columnName.indexOf(this.DELETED_PREFIX) !== 0) {
           currentTable.columns[columnName] = newColumn;
         } else {
@@ -230,7 +230,7 @@ export class PgToDbObject extends F1.AbstractPackage {
         if (column.data_type === 'USER-DEFINED') {
           newColumn.customType = type;
           // check if it is a known enum
-          newColumn.type = (this.dbObject.enums[newColumn.customType] != null) ? 'enum' : 'customType';
+          newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
         } else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') { // Array of _uuid is most certainly an n:m relation
 
           // many to many arrays should have JSON description - check for that
@@ -240,13 +240,13 @@ export class PgToDbObject extends F1.AbstractPackage {
             // check if referenced table exists
             if (mtmRelationPayload.reference != null &&
               mtmRelationPayload.reference.tableName != null &&
-              this.dbObject.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
+              this.dbMeta.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
               // create one side m:n
               this.manyToManyRelationBuilderHelper(column, schemaName, tableName, mtmRelationPayload);
             }
           } catch (err) {
             process.stderr.write(
-              'PgToDbObject.error.mtmrelation.payload.parsing.error: ' + err + '\n',
+              'PgToDbMeta.error.mtmrelation.payload.parsing.error: ' + err + '\n',
             );
           }
         }
@@ -261,7 +261,7 @@ export class PgToDbObject extends F1.AbstractPackage {
   private async iterateAndAddConstraints(schemaName, tableName): Promise<void> {
 
     // keep reference to current table
-    const currentTable = this.dbObject.schemas[schemaName].tables[tableName];
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
     const { rows } = await this.dbClient.query(
@@ -312,7 +312,7 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   private addConstraint(constraintType,
                         constraintRow,
-                        refDbObjectCurrentTable): void {
+                        refDbMetaCurrentTable): void {
 
     let constraintName  = constraintRow.constraint_name;
     const columnName = constraintRow.column_name;
@@ -323,12 +323,12 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     // add constraint name for not_nullable
     if (constraintType === 'not_null') {
-      constraintName = `${refDbObjectCurrentTable.name}_${columnName}_not_null`;
+      constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
     }
 
     // create new constraint if name was set
     if (constraintName != null) {
-      const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
+      const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: constraintType,
         options: {},
         columns: []
@@ -340,7 +340,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     }
 
     // add constraint name to field
-    const currentColumnRef = refDbObjectCurrentTable.columns[columnName];
+    const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
 
     currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
     currentColumnRef.constraintNames.push(constraintName);
@@ -349,7 +349,7 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   }
 
-  private addCheck(constraintRow, refDbObjectCurrentTable): void {
+  private addCheck(constraintRow, refDbMetaCurrentTable): void {
     const constraintName = constraintRow.constraint_name;
     const checkCode = constraintRow.check_code;
     // ignore and other constraints without code
@@ -359,7 +359,7 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     // create new constraint if name was set
     if (constraintName != null) {
-      refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
+      refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: 'CHECK',
         options: {
           param1: checkCode
@@ -369,7 +369,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     }
 
     // add constraint name to field
-    /* const currentColumnRef = refDbObjectCurrentTable.columns[columnName];
+    /* const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
 		currentColumnRef.constraintNames.push(constraintName);*/
   }
 
@@ -389,7 +389,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     } catch (err) {
       // ignore empty payload -> fallback in code below
       process.stderr.write(
-        'PgToDbObject.error.relation.payload.parsing.error: ' + err + '\n',
+        'PgToDbMeta.error.relation.payload.parsing.error: ' + err + '\n',
       );
     }
 
@@ -442,16 +442,16 @@ export class PgToDbObject extends F1.AbstractPackage {
     const relationOneName = `${relationOne.schemaName}.${relationOne.tableName}`;
     const relationManyName = `${relationMany.schemaName}.${relationMany.tableName}`;
 
-    // add relation to dbObject
-    this.dbObject.relations[constraintName] = {
+    // add relation to dbMeta
+    this.dbMeta.relations[constraintName] = {
       [relationOneName]: relationOne,
       [relationManyName]: relationMany
     };
 
     // remove FK column
-    delete this.dbObject.schemas[relationOne.schemaName]
+    delete this.dbMeta.schemas[relationOne.schemaName]
       .tables[relationOne.tableName]
-      .columns[this.dbObject.relations[constraintName][relationOneName].columnName];
+      .columns[this.dbMeta.relations[constraintName][relationOneName].columnName];
 
   }
 
@@ -483,11 +483,11 @@ export class PgToDbObject extends F1.AbstractPackage {
     const relationSideName = `${newRelation.schemaName}.${newRelation.tableName}`;
 
     // create relation object if not available
-    this.dbObject.relations[mtmPayload.name] = this.dbObject.relations[mtmPayload.name] || {};
-    this.dbObject.relations[mtmPayload.name][relationSideName] = newRelation;
+    this.dbMeta.relations[mtmPayload.name] = this.dbMeta.relations[mtmPayload.name] || {};
+    this.dbMeta.relations[mtmPayload.name][relationSideName] = newRelation;
 
     // remove FK column
-    delete this.dbObject.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
+    delete this.dbMeta.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
 
   }
 

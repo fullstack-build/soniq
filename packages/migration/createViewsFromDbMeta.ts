@@ -5,13 +5,13 @@ const operationMapper = {
   DELETE: 'DELETE'
 };
 
-export default (dbObject, applicationUserName, includePrivileges) => {
+export default (dbMeta, applicationUserName, includePrivileges) => {
   const statements = [];
   const viewSchemas = {};
   statements.push('-- views');
 
   if (includePrivileges === true) {
-    Object.values(dbObject.schemas).forEach((schema) => {
+    Object.values(dbMeta.schemas).forEach((schema) => {
       Object.values(schema.tables).forEach((table) => {
         statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
       });
@@ -19,7 +19,7 @@ export default (dbObject, applicationUserName, includePrivileges) => {
   }
 
   // todo @Dustin: Can be null if relation table was not found
-  Object.values(dbObject.schemas).forEach((schema) => {
+  Object.values(dbMeta.schemas).forEach((schema) => {
     Object.values(schema.views).forEach((dbView) => {
       let security = '';
       const fieldSelects = dbView.fields.map((field) => {

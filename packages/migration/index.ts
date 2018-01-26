@@ -3,97 +3,46 @@ import * as deepmerge from 'deepmerge';
 import * as deepEqual from 'deep-equal';
 
 import * as F1 from '../core';
-import createViewsFromDbObject from './createViewsFromDbObject';
+import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { isExpressionValueUsed } from 'tsutils';
 import { isObject } from 'util';
-import { IDbObject } from '../core/IDbObject';
-
-interface IAction {
-  ignore: boolean;
-  add: boolean;
-  remove: boolean;
-  rename: boolean;
-  change: boolean;
-}
-
-interface ISqlObj {
-  up: undefined[];
-  down: undefined[];
-}
-
-interface IMigrationSqlObj {
-  version: number;
-  schemas?: {
-    [name: string]: {
-      name: string;
-      sql: ISqlObj;
-      tables?: {
-        [name: string]: {
-          name: string;
-          sql: ISqlObj;
-          columns: {
-            [name: string]:
-              {
-                name: string;
-                sql: ISqlObj;
-              }
-          };
-          constraints?: {
-            sql: ISqlObj;
-          };
-        };
-      }
-    }
-  };
-  enums?: {
-    [name: string]: {
-      name: string;
-      sql: ISqlObj;
-    };
-  };
-  relations?: {
-    [name: string]: {
-      name: string;
-      sql: ISqlObj;
-    };
-  };
-}
+import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
 
 export namespace migration {
   const ACTION_KEY: string = '$$action$$';
   const DELETED_PREFIX: string = '_deleted:';
   let renameInsteadOfDrop: boolean = true;
-  let dbObjectFrom: F1.IDbObject = null;
-  let dbObjectTo: F1.IDbObject = null;
-  let migrationDbObject: any = null;
+  let fromDbMeta: F1.IDbMeta = null;
+  let toDbMeta: F1.IDbMeta = null;
+  let migrationSqlObj: any = null;
 
-  export function createMigrationSqlFromTwoDbObjects(pDbObjectFrom: F1.IDbObject,
-                                                     pDbObjectTo: F1.IDbObject,
-                                                     pRenameInsteadOfDrop: boolean = true): string[] {
+  export function createMigrationSqlFromTwoDbMetaObjects(pFromDbMeta: F1.IDbMeta,
+                                                         pToDbMeta: F1.IDbMeta,
+                                                         pRenameInsteadOfDrop: boolean = true): string[] {
 
     renameInsteadOfDrop = pRenameInsteadOfDrop;
 
-    // check if dbObjectTo is empty -> Parsing error
-    if (pDbObjectTo == null || Object.keys(pDbObjectTo).length === 0) {
+    // check if toDbMeta is empty -> Parsing error
+    if (pToDbMeta == null || Object.keys(pToDbMeta).length === 0) {
       throw new Error(`Migration Error: Provided migration final state is empty.`);
     }
 
     // crete copy of objects
     // new
-    dbObjectFrom = _.cloneDeep(pDbObjectFrom);
+    fromDbMeta = _.cloneDeep(pFromDbMeta);
     // remove views and exposed names
-    delete dbObjectFrom.exposedNames;
+    delete fromDbMeta.exposedNames;
 
     // old
-    dbObjectTo = _.cloneDeep(pDbObjectTo);
+    toDbMeta = _.cloneDeep(pToDbMeta);
     // remove views and exposed names
-    delete dbObjectTo.exposedNames;
+    delete toDbMeta.exposedNames;
     // remove graphql // todo
-    delete dbObjectTo.schemas.graphql;
+    delete toDbMeta.schemas.graphql;
 
-    migrationDbObject = _diffAndAddActions(dbObjectFrom, dbObjectTo);
+    migrationSqlObj = _diffAndAddActions(fromDbMeta, toDbMeta);
 
-    return _sqlMigrationObjToSqlStatements(createMigrationSqlObjFromDeltaDbObject());
+    return _sqlMigrationObjToSqlStatements(createMigrationSqlObjFromDeltaDbMeta());
   }
 
   function _sqlMigrationObjToSqlStatements(sqlMigrationObj: IMigrationSqlObj): string[] {
@@ -196,7 +145,7 @@ export namespace migration {
     };
   }
 
-  function createMigrationSqlObjFromDeltaDbObject(): IMigrationSqlObj {
+  function createMigrationSqlObjFromDeltaDbMeta(): IMigrationSqlObj {
     const sqlMigrationObj: IMigrationSqlObj = {
       version: 1.0,
       schemas: {
@@ -214,15 +163,15 @@ export namespace migration {
     };
 
     // create enum types first
-    if (migrationDbObject.enums != null) {
-      const enums = _splitActionFromNode(migrationDbObject.enums).node;
+    if (migrationSqlObj.enums != null) {
+      const enums = _splitActionFromNode(migrationSqlObj.enums).node;
       Object.entries(enums).map((enumTypeArray) => {
         createSqlForEnumObject(sqlMigrationObj, enumTypeArray[0], enumTypeArray[1]);
       });
     }
 
-    if (migrationDbObject.schemas != null) {
-      const schemas = _splitActionFromNode(migrationDbObject.schemas).node;
+    if (migrationSqlObj.schemas != null) {
+      const schemas = _splitActionFromNode(migrationSqlObj.schemas).node;
 
       // iterate over database schemas
       Object.entries(schemas).map((schemaEntry) => {
@@ -245,8 +194,8 @@ export namespace migration {
     }
 
     // iterate over database relations
-    if (migrationDbObject.relations != null) {
-      const relations = _splitActionFromNode(migrationDbObject.relations).node;
+    if (migrationSqlObj.relations != null) {
+      const relations = _splitActionFromNode(migrationSqlObj.relations).node;
 
       Object.values(relations).map((
         relationObj: { [tableName: string]: F1.IDbRelation }
@@ -373,7 +322,7 @@ export namespace migration {
     const { action, node } = _splitActionFromNode(tableDefinition);
 
     // use the current table name, otherwise name of node
-    // (in case it got removed on dbObject merge)
+    // (in case it got removed on dbMeta merge)
     const tableNameUp   = node.name || tableName;
     const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
     const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;
@@ -558,7 +507,7 @@ export namespace migration {
         }
         break;
       case 'PRIMARY KEY':
-        /* moved to graphQlSchemaToDbObject -> expression
+        /* moved to graphQlSchemaToDbMeta -> expression
 				// convention: all PKs are generated uuidv4
 				node.columns.forEach((columnName) => {
 					sqlCommands.up.push(
@@ -653,15 +602,15 @@ export namespace migration {
         // todo redundant => combine into function
         /*
         // todo: remove, cannot be checked for relations. trust, DB will test!
-        if (migrationDbObject.schemas[node.schemaName] == null ||
-            migrationDbObject.schemas[node.schemaName].tables[node.tableName] == null) {
+        if (sqlMigrationObj.schemas[node.schemaName] == null ||
+            sqlMigrationObj.schemas[node.schemaName].tables[node.tableName] == null) {
           process.stdout.write(
             'migration.relation.missing.table: ' +
             `${node.name}: ${node.schemaName}.${node.tableName} not found` + '\n'
           );
           return;
-        } else if (migrationDbObject.schemas[node.reference.schemaName] == null ||
-                   migrationDbObject.schemas[node.reference.schemaName].tables[node.reference.tableName] == null) {
+        } else if (sqlMigrationObj.schemas[node.reference.schemaName] == null ||
+                   sqlMigrationObj.schemas[node.reference.schemaName].tables[node.reference.tableName] == null) {
           process.stdout.write(
             'migration.relation.missing.table: ' +
             `${node.name}: ${node.reference.schemaName}.${node.reference.tableName} not found` + '\n'
@@ -670,7 +619,7 @@ export namespace migration {
         }*/
 
         const tableName = `"${node.schemaName}"."${node.tableName}"`;
-        const fullRelationToNode = dbObjectTo.relations[node.name];
+        const fullRelationToNode = toDbMeta.relations[node.name];
 
         // create column for FK // convention: uuid
         if (!ignoreColumnsCreation) {
@@ -730,7 +679,7 @@ export namespace migration {
           const constraintName = `fk_${node.name}`;
 
           const oneSideTableName = `"${node.reference.schemaName}"."${node.reference.tableName}"`;
-          const fullRelationToNode = dbObjectTo.relations[node.name];
+          const fullRelationToNode = toDbMeta.relations[node.name];
           thisSql.up.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${oneSideTableName} IS '${JSON.stringify(fullRelationToNode)}';`);
         }
       }
@@ -739,7 +688,7 @@ export namespace migration {
       if (action.change) {
         /*
         // FROM find one side and copy and add "remove" action
-        const fullRelationFromNodeOneSide = { ...Object.values(dbObjectFrom.relations[node.name]).find((relation) => {
+        const fullRelationFromNodeOneSide = { ...Object.values(fromDbMeta.relations[node.name]).find((relation) => {
           return (relation.type === 'ONE');
         }), [ACTION_KEY]: {
           remove: true
@@ -748,7 +697,7 @@ export namespace migration {
         _createSqlRelation(fullRelationFromNodeOneSide, true);
         */
         // TO: find one side and copy and add "add" action
-        const fullRelationToNodeOneSide = { ...Object.values(dbObjectTo.relations[node.name]).find((relation) => {
+        const fullRelationToNodeOneSide = { ...Object.values(toDbMeta.relations[node.name]).find((relation) => {
           return (relation.type === 'ONE');
         }), [ACTION_KEY]: {
           add: true
@@ -781,15 +730,15 @@ export namespace migration {
     // CANNOT BE DONE FOR MIGRATIONS WHERE TABLES MIGHT BE MISSING
     // check if both sides of relation exist, ignore relation otherwise
     // todo redundant => combine into function
-    if (migrationDbObject.schemas[nodeRelation1Clean.schemaName] == null ||
-      migrationDbObject.schemas[nodeRelation1Clean.schemaName].tables[nodeRelation1Clean.tableName] == null) {
+    if (sqlMigrationObj.schemas[nodeRelation1Clean.schemaName] == null ||
+      sqlMigrationObj.schemas[nodeRelation1Clean.schemaName].tables[nodeRelation1Clean.tableName] == null) {
       process.stdout.write(
         'migration.relation.missing.table: ' +
         `${nodeRelation1Clean.name}: ${nodeRelation1Clean.schemaName}.${nodeRelation1Clean.tableName} not found` + '\n'
       );
       return;
-    } else if (migrationDbObject.schemas[nodeRelation1Clean.reference.schemaName] == null ||
-      migrationDbObject.schemas[nodeRelation1Clean.reference.schemaName].tables[nodeRelation1Clean.reference.tableName] == null) {
+    } else if (sqlMigrationObj.schemas[nodeRelation1Clean.reference.schemaName] == null ||
+      sqlMigrationObj.schemas[nodeRelation1Clean.reference.schemaName].tables[nodeRelation1Clean.reference.tableName] == null) {
       process.stdout.write(
         'migration.relation.missing.table: ' +
         `${nodeRelation1Clean.name}: ${nodeRelation1Clean.reference.schemaName}.${nodeRelation1Clean.reference.tableName} not found` + '\n'
@@ -799,15 +748,15 @@ export namespace migration {
 
     // check if both sides of relation exist, ignore relation otherwise
     // todo redundant => combine into function
-    if (migrationDbObject.schemas[nodeRelation2Clean.schemaName] == null ||
-      migrationDbObject.schemas[nodeRelation2Clean.schemaName].tables[nodeRelation2Clean.tableName] == null) {
+    if (sqlMigrationObj.schemas[nodeRelation2Clean.schemaName] == null ||
+      sqlMigrationObj.schemas[nodeRelation2Clean.schemaName].tables[nodeRelation2Clean.tableName] == null) {
       process.stdout.write(
         'migration.relation.missing.table: ' +
         `${nodeRelation2Clean.name}: ${nodeRelation2Clean.schemaName}.${nodeRelation2Clean.tableName} not found` + '\n'
       );
       return;
-    } else if (migrationDbObject.schemas[nodeRelation2Clean.reference.schemaName] == null ||
-      migrationDbObject.schemas[nodeRelation2Clean.reference.schemaName].tables[nodeRelation2Clean.reference.tableName] == null) {
+    } else if (sqlMigrationObj.schemas[nodeRelation2Clean.reference.schemaName] == null ||
+      sqlMigrationObj.schemas[nodeRelation2Clean.reference.schemaName].tables[nodeRelation2Clean.reference.tableName] == null) {
       process.stdout.write(
         'migration.relation.missing.table: ' +
         `${nodeRelation2Clean.name}: ${nodeRelation2Clean.reference.schemaName}.${nodeRelation2Clean.reference.tableName} not found` + '\n'
@@ -1019,58 +968,58 @@ export namespace migration {
     return obj;
   }
 
-  function _diffAndAddActions(dbObjFrom, dbObjTo) {
+  function _diffAndAddActions(pFromDbMeta, pToDbMeta) {
 
-    return iterateAndMark(dbObjFrom, dbObjTo, {});
-    function iterateAndMark(pDbObjFrom, pDbObjTo, pResult, pFromObjParent: {} = {}, pToObjParent: {} = {}, pResultParent: {} = {}) {
+    return iterateAndMark(pFromDbMeta, pToDbMeta, {});
+    function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, pFromObjParent: {} = {}, pToObjParent: {} = {}, pResultParent: {} = {}) {
       // all keys
-      const keys = _.union(Object.keys(pDbObjFrom), Object.keys(pDbObjTo));
+      const keys = _.union(Object.keys(recursiveFromDbMeta), Object.keys(recursiveToDbMeta));
       keys.map((key) => {
-        if /* only from */ (pDbObjTo[key] == null) {
+        if /* only from */ (recursiveToDbMeta[key] == null) {
           // is not object -> copy value
-          if (!isObject(pDbObjFrom[key])) {
+          if (!isObject(recursiveFromDbMeta[key])) {
             // ignore empty
-            if (pDbObjFrom[key] != null) {
-              pResult[key] = pDbObjFrom[key];
+            if (recursiveFromDbMeta[key] != null) {
+              pResult[key] = recursiveFromDbMeta[key];
             }
           } else { // nested object
             // mark node as "remove" continue recursively
             pResult[key] = pResult[key] || {}; // create node if not available
             pResult[key][ACTION_KEY] = pResult[key][ACTION_KEY] || {};
             pResult[key][ACTION_KEY].remove = true;
-            iterateAndMark(pDbObjFrom[key], {}, pResult[key], pDbObjFrom, pDbObjTo, pResult);
+            iterateAndMark(recursiveFromDbMeta[key], {}, pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
           }
 
-        } /* only "to" */ else if (pDbObjFrom[key] == null) {
+        } /* only "to" */ else if (recursiveFromDbMeta[key] == null) {
           // is not object -> copy value
-          if (!isObject(pDbObjTo[key])) {
+          if (!isObject(recursiveToDbMeta[key])) {
             // ignore empty
-            if (pDbObjTo[key] != null) {
+            if (recursiveToDbMeta[key] != null) {
               // copy value
-              pResult[key] = pDbObjTo[key];
+              pResult[key] = recursiveToDbMeta[key];
             }
           } else { // nested object
             // mark node as "add" continue recursively
             pResult[key] = pResult[key] || {}; // create node if not available
             pResult[key][ACTION_KEY] = pResult[key][ACTION_KEY] || {};
             pResult[key][ACTION_KEY].add = true;
-            iterateAndMark({}, pDbObjTo[key], pResult[key], pDbObjFrom, pDbObjTo, pResult);
+            iterateAndMark({}, recursiveToDbMeta[key], pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
           }
 
         } /* both sides */ else {
           // both not an object?
-          if (!isObject(pDbObjFrom[key]) && !isObject(pDbObjTo[key])) {
+          if (!isObject(recursiveFromDbMeta[key]) && !isObject(recursiveToDbMeta[key])) {
 
             // not equal? -> use new value, mark parent as changed / otherwise ignore
-            if (pDbObjFrom[key] !== pDbObjTo[key]) {
-              pResult[key] = pDbObjTo[key];
+            if (recursiveFromDbMeta[key] !== recursiveToDbMeta[key]) {
+              pResult[key] = recursiveToDbMeta[key];
               // parent "change"
               pResult[ACTION_KEY] = pResult[ACTION_KEY] || {};
               pResult[ACTION_KEY].change = true;
             } else {
               // ignore equal values, but keep name
               if (key === 'name') {
-                pResult[key] = pDbObjTo[key];
+                pResult[key] = recursiveToDbMeta[key];
               }
             }
           } else { // nested object
@@ -1078,8 +1027,8 @@ export namespace migration {
             // create empty node
             pResult[key] = pResult[key] || {};
             // compare old and new (first level) and mark as changed if not equal
-            const nodeDiff = _difference(_getPropertiesWithoutNested(pDbObjTo[key], ['oldName', 'oldSchemaName']),
-              _getPropertiesWithoutNested(pDbObjFrom[key], ['oldName', 'oldSchemaName']));
+            const nodeDiff = _difference(_getPropertiesWithoutNested(recursiveToDbMeta[key], ['oldName', 'oldSchemaName']),
+              _getPropertiesWithoutNested(recursiveFromDbMeta[key], ['oldName', 'oldSchemaName']));
             if (Object.keys(nodeDiff).length > 0) {
               // "change" detected, mark this node before continuing recursively
               pResult[key][ACTION_KEY] = pResult[key][ACTION_KEY] || {};
@@ -1087,15 +1036,15 @@ export namespace migration {
             }
 
             // continue recursively
-            iterateAndMark(pDbObjFrom[key], pDbObjTo[key], pResult[key], pDbObjFrom, pDbObjTo, pResult);
+            iterateAndMark(recursiveFromDbMeta[key], recursiveToDbMeta[key], pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
 
           }
 
         }
       });
 
-      // adjust changes to dbObj for migration
-      _adjustDeltaDbObject(pResult);
+      // adjust changes on dbMeta for migration
+      _adjustDeltaDbMeta(pResult);
       // clean empty objects
       _cleanObject(pResult);
       return pResult;
@@ -1103,11 +1052,11 @@ export namespace migration {
 
   }
 
-  function _adjustDeltaDbObject(pMigrationDbObject: F1.IDbObject): F1.IDbObject {
+  function _adjustDeltaDbMeta(pMigrationDbMeta: F1.IDbMeta): F1.IDbMeta {
 
     // iterate schemas
-    if (pMigrationDbObject.schemas != null) {
-      Object.entries(pMigrationDbObject.schemas).map((schema) => {
+    if (pMigrationDbMeta.schemas != null) {
+      Object.entries(pMigrationDbMeta.schemas).map((schema) => {
         const schemaName = schema[0];
         const schemaDef = schema[1];
 
@@ -1119,7 +1068,7 @@ export namespace migration {
 
             // rename table?
             if (tableDef.oldName != null || tableDef.oldSchemaName != null) {
-              _combineRenamedNodes(tableDef.oldSchemaName, tableDef.schemaName, tableDef.oldName, tableName, pMigrationDbObject.schemas);
+              _combineRenamedNodes(tableDef.oldSchemaName, tableDef.schemaName, tableDef.oldName, tableName, pMigrationDbMeta.schemas);
             }
 
             // iterate columns
@@ -1141,8 +1090,8 @@ export namespace migration {
       });
     }
     // iterate enums and adjust enums
-    if (pMigrationDbObject.enums != null) {
-      Object.entries(pMigrationDbObject.enums).map((enumEntry) => {
+    if (pMigrationDbMeta.enums != null) {
+      Object.entries(pMigrationDbMeta.enums).map((enumEntry) => {
         const enumName = enumEntry[0];
         const enumDef = enumEntry[1];
         const enumValues = enumDef.values;
@@ -1152,7 +1101,7 @@ export namespace migration {
         // if enum or enum values action "change" => recreate (remove and add) enum type
         // override with enum values "to" and mark als remove and add
         if ((enumAction != null && enumAction.change) || (enumValuesAction != null && enumValuesAction.change)) {
-          enumDef.values = dbObjectTo.enums[enumName].values;
+          enumDef.values = toDbMeta.enums[enumName].values;
           enumDef[ACTION_KEY] = {
             remove: true,
             add:    true
@@ -1163,9 +1112,9 @@ export namespace migration {
           Object.values(enumColumns).forEach((enumColumn) => {
             // access coulmn using enum
             const enumColumnDefinitionMigration =
-              pMigrationDbObject.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
+              pMigrationDbMeta.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
             const enumColumnDefinitionTo =
-              dbObjectTo.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
+              toDbMeta.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
 
             enumColumnDefinitionMigration[ACTION_KEY] = enumColumnDefinitionMigration[ACTION_KEY] || {};
             enumColumnDefinitionMigration[ACTION_KEY].changed = true;
@@ -1251,7 +1200,7 @@ export namespace migration {
         }
 
         // check if node is a table and has relations
-        if (pMigrationDbObject.relations) {
+        if (pMigrationDbMeta.relations) {
           _renameRelations();
         }
 
@@ -1309,7 +1258,7 @@ export namespace migration {
           const oldRelationSideName = `${oldSchemaName}.${oldTableName}`;
 
           // iterate relations
-          const relationsToBeRenamed = Object.values(pMigrationDbObject.relations).filter((relationsObj) => {
+          const relationsToBeRenamed = Object.values(pMigrationDbMeta.relations).filter((relationsObj) => {
             // iterate both sides of the relation
             let result = false;
             Object.values(relationsObj).map((sideOfRelation) => {
@@ -1333,7 +1282,7 @@ export namespace migration {
             delete oldRelation.tableName;
             if (!deepEqual(oldRelation, newRelation)) {
               // remove old part of relation
-              delete pMigrationDbObject.relations[oldRelation.name][oldRelationSideName];
+              delete pMigrationDbMeta.relations[oldRelation.name][oldRelationSideName];
               // mark remaining two as to be renamed
 
               Object.values(relationObj).map((relationToTable) => {
@@ -1343,7 +1292,7 @@ export namespace migration {
                     rename: true
                   };
                   // and return
-                  pMigrationDbObject.relations[newRelation.name][newRelationSideName] = relationToTable;
+                  pMigrationDbMeta.relations[newRelation.name][newRelationSideName] = relationToTable;
                 }
               });
             }
@@ -1404,7 +1353,7 @@ export namespace migration {
     }
     return nested(obj);*/
 
-    return pMigrationDbObject;
+    return pMigrationDbMeta;
   }
 
 }
