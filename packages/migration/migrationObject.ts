@@ -184,14 +184,14 @@ export namespace migrationObject {
           // mark columns as changed to force type cast to new enum type
           const enumColumns = _splitActionFromNode(enumDef.columns).node;
           Object.values(enumColumns).forEach((enumColumn) => {
-            // access coulmn using enum
+            // access column using enum
             const enumColumnDefinitionMigration =
               pMigrationDbMeta.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
             const enumColumnDefinitionTo =
               toDbMeta.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];
 
             enumColumnDefinitionMigration[ACTION_KEY] = enumColumnDefinitionMigration[ACTION_KEY] || {};
-            enumColumnDefinitionMigration[ACTION_KEY].changed = true;
+            enumColumnDefinitionMigration[ACTION_KEY].change = true;
             // keep needed type information from "to" state
             enumColumnDefinitionMigration.type        = enumColumnDefinitionTo.type;
             enumColumnDefinitionMigration.customType  = enumColumnDefinitionTo.customType;
@@ -357,8 +357,8 @@ export namespace migrationObject {
             if (!deepEqual(oldRelation, newRelation)) {
               // remove old part of relation
               delete pMigrationDbMeta.relations[oldRelation.name][oldRelationSideName];
-              // mark remaining two as to be renamed
 
+              // mark remaining two as to be renamed
               Object.values(relationObj).map((relationToTable) => {
                 if (relationToTable.tableName != null) {
                   // mark

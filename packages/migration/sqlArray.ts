@@ -30,6 +30,7 @@ export namespace sqlArray {
     return helper.splitActionFromNode(ACTION_KEY, node);
   }
 
+  // iterate sqlMigrationObj in a certain order in order to create SQL statement in the correct order
   function _sqlMigrationObjToSqlStatements(sqlMigrationObj: IMigrationSqlObj): string[] {
     const sqlStatements = [];
 
