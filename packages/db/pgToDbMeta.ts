@@ -53,7 +53,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
 
         // ignore deleted schemas
         if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
-          // create schema objects for each schema
+          // getSqlFromMigrationObj schema objects for each schema
           this.dbMeta.schemas[schemaName] = {
             name: schemaName,
             tables: {},
@@ -133,7 +133,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
       for (const row of Object.values(rows)) {
         const tableName = row.table_name;
 
-        // create new table object
+        // getSqlFromMigrationObj new table object
         this.dbMeta.schemas[schemaName].tables[tableName] = {
           name: tableName,
           schemaName,
@@ -196,7 +196,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
       for (const column of Object.values(rows)) {
         const type = column.udt_name;
 
-        // create new column and keep reference for later
+        // getSqlFromMigrationObj new column and keep reference for later
         const columnName = column.column_name;
         const newColumn: any = {
           name: columnName,
@@ -241,7 +241,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
             if (mtmRelationPayload.reference != null &&
               mtmRelationPayload.reference.tableName != null &&
               this.dbMeta.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
-              // create one side m:n
+              // getSqlFromMigrationObj one side m:n
               this.manyToManyRelationBuilderHelper(column, schemaName, tableName, mtmRelationPayload);
             }
           } catch (err) {
@@ -326,7 +326,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
       constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
     }
 
-    // create new constraint if name was set
+    // getSqlFromMigrationObj new constraint if name was set
     if (constraintName != null) {
       const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: constraintType,
@@ -357,7 +357,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
       return;
     }
 
-    // create new constraint if name was set
+    // getSqlFromMigrationObj new constraint if name was set
     if (constraintName != null) {
       refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: 'CHECK',
@@ -398,7 +398,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
     const onUpdate = (constraint.on_update !== 'NO ACTION') ? constraint.on_update : null;
     const onDelete = (constraint.on_delete !== 'NO ACTION') ? constraint.on_delete : null;
 
-    // create relation: one
+    // getSqlFromMigrationObj relation: one
     const relationOne: IDbRelation = {
       name: constraintName,
       type: 'ONE',
@@ -418,7 +418,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
       }
     };
 
-    // create relation: many
+    // getSqlFromMigrationObj relation: many
     const relationMany: IDbRelation = {
       name: constraintName,
       type: 'MANY',
@@ -459,7 +459,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
 
     const relationName = mtmPayload.name;
 
-    // create relation: one
+    // getSqlFromMigrationObj relation: one
     const newRelation: IDbRelation = {
       name: relationName,
       type: 'MANY',
@@ -482,7 +482,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
     // relations names
     const relationSideName = `${newRelation.schemaName}.${newRelation.tableName}`;
 
-    // create relation object if not available
+    // getSqlFromMigrationObj relation object if not available
     this.dbMeta.relations[mtmPayload.name] = this.dbMeta.relations[mtmPayload.name] || {};
     this.dbMeta.relations[mtmPayload.name][relationSideName] = newRelation;
 

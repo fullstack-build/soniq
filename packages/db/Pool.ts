@@ -18,7 +18,7 @@ export class DbPool extends F1.AbstractPackage implements IDb {
 
   public async create(): Promise<PgPool> {
     try {
-      // create first connection
+      // getSqlFromMigrationObj first connection
       const pool = await this.pool.connect();
       try {
         this.logger.info(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);

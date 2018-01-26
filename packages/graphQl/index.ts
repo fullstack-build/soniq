@@ -8,7 +8,6 @@ import { helper } from '../core';
 
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
-export * from '../migration/migration';
 
 import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/resolvers';

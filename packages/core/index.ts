@@ -25,7 +25,7 @@ import { Events, IEventEmitter } from './events';
 import { DbClient, DbPool, PgClient, PgPool, PgToDbMeta } from '../db';
 import { Logger } from './logger';
 import { graphQl } from '../graphQl/index';
-import { migration } from '../migration/index';
+import { Migration } from '../migration';
 import { Auth } from '../auth';
 
 // helper
@@ -74,7 +74,7 @@ class FullstackOneCore implements IFullstackOneCore {
       path:    projectPath,
       port:    parseInt(process.env.PORT, 10),
       version: PROJECT_PACKAGE.version,
-      // create unique instance ID (6 char)
+      // getSqlFromMigrationObj unique instance ID (6 char)
       nodeId:  randomBytes(20).toString('hex').substr(5,6),
       namespace: 'f1' // default
     };
@@ -88,7 +88,7 @@ class FullstackOneCore implements IFullstackOneCore {
     // set namespace from config
     this.ENVIRONMENT.namespace = this.CONFIG.core.namespace;
 
-    // create event emitter
+    // getSqlFromMigrationObj event emitter
     this.eventEmitter = Events.getEventEmitter(this);
 
     // init core logger
@@ -179,9 +179,11 @@ class FullstackOneCore implements IFullstackOneCore {
   public async runMigration() {
 
     try {
-      const fromDbMeta = await (new PgToDbMeta()).getPgDbMeta();
-      const toDbMeta   = this.getDbMeta();
-      const sqlMigrations       = migration.createMigrationSqlFromTwoDbMetaObjects(fromDbMeta, toDbMeta, true);
+      const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
+      const toDbMeta        = this.getDbMeta();
+      const migration       = new Migration(fromDbMeta, toDbMeta);
+      const sqlMigrations   = migration.getSqlStatements(true);
+
       // tslint:disable-next-line:no-console
       console.log('############### DELTA:');
       // tslint:disable-next-line:no-console
@@ -270,21 +272,21 @@ class FullstackOneCore implements IFullstackOneCore {
 
   }
 
-  // connect to setup db and create a general connection pool
+  // connect to setup db and getSqlFromMigrationObj a general connection pool
   private async connectDB() {
     const configDB = this.getConfig('db');
 
     try {
-      // create connection with setup user
+      // getSqlFromMigrationObj connection with setup user
       const configDbWithAppName = configDB.setup;
       configDbWithAppName.application_name = this.ENVIRONMENT.namespace + '_client_' + this.nodeId;
       this.dbSetupClientObj = new DbClient(configDbWithAppName);
-      // create connection
+      // getSqlFromMigrationObj connection
       await this.dbSetupClientObj.create();
       // emit event
       this.emit('db.setup.connection.created');
 
-      // create pool
+      // getSqlFromMigrationObj pool
       await _gracefullyAdjustPoolSize.bind(this)();
 
       // and adjust pool size for every node change
@@ -294,7 +296,7 @@ class FullstackOneCore implements IFullstackOneCore {
 
         // gracefully end pool if already available
         if (this.dbPoolObj != null) {
-          // dont wait for promise, we just immediately create a new pool
+          // dont wait for promise, we just immediately getSqlFromMigrationObj a new pool
           this.dbPoolObj.end();
         }
 
@@ -302,7 +304,7 @@ class FullstackOneCore implements IFullstackOneCore {
         // reserve one for setup connection
         const connectionsPerInstance: number = Math.floor((configDB.general.totalMax / knownNodes - 1));
 
-        // create general connection pool
+        // getSqlFromMigrationObj general connection pool
         const generalDbWithAppNameAndMaxConnections = {
           ... configDB.general,
           application_name: this.ENVIRONMENT.namespace + '_pool_' + this.nodeId,
@@ -310,7 +312,7 @@ class FullstackOneCore implements IFullstackOneCore {
         };
         // new pool with adjusted number of connections
         this.dbPoolObj = new DbPool(generalDbWithAppNameAndMaxConnections);
-        // create pool
+        // getSqlFromMigrationObj pool
         await this.dbPoolObj.create();
         // emit event
         this.emit('db.pool.created');
@@ -469,7 +471,7 @@ class FullstackOneCore implements IFullstackOneCore {
 
 // GETTER
 
-// F1 SINGLETON
+// One SINGLETON
 const $one = new FullstackOneCore();
 export function getInstance(): FullstackOneCore {
   return $one;

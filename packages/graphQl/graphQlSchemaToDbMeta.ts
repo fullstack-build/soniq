@@ -54,7 +54,7 @@ const GQL_JSON_PARSER = {
   Document: (gQlSchemaNode, dbMetaNode, refDbMeta) => {
 
     // FIRST round:
-    // create blank objects for all tables and enums (needed for validation of relationships)
+    // getSqlFromMigrationObj blank objects for all tables and enums (needed for validation of relationships)
     // but don't continue recursively
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
       // type
@@ -98,14 +98,14 @@ const GQL_JSON_PARSER = {
     const schemaName  = schemaAndTableName.schemaName || 'public';
     const tableName   = schemaAndTableName.tableName || typeName;
 
-    // find or create schema
+    // find or getSqlFromMigrationObj schema
     refDbMeta.schemas[schemaName] = refDbMeta.schemas[schemaName] || {
       name: schemaName,
       tables:{},
       views: []
     };
 
-    // find or create table in schema
+    // find or getSqlFromMigrationObj table in schema
     // and save ref to tableObject for recursion
     const refDbMetaCurrentTable = refDbMeta.schemas[schemaName].tables[tableName] = refDbMeta.schemas[schemaName].tables[tableName] || {
       schemaName,
@@ -261,7 +261,7 @@ const GQL_JSON_PARSER = {
     refDbMeta,
     refDbMetaCurrentTable,
   ) => {
-    // create columns object if not set already
+    // getSqlFromMigrationObj columns object if not set already
     dbMetaNode.columns = dbMetaNode.columns || {};
 
     // check if column is relation
@@ -532,7 +532,7 @@ function addConstraint(pConstraintType,
       break;
   }
 
-  // create new constraint if name was set
+  // getSqlFromMigrationObj new constraint if name was set
   if (constraintName != null) {
     const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
       type: constraintType,
@@ -542,7 +542,7 @@ function addConstraint(pConstraintType,
     // link constraint to field
     if (linkToColumn != null) {
 
-      // create columns field if not available
+      // getSqlFromMigrationObj columns field if not available
       constraint.columns = constraint.columns || [];
 
       // add column name to constraint
@@ -680,7 +680,7 @@ function relationBuilderHelper(
     const thisRelationName        = `${relationSchemaName}.${relationTableName}`;
     const referencedRelationName  = `${referencedSchemaName}.${referencedTableName}`;
 
-    // get or create new relations and keep reference for later
+    // get or getSqlFromMigrationObj new relations and keep reference for later
     const relations = refDbMeta.relations[relationName] = refDbMeta.relations[relationName] || {
       [thisRelationName]:     _.cloneDeep(emptyRelation),
       [referencedRelationName]: _.cloneDeep(emptyRelation)

@@ -34,7 +34,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     otherDefinitions
   } = classification;
 
-  // create new GraphQL document
+  // getFromMigrationDbMeta new GraphQL document
   const graphQlDocument = {
     kind: 'Document',
     // definitions: [...otherDefinitions],

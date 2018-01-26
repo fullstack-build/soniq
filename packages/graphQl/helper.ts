@@ -28,7 +28,7 @@ export namespace graphQl.helper {
     tableObject: IDbMeta,
     migrationId?: number,
   ) => {
-    // create name for migration
+    // getSqlFromMigrationObj name for migration
     const timestampMigration =
       migrationsPath + (migrationId || new Date().getTime()) + '.json';
 
