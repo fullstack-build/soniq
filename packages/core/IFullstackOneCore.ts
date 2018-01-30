@@ -4,8 +4,8 @@ import * as Koa from 'koa';
 import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
 import { IEnvironmentInformation } from './IEnvironmentInformation';
-import { IDbObject } from './IDbObject';
-export { IEnvironmentInformation, IDbObject };
+import { IDbMeta } from './IDbMeta';
+export { IEnvironmentInformation, IDbMeta };
 
 // fullstackOne imports
 import { Logger } from './logger';
@@ -20,7 +20,7 @@ export interface IFullstackOneCore {
   getLogger: (pModuleName: string) => Logger;
   getApp: () => Koa;
   getEventEmitter: () => IEventEmitter;
-  getDbObject: () => IDbObject;
+  getDbMeta: () => IDbMeta;
   getDbSetupClient: () => PgClient;
   getDbPool: () => PgPool;
   runMigration: () => void;

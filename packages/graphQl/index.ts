@@ -8,14 +8,13 @@ import { helper } from '../core';
 
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
-export * from '../migration/migration';
 
 import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/resolvers';
 
 // import interfaces
 import { IViews, IExpressions } from './interfaces';
-import { parseGraphQlJsonSchemaToDbObject } from './graphQlSchemaToDbObject';
+import { parseGraphQlJsonSchemaToDbMeta } from './graphQlSchemaToDbMeta';
 
 export namespace graphQl {
 
@@ -26,7 +25,7 @@ export namespace graphQl {
   let gQlRuntimeSchema: string;
   let gQlRuntimeDocument: any;
   let gQlTypes: any;
-  let dbObject: any;
+  let dbMeta: any;
   let mutations: any;
   let queries: any;
   let customOperations: any;
@@ -49,53 +48,60 @@ export namespace graphQl {
       // emit event
       $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
 
-      dbObject = parseGraphQlJsonSchemaToDbObject(gQlJsonSchema);
+      dbMeta = parseGraphQlJsonSchemaToDbMeta(gQlJsonSchema);
+
       // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbObject`);
+      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbMeta`);
 
-      // load permissions
-      const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
-      const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
-      views = [].concat.apply([], viewsArray);
-      // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
+      // load permissions and expressions and generate views and put them into schemas
+      try {
 
-      // load expressions
-      const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
-      const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
-      expressions = [].concat.apply([], expressionsArray);
-      // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
+        // load permissions
+        const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
+        const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
+        views = [].concat.apply([], viewsArray);
+        // emit event
+        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
-      const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbObject, $one);
+        // load expressions
+        const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
+        const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
+        expressions = [].concat.apply([], expressionsArray);
+        // emit event
+        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
-      gQlRuntimeDocument = combinedSchemaInformation.document;
-      gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
-      gQlTypes = combinedSchemaInformation.gQlTypes;
-      queries = combinedSchemaInformation.queries;
-      mutations = combinedSchemaInformation.mutations;
+        const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbMeta, $one);
 
-      customOperations = {
-        fields: combinedSchemaInformation.customFields,
-        queries: combinedSchemaInformation.customQueries,
-        mutations: combinedSchemaInformation.customMutations
-      };
+        gQlRuntimeDocument = combinedSchemaInformation.document;
+        gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(gQlRuntimeDocument);
+        gQlTypes = combinedSchemaInformation.gQlTypes;
+        queries = combinedSchemaInformation.queries;
+        mutations = combinedSchemaInformation.mutations;
 
-      Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
-        if (dbObject.schemas[dbView.viewSchemaName] == null) {
-          dbObject.schemas[dbView.viewSchemaName] = {
-            tables: {},
-            views: {}
-          };
-        }
-        dbObject.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
-      });
-      // dbObject.views = combinedSchemaInformation.views;
+        customOperations = {
+          fields: combinedSchemaInformation.customFields,
+          queries: combinedSchemaInformation.customQueries,
+          mutations: combinedSchemaInformation.customMutations
+        };
 
-      // add endpoints
-      await addEndpoints($one);
+        Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
+          if (dbMeta.schemas[dbView.viewSchemaName] == null) {
+            dbMeta.schemas[dbView.viewSchemaName] = {
+              tables: {},
+              views: {}
+            };
+          }
+          dbMeta.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
+        });
 
-      return dbObject;
+        // add endpoints
+        await addEndpoints($one);
+
+      } catch (err) {
+        throw err;
+      }
+
+      return dbMeta;
 
     } catch (err) {
       // tslint:disable-next-line:no-console
@@ -129,7 +135,7 @@ export namespace graphQl {
 
     const schema = makeExecutableSchema({
 			typeDefs: gQlRuntimeSchema,
-			resolvers: getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject),
+			resolvers: getResolvers(gQlTypes, dbMeta, queries, mutations, customOperations, resolversObject),
 		});
 
     const setCacheHeaders = async (ctx, next) => {

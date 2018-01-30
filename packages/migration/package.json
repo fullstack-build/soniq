@@ -10,6 +10,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1"
   }
 }

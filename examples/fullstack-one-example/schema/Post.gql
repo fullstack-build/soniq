@@ -1,8 +1,8 @@
-type Post @table {#@migrate(oldName:"PostOld"){
-  id: ID! @isUnique
+type Post @table {#@migrate(from:"PostOld"){
+  id: ID! @unique
   title: String
   content: String
-  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "cascade")
+  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict")
   ownerSecret: String
   titleImage: PrivateFile @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")

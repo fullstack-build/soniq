@@ -1,4 +1,4 @@
-export interface IDbObject {
+export interface IDbMeta {
   version: number;
   schemas?: {
     [name: string]: {
@@ -7,6 +7,7 @@ export interface IDbObject {
       tables?: {
         [name: string]: {
           schemaName: string;
+          oldSchemaName?: string;
           name: string;
           oldName?: string;
           exposedNames?: [string];
@@ -44,11 +45,21 @@ export interface IDbObject {
     }
   };
   enums?: {
-    [name: string]: [string];
+    [name: string]: {
+      name: string;
+      values: [string];
+      columns?: {
+        [name: string]: {
+          schemaName: string;
+          tableName: string;
+          columnName: string;
+        }
+      }
+    };
   };
   relations?: {
     [name: string]: {
-      [tableName: string]: IDbRelation;
+      [sideName: string]: IDbRelation;
     };
   };
   exposedNames?: {

@@ -19,7 +19,7 @@ export abstract class AbstractPackage /*implements IAbstractPackage*/ {
      this.$one = F1.getInstance();
      // get config
      this.CONFIG = this.$one.getConfig(this.className);
-     // create logger
+     // getSqlFromMigrationObj logger
      this.logger = this.$one.getLogger(`fullstack-one:${this.$one.nodeId}:${this.className}`);
      // get eventemitter
      this.eventEmitter = this.$one.getEventEmitter();

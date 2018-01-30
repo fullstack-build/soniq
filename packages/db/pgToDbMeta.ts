@@ -1,14 +1,14 @@
 import * as deepmerge from 'deepmerge';
 
 import * as F1 from '../core';
-import { IDbObject, IDbRelation } from '../core/IDbObject';
+import { IDbMeta, IDbRelation } from '../core/IDbMeta';
 
 // https://www.alberton.info/postgresql_meta_info.html
-export class PgToDbObject extends F1.AbstractPackage {
+export class PgToDbMeta extends F1.AbstractPackage {
 
   private readonly DELETED_PREFIX = '_deleted:';
   private dbClient = this.$one.getDbSetupClient();
-  private readonly dbObject: IDbObject = {
+  private readonly dbMeta: IDbMeta = {
     version: 1.0,
     schemas: {},
     enums: {},
@@ -20,12 +20,12 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   }
 
-  public async getPgDbObject(): Promise<IDbObject> {
+  public async getPgDbMeta(): Promise<IDbMeta> {
     try {
 
       await this.iterateAndAddSchemas();
       // return copy instead of ref
-      return deepmerge({}, this.dbObject);
+      return deepmerge({}, this.dbMeta);
     } catch (err) {
       throw err;
     }
@@ -53,8 +53,8 @@ export class PgToDbObject extends F1.AbstractPackage {
 
         // ignore deleted schemas
         if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
-          // create schema objects for each schema
-          this.dbObject.schemas[schemaName] = {
+          // getSqlFromMigrationObj schema objects for each schema
+          this.dbMeta.schemas[schemaName] = {
             name: schemaName,
             tables: {},
             views: []
@@ -74,27 +74,47 @@ export class PgToDbObject extends F1.AbstractPackage {
   }
 
   private async iterateEnumTypes(schemaName): Promise<void> {
-    // iterate ENUM Types
+    // iterate ENUM Types with columns its used in
     const { rows } =  await this.dbClient.query(
       `SELECT
-      n.nspname as enum_schema,
-      t.typname as enum_name,
-      array_to_json(array_agg(e.enumlabel)) as enum_values
-    FROM
-      pg_type t
-    JOIN
-      pg_enum e on t.oid = e.enumtypid
-    JOIN
-      pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-    WHERE
-      n.nspname = $1
-    GROUP BY
-      n.nspname, t.typname;`, [schemaName]);
+        n.nspname as enum_schema,
+        t.typname as enum_name,
+        array_to_json(array_agg(e.enumlabel)) as enum_values,
+        c.table_schema as used_schema,
+        c.table_name as used_table,
+        c.column_name as used_column
+      FROM
+        pg_type t
+      JOIN
+        pg_enum e on t.oid = e.enumtypid
+      JOIN
+        pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+      FULL JOIN
+       information_schema.columns c ON c.udt_name = t.typname
+      WHERE
+        n.nspname = $1
+      GROUP BY
+        n.nspname, t.typname, c.table_schema, c.table_name, c.column_name;`, [schemaName]);
 
     // iterate all tables
     for (const row of Object.values(rows)) {
       const enumName = row.enum_name;
-      this.dbObject.enums[enumName] = row.enum_values;
+
+      // reuse existing enum (for multiple columns using same enum)
+      const thisEnums = this.dbMeta.enums[enumName] = this.dbMeta.enums[enumName] || {
+        name: enumName,
+        values: row.enum_values,
+        columns: {}
+      };
+      // add column to enum if used
+      if (row.used_schema != null && row.used_table != null && row.used_column != null) {
+        const enumColumnName = `${row.used_schema}.${row.used_table}.${row.used_column}`;
+        thisEnums.columns[enumColumnName] = {
+          schemaName: row.used_schema,
+          tableName:  row.used_table,
+          columnName: row.used_column
+        };
+      }
     }
   }
 
@@ -113,8 +133,8 @@ export class PgToDbObject extends F1.AbstractPackage {
       for (const row of Object.values(rows)) {
         const tableName = row.table_name;
 
-        // create new table object
-        this.dbObject.schemas[schemaName].tables[tableName] = {
+        // getSqlFromMigrationObj new table object
+        this.dbMeta.schemas[schemaName].tables[tableName] = {
           name: tableName,
           schemaName,
           description: null,
@@ -125,13 +145,13 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
 
       // iterate tables and add columns - relates on tables existing
-      for (const tableName of Object.keys(this.dbObject.schemas[schemaName].tables)) {
+      for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
         // add columns to table
         await this.iterateAndAddColumns(schemaName, tableName);
       }
 
       // iterate tables and add constraints - relates on tables and columns existing
-      for (const tableName of Object.keys(this.dbObject.schemas[schemaName].tables)) {
+      for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
         // add constraints to table
         await this.iterateAndAddConstraints(schemaName, tableName);
       }
@@ -145,7 +165,7 @@ export class PgToDbObject extends F1.AbstractPackage {
   private async iterateAndAddColumns(schemaName, tableName): Promise<void> {
 
     // keep reference to current table
-    const currentTable = this.dbObject.schemas[schemaName].tables[tableName];
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     try {
 
@@ -176,7 +196,7 @@ export class PgToDbObject extends F1.AbstractPackage {
       for (const column of Object.values(rows)) {
         const type = column.udt_name;
 
-        // create new column and keep reference for later
+        // getSqlFromMigrationObj new column and keep reference for later
         const columnName = column.column_name;
         const newColumn: any = {
           name: columnName,
@@ -184,7 +204,7 @@ export class PgToDbObject extends F1.AbstractPackage {
           type
         };
 
-        // add new column to dbObject if its not marked as deleted
+        // add new column to dbMeta if its not marked as deleted
         if (columnName.indexOf(this.DELETED_PREFIX) !== 0) {
           currentTable.columns[columnName] = newColumn;
         } else {
@@ -210,7 +230,7 @@ export class PgToDbObject extends F1.AbstractPackage {
         if (column.data_type === 'USER-DEFINED') {
           newColumn.customType = type;
           // check if it is a known enum
-          newColumn.type = (this.dbObject.enums[newColumn.customType] != null) ? 'enum' : 'customType';
+          newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
         } else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') { // Array of _uuid is most certainly an n:m relation
 
           // many to many arrays should have JSON description - check for that
@@ -220,12 +240,14 @@ export class PgToDbObject extends F1.AbstractPackage {
             // check if referenced table exists
             if (mtmRelationPayload.reference != null &&
               mtmRelationPayload.reference.tableName != null &&
-              this.dbObject.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
-              // create one side m:n
+              this.dbMeta.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
+              // getSqlFromMigrationObj one side m:n
               this.manyToManyRelationBuilderHelper(column, schemaName, tableName, mtmRelationPayload);
             }
           } catch (err) {
-            // ignore error
+            process.stderr.write(
+              'PgToDbMeta.error.mtmrelation.payload.parsing.error: ' + err + '\n',
+            );
           }
         }
 
@@ -239,7 +261,7 @@ export class PgToDbObject extends F1.AbstractPackage {
   private async iterateAndAddConstraints(schemaName, tableName): Promise<void> {
 
     // keep reference to current table
-    const currentTable = this.dbObject.schemas[schemaName].tables[tableName];
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
     const { rows } = await this.dbClient.query(
@@ -290,7 +312,7 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   private addConstraint(constraintType,
                         constraintRow,
-                        refDbObjectCurrentTable): void {
+                        refDbMetaCurrentTable): void {
 
     let constraintName  = constraintRow.constraint_name;
     const columnName = constraintRow.column_name;
@@ -301,12 +323,12 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     // add constraint name for not_nullable
     if (constraintType === 'not_null') {
-      constraintName = `${refDbObjectCurrentTable.name}_${columnName}_not_null`;
+      constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
     }
 
-    // create new constraint if name was set
+    // getSqlFromMigrationObj new constraint if name was set
     if (constraintName != null) {
-      const constraint = refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
+      const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: constraintType,
         options: {},
         columns: []
@@ -318,7 +340,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     }
 
     // add constraint name to field
-    const currentColumnRef = refDbObjectCurrentTable.columns[columnName];
+    const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
 
     currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
     currentColumnRef.constraintNames.push(constraintName);
@@ -327,7 +349,7 @@ export class PgToDbObject extends F1.AbstractPackage {
 
   }
 
-  private addCheck(constraintRow, refDbObjectCurrentTable): void {
+  private addCheck(constraintRow, refDbMetaCurrentTable): void {
     const constraintName = constraintRow.constraint_name;
     const checkCode = constraintRow.check_code;
     // ignore and other constraints without code
@@ -335,9 +357,9 @@ export class PgToDbObject extends F1.AbstractPackage {
       return;
     }
 
-    // create new constraint if name was set
+    // getSqlFromMigrationObj new constraint if name was set
     if (constraintName != null) {
-      refDbObjectCurrentTable.constraints[constraintName] = refDbObjectCurrentTable.constraints[constraintName] || {
+      refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
         type: 'CHECK',
         options: {
           param1: checkCode
@@ -347,7 +369,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     }
 
     // add constraint name to field
-    /* const currentColumnRef = refDbObjectCurrentTable.columns[columnName];
+    /* const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
 		currentColumnRef.constraintNames.push(constraintName);*/
   }
 
@@ -356,8 +378,7 @@ export class PgToDbObject extends F1.AbstractPackage {
     let relationPayloadOne: any = {};
     let relationPayloadMany: any = {};
     try {
-      const relationPayload = JSON.parse(constraint.comment);
-
+      const relationPayload = Object.values(JSON.parse(constraint.comment));
       relationPayloadOne = relationPayload.find((relation) => {
         return (relation.type === 'ONE');
       });
@@ -367,27 +388,24 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     } catch (err) {
       // ignore empty payload -> fallback in code below
+      process.stderr.write(
+        'PgToDbMeta.error.relation.payload.parsing.error: ' + err + '\n',
+      );
     }
 
     const constraintName = relationPayloadOne.name || relationPayloadMany.name || constraint.constraint_name.replace('fk_', '');
 
-    const constraintOneVirtualName = (relationPayloadOne != null) ?
-      relationPayloadOne.virtualColumnName : constraint.column_name.split(':')[0];
-
-    // if not available, "invent" virtual column name by making plural (maybe a library later for real plurals)
-    const constraintManyVirtualName = (relationPayloadMany != null) ?
-      relationPayloadMany.virtualColumnName : constraint.table_name.toLowerCase() + 's';
-
     const onUpdate = (constraint.on_update !== 'NO ACTION') ? constraint.on_update : null;
     const onDelete = (constraint.on_delete !== 'NO ACTION') ? constraint.on_delete : null;
-    // create relation: one
+
+    // getSqlFromMigrationObj relation: one
     const relationOne: IDbRelation = {
       name: constraintName,
       type: 'ONE',
       schemaName: constraint.schema_name,
       tableName: constraint.table_name,
       columnName: constraint.column_name,
-      virtualColumnName: constraintOneVirtualName,
+      virtualColumnName: relationPayloadOne && relationPayloadOne.virtualColumnName,
       onUpdate,
       onDelete,
       // Name of the association
@@ -400,14 +418,14 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
     };
 
-    // create relation: many
+    // getSqlFromMigrationObj relation: many
     const relationMany: IDbRelation = {
       name: constraintName,
       type: 'MANY',
       schemaName: constraint.references_schema_name,
       tableName: constraint.references_table_name,
       columnName: null,
-      virtualColumnName: constraintManyVirtualName,
+      virtualColumnName: relationPayloadMany && relationPayloadMany.virtualColumnName,
       onUpdate: null,
       onDelete: null,
       // Name of the association
@@ -420,16 +438,20 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
     };
 
-    // add relation to dbObject
-    this.dbObject.relations[constraintName] = {
-      [relationOne.tableName]: relationOne,
-      [relationMany.tableName]: relationMany
+    // relations names
+    const relationOneName = `${relationOne.schemaName}.${relationOne.tableName}`;
+    const relationManyName = `${relationMany.schemaName}.${relationMany.tableName}`;
+
+    // add relation to dbMeta
+    this.dbMeta.relations[constraintName] = {
+      [relationOneName]: relationOne,
+      [relationManyName]: relationMany
     };
 
     // remove FK column
-    delete this.dbObject.schemas[relationOne.schemaName]
+    delete this.dbMeta.schemas[relationOne.schemaName]
       .tables[relationOne.tableName]
-      .columns[this.dbObject.relations[constraintName][relationOne.tableName].columnName];
+      .columns[this.dbMeta.relations[constraintName][relationOneName].columnName];
 
   }
 
@@ -437,14 +459,14 @@ export class PgToDbObject extends F1.AbstractPackage {
 
     const relationName = mtmPayload.name;
 
-    // create relation: one
+    // getSqlFromMigrationObj relation: one
     const newRelation: IDbRelation = {
       name: relationName,
       type: 'MANY',
       schemaName,
       tableName,
       columnName: columnDescribingRelation.column_name,
-      virtualColumnName: mtmPayload.virtualColumnName,
+      virtualColumnName: mtmPayload && mtmPayload.virtualColumnName,
       onUpdate: null,
       onDelete: null,
       // Name of the association
@@ -457,12 +479,15 @@ export class PgToDbObject extends F1.AbstractPackage {
       }
     };
 
-    // create relation object if not available
-    this.dbObject.relations[mtmPayload.name] = this.dbObject.relations[mtmPayload.name] || {};
-    this.dbObject.relations[mtmPayload.name][newRelation.tableName] = newRelation;
+    // relations names
+    const relationSideName = `${newRelation.schemaName}.${newRelation.tableName}`;
+
+    // getSqlFromMigrationObj relation object if not available
+    this.dbMeta.relations[mtmPayload.name] = this.dbMeta.relations[mtmPayload.name] || {};
+    this.dbMeta.relations[mtmPayload.name][relationSideName] = newRelation;
 
     // remove FK column
-    delete this.dbObject.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
+    delete this.dbMeta.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
 
   }
 

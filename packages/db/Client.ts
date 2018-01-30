@@ -19,7 +19,7 @@ export class DbClient extends F1.AbstractPackage implements IDb {
   public async create(): Promise<PgClient> {
 
     try {
-      // create connection
+      // getSqlFromMigrationObj connection
       await this.client.connect();
       this.logger.info('Postgres connection created');
     } catch (err) {
