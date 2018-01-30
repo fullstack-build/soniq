@@ -83,7 +83,7 @@ BEGIN
     v_payload := v_tok_timestamp || ':' || v_admin_token_secret;
     
     -- Hash the payload to recreate the signature and check if it matches => Return true if it does
-    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
+    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
         RETURN true;
     END IF;
     
@@ -108,8 +108,8 @@ DECLARE
     v_user_id TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
   
@@ -127,12 +127,12 @@ BEGIN
         EXECUTE format(v_query, v_auth_field_password, i_provider, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_meta, v_user_id;
     ELSE
         v_query := $tok$SELECT %I->'providers'->%L->'meta', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
-        EXECUTE format(v_query, v_auth_field_password, i_provider, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_meta, v_user_id;
+        EXECUTE format(v_query, v_auth_field_password, i_provider, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_meta, v_user_id;
     END IF;
 
     -- If userId or pwMetas is null something is wrong
     IF v_user_id IS NULL OR v_pw_meta IS NULL THEN
-        RAISE EXCEPTION 'User or provider not found!';
+        RAISE EXCEPTION 'User or provider not found!';
     END IF;
 
     -- Return the data as jsonb object    
@@ -162,8 +162,8 @@ DECLARE
     v_user_token TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
   
@@ -279,7 +279,7 @@ BEGIN
 
     -- If the position is not null, the token-timestamp is in the list and thereby invalid.
     IF v_invalid_token_position IS NOT NULL THEN
-        RETURN false;
+        RETURN false;
     END IF;
     
     -- Recreate the signature-payload of the user-token to check it
@@ -313,7 +313,7 @@ DECLARE
 BEGIN
     -- Check if the user-token is valid. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
@@ -393,7 +393,7 @@ BEGIN
     v_payload := v_user_id || ':' || v_timestamp || ':' || txid_current() || v_transaction_token_secret;
     
     -- Hash payload and check if it matches the token-signature
-    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
+    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
         -- If valid return the userId
         RETURN v_user_id::uuid;
     END IF;
@@ -431,7 +431,7 @@ BEGIN
 
     -- Check if the user-token is valid. Return if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RETURN;
     END IF;
 
@@ -507,7 +507,7 @@ BEGIN
 
     -- Check if the user-token is valid. Return if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RETURN;
     END IF;
 
@@ -567,8 +567,8 @@ DECLARE
     v_user_token TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
   
@@ -657,7 +657,7 @@ BEGIN
     -- Check if the token is valid as user-token or user-token-temp and is not older than user_token_temp_max_age_in_seconds. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, true);
     v_is_user_token_temp_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, true, true);
-    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
   
@@ -680,7 +680,7 @@ BEGIN
 
     -- Check if the requested provider is allowed
     IF array_position(v_auth_providers, i_set_provider) IS NULL THEN
-        RAISE EXCEPTION 'Auth provider does not exist!';
+        RAISE EXCEPTION 'Auth provider does not exist!';
     END IF;
 
     -- Get userId and password-field from user by userId
@@ -763,12 +763,12 @@ BEGIN
         EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_hash, v_user_id;
     ELSE
         v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
-        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_hash, v_user_id;
+        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_hash, v_user_id;
     END IF;
 
     -- Checks if user exists and pwHash is not null
     IF v_user_id IS NULL OR v_pw_hash IS NULL THEN
-        RAISE EXCEPTION 'User or provider not found!';
+        RAISE EXCEPTION 'User or provider not found!';
     END IF;
 
     -- Create signature payload with user_token_temp_secret to create a temporary user-token.
@@ -797,15 +797,15 @@ DECLARE
     v_password jsonb;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
 
     -- Check if the token is valid as user-token or user-token-temp and is not older than user_token_temp_max_age_in_seconds. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, true);
     v_is_user_token_temp_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, true, true);
-    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
