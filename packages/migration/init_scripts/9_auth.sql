@@ -187,7 +187,7 @@ BEGIN
     END IF;
 
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
-    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot getFromMigrationDbMeta a user-token.
+    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot create a user-token.
     -- It includes the auth_pw_secret
     v_pw_hash_check := crypt(encode(digest(i_pw_hash || v_auth_pw_secret, 'sha256'), 'hex'), v_pw_hash);
 
@@ -196,7 +196,7 @@ BEGIN
         RAISE EXCEPTION 'Login failed!';
     END IF;
     
-    -- Here we know, the login-hash is correct and can getFromMigrationDbMeta a user-token
+    -- Here we know, the login-hash is correct and can create a user-token
 
     -- For the user-token we need to get a current timestamp
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
@@ -341,7 +341,7 @@ BEGIN
     -- Create signature-payload from userId, timestamp, transactionId, secret
     v_transaction_payload := i_user_id || ':' || v_timestamp || ':' || txid_current() || v_transaction_token_secret;
 
-    -- Hash signature-payload and add userId and timestamp to getFromMigrationDbMeta a transaction_token
+    -- Hash signature-payload and add userId and timestamp to create a transaction_token
     v_transaction_token := i_user_id || ':' || v_timestamp || ':' || encode(digest(v_transaction_payload, 'sha256'), 'hex');
     
     -- Set transaction_token into a local variable, which is available it the current transaction.
@@ -595,7 +595,7 @@ BEGIN
     v_random_pw = crypt(encode(gen_random_bytes(64), 'hex'), gen_salt('bf', 6));
 
     -- Hash the pwHash 
-    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot getFromMigrationDbMeta a user-token.
+    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot create a user-token.
     -- It does not contain the auth_pw_secret. Thereby it cannot be used to login.
     v_pw_hash := crypt(encode(digest(v_random_pw, 'sha256'), 'hex'), gen_salt('bf', v_pw_bf_iter_count));
 
@@ -616,7 +616,7 @@ BEGIN
         EXECUTE format('INSERT INTO %I.%I(%I, %I, %I) VALUES(%L, %L, %L) RETURNING id', v_auth_table_schema, v_auth_table, v_auth_field_username, v_auth_field_password, v_auth_field_tenant, i_username, v_password, i_tenant) INTO v_user_id;
     END IF;
 
-    -- Create signature-payload with user_token_temp_secret to getFromMigrationDbMeta a temporary user-token which can be used to set a password.
+    -- Create signature-payload with user_token_temp_secret to create a temporary user-token which can be used to set a password.
     v_payload := v_pw_hash || ':' || v_timestamp || ':' || v_user_token_temp_secret;
     
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
@@ -696,7 +696,7 @@ BEGIN
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
 
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
-    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot getFromMigrationDbMeta a user-token.
+    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot create a user-token.
     -- It includes the auth_pw_secret
     v_pw_hash := crypt(encode(digest(i_pw_hash || v_auth_pw_secret, 'sha256'), 'hex'), gen_salt('bf', v_pw_bf_iter_count));
 
@@ -771,7 +771,7 @@ BEGIN
         RAISE EXCEPTION 'User or provider not found!';
     END IF;
 
-    -- Create signature payload with user_token_temp_secret to getFromMigrationDbMeta a temporary user-token.
+    -- Create signature payload with user_token_temp_secret to create a temporary user-token.
     v_payload := v_pw_hash || ':' || v_timestamp || ':' || v_user_token_temp_secret;
     
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
