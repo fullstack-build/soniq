@@ -27,7 +27,7 @@ BEGIN
     -- Check if the token is valid as user-token or user-token-temp and is not older than user_token_temp_max_age_in_seconds. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, true);
     v_is_user_token_temp_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, true, true);
-    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
@@ -50,7 +50,7 @@ BEGIN
 
     -- Check if the requested provider is allowed
     IF array_position(v_auth_providers, i_set_provider) IS NULL THEN
-        RAISE EXCEPTION 'Auth provider does not exist!';
+        RAISE EXCEPTION 'Auth provider does not exist!';
     END IF;
 
     -- Get userId and password-field from user by userId
@@ -66,7 +66,7 @@ BEGIN
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
 
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
-    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot getFromMigrationDbMeta a user-token.
+    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot create a user-token.
     -- It includes the auth_pw_secret
     v_pw_hash := crypt(encode(digest(i_pw_hash || v_auth_pw_secret, 'sha256'), 'hex'), gen_salt('bf', v_pw_bf_iter_count));
 

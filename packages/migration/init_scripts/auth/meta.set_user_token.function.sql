@@ -12,7 +12,7 @@ DECLARE
 BEGIN
     -- Check if the user-token is valid. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
@@ -40,7 +40,7 @@ BEGIN
     -- Create signature-payload from userId, timestamp, transactionId, secret
     v_transaction_payload := i_user_id || ':' || v_timestamp || ':' || txid_current() || v_transaction_token_secret;
 
-    -- Hash signature-payload and add userId and timestamp to getFromMigrationDbMeta a transaction_token
+    -- Hash signature-payload and add userId and timestamp to create a transaction_token
     v_transaction_token := i_user_id || ':' || v_timestamp || ':' || encode(digest(v_transaction_payload, 'sha256'), 'hex');
 
     -- Set transaction_token into a local variable, which is available it the current transaction.

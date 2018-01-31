@@ -87,6 +87,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -125,6 +128,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -153,6 +159,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -181,6 +190,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -205,6 +217,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -230,6 +245,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -254,6 +272,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 
@@ -278,6 +299,9 @@ export class Auth extends F1.AbstractPackage {
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
+    } finally {
+      // Release client to pool
+      client.release();
     }
   }
 

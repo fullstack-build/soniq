@@ -12,15 +12,15 @@ DECLARE
     v_password jsonb;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
 
     -- Check if the token is valid as user-token or user-token-temp and is not older than user_token_temp_max_age_in_seconds. Raise exeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, true);
     v_is_user_token_temp_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, true, true);
-    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE AND v_is_user_token_temp_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 

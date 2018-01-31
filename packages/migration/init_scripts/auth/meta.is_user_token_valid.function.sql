@@ -64,7 +64,7 @@ BEGIN
 
     -- If the position is not null, the token-timestamp is in the list and thereby invalid.
     IF v_invalid_token_position IS NOT NULL THEN
-        RETURN false;
+        RETURN false;
     END IF;
 
     -- Recreate the signature-payload of the user-token to check it

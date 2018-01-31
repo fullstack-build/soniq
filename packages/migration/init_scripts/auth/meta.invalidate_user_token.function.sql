@@ -26,11 +26,11 @@ BEGIN
 
     -- Check if the user-token is valid. Return if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RETURN;
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this to one query
     -- Get required values from Auth-table
     SELECT value INTO v_user_token_max_age_in_seconds FROM _meta."Auth" WHERE key = 'user_token_max_age_in_seconds';
     SELECT value INTO v_auth_table FROM _meta."Auth" WHERE key = 'auth_table';

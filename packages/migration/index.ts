@@ -72,24 +72,24 @@ export class Migration extends One.AbstractPackage {
 
       // run migration sql
       for (const suffix of loadSuffixOrder) {
-
-        for (const entry of Object.entries(loadFilesOrder[suffix])) {
-          const path = entry[0];
-          const statement = entry[1];
-          try {
-            this.logger.trace('migration.init.db.file', path);
-
-            await  dbClient.query(statement, null);
-          } catch (err) {
-            // check if an optional query failed
-            if (optinalSuffix.includes(suffix)) {
-              // tslint:disable-next-line:no-console
-              console.error('* optional statement failed', suffix, path, err);
-            } else {
-              // actual error -> rollback
-              // tslint:disable-next-line:no-console
-              console.error('* actual error', suffix, path, err);
-              throw err;
+        if (loadFilesOrder[suffix] != null) {
+          for (const entry of Object.entries(loadFilesOrder[suffix])) {
+            const path = entry[0];
+            const statement = entry[1];
+            try {
+              this.logger.trace('migration.init.db.file', path);
+              await  dbClient.query(statement, null);
+            } catch (err) {
+              // check if an optional query failed
+              if (optinalSuffix.includes(suffix)) {
+                // tslint:disable-next-line:no-console
+                console.error('* optional statement failed', suffix, path, err);
+              } else {
+                // actual error -> rollback
+                // tslint:disable-next-line:no-console
+                console.error('* actual error', suffix, path, err);
+                throw err;
+              }
             }
           }
         }
@@ -98,7 +98,7 @@ export class Migration extends One.AbstractPackage {
       // commit
       await dbClient.query('COMMIT');
     } catch (err) {
-      // roll-back
+      // rollback
       await dbClient.query('ROLLBACK');
       throw err;
     }

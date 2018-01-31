@@ -38,20 +38,20 @@ BEGIN
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
 
     -- Get pwHash and userId from user by username (and tenant if available) [use local stategie]
---    IF v_auth_field_tenant IS NULL THEN
---        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L$tok$;
---        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_hash, v_user_id;
---    ELSE
---        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
---        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_hash, v_user_id;
---    END IF;
+    IF v_auth_field_tenant IS NULL THEN
+        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L$tok$;
+        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_hash, v_user_id;
+    ELSE
+        v_query := $tok$SELECT %I->'providers'->'local'->>'hash', id FROM %I.%I WHERE %I = %L AND %I = %L$tok$;
+        EXECUTE format(v_query, v_auth_field_password, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username, v_auth_field_tenant, i_tenant) INTO v_pw_hash, v_user_id;
+    END IF;
 
     -- Checks if user exists and pwHash is not null
---    IF v_user_id IS NULL OR v_pw_hash IS NULL THEN
---        RAISE EXCEPTION 'User or provider not found!';
---    END IF;
+    IF v_user_id IS NULL OR v_pw_hash IS NULL THEN
+        RAISE EXCEPTION 'User or provider not found!';
+    END IF;
 
-    -- Create signature payload with user_token_temp_secret to getFromMigrationDbMeta a temporary user-token.
+    -- Create signature payload with user_token_temp_secret to create a temporary user-token.
     v_payload := v_pw_hash || ':' || v_timestamp || ':' || v_user_token_temp_secret;
 
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars

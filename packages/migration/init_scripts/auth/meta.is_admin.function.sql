@@ -49,7 +49,7 @@ BEGIN
     v_payload := v_tok_timestamp || ':' || v_admin_token_secret;
 
     -- Hash the payload to recreate the signature and check if it matches => Return true if it does
-    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
+    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
         RETURN true;
     END IF;
 

@@ -20,7 +20,7 @@ BEGIN
 
     -- Check if the user-token is valid. Return if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
-    IF v_is_user_token_valid = FALSE THEN
+    IF v_is_user_token_valid = FALSE THEN
         RETURN;
     END IF;
 

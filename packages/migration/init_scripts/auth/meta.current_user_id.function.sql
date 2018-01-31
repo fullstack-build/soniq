@@ -1,5 +1,5 @@
 -- current_user_id function returns the id of the current user if the transaction_token is present and valid
-CREATE OR REPLACE FUNCTION _meta.current_user_id() RETURNS uuid AS $BODY$
+CREATE OR REPLACE FUNCTION _meta.current_user_id() RETURNS uuid AS $$
 DECLARE
     v_transaction_token_secret TEXT;
     v_transaction_token TEXT;
@@ -42,12 +42,12 @@ BEGIN
     v_payload := v_user_id || ':' || v_timestamp || ':' || txid_current() || v_transaction_token_secret;
 
     -- Hash payload and check if it matches the token-signature
---    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
+    IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
         -- If valid return the userId
---        RETURN v_user_id::uuid;
---    END IF;
+        RETURN v_user_id::uuid;
+    END IF;
 
     -- Raise exeption because the token is not valid.
     RAISE EXCEPTION 'Session expired or token invalid.';
 END;
-$BODY$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;

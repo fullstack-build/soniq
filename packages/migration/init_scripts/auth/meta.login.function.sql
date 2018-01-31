@@ -18,8 +18,8 @@ DECLARE
     v_user_token TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
-    IF v_is_admin = FALSE THEN
+    v_is_admin := _meta.is_admin();
+    IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
 
@@ -43,7 +43,7 @@ BEGIN
     END IF;
 
     -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
-    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot getFromMigrationDbMeta a user-token.
+    -- This hash of the input-hash ensures, that if anyone has access to the user's password-field he cannot create a user-token.
     -- It includes the auth_pw_secret
     v_pw_hash_check := crypt(encode(digest(i_pw_hash || v_auth_pw_secret, 'sha256'), 'hex'), v_pw_hash);
 
@@ -52,7 +52,7 @@ BEGIN
         RAISE EXCEPTION 'Login failed!';
     END IF;
 
-    -- Here we know, the login-hash is correct and can getFromMigrationDbMeta a user-token
+    -- Here we know, the login-hash is correct and can create a user-token
 
     -- For the user-token we need to get a current timestamp
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
