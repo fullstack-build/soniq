@@ -1,0 +1,3 @@
+- set local auth.admin_token to '1515332430747:f62c0c0a744ed5103d370fae033085bf0c8dbd4ff6bf7247e359c21eff2e2235';
+- SELECT is_admin();
+- SELECT extract(epoch from now())*1000::bigint;

@@ -176,24 +176,33 @@ class FullstackOneCore implements IFullstackOneCore {
     return this.dbPoolObj.pool;
   }
 
-  public async runMigration() {
-
+  public async getMigrationSql() {
+    const configDB = this.getConfig('db');
     try {
       const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
       const migration       = new Migration(fromDbMeta, toDbMeta);
-      const sqlMigrations   = migration.getSqlStatements(true);
-
-      // tslint:disable-next-line:no-console
-      console.log('############### DELTA:');
-      // tslint:disable-next-line:no-console
-      console.log(sqlMigrations.join('\n'));
+      return migration.getMigrationSqlStatements(configDB.renameInsteadOfDrop);
 
     } catch (err) {
       // tslint:disable-next-line:no-console
-      console.error('ERR', err);
+      console.error('ERROR', err);
     }
+  }
 
+  public async runMigration() {
+
+    const configDB = this.getConfig('db');
+    try {
+      const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
+      const toDbMeta        = this.getDbMeta();
+      const migration       = new Migration(fromDbMeta, toDbMeta);
+      return await migration.migrate(configDB.renameInsteadOfDrop);
+
+    } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.error('ERROR', err);
+    }
   }
 
   /**
@@ -244,15 +253,24 @@ class FullstackOneCore implements IFullstackOneCore {
       // connect Db
       await this.connectDB();
 
+      // boot GraphQL and add endpoints
+      this.dbMeta = await graphQl.bootGraphQl(this);
+      this.emit('dbMeta.set');
+
+      // run auto migration, if enabled
+      const configDB = this.getConfig('db');
+      if (configDB.automigrate === true) {
+        await this.runMigration();
+      }
+
       // start server
       await this.startServer();
 
       // Load Auth
       this.auth = new Auth();
 
-      // boot GraphQL and add endpoints
-      this.dbMeta = await graphQl.bootGraphQl(this);
-      this.emit('dbMeta.set');
+      // add GraphQL endpoints
+      await graphQl.addEndpoints(this);
 
       // execute book scripts
       await this.executeBootScripts();

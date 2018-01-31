@@ -322,7 +322,7 @@ export namespace sqlArray {
           if (tableDefinition.name.indexOf(DELETED_PREFIX) !== 0) {
             thisSql.down.push(`ALTER TABLE ${tableNameWithSchemaDown} RENAME TO "${DELETED_PREFIX}${node.name}";`);
           } else {
-            thisSql.down.push(`-- Table ${tableNameWithSchemaDown} was already renamed instead of deleted.`);
+            // table was already renamed instead of deleted
           }
         }
       } else if (action.rename) {

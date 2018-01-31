@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "deepmerge": "^2.0.1",
-    "pg": "^7.4.0"
+    "pg": "^7.4.1"
   },
   "devDependencies": {
     "@types/pg": "^7.1.5"

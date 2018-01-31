@@ -1,12 +1,3 @@
--- PL/V8 modules
--- https://rymc.io/2016/03/22/a-deep-dive-into-plv8/
--- https://github.com/JerrySievert/plv8-modules
-CREATE TABLE _meta.plv8_js_modules (
-    module text unique primary key,
-    autoload bool default true,
-    source text
-);
-
 CREATE OR REPLACE FUNCTION _meta.plv8_require()
 returns void as $$
     moduleCache = {};
@@ -44,8 +35,3 @@ returns void as $$
         load(row.module, row.source);
     });
 $$ LANGUAGE plv8 IMMUTABLE STRICT;
-
--- PL/v8 supports a "start proc" variable that can act as a bootstrap function.
-SET plv8.start_proc = '_meta.plv8_require';
--- and start in case event was fired already
-SELECT _meta.plv8_require();

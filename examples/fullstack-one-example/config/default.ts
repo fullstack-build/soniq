@@ -6,6 +6,8 @@ export = {
     versioningLogging: false,
   },
   db: {
+    automigrate: true,
+    renameInsteadOfDrop: true,
     setup: {
       database: 'fullstack-one-example',
       host: 'localhost',

@@ -14,6 +14,7 @@ export class DbClient extends F1.AbstractPackage implements IDb {
 
     this.credentials  = pCredentials;
     this.client       = new PgClient(this.credentials);
+
   }
 
   public async create(): Promise<PgClient> {

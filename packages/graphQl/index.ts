@@ -94,9 +94,6 @@ export namespace graphQl {
           dbMeta.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
         });
 
-        // add endpoints
-        await addEndpoints($one);
-
       } catch (err) {
         throw err;
       }
@@ -124,7 +121,7 @@ export namespace graphQl {
     return { ...gQlJsonSchema };
   };
 
-  const addEndpoints = async ($one) => {
+  export const addEndpoints = async ($one) => {
     const graphQlConfig = $one.getConfig('graphql');
 
     const gqlRouter = new KoaRouter();

@@ -30,7 +30,7 @@ $one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
 });
 
 // go
-$one.getEventEmitter().on('f1.ready', async (instanceId) => {
+/*$one.getEventEmitter().on('f1.ready', async (instanceId) => {
 
   // console.log($one.getDbMeta());
   // console.log(JSON.stringify($one.getDbMeta(), null, 2));
@@ -38,3 +38,4 @@ $one.getEventEmitter().on('f1.ready', async (instanceId) => {
   $one.runMigration();
 
 });
+*/

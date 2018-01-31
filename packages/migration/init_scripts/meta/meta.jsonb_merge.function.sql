@@ -1,6 +1,5 @@
 -- Thanks to @phillip-haydon https://gist.github.com/phillip-haydon/54871b746201793990a18717af8d70dc
-
-CREATE OR REPLACE FUNCTION jsonb_merge(left JSONB, right JSONB) RETURNS JSONB AS $$
+CREATE OR REPLACE FUNCTION _meta.jsonb_merge(left JSONB, right JSONB) RETURNS JSONB AS $$
 
 var mergeJSON = function (target, add) {
     function isObject(obj) {

@@ -8,11 +8,11 @@ import { Events, IEventEmitter } from './events';
 
 export abstract class AbstractPackage /*implements IAbstractPackage*/ {
 
-  protected $one: F1.IFullstackOneCore;
-  protected logger: Logger;
-  protected eventEmitter: IEventEmitter;
+  protected readonly $one: F1.IFullstackOneCore;
+  protected readonly logger: Logger;
+  protected readonly eventEmitter: IEventEmitter;
   protected readonly CONFIG: any;
-  private className: string;
+  private readonly className: string;
 
    constructor() {
      this.className = this.constructor.name;
