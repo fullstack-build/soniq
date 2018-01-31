@@ -44,14 +44,45 @@ export class Migration extends One.AbstractPackage {
     return _.cloneDeep(this.migrationObject);
   }
 
-  public async initDb(): void {
+  public async initDb(): Promise<void> {
+    const dbClient = this.$one.getDbSetupClient();
 
-    const loadSuffixOrder = ['extension', 'schema', 'table', 'function', 'insert', 'set', 'select', 'operator_class'];
+    // check latest version migrated
+    let latestVersion = 0;
+    try {
+      const dbInitVersion = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
+
+      if (dbInitVersion != null && dbInitVersion.value != null) {
+        latestVersion = parseFloat(dbInitVersion.value);
+        this.logger.debug('migration.db.init.version.detected', latestVersion);
+      }
+    } catch (err) {
+      this.logger.info('migration.db.init.not.found');
+    }
+
+    // find init scripts to ignore
+    let initFoldersToIgnore = [];
+    if (latestVersion > 0) {
+      const initFolders = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]`, {
+        deep: false,
+        onlyDirs: true,
+      });
+      initFoldersToIgnore = initFolders.reduce((result, path) => {
+        const pathVersion = parseFloat(path.split('/').pop());
+        if (pathVersion <= latestVersion) {
+          result.push(path + '/**');
+        }
+        return result;
+      }, []);
+    }
+
+    const loadSuffixOrder = ['extension', 'schema', 'table', 'function', 'insert', 'set', 'select'];
     // will try, but ignore any errors
-    const optinalSuffix = ['operator_class'];
+    const loadOptionalSuffixOrder = ['operator_class'];
     const loadFilesOrder  = {};
-    for (const suffix of loadSuffixOrder) {
-      const paths = fastGlob.sync(`${__dirname}/init_scripts/*/*.${suffix}.sql`, {
+    for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
+      const paths = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
+        ignore: initFoldersToIgnore,
         deep: true,
         onlyFiles: true,
       });
@@ -62,45 +93,58 @@ export class Migration extends One.AbstractPackage {
         loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
       }
     }
+    // only if there are migration folders left
+    if (Object.keys(loadFilesOrder).length > 0) {
+      // run migration sql - mandatory
+      try {
+        // create transaction
+        this.logger.trace('migration.db.init.mandatory.begin');
+        await dbClient.query('BEGIN');
 
-    // send statements to DB
-    const dbClient = this.$one.getDbSetupClient();
-
-    try {
-      // create transaction
-      await dbClient.query('BEGIN');
-
-      // run migration sql
-      for (const suffix of loadSuffixOrder) {
-        if (loadFilesOrder[suffix] != null) {
-          for (const entry of Object.entries(loadFilesOrder[suffix])) {
-            const path = entry[0];
-            const statement = entry[1];
-            try {
-              this.logger.trace('migration.init.db.file', path);
-              await  dbClient.query(statement, null);
-            } catch (err) {
-              // check if an optional query failed
-              if (optinalSuffix.includes(suffix)) {
-                // tslint:disable-next-line:no-console
-                console.error('* optional statement failed', suffix, path, err);
-              } else {
-                // actual error -> rollback
-                // tslint:disable-next-line:no-console
-                console.error('* actual error', suffix, path, err);
+        for (const suffix of loadSuffixOrder) {
+          if (loadFilesOrder[suffix] != null) {
+            for (const entry of Object.entries(loadFilesOrder[suffix])) {
+              const path = entry[0];
+              const statement = entry[1];
+              try {
+                this.logger.trace('migration.db.init.mandatory.file', path);
+                await  dbClient.query(statement, null);
+              } catch (err) {
+                // error -> rollback
+                this.logger.trace('migration.db.init.mandatory.error', suffix, path, err);
                 throw err;
               }
             }
           }
         }
+
+        // commit
+        this.logger.trace('migration.db.init.mandatory.commit');
+        await dbClient.query('COMMIT');
+      } catch (err) {
+        // rollback
+        this.logger.trace('migration.db.init.mandatory.rollback', err);
+        await dbClient.query('ROLLBACK');
+        throw err;
       }
 
-      // commit
-      await dbClient.query('COMMIT');
-    } catch (err) {
-      // rollback
-      await dbClient.query('ROLLBACK');
-      throw err;
+      // run migration sql - optional (no transaction, just ignore if one fails)
+      for (const suffix of loadOptionalSuffixOrder) {
+        if (loadFilesOrder[suffix] != null) {
+          for (const entry of Object.entries(loadFilesOrder[suffix])) {
+            const path = entry[0];
+            const statement = entry[1];
+            try {
+              this.logger.trace('migration.db.init.optional.file', path);
+              await  dbClient.query(statement, null);
+            } catch (err) {
+              // error -> rollback
+              this.logger.warn('migration.db.init.optional.failed', suffix, path);
+            }
+          }
+        }
+      }
+
     }
 
   }
@@ -110,17 +154,19 @@ export class Migration extends One.AbstractPackage {
   }
 
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
+    // init DB
+    await this.initDb();
+
+    // get migration statements
     const migrationSqlStatements = this.getMigrationSqlStatements(renameInsteadOfDrop);
 
     // anything to migrate?
     if (migrationSqlStatements.length > 0) {
       const dbClient = this.$one.getDbSetupClient();
 
-      // init DB
-      await this.initDb();
-
       try {
         // create transaction
+        this.logger.trace('migration.begin');
         await dbClient.query('BEGIN');
 
         // run migration sql
@@ -130,12 +176,15 @@ export class Migration extends One.AbstractPackage {
         }
 
         // last step, save final dbMeta in _meta
+        this.logger.trace('migration.state.saved');
         await dbClient.query(`INSERT INTO "_meta"."migrations"(state) VALUES($1)`, [this.toDbMeta]);
 
         // commit
+        this.logger.trace('migration.commit');
         await dbClient.query('COMMIT');
       } catch (err) {
-        // roll-back
+        // rollback
+        this.logger.warn('migration.rollback');
         await dbClient.query('ROLLBACK');
         throw err;
       }
