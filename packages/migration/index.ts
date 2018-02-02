@@ -4,6 +4,7 @@ import * as fs from 'fs';
 
 import * as One from '../core';
 import { migrationObject } from './migrationObject';
+import createViewsFromDbMeta from './createViewsFromDbMeta';
 
 import { sqlArray } from './sqlArray';
 
@@ -153,6 +154,10 @@ export class Migration extends One.AbstractPackage {
     return sqlArray.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
   }
 
+  public getViewsSql() {
+    return createViewsFromDbMeta(this.toDbMeta, 'appuserhugo', false);
+  }
+
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
     // init DB
     await this.initDb();
@@ -164,6 +169,10 @@ export class Migration extends One.AbstractPackage {
     if (migrationSqlStatements.length > 0) {
       const dbClient = this.$one.getDbSetupClient();
 
+      // get view statements
+      const viewsSqlStatements = this.getViewsSql();
+
+      // run DB migrations
       try {
         // create transaction
         this.logger.trace('migration.begin');
@@ -172,6 +181,12 @@ export class Migration extends One.AbstractPackage {
         // run migration sql
         for (const sql of Object.values(migrationSqlStatements)) {
           this.logger.trace('migration.sql.statement', sql);
+          await  dbClient.query(sql);
+        }
+
+        // create views based on DB
+        for (const sql of Object.values(viewsSqlStatements)) {
+          this.logger.trace('migration.view.sql.statement', sql);
           await  dbClient.query(sql);
         }
 

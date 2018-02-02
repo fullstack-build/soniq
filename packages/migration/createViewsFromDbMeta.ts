@@ -8,7 +8,6 @@ const operationMapper = {
 export default (dbMeta, applicationUserName, includePrivileges) => {
   const statements = [];
   const viewSchemas = {};
-  statements.push('-- views');
 
   if (includePrivileges === true) {
     Object.values(dbMeta.schemas).forEach((schema) => {

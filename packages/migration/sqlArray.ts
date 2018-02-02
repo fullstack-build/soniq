@@ -6,6 +6,7 @@ export namespace sqlArray {
 
   const ACTION_KEY: string = '$$action$$';
   const DELETED_PREFIX: string = '_deleted:';
+  const schemasToIgnore: [string] = ['public', 'graphql'];
   let renameInsteadOfDrop: boolean = true;
   let migrationObj: One.IDbMeta = null;
   let toDbMeta: One.IDbMeta = null;
@@ -265,8 +266,8 @@ export namespace sqlArray {
     // node
     const { action, node } = _splitActionFromNode(schemDefinition);
 
-    // avoid dropping or createing public schema
-    if (schemaName !== 'public') {
+    // avoid dropping or creating mandatory schemas
+    if (!schemasToIgnore.includes(schemaName)) {
 
       if (action.add) {
         // don't getSqlFromMigrationObj schema, it will be created automatically with table creation
