@@ -385,6 +385,7 @@ export namespace sqlObjFromMigrationObject {
           (
             id uuid NOT NULL DEFAULT uuid_generate_v4(),
             created_at timestamp without time zone DEFAULT now(),
+            user_id uuid,
             created_by character varying(255),
             action _meta.versioning_action,
             table_name character varying(255),
