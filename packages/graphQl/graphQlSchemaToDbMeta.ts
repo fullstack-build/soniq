@@ -230,6 +230,11 @@ const GQL_JSON_PARSER = {
         // add special miration
         addMigration(gQlDirectiveNode, dbMetaNode, refDbMeta);
         break;
+      case 'versioning':
+        dbMetaNode.versioning = {
+          isActive: true
+        };
+        break;
       case 'default': // set default value
         setDefaultValueForColumn(gQlDirectiveNode,
                                  dbMetaNode,

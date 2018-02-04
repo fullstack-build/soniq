@@ -1,5 +1,5 @@
 #type User @table @check(notGenericAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'"){
-type User @table @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
+type User @table @versioning @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
   id: ID! @unique
   email: String @unique @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
   gender: Gender!

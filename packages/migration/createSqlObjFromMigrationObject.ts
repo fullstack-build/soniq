@@ -2,11 +2,11 @@ import * as One from '../core';
 import * as helper from './helper';
 import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
 
-export namespace sqlArray {
+export namespace sqlObjFromMigrationObject {
 
   const ACTION_KEY: string = '$$action$$';
   const DELETED_PREFIX: string = '_deleted:';
-  const schemasToIgnore: [string] = ['public', 'graphql'];
+  const schemasToIgnore: [string] = ['_versions', 'graphql'];
   let renameInsteadOfDrop: boolean = true;
   let migrationObj: One.IDbMeta = null;
   let toDbMeta: One.IDbMeta = null;
@@ -21,6 +21,7 @@ export namespace sqlArray {
     }
 
     migrationObj = pMigrationObj;
+
     // save final state for comparison
     toDbMeta = pToDbMeta;
 
@@ -155,16 +156,19 @@ export namespace sqlArray {
         const schemaName = schemaEntry[0];
         const schemaDefinition = schemaEntry[1];
 
-        createSqlFromSchemaObject(sqlMigrationObj, schemaName, schemaDefinition);
+        // avoid dropping or creating mandatory schemas (and tables)
+        if (!schemasToIgnore.includes(schemaName)) {
+          createSqlFromSchemaObject(sqlMigrationObj, schemaName, schemaDefinition);
 
-        // iterate over database tables
-        if (schemaDefinition != null && schemaDefinition.tables != null) {
-          const tables = _splitActionFromNode(schemaDefinition.tables).node;
-          Object.entries(tables).map((tableEntry) => {
-            const tableName = tableEntry[0];
-            const tableObject = tableEntry[1];
-            createSqlFromTableObject(sqlMigrationObj, schemaName, tableName, tableObject);
-          });
+          // iterate over database tables
+          if (schemaDefinition != null && schemaDefinition.tables != null) {
+            const tables = _splitActionFromNode(schemaDefinition.tables).node;
+            Object.entries(tables).map((tableEntry) => {
+              const tableName = tableEntry[0];
+              const tableObject = tableEntry[1];
+              createSqlFromTableObject(sqlMigrationObj, schemaName, tableName, tableObject);
+            });
+          }
         }
       });
     }
@@ -266,19 +270,15 @@ export namespace sqlArray {
     // node
     const { action, node } = _splitActionFromNode(schemDefinition);
 
-    // avoid dropping or creating mandatory schemas
-    if (!schemasToIgnore.includes(schemaName)) {
-
-      if (action.add) {
-        // don't getSqlFromMigrationObj schema, it will be created automatically with table creation
-        // thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
-      } else if (action.remove) {
-        // drop or rename schema
-        if (!renameInsteadOfDrop) {
-          thisSql.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
-        } else { // getSqlFromMigrationObj rename instead
-          thisSql.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
-        }
+    if (action.add) {
+      // don't getSqlFromMigrationObj schema, it will be created automatically with table creation
+      // thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
+    } else if (action.remove) {
+      // drop or rename schema
+      if (!renameInsteadOfDrop) {
+        thisSql.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
+      } else { // getSqlFromMigrationObj rename instead
+        thisSql.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
       }
     }
 
@@ -302,6 +302,7 @@ export namespace sqlArray {
     const tableNameUp   = node.name || tableName;
     const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
     const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;
+    const versionTableNameWithSchemaUp   = `_versions."${schemaName}_${tableNameUp}"`;
     const tableNameWithSchemaDown = `"${schemaName}"."${tableNameDown}"`;
 
     // only if table needs to be created
@@ -310,7 +311,7 @@ export namespace sqlArray {
 
         // getSqlFromMigrationObj table statement
         thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
-        thisSql.up.push(`CREATE TABLE ${tableNameWithSchemaUp}();`);
+        thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${tableNameWithSchemaUp}();`);
 
       } else if (action.remove) {
 
@@ -358,6 +359,47 @@ export namespace sqlArray {
         const constraintName = constraintObject[0];
         const constraintDefinition = constraintObject[1];
         createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableNameUp, constraintName, constraintDefinition);
+      }
+    }
+
+    // versioning for table
+    if (tableDefinition.versioning != null) {
+
+      // create
+      const versioningActionObject = _splitActionFromNode(tableDefinition.versioning);
+      const versioningAction = versioningActionObject.action;
+      const versioningDef = versioningActionObject.node;
+
+      // drop trigger for remove and before add (in case it's already there)
+      if (versioningAction.remove || versioningAction.add) {
+        // drop trigger, keep table and data
+        thisSql.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
+      }
+
+      // create versioning table and trigger
+      if (versioningAction.add) {
+
+        // (re-)create versioning table if not exists
+        thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
+        thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
+          (
+            id uuid NOT NULL DEFAULT uuid_generate_v4(),
+            created_at timestamp without time zone DEFAULT now(),
+            created_by character varying(255),
+            action _meta.versioning_action,
+            table_name character varying(255),
+            table_id uuid,
+            state jsonb,
+            diff jsonb,
+            CONSTRAINT _version_pkey PRIMARY KEY (id)
+        );`);
+
+        // create trigger for table
+        thisSql.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableName}"
+          AFTER INSERT OR UPDATE OR DELETE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.create_version();`);
       }
     }
 

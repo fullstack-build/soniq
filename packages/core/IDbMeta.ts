@@ -12,6 +12,9 @@ export interface IDbMeta {
           oldName?: string;
           exposedNames?: [string];
           description?: string;
+          versioning?: {
+            isActive: boolean;
+          };
           columns: {
             [name: string]:
               {

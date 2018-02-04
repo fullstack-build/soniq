@@ -6,7 +6,7 @@ import * as One from '../core';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 
-import { sqlArray } from './sqlArray';
+import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
 export class Migration extends One.AbstractPackage {
 
@@ -77,7 +77,7 @@ export class Migration extends One.AbstractPackage {
       }, []);
     }
 
-    const loadSuffixOrder = ['extension', 'schema', 'table', 'function', 'insert', 'set', 'select'];
+    const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'insert', 'set', 'select'];
     // will try, but ignore any errors
     const loadOptionalSuffixOrder = ['operator_class'];
     const loadFilesOrder  = {};
@@ -151,14 +151,33 @@ export class Migration extends One.AbstractPackage {
   }
 
   public getMigrationSqlStatements(renameInsteadOfDrop: boolean = true): string[] {
-    return sqlArray.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
+    return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
   }
 
   public getViewsSql() {
     return createViewsFromDbMeta(this.toDbMeta, 'appuserhugo', false);
   }
 
+  public getBootSql() {
+
+    const bootSql = [];
+
+    const paths = fastGlob.sync(`${__dirname}/boot_scripts/*.sql`, {
+      deep: true,
+      onlyFiles: true,
+    });
+
+    // load content
+    for (const filePath of paths) {
+      bootSql.push(fs.readFileSync(filePath, 'utf8'));
+    }
+
+    return bootSql;
+  }
+
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
+    const dbClient = this.$one.getDbSetupClient();
+
     // init DB
     await this.initDb();
 
@@ -167,7 +186,6 @@ export class Migration extends One.AbstractPackage {
 
     // anything to migrate?
     if (migrationSqlStatements.length > 0) {
-      const dbClient = this.$one.getDbSetupClient();
 
       // get view statements
       const viewsSqlStatements = this.getViewsSql();
@@ -204,6 +222,14 @@ export class Migration extends One.AbstractPackage {
         throw err;
       }
     }
+
+    // run boot sql script every time - independent, no transaction
+    const bootSqlStatements = this.getBootSql();
+    for (const sql of Object.values(bootSqlStatements)) {
+      this.logger.trace('migration.boot.sql.statement', sql);
+      await  dbClient.query(sql);
+    }
+
   }
 
 }

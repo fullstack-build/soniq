@@ -1,0 +1,1 @@
+SELECT _meta.plv8_require(); -- make sure require plv8 modules works

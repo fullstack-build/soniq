@@ -2,7 +2,7 @@ import * as F1 from '../core';
 import { IDb } from './IDb';
 import { Client as PgClient, ClientConfig as PgClientConfig } from 'pg';
 export { PgClient };
-import * as massive from 'massive';
+// import * as massive from 'massive';
 
 export class DbClient extends F1.AbstractPackage implements IDb {
   public readonly client: PgClient;
@@ -21,8 +21,12 @@ export class DbClient extends F1.AbstractPackage implements IDb {
 
   public async create(): Promise<PgClient> {
 
-    this.massiveClient = await massive(this.credentials);
-    // console.error('**', this.massiveClient);
+    /*this.massiveClient = await massive(this.credentials);
+    console.error(this.massiveClient);
+    console.error('**', await this.massiveClient.UserView.find());
+    console.error('##', await this.massiveClient.UserView.insert({
+      email: 'huhu@fullstack.build',
+      gender: 'male'}));*/
 
     try {
       // getSqlFromMigrationObj connection

@@ -156,6 +156,12 @@ export class PgToDbMeta extends F1.AbstractPackage {
         await this.iterateAndAddConstraints(schemaName, tableName);
       }
 
+      // iterate and add triggers
+      for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
+        // add triggers to table
+        await this.iterateAndAddTriggers(schemaName, tableName);
+      }
+
     } catch (err) {
       throw err;
     }
@@ -371,6 +377,33 @@ export class PgToDbMeta extends F1.AbstractPackage {
     // add constraint name to field
     /* const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
 		currentColumnRef.constraintNames.push(constraintName);*/
+  }
+
+  private async iterateAndAddTriggers(schemaName, tableName): Promise<void> {
+
+    // keep reference to current table
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
+
+    // load triggers for table
+    const { rows } = await this.dbClient.query(
+      `SELECT DISTINCT trigger_name
+                 FROM  information_schema.triggers
+                 WHERE
+                     event_object_schema = $1
+                     AND
+                     event_object_table = $2;`, [schemaName, tableName]
+    );
+
+    Object.values(rows).forEach((trigger) => {
+      // versioning active for table?
+      if (trigger.trigger_name.indexOf('create_version') >= 0) {
+        currentTable.versioning = {
+          isActive: true
+        };
+      }
+
+    });
+
   }
 
   private relationBuilderHelper(constraint) {
