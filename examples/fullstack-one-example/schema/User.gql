@@ -24,7 +24,7 @@ type PayloadData {
 
 type Payload {
   data: PayloadData
-  secret: Int
+  secret: Int!
 }
 
 input PayloadDataInput {

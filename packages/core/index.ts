@@ -27,6 +27,7 @@ import { Logger } from './logger';
 import { graphQl } from '../graphQl/index';
 import { Migration } from '../migration';
 import { Auth } from '../auth';
+import { Queue, PgBoss } from '../queue';
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -58,6 +59,7 @@ class FullstackOneCore implements IFullstackOneCore {
   private dbMeta: IDbMeta;
   private knownNodeIds: [string];
   private auth;
+  private queue;
 
   constructor() {
 
@@ -125,8 +127,11 @@ class FullstackOneCore implements IFullstackOneCore {
       // return copy instead of a ref
       return { ... this.CONFIG };
     } else {
+      // find config key by name case insensitive
+      const configKey = Object.keys(this.CONFIG).find(key => key.toLowerCase() === pModuleName.toLowerCase());
+
       // return copy instead of a ref
-      return { ... this.CONFIG[pModuleName] };
+      return { ... this.CONFIG[configKey] };
     }
   }
 
@@ -174,6 +179,11 @@ class FullstackOneCore implements IFullstackOneCore {
   // return DB pool
   public getDbPool(): PgPool {
     return this.dbPoolObj.pool;
+  }
+
+  // return Queue
+  public getQueue(): PgBoss {
+    return this.queue;
   }
 
   public async getMigrationSql() {
@@ -271,6 +281,10 @@ class FullstackOneCore implements IFullstackOneCore {
 
       // add GraphQL endpoints
       await graphQl.addEndpoints(this);
+
+      // init queue
+      const queue = new Queue();
+      this.queue = await queue.start();
 
       // execute book scripts
       await this.executeBootScripts();

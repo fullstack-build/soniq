@@ -1,0 +1,16 @@
+{
+  "name": "@fullstack-one/queue",
+  "version": "0.1.0",
+  "description": "fullstack.one queue package",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "pg-boss": "^2.4.0"
+  },
+  "devDependencies": {}
+}

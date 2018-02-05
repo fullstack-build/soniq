@@ -1,6 +1,6 @@
-import * as F1 from '../core';
+import * as One from '../core';
 
-export class Example extends F1.AbstractPackage {
+export class Example extends One.AbstractPackage {
 
   constructor() {
     super();
