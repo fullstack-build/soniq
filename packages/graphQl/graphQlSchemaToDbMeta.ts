@@ -168,7 +168,7 @@ const GQL_JSON_PARSER = {
               refDbMetaCurrentTable,
               refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
-    switch (directiveKind) {
+    switch ((directiveKind).toLowerCase()) {
       case 'table':
         // nothing to do here -> has been done in ObjectTypeDefinition
         break;
@@ -233,6 +233,17 @@ const GQL_JSON_PARSER = {
       case 'versioning':
         dbMetaNode.versioning = {
           isActive: true
+        };
+        break;
+      case 'nonupdatable':
+        dbMetaNode.immutable = {
+          isUpdatable: false
+        };
+        break;
+      case 'immutable':
+        dbMetaNode.immutable = {
+          isUpdatable: false,
+          isDeletable: false
         };
         break;
       case 'default': // set default value

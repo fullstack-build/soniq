@@ -1,4 +1,4 @@
-type Post @table {#@migrate(from:"PostOld"){
+type Post @table @immutable @migrate(from:"PostOld"){
   id: ID! @unique
   title: String
   content: String

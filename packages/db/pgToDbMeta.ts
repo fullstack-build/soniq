@@ -395,12 +395,20 @@ export class PgToDbMeta extends F1.AbstractPackage {
     );
 
     Object.values(rows).forEach((trigger) => {
-      // versioning active for table?
       if (trigger.trigger_name.indexOf('create_version') >= 0) {
+        // versioning active for table
         currentTable.versioning = {
           isActive: true
         };
-      }
+      } else if (trigger.trigger_name.indexOf('table_is_not_updatable') >= 0) {
+        // immutability active for table: non updatable
+        currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
+        currentTable.immutable.isUpdatable = false;
+      } else if (trigger.trigger_name.indexOf('table_is_not_deletable') >= 0) {
+        // immutability active for table: non deletable
+        currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
+        currentTable.immutable.isDeletable = false;
+    }
 
     });
 

@@ -11,6 +11,7 @@ export { IEnvironmentInformation, IDbMeta };
 import { Logger } from './logger';
 import { IEventEmitter } from './events';
 import { PgClient, PgPool } from '../db';
+import { PgBoss } from '../queue';
 
 export interface IFullstackOneCore {
   ENVIRONMENT: IEnvironmentInformation;
@@ -24,4 +25,5 @@ export interface IFullstackOneCore {
   getDbSetupClient: () => PgClient;
   getDbPool: () => PgPool;
   runMigration: () => void;
+  getQueue: () => PgBoss;
 }

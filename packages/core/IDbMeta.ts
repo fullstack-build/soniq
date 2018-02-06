@@ -15,6 +15,10 @@ export interface IDbMeta {
           versioning?: {
             isActive: boolean;
           };
+          immutable?: {
+            isUpdatable?: boolean;
+            isDeletable?: boolean;
+          };
           columns: {
             [name: string]:
               {

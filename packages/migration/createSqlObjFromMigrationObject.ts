@@ -302,7 +302,6 @@ export namespace sqlObjFromMigrationObject {
     const tableNameUp   = node.name || tableName;
     const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
     const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;
-    const versionTableNameWithSchemaUp   = `_versions."${schemaName}_${tableNameUp}"`;
     const tableNameWithSchemaDown = `"${schemaName}"."${tableNameDown}"`;
 
     // only if table needs to be created
@@ -364,44 +363,12 @@ export namespace sqlObjFromMigrationObject {
 
     // versioning for table
     if (tableDefinition.versioning != null) {
+      createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
+    }
 
-      // create
-      const versioningActionObject = _splitActionFromNode(tableDefinition.versioning);
-      const versioningAction = versioningActionObject.action;
-      const versioningDef = versioningActionObject.node;
-
-      // drop trigger for remove and before add (in case it's already there)
-      if (versioningAction.remove || versioningAction.add) {
-        // drop trigger, keep table and data
-        thisSql.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-      }
-
-      // create versioning table and trigger
-      if (versioningAction.add) {
-
-        // (re-)create versioning table if not exists
-        thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
-        thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
-          (
-            id uuid NOT NULL DEFAULT uuid_generate_v4(),
-            created_at timestamp without time zone DEFAULT now(),
-            user_id uuid,
-            created_by character varying(255),
-            action _meta.versioning_action,
-            table_name character varying(255),
-            table_id uuid,
-            state jsonb,
-            diff jsonb,
-            CONSTRAINT _version_pkey PRIMARY KEY (id)
-        );`);
-
-        // create trigger for table
-        thisSql.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableName}"
-          AFTER INSERT OR UPDATE OR DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.create_version();`);
-      }
+    // immutability for table
+    if (tableDefinition.immutable != null) {
+      makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
     }
 
   }
@@ -597,6 +564,89 @@ export namespace sqlObjFromMigrationObject {
         break;
     }
 
+  }
+
+  function createVersioningForTable(tableSql, schemaName, tableName, versioningObjectWithAction) {
+
+    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
+    const versionTableNameWithSchemaUp   = `_versions."${schemaName}_${tableName}"`;
+
+    // create
+    const versioningActionObject = _splitActionFromNode(versioningObjectWithAction);
+    const versioningAction = versioningActionObject.action;
+    const versioningDef = versioningActionObject.node;
+
+    // drop trigger for remove and before add (in case it's already there)
+    if (versioningAction.remove || versioningAction.add) {
+      // drop trigger, keep table and data
+      tableSql.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
+    }
+
+    // create versioning table and trigger
+    if (versioningAction.add) {
+
+      // (re-)create versioning table if not exists
+      tableSql.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
+      tableSql.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
+          (
+            id uuid NOT NULL DEFAULT uuid_generate_v4(),
+            created_at timestamp without time zone DEFAULT now(),
+            user_id uuid,
+            created_by character varying(255),
+            action _meta.versioning_action,
+            table_name character varying(255),
+            table_id uuid,
+            state jsonb,
+            diff jsonb,
+            CONSTRAINT _version_pkey PRIMARY KEY (id)
+        );`);
+
+      // create trigger for table
+      tableSql.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableName}"
+          AFTER INSERT OR UPDATE OR DELETE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.create_version();`);
+    }
+  }
+
+  function makeTableImmutable(tableSql, schemaName, tableName, immutableObjectWithAction) {
+
+    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
+
+    // create
+    const immutabilityActionObject  = _splitActionFromNode(immutableObjectWithAction);
+    const immutabilityAction        = immutabilityActionObject.action;
+    const immutabilityDef           = immutabilityActionObject.node;
+
+    // drop trigger for remove and before add (in case it's already there)
+    if (immutabilityAction.remove || immutabilityAction.add || immutabilityAction.change) {
+      // drop trigger, keep table and data
+      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_updatable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
+      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_deletable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
+    }
+
+    // create versioning table and trigger
+    if (immutabilityAction.add || immutabilityAction.change) {
+
+      // create trigger for table: not updatable
+      if (immutabilityDef.isUpdatable === false) { // has to be set EXACTLY to false
+        tableSql.up.push(`CREATE TRIGGER "table_is_not_updatable_${schemaName}_${tableName}"
+          BEFORE UPDATE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.make_table_immutable();`);
+      }
+
+      // create trigger for table: not updatable
+      if (immutabilityDef.isDeletable === false) { // has to be set EXACTLY to false
+        tableSql.up.push(`CREATE TRIGGER "table_is_not_deletable_${schemaName}_${tableName}"
+          BEFORE DELETE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.make_table_immutable();`);
+      }
+    }
   }
 
   function createRelation(sqlMigrationObj, relationName, relationObject: One.IDbRelation[]) {

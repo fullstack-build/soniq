@@ -28,6 +28,7 @@ import { graphQl } from '../graphQl/index';
 import { Migration } from '../migration';
 import { Auth } from '../auth';
 import { Queue, PgBoss } from '../queue';
+import { Email } from '../notifications';
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -60,6 +61,7 @@ class FullstackOneCore implements IFullstackOneCore {
   private knownNodeIds: [string];
   private auth;
   private queue;
+  private email;
 
   constructor() {
 
@@ -285,6 +287,11 @@ class FullstackOneCore implements IFullstackOneCore {
       // init queue
       const queue = new Queue();
       this.queue = await queue.start();
+
+      // notifications
+      this.email = new Email();
+
+      // console.error('***>>', await this.email.sendMessage('test@test.de', 'test subject', 'html content'));
 
       // execute book scripts
       await this.executeBootScripts();
