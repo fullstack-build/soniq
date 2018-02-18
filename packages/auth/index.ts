@@ -27,7 +27,7 @@ export class Auth extends ONE.AbstractPackage {
 
     this.$one = $one;
 
-    this.authConfig = this.$one.getConfig('auth');
+    this.authConfig = this.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
     this.linkPassport();

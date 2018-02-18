@@ -4,7 +4,7 @@ import { Pool as PgPool, PoolConfig as PgPoolConfig } from 'pg';
 export { PgPool };
 
 @ONE.Service()
-export class DbGeneralPool implements IDb {
+export class DbGeneralPool extends ONE.AbstractPackage implements IDb  {
   private readonly config: any;
   private readonly applicationName: string;
   private credentials: PgPoolConfig;
@@ -18,13 +18,14 @@ export class DbGeneralPool implements IDb {
     @ONE.Inject(type => ONE.EventEmitter) eventEmitter?,
     @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
     ) {
+    super ();
+    // DI
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbGeneralPool');
 
     const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
-    this.config = ONE.Container.get('CONFIG');
 
-    this.config = this.config.db.general;
+    this.config = this.getConfig('db').general;
     this.applicationName = env.namespace + '_pool_' + env.nodeId;
 
     this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });

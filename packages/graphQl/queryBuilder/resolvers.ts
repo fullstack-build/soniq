@@ -30,9 +30,9 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
 
   // DI
-  // todo need refactoring @dustin
+  // todo needs refactoring @dustin
   const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
-  const auth = ONE.Container.get(ONE.FullstackOneCore).getAuthInstance();
+  const auth = ONE.Container.get(ONE.Auth);
 
   const queryResolvers = {};
   const mutationResolvers = {};

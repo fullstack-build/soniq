@@ -4,7 +4,7 @@ export { PgBoss };
 import * as ONE from '../core';
 
 @ONE.Service()
-export class Queue {
+export class Queue extends ONE.AbstractPackage {
   private queue;
 
   // DI
@@ -13,6 +13,8 @@ export class Queue {
   constructor(
     @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
   ) {
+    super();
+
     // set DI dependencies
     this.logger = loggerFactory.create('Queue');
   }
@@ -20,7 +22,7 @@ export class Queue {
   public async start(): Promise<PgBoss> {
 
     let boss;
-    const queueConfig = ONE.Container.get('CONFIG').queue;
+    const queueConfig = this.getConfig('queue');
 
     // create new connection if set in config, otherwise use one from the pool
     if (queueConfig != null &&

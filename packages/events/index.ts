@@ -8,7 +8,7 @@ export interface IEventEmitter {
 }
 
 @ONE.Service()
-export class EventEmitter implements IEventEmitter {
+export class EventEmitter extends ONE.AbstractPackage implements IEventEmitter {
 
   private eventEmitter: EventEmitter2;
 
@@ -18,12 +18,13 @@ export class EventEmitter implements IEventEmitter {
   private namespace: string = 'one';
 
   constructor() {
+    super();
 
     const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
-    const config: any = ONE.Container.get('CONFIG');
+    const config: any = this.getConfig('config');
 
     this.nodeId = env.nodeId;
-    this.namespace = config.core.namespace;
+    this.namespace = this.getConfig('core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',

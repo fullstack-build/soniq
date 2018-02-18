@@ -1,18 +1,18 @@
-import * as FullstackOne from '../../';
+import * as ONE from '../../';
 
-const $one = FullstackOne.getInstance();
+const $one = ONE.getInstance();
 
-$one.getEventEmitter().on('f1.ready',() => {
+ONE.Container.get(ONE.EventEmitter).on('f1.ready',() => {
   console.log('EVENT: ready');
 });
 
-$one.getEventEmitter().on('f1.not-ready',(err) => {
+ONE.Container.get(ONE.EventEmitter).on('f1.not-ready',(err) => {
   console.error('Error-EVENT: not-ready', err);
 });
 
 (async () => {
   try {
-    const $one2 = await FullstackOne.getReadyPromise();
+    const $one2 = await ONE.getReadyPromise();
     console.log('PROMISE: ready');
   } catch (err) {
     console.error('Error-PROMISE: not-ready', err);
@@ -21,15 +21,14 @@ $one.getEventEmitter().on('f1.not-ready',(err) => {
 
 // catch another system event as a promise
 (async () => {
-  const payloadArray = await FullstackOne.eventToPromise('f1.dbObject.set');
+  const payloadArray = await ONE.eventToPromise('f1.dbObject.set');
   console.log('!!! PROMISED event caught fullstack-one.*.dbObject.set');
 })();
 
 // catch events from other nodes
-$one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
+ONE.Container.get(ONE.EventEmitter).onAnyInstance('f1.ready', async (instanceId) => {
   console.log('* ready event on any node', instanceId);
 });
-
 
 // go
 /*$one.getEventEmitter().on('f1.ready', async (instanceId) => {

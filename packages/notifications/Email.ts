@@ -18,8 +18,7 @@ export class Email extends ONE.AbstractPackage {
 
   constructor(
     @ONE.Inject(type => ONE.Queue) queue?,
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?,
-    @ONE.Inject('CONFIG') config?
+    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
   ) {
     super();
 

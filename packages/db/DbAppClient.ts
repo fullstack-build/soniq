@@ -4,7 +4,7 @@ import { Client as PgClient, ClientConfig as PgClientConfig } from 'pg';
 export { PgClient };
 
 @ONE.Service()
-export class DbAppClient implements IDb {
+export class DbAppClient extends ONE.AbstractPackage implements IDb {
 
   public readonly client: PgClient;
 
@@ -22,15 +22,16 @@ export class DbAppClient implements IDb {
     @ONE.Inject(type => ONE.EventEmitter) eventEmitter?,
     @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
   ) {
+    super();
+
     // set DI dependencies
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbAppClient');
 
     // get settings from DI container
     this.ENVIRONMENT = ONE.Container.get('ENVIRONMENT');
-    const config: any = ONE.Container.get('CONFIG');
 
-    const configDB = config.db;
+    const configDB = this.getConfig('db');
     this.credentials  = configDB.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
@@ -52,7 +53,7 @@ export class DbAppClient implements IDb {
     });
 
     // check connected clients every x secons
-    const updateClientListInterval = config.updateClientListInterval || 10000;
+    const updateClientListInterval = configDB.updateClientListInterval || 10000;
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
   }

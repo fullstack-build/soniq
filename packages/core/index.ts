@@ -37,7 +37,7 @@ import { Migration } from '../migration';
 import { Auth } from '../auth';
 import { Queue, PgBoss } from '../queue';
 import { Email } from '../notifications';
-export { LoggerFactory, EventEmitter, ILogger, DbAppClient, DbGeneralPool, IConfig, Queue };
+export { LoggerFactory, EventEmitter, ILogger, DbAppClient, DbGeneralPool, IConfig, Queue, Auth };
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -58,14 +58,11 @@ try {
 export class FullstackOneCore extends AbstractPackage implements IFullstackOneCore {
 
   public readonly ENVIRONMENT: IEnvironment;
-  private hasBooted: boolean;
+  private hasBooted: boolean = false;
 
   // dependencies DI
-  @Inject()
-  private loggerFactory: LoggerFactory;
   private logger: ILogger;
 
-  @Inject()
   private eventEmitter: EventEmitter;
 
   @Inject()
@@ -81,10 +78,8 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private queue;
   private email;
 
-  constructor() {
+  constructor(@Inject(type => LoggerFactory) loggerFactory?) {
     super();
-
-    this.hasBooted = false;
 
     // load project package.js
     const projectPath = path.dirname(require.main.filename);
@@ -109,6 +104,13 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
     this.ENVIRONMENT.namespace = this.getConfig('core').namespace;
     // put ENVIRONMENT into DI
     Container.set('ENVIRONMENT', this.ENVIRONMENT);
+
+    // init core logger after ENVIRONMENT was set
+    this.logger = loggerFactory.create('core');
+    this.logger.trace('starting...');
+
+    // init event emitter after ENVIRONMENT was set
+    this.eventEmitter = Container.get(EventEmitter);
 
     // continue booting async on next tick
     // (is needed in order to be able to call getInstance from outside)
@@ -182,10 +184,6 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private async bootAsync(): Promise<void> {
 
     try {
-
-      // init core logger
-      this.logger = this.getLogger('core');
-      this.logger.trace('booting...');
 
       // connect Db
       await this.connectDB();
@@ -401,7 +399,7 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
     process.stdout.write('name: ' + this.ENVIRONMENT.name + '\n');
     process.stdout.write('version: ' + this.ENVIRONMENT.version + '\n');
     process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
-    process.stdout.write('env: ' + this.ENVIRONMENT.env + '\n');
+    process.stdout.write('env: ' + this.ENVIRONMENT.NODE_ENV + '\n');
     process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
     process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
     process.stdout.write('____________________________________\n');
@@ -427,11 +425,11 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
     } else {
 
       // catch ready event
-      $one.getEventEmitter().on(`${$one.ENVIRONMENT.namespace}.ready`, () => {
+      Container.get(EventEmitter).on(`${$one.ENVIRONMENT.namespace}.ready`, () => {
         $resolve($one);
       });
       // catch not ready event
-      $one.getEventEmitter().on(`${$one.ENVIRONMENT.namespace}.not-ready`, (err) => {
+      Container.get(EventEmitter).on(`${$one.ENVIRONMENT.namespace}.not-ready`, (err) => {
         $reject(err);
       });
     }
@@ -442,7 +440,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
 // helper to convert an event into a promise
 export function eventToPromise(pEventName: string): Promise<any> {
   return new Promise(($resolve, $reject) => {
-    $one.getEventEmitter().on(pEventName, (...args: any[]) => {
+    Container.get(EventEmitter).on(pEventName, (...args: any[]) => {
       $resolve([... args]);
     });
 

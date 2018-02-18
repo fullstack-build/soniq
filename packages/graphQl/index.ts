@@ -4,7 +4,7 @@ import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
 // fullstack-one core
-import { helper } from '../core';
+import * as ONE from '../core';
 
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
@@ -30,45 +30,49 @@ export namespace graphQl {
   let queries: any;
   let customOperations: any;
 
+  // DI
+  // todo need refactoring --> ONE.Container.get(ONE.EventEmitter) many times
+
   export const bootGraphQl = async ($one) => {
 
-    const logger = $one.getLogger('bootGraphQl');
-    const graphQlConfig = $one.getConfig('graphql');
+    // todo needs refactoring
+    const logger = ONE.Container.get(ONE.LoggerFactory).create('bootGraphQl');
+    const graphQlConfig = ONE.Container.get(ONE.FullstackOneCore).getConfig('graphql');
 
     try {
 
       // load schema
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
-      gQlSchema = await helper.loadFilesByGlobPattern(gQlSchemaPattern);
+      gQlSchema = await ONE.helper.loadFilesByGlobPattern(gQlSchemaPattern);
       // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.load.success`);
+      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.load.success`);
 
       const gQlSchemaCombined = gQlSchema.join('\n');
       gQlJsonSchema = gQLHelper.helper.parseGraphQlSchema(gQlSchemaCombined);
       // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
+      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
 
       dbMeta = parseGraphQlJsonSchemaToDbMeta(gQlJsonSchema);
 
       // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbMeta`);
+      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbMeta`);
 
       // load permissions and expressions and generate views and put them into schemas
       try {
 
         // load permissions
         const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
-        const viewsArray = await helper.requireFilesByGlobPattern(viewsPattern);
+        const viewsArray = await ONE.helper.requireFilesByGlobPattern(viewsPattern);
         views = [].concat.apply([], viewsArray);
         // emit event
-        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
+        ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
         // load expressions
         const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
-        const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
+        const expressionsArray = await ONE.helper.requireFilesByGlobPattern(expressionsPattern);
         expressions = [].concat.apply([], expressionsArray);
         // emit event
-        $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
+        ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
         const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbMeta, $one);
 
@@ -106,7 +110,7 @@ export namespace graphQl {
 
       logger.warn('bootGraphQl.error', err);
       // emit event
-      $one.getEventEmitter().emit(`${$one.ENVIRONMENT.namespace}.graphQl.bootGraphQl.error`, err);
+      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.bootGraphQl.error`, err);
     }
 
   };
@@ -128,7 +132,7 @@ export namespace graphQl {
 
     // Load resolvers
     const resolversPattern = $one.ENVIRONMENT.path + graphQlConfig.resolversPattern;
-    const resolversObject = await helper.requireFilesByGlobPatternAsObject(resolversPattern);
+    const resolversObject = await ONE.helper.requireFilesByGlobPatternAsObject(resolversPattern);
 
     const schema = makeExecutableSchema({
 			typeDefs: gQlRuntimeSchema,
