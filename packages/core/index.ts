@@ -1,6 +1,14 @@
+// ENV
 import * as dotenv from 'dotenv-safe';
+// DI
+import 'reflect-metadata';
+import { Container, Inject, Service } from 'typedi';
+export * from 'typedi';
+
+// graceful exit
 import * as onExit from 'signal-exit';
 import * as terminus from '@godaddy/terminus';
+// other npm dependencies
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 import * as http from 'http';
@@ -14,21 +22,22 @@ import { AbstractPackage } from './AbstractPackage';
 export { AbstractPackage };
 import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
-import { IEnvironmentInformation } from './IEnvironmentInformation';
+import { IEnvironment } from './IEnvironment';
 import { IDbMeta, IDbRelation } from './IDbMeta';
-export { IFullstackOneCore, IEnvironmentInformation, IDbMeta, IDbRelation };
+export { IFullstackOneCore, IEnvironment, IDbMeta, IDbRelation };
 
 // fullstack-one imports
 import { helper } from '../helper';
 export { helper } from '../helper';
-import { Events, IEventEmitter } from './events';
-import { DbClient, DbPool, PgClient, PgPool, PgToDbMeta } from '../db';
-import { Logger } from './logger';
+import { EventEmitter } from '../events';
+import { DbAppClient, DbGeneralPool, PgClient, PgPool, PgToDbMeta } from '../db';
+import { LoggerFactory, ILogger } from '../logger';
 import { graphQl } from '../graphQl/index';
 import { Migration } from '../migration';
 import { Auth } from '../auth';
 import { Queue, PgBoss } from '../queue';
 import { Email } from '../notifications';
+export { LoggerFactory, EventEmitter, ILogger, DbAppClient, DbGeneralPool, IConfig, Queue };
 
 // helper
 // import { graphQlHelper } from '../graphQlHelper/main';
@@ -45,25 +54,35 @@ try {
   process.exit(1);
 }
 
-class FullstackOneCore implements IFullstackOneCore {
+@Service()
+export class FullstackOneCore extends AbstractPackage implements IFullstackOneCore {
 
-  public readonly ENVIRONMENT: IEnvironmentInformation;
-  public readonly nodeId: string;
+  public readonly ENVIRONMENT: IEnvironment;
   private hasBooted: boolean;
-  private eventEmitter: IEventEmitter;
-  private CONFIG: IConfig;
-  private logger: Logger;
-  private dbSetupClientObj: DbClient;
-  private dbPoolObj: DbPool;
+
+  // dependencies DI
+  @Inject()
+  private loggerFactory: LoggerFactory;
+  private logger: ILogger;
+
+  @Inject()
+  private eventEmitter: EventEmitter;
+
+  @Inject()
+  private dbAppClientObj: DbAppClient;
+
+  @Inject()
+  private dbPoolObj: DbGeneralPool;
+
   private server: http.Server;
   private APP: Koa;
   private dbMeta: IDbMeta;
-  private knownNodeIds: [string];
   private auth;
   private queue;
   private email;
 
   constructor() {
+    super();
 
     this.hasBooted = false;
 
@@ -73,41 +92,23 @@ class FullstackOneCore implements IFullstackOneCore {
 
     // ENV CONST
     this.ENVIRONMENT = {
-      env:     process.env.NODE_ENV,
-      name:    PROJECT_PACKAGE.name,
-      path:    projectPath,
-      port:    parseInt(process.env.PORT, 10),
-      version: PROJECT_PACKAGE.version,
+      NODE_ENV: process.env.NODE_ENV,
+      name:     PROJECT_PACKAGE.name,
+      path:     projectPath,
+      port:     parseInt(process.env.PORT, 10),
+      version:  PROJECT_PACKAGE.version,
       // getSqlFromMigrationObj unique instance ID (6 char)
-      nodeId:  randomBytes(20).toString('hex').substr(5,6),
-      namespace: 'f1' // default
+      nodeId:   randomBytes(20).toString('hex').substr(5,6),
+      namespace:  'one' // default
     };
-    this.nodeId = this.ENVIRONMENT.nodeId;
-    // add nodeId to list of known nodes
-    this.knownNodeIds = [this.nodeId];
 
     // load config
     this.loadConfig();
 
     // set namespace from config
-    this.ENVIRONMENT.namespace = this.CONFIG.core.namespace;
-
-    // getSqlFromMigrationObj event emitter
-    this.eventEmitter = Events.getEventEmitter(this);
-
-    // init core logger
-    this.logger = this.getLogger('core');
-
-    // collect known nodes
-    this.eventEmitter.onAnyInstance(`${this.ENVIRONMENT.namespace}.ready`, (nodeId) => {
-      this.updateNodeIdsFromDb();
-    });
-
-    // has to be exiting before we lose connection
-    this.eventEmitter.onAnyInstance(`${this.ENVIRONMENT.namespace}.exiting`, (nodeId) => {
-      // wait one tick until it actually finishes
-      process.nextTick(() => { this.updateNodeIdsFromDb(); });
-    });
+    this.ENVIRONMENT.namespace = this.getConfig('core').namespace;
+    // put ENVIRONMENT into DI
+    Container.set('ENVIRONMENT', this.ENVIRONMENT);
 
     // continue booting async on next tick
     // (is needed in order to be able to call getInstance from outside)
@@ -118,43 +119,13 @@ class FullstackOneCore implements IFullstackOneCore {
    * PUBLIC METHODS
    */
   // return whether server is ready
-  public isReady(): boolean {
+  get isReady(): boolean {
     return this.hasBooted;
   }
 
-  // return CONFIG
-  // return either full config or only module config
-  public getConfig(pModuleName?: string): IConfig | any {
-    if (pModuleName == null) {
-      // return copy instead of a ref
-      return { ... this.CONFIG };
-    } else {
-      // find config key by name case insensitive
-      const configKey = Object.keys(this.CONFIG).find(key => key.toLowerCase() === pModuleName.toLowerCase());
-
-      // return copy instead of a ref
-      return { ... this.CONFIG[configKey] };
-    }
-  }
-
-  // return auth instance for Module
-  public getAuthInstance() {
-    return this.auth;
-  }
-
-  // return Logger instance for Module
-  public getLogger(pModuleName: string): Logger {
-    return new Logger(this, pModuleName);
-  }
-
   // return koa app
-  public getApp(): Koa {
+  get app(): Koa {
     return this.APP;
-  }
-
-  // return EventEmitter
-  public getEventEmitter(): IEventEmitter  {
-    return this.eventEmitter;
   }
 
   // forward GraphQl Schema
@@ -171,21 +142,6 @@ class FullstackOneCore implements IFullstackOneCore {
   public getDbMeta(): IDbMeta {
     // return copy instead of ref
     return _.cloneDeep(this.dbMeta);
-  }
-
-  // return DB setup connection
-  public getDbSetupClient(): PgClient {
-    return this.dbSetupClientObj.client;
-  }
-
-  // return DB pool
-  public getDbPool(): PgPool {
-    return this.dbPoolObj.pool;
-  }
-
-  // return Queue
-  public getQueue(): PgBoss {
-    return this.queue;
   }
 
   public async getMigrationSql() {
@@ -206,14 +162,15 @@ class FullstackOneCore implements IFullstackOneCore {
 
     const configDB = this.getConfig('db');
     try {
-      const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
+      const pgToDbMeta = Container.get(PgToDbMeta);
+      const fromDbMeta      = await pgToDbMeta.getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
       const migration       = new Migration(fromDbMeta, toDbMeta);
       return await migration.migrate(configDB.renameInsteadOfDrop);
 
     } catch (err) {
       // tslint:disable-next-line:no-console
-      console.error('ERROR', err);
+      this.logger.warn('runMigration.error', err);
     }
   }
 
@@ -221,46 +178,14 @@ class FullstackOneCore implements IFullstackOneCore {
    * PRIVATE METHODS
    */
 
-  private emit(eventName: string, ...args: any[]): void {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-    this.eventEmitter.emit(eventNamespaceName, this.nodeId, ...args);
-  }
-
-  private on(eventName: string, listener: (...args: any[]) => void) {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-    this.eventEmitter.on(eventNamespaceName, listener);
-  }
-
-  // load config based on ENV
-  private loadConfig(): void {
-    // framework config path
-    const frameworkConfigPath = `../../config/default.ts`;
-
-    // project config paths
-    const mainConfigPath = `${this.ENVIRONMENT.path}/config/default.ts`;
-    const envConfigPath = `${this.ENVIRONMENT.path}/config/${this.ENVIRONMENT.env}.ts`;
-
-    // load framework config file
-    let config: IConfig = require(frameworkConfigPath);
-
-    // extend framework config
-    // with project config (so it can override framework settings
-    if (!!fs.existsSync(mainConfigPath)) {
-      config = _.merge(config, require(mainConfigPath));
-    }
-    // extend with env config
-    if (!!fs.existsSync(envConfigPath)) {
-      config = _.merge(config, require(envConfigPath));
-    }
-    this.CONFIG = config;
-  }
-
   // boot async and fire event when ready
   private async bootAsync(): Promise<void> {
 
     try {
+
+      // init core logger
+      this.logger = this.getLogger('core');
+      this.logger.trace('booting...');
 
       // connect Db
       await this.connectDB();
@@ -278,20 +203,23 @@ class FullstackOneCore implements IFullstackOneCore {
       // start server
       await this.startServer();
 
-      // Load Auth
-      this.auth = new Auth();
+      // get Auth from DI
+      this.auth = Container.get(Auth);
 
       // add GraphQL endpoints
       await graphQl.addEndpoints(this);
 
-      // init queue
-      const queue = new Queue();
+      // get Queue from DI and init
+      const queue = Container.get(Queue);
       this.queue = await queue.start();
 
-      // notifications
-      this.email = new Email();
+      // get Email from DI and init
+      this.email = Container.get(Email);
 
-      // console.error('***>>', await this.email.sendMessage('test@test.de', 'test subject', 'html content'));
+      // send test mail
+      await this.email.sendMessage('test@test.de', 'test subject', 'html content');
+      // tslint:disable-next-line:no-console
+      console.error('***>> sending email');
 
       // execute book scripts
       await this.executeBootScripts();
@@ -301,7 +229,7 @@ class FullstackOneCore implements IFullstackOneCore {
 
       // emit ready event
       this.hasBooted = true;
-      this.emit('ready', this.nodeId);
+      this.emit('ready', this.ENVIRONMENT.nodeId);
     } catch (err) {
       // tslint:disable-next-line:no-console
       console.error('An error occurred while booting', err);
@@ -311,51 +239,52 @@ class FullstackOneCore implements IFullstackOneCore {
 
   }
 
+  private emit(eventName: string, ...args: any[]): void {
+    // add namespace
+    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
+    this.eventEmitter.emit(eventNamespaceName, this.ENVIRONMENT.nodeId, ...args);
+  }
+
+  private on(eventName: string, listener: (...args: any[]) => void) {
+    // add namespace
+    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
+    this.eventEmitter.on(eventNamespaceName, listener);
+  }
+
+  // load config based on ENV
+  private loadConfig(): void {
+    // framework config path
+    const frameworkConfigPath = `../../config/default.ts`;
+
+    // project config paths
+    const mainConfigPath = `${this.ENVIRONMENT.path}/config/default.ts`;
+    const envConfigPath = `${this.ENVIRONMENT.path}/config/${this.ENVIRONMENT.NODE_ENV}.ts`;
+
+    // load framework config file
+    let config: IConfig = require(frameworkConfigPath);
+
+    // extend framework config
+    // with project config (so it can override framework settings
+    if (!!fs.existsSync(mainConfigPath)) {
+      config = _.merge(config, require(mainConfigPath));
+    }
+    // extend with env config
+    if (!!fs.existsSync(envConfigPath)) {
+      config = _.merge(config, require(envConfigPath));
+    }
+
+    // put config into DI
+    Container.set('CONFIG', config);
+  }
+
   // connect to setup db and getSqlFromMigrationObj a general connection pool
   private async connectDB() {
-    const configDB = this.getConfig('db');
 
     try {
-      // getSqlFromMigrationObj connection with setup user
-      const configDbWithAppName = configDB.setup;
-      configDbWithAppName.application_name = this.ENVIRONMENT.namespace + '_client_' + this.nodeId;
-      this.dbSetupClientObj = new DbClient(configDbWithAppName);
-      // getSqlFromMigrationObj connection
-      await this.dbSetupClientObj.create();
-      // emit event
-      this.emit('db.setup.connection.created');
-
-      // getSqlFromMigrationObj pool
-      await _gracefullyAdjustPoolSize.bind(this)();
-
-      // and adjust pool size for every node change
-      this.on(`nodes.changed`, (nodeId) => { _gracefullyAdjustPoolSize.bind(this)(); });
-
-      async function _gracefullyAdjustPoolSize() {
-
-        // gracefully end pool if already available
-        if (this.dbPoolObj != null) {
-          // dont wait for promise, we just immediately getSqlFromMigrationObj a new pool
-          this.dbPoolObj.end();
-        }
-
-        const knownNodes: number = this.knownNodeIds.length;
-        // reserve one for setup connection
-        const connectionsPerInstance: number = Math.floor((configDB.general.totalMax / knownNodes - 1));
-
-        // getSqlFromMigrationObj general connection pool
-        const generalDbWithAppNameAndMaxConnections = {
-          ... configDB.general,
-          application_name: this.ENVIRONMENT.namespace + '_pool_' + this.nodeId,
-          max: connectionsPerInstance
-        };
-        // new pool with adjusted number of connections
-        this.dbPoolObj = new DbPool(generalDbWithAppNameAndMaxConnections);
-        // getSqlFromMigrationObj pool
-        await this.dbPoolObj.create();
-        // emit event
-        this.emit('db.pool.created');
-      }
+      // create single app client
+      await this.dbAppClientObj.connect();
+      // managed pool creation will be automatically triggered
+      // by the changed number of connected clients
 
     } catch (err) {
       throw err;
@@ -368,16 +297,10 @@ class FullstackOneCore implements IFullstackOneCore {
     try {
       // end setup client and pool
       await Promise.all([
-          this.dbSetupClientObj.end(),
+          this.dbAppClientObj.end(),
           this.dbPoolObj.end()
         ]);
-
-      // emit event
-      this.emit('db.setup.connection.ended');
-      // emit event
-      this.emit('db.pool.ended');
       return true;
-
     } catch (err) {
       throw err;
     }
@@ -468,28 +391,6 @@ class FullstackOneCore implements IFullstackOneCore {
 
   }
 
-  private async updateNodeIdsFromDb(): Promise<void> {
-
-    try {
-      const dbName = this.getConfig('db').general.database;
-      const applicationNamePrefix = `${this.ENVIRONMENT.namespace}_client_`;
-      const dbNodes = await this.dbSetupClientObj.client.query(
-        `SELECT * FROM pg_stat_activity WHERE datname = '${dbName}' AND application_name LIKE '${applicationNamePrefix}%';`
-      );
-      const nodeIds: [string] = dbNodes.rows.map((row) => {
-        return row.application_name.replace(applicationNamePrefix, '');
-      }) as [string];
-      // check if number of nodes has changed
-      if (this.knownNodeIds.length !== nodeIds.length) {
-        this.knownNodeIds = nodeIds;
-        this.emit('nodes.changed');
-      }
-
-    } catch (err) {
-      this.logger.warn(err);
-    }
-  }
-
   // draw CLI art
   private cliArt(): void {
     process.stdout.write(
@@ -510,8 +411,8 @@ class FullstackOneCore implements IFullstackOneCore {
 
 // GETTER
 
-// One SINGLETON
-const $one = new FullstackOneCore();
+// ONE SINGLETON
+const $one: FullstackOneCore = Container.get(FullstackOneCore);
 export function getInstance(): FullstackOneCore {
   return $one;
 }
@@ -521,7 +422,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
   return new Promise(($resolve, $reject) => {
 
     // already booted?
-    if ($one.isReady()) {
+    if ($one.isReady) {
       $resolve($one);
     } else {
 
@@ -538,7 +439,7 @@ export function getReadyPromise(): Promise<FullstackOneCore> {
   });
 }
 
-// helper to confert an event to a promise
+// helper to convert an event into a promise
 export function eventToPromise(pEventName: string): Promise<any> {
   return new Promise(($resolve, $reject) => {
     $one.getEventEmitter().on(pEventName, (...args: any[]) => {

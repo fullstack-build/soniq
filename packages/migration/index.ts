@@ -2,21 +2,27 @@ import * as _ from 'lodash';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 
-import * as One from '../core';
+import * as ONE from '../core';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
-export class Migration extends One.AbstractPackage {
+@ONE.Service()
+export class Migration {
 
-  private readonly fromDbMeta: One.IDbMeta;
-  private readonly toDbMeta: One.IDbMeta;
-  private readonly migrationObject: One.IDbMeta;
+  private readonly fromDbMeta: ONE.IDbMeta;
+  private readonly toDbMeta: ONE.IDbMeta;
+  private readonly migrationObject: ONE.IDbMeta;
 
-  constructor(fromDbMeta: One.IDbMeta,
-              toDbMeta: One.IDbMeta) {
-    super();
+  // DI
+  private logger: ONE.ILogger;
+
+  constructor(fromDbMeta: ONE.IDbMeta,
+              toDbMeta: ONE.IDbMeta) {
+
+    // create logger
+    this.logger = ONE.Container.get(ONE.LoggerFactory).create('Migration');
 
     // check if toDbMeta is empty -> Parsing error
     if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
@@ -41,12 +47,13 @@ export class Migration extends One.AbstractPackage {
 
   }
 
-  public getMigrationDbMeta(): One.IDbMeta {
+  public getMigrationDbMeta(): ONE.IDbMeta {
     return _.cloneDeep(this.migrationObject);
   }
 
   public async initDb(): Promise<void> {
-    const dbClient = this.$one.getDbSetupClient();
+    // get DB client from DI container
+    const dbClient = ONE.Container.get(ONE.DbAppClient).client;
 
     // check latest version migrated
     let latestVersion = 0;
@@ -176,7 +183,9 @@ export class Migration extends One.AbstractPackage {
   }
 
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
-    const dbClient = this.$one.getDbSetupClient();
+
+    // get DB client from DI container
+    const dbClient = ONE.Container.get(ONE.DbAppClient).client;
 
     // init DB
     await this.initDb();

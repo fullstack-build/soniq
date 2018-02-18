@@ -1,4 +1,5 @@
 import * as FullstackOne from '../../';
+
 const $one = FullstackOne.getInstance();
 
 $one.getEventEmitter().on('f1.ready',() => {
@@ -28,6 +29,7 @@ $one.getEventEmitter().on('f1.not-ready',(err) => {
 $one.getEventEmitter().onAnyInstance('f1.ready', async (instanceId) => {
   console.log('* ready event on any node', instanceId);
 });
+
 
 // go
 /*$one.getEventEmitter().on('f1.ready', async (instanceId) => {

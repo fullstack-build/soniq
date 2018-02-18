@@ -3,7 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 export = {
   core: {
-    namespace: 'f1'
+    namespace: 'one'
   },
   eventEmitter: {},
   graphql: {
@@ -15,7 +15,8 @@ export = {
     resolversPattern: '/resolvers/*.ts'
   },
   db: {
-    viewSchemaName: 'graphql'
+    viewSchemaName: 'graphql',
+    updateClientListInterval: 10000
   },
   auth: {
     sodium: {},

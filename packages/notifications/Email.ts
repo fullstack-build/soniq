@@ -1,18 +1,32 @@
 import { createTestAccount, createTransport, getTestMessageUrl } from 'nodemailer';
 import { htmlToText } from 'nodemailer-html-to-text';
 
-import * as One from '../core';
+import * as ONE from '../core';
 
-export class Email extends One.AbstractPackage {
+ONE.Service();
+export class Email extends ONE.AbstractPackage {
 
   private isReady = false;
   private transport;
-  private readonly queue;
 
-  constructor() {
+  // DI dependencies
+  private CONFIG: any;
+  private readonly queue: any;
+  private logger: ONE.ILogger;
+  @ONE.Inject()
+  private eventEmitter: ONE.EventEmitter;
+
+  constructor(
+    @ONE.Inject(type => ONE.Queue) queue?,
+    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?,
+    @ONE.Inject('CONFIG') config?
+  ) {
     super();
-    // store queue for future use
-    this.queue = this.$one.getQueue();
+
+    // set DI dependencies
+    this.CONFIG = this.getConfig('email');
+    this.queue = queue.getQueue();
+    this.logger = loggerFactory.create('Email');
 
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {

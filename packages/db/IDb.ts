@@ -1,4 +1,6 @@
+import { ClientConfig } from 'pg';
+
 export interface IDb {
-  create: () => Promise<any>;
+  connect: (pCredentials: ClientConfig) => Promise<any>;
   end: () => Promise<void>;
 }

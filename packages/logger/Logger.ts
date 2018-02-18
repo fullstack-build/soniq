@@ -1,21 +1,15 @@
-import * as F1 from '../index';
+import * as ONE from '../core/index';
 import * as DebugLogger from 'debug-logger';
 // import * as LE from 'le_node';
 import * as Tracer from 'tracer';
-
-import { IEnvironmentInformation } from '../IEnvironmentInformation';
 import { ILogger } from './ILogger';
 import { ILogObject } from './ILogObject';
 
 export class Logger implements ILogger {
   private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
 
-  // Logger Name
-  private moduleName: string = null;
-  // instance ID
-  private nodeId: string = null;
-  // project environment
-  private envInfo: IEnvironmentInformation;
+  private loggerName: string;
+
   // tracer
   private tracerLogger: Tracer = null;
   // debug
@@ -26,18 +20,18 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor($one: F1.IFullstackOneCore, pModuleName: string = 'root') {
+  constructor(moduleName: string = 'root') {
 
-    this.moduleName = pModuleName;
-    this.nodeId = $one.nodeId;
+    const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
+    const config: any = ONE.Container.get('CONFIG');
 
-    const env = (this.envInfo = $one.ENVIRONMENT);
-    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.env}/I:${this.nodeId}`;
+    this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
+    this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
 
     // setup tracer
     const tracerConfig: any = {
       // min level
-      level: $one.getConfig('logger').minLevel,
+      level: config.logger.minLevel,
       // set log levels
       methods: this.LEVELS,
       // override tracer transport with logToDebug
@@ -46,7 +40,7 @@ export class Logger implements ILogger {
     this.tracerLogger = Tracer.colorConsole(tracerConfig);
 
     // setup debug
-    this.debugLogger = DebugLogger(`${this.moduleName}`);
+    this.debugLogger = DebugLogger(this.loggerName);
 
     /*
     // setup LogEntries

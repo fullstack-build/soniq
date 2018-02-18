@@ -1,28 +1,30 @@
-import * as F1 from './index';
-import { Logger } from './logger';
-import { Events, IEventEmitter } from './events';
+import * as ONE from './index';
 
-/*export interface IAbstractPackage {
-  // todo
-}*/
+export interface IAbstractPackage {
+  getConfig: () => ONE.IConfig | any;
+}
 
-export abstract class AbstractPackage /*implements IAbstractPackage*/ {
+/*
+* helpers
+* */
+export abstract class AbstractPackage implements IAbstractPackage {
 
-  protected readonly $one: F1.IFullstackOneCore;
-  protected readonly logger: Logger;
-  protected readonly eventEmitter: IEventEmitter;
-  protected readonly CONFIG: any;
-  private readonly className: string;
+  // return CONFIG
+  // return either full config or only module config
+  public getConfig(pModuleName?: string): ONE.IConfig | any {
 
-   constructor() {
-     this.className = this.constructor.name;
-     this.$one = F1.getInstance();
-     // get config
-     this.CONFIG = this.$one.getConfig(this.className);
-     // getSqlFromMigrationObj logger
-     this.logger = this.$one.getLogger(`fullstack-one:${this.$one.nodeId}:${this.className}`);
-     // get eventemitter
-     this.eventEmitter = this.$one.getEventEmitter();
+    const config = ONE.Container.get('CONFIG');
+
+    if (pModuleName == null) {
+      // return copy instead of a ref
+      return { ... config };
+    } else {
+      // find config key by name case insensitive
+      const configKey = Object.keys(config).find(key => key.toLowerCase() === pModuleName.toLowerCase());
+
+      // return copy instead of a ref
+      return { ... config[configKey] };
+    }
   }
 
 }

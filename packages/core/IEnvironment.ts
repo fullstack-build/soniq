@@ -1,5 +1,5 @@
-export interface IEnvironmentInformation {
-  env: string;
+export interface IEnvironment {
+  NODE_ENV: string;
   name: string;
   path: string;
   port: number;

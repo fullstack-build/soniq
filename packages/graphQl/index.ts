@@ -172,8 +172,8 @@ export namespace graphQl {
 
     gqlRouter.get(graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: graphQlConfig.endpoint }));
 
-    $one.getApp().use(gqlRouter.routes());
-    $one.getApp().use(gqlRouter.allowedMethods());
+    $one.app.use(gqlRouter.routes());
+    $one.app.use(gqlRouter.allowedMethods());
 
   };
 }

@@ -1,19 +1,26 @@
 import * as PgBoss from 'pg-boss';
 export { PgBoss };
 
-import * as One from '../core';
+import * as ONE from '../core';
 
-export class Queue extends One.AbstractPackage {
+@ONE.Service()
+export class Queue {
   private queue;
 
-  constructor() {
-    super();
+  // DI
+  private logger: ONE.ILogger;
+
+  constructor(
+    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
+  ) {
+    // set DI dependencies
+    this.logger = loggerFactory.create('Queue');
   }
 
   public async start(): Promise<PgBoss> {
 
     let boss;
-    const queueConfig = this.CONFIG;
+    const queueConfig = ONE.Container.get('CONFIG').queue;
 
     // create new connection if set in config, otherwise use one from the pool
     if (queueConfig != null &&
@@ -25,8 +32,11 @@ export class Queue extends One.AbstractPackage {
       boss = new PgBoss(queueConfig);
     } else {
 
-      // get new conenction from the pool
-      const pgCon = await this.$one.getDbPool().connect();
+      // get connection pool from DI container
+      const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
+
+      // get new connection from the pool
+      const pgCon = await pool.connect();
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = Object.assign(pgCon, {

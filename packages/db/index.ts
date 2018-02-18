@@ -1,3 +1,3 @@
-export { DbClient, PgClient } from './Client';
-export { DbPool, PgPool } from './Pool';
+export { DbAppClient, PgClient } from './DbAppClient';
+export { DbGeneralPool, PgPool } from './DbGeneralPool';
 export { PgToDbMeta } from './pgToDbMeta';

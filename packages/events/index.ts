@@ -1,4 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
+import * as ONE from '../core/index';
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) =>  void;
@@ -6,18 +7,23 @@ export interface IEventEmitter {
   onAnyInstance: (eventName: string, listener: (...args: any[]) => void) => void;
 }
 
-class EventEmitter implements IEventEmitter {
+@ONE.Service()
+export class EventEmitter implements IEventEmitter {
 
   private eventEmitter: EventEmitter2;
-  private $one;
-  private nodeId: string;
-  private dbClient;
-  private namespace: string = 'f1';
 
-  constructor($one) {
-    this.$one = $one;
-    this.nodeId = $one.nodeId;
-    this.namespace = this.$one.getConfig('core').namespace;
+  private nodeId: string;
+  @ONE.Inject(type => ONE.DbAppClient)
+  private dbClient: ONE.DbAppClient;
+  private namespace: string = 'one';
+
+  constructor() {
+
+    const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
+    const config: any = ONE.Container.get('CONFIG');
+
+    this.nodeId = env.nodeId;
+    this.namespace = config.core.namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',
@@ -56,12 +62,11 @@ class EventEmitter implements IEventEmitter {
   }
 
   private async finishInitialisation() {
-    this.dbClient = this.$one.getDbSetupClient();
     try {
       // catch events from other nodes
-      this.dbClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));
+      this.dbClient.client.on('notification', (msg: any) => this.receiveEventFromPg(msg));
 
-      this.dbClient.query(`LISTEN ${this.namespace}`);
+      this.dbClient.client.query(`LISTEN ${this.namespace}`);
 
     } catch (err) {
       throw err;
@@ -72,7 +77,7 @@ class EventEmitter implements IEventEmitter {
 
     const event = {
       name: eventName,
-      instanceId: this.$one.nodeId,
+      instanceId: this.nodeId,
       args: {
         ...args
       }
@@ -80,9 +85,8 @@ class EventEmitter implements IEventEmitter {
 
     // send event to PG (if connection available)
     if (this.dbClient != null) {
-      this.dbClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+      this.dbClient.client.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
     }
-
   }
 
   private receiveEventFromPg(msg) {
@@ -91,27 +95,12 @@ class EventEmitter implements IEventEmitter {
       const event = JSON.parse(msg.payload);
 
       // fire on this node if not from same node
-      if (event.instanceId !== this.$one.nodeId) {
+      if (event.instanceId !== this.nodeId) {
 
         const params = [event.name, event.instanceId, ...Object.values(event.args)];
         this._emit.apply(this, params);
       }
     }
-  }
-
-}
-
-export namespace Events {
-
-  let eventEmitter: EventEmitter = null;
-
-  export function getEventEmitter($one?) {
-
-    // init if not yet initiated
-    eventEmitter = (eventEmitter == null && $one != null) ? (new EventEmitter($one)) : eventEmitter;
-
-    return eventEmitter;
-
   }
 
 }

@@ -8,7 +8,7 @@ export = {
   db: {
     automigrate: true,
     renameInsteadOfDrop: true,
-    setup: {
+    appClient: {
       database: 'fullstack-one-example',
       host: 'localhost',
       user: 'postgres',

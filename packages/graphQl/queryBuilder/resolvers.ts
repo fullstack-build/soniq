@@ -10,9 +10,7 @@ import {
   getMutationResolver
 } from './sqlGenerator/mutate';
 
-import {
-  getInstance
-} from '../../core';
+import * as ONE from '../../core';
 
 /* ======================================================= */
 
@@ -31,9 +29,10 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
 
-  const f1 = getInstance();
-  const pool = f1.getDbPool();
-  const auth = f1.getAuthInstance();
+  // DI
+  // todo need refactoring @dustin
+  const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
+  const auth = ONE.Container.get(ONE.FullstackOneCore).getAuthInstance();
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -182,7 +181,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     }
 
     queryResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
     };
   });
 
@@ -193,7 +192,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     }
 
     mutationResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
     };
   });
 
@@ -216,7 +215,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
     }
 
     resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, f1);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
     };
   });
 

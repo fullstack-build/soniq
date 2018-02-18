@@ -1,24 +1,23 @@
 import * as deepmerge from 'deepmerge';
 
-import * as F1 from '../core';
+import * as ONE from '../core';
 import { IDbMeta, IDbRelation } from '../core/IDbMeta';
 
 // https://www.alberton.info/postgresql_meta_info.html
-export class PgToDbMeta extends F1.AbstractPackage {
+@ONE.Service()
+export class PgToDbMeta {
 
   private readonly DELETED_PREFIX = '_deleted:';
-  private dbClient = this.$one.getDbSetupClient();
+
+  @ONE.Inject(type => ONE.DbAppClient)
+  private dbAppClient: ONE.DbAppClient;
+
   private readonly dbMeta: IDbMeta = {
     version: 1.0,
     schemas: {},
     enums: {},
     relations: {}
   };
-
-  constructor() {
-    super();
-
-  }
 
   public async getPgDbMeta(): Promise<IDbMeta> {
     try {
@@ -35,7 +34,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
   private async iterateAndAddSchemas(): Promise<void> {
 
     try {
-      const { rows } = await this.dbClient.query(
+      const { rows } = await this.dbAppClient.client.query(
         `SELECT
           schema_name
         FROM
@@ -75,7 +74,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
 
   private async iterateEnumTypes(schemaName): Promise<void> {
     // iterate ENUM Types with columns its used in
-    const { rows } =  await this.dbClient.query(
+    const { rows } =  await this.dbAppClient.client.query(
       `SELECT
         n.nspname as enum_schema,
         t.typname as enum_name,
@@ -121,7 +120,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
   private async iterateAndAddTables(schemaName): Promise<void> {
 
     try {
-      const { rows } = await this.dbClient.query(
+      const { rows } = await this.dbAppClient.client.query(
         `SELECT
             table_name
         FROM
@@ -175,7 +174,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
 
     try {
 
-      const { rows } = await this.dbClient.query(
+      const { rows } = await this.dbAppClient.client.query(
         `SELECT
         c.column_name AS column_name,
         c.column_default AS column_default,
@@ -270,7 +269,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
-    const { rows } = await this.dbClient.query(
+    const { rows } = await this.dbAppClient.client.query(
       `SELECT
         tc.constraint_type    AS constraint_type,
         tc.constraint_name    AS constraint_name,
@@ -385,7 +384,7 @@ export class PgToDbMeta extends F1.AbstractPackage {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // load triggers for table
-    const { rows } = await this.dbClient.query(
+    const { rows } = await this.dbAppClient.client.query(
       `SELECT DISTINCT trigger_name
                  FROM  information_schema.triggers
                  WHERE
