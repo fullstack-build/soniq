@@ -32,7 +32,7 @@ import { EventEmitter } from '../events';
 import { DbAppClient, DbGeneralPool, PgClient, PgPool, PgToDbMeta } from '../db';
 
 // fullstack.one optional imports
-import { graphQl } from '../graphQl/index';
+import { GraphQl } from '../graphQl';
 import { Migration } from '../migration';
 
 // fullstack-one exports
@@ -123,16 +123,6 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
     return this.APP;
   }
 
-  // forward GraphQl Schema
-  public async getGraphQlSchema() {
-    return await graphQl.getGraphQlSchema();
-  }
-
-  // forward GraphQl JSON Schema
-  public async getGraphQlJsonSchema() {
-    return await graphQl.getGraphQlJsonSchema();
-  }
-
   // return DB object
   public getDbMeta(): IDbMeta {
     // return copy instead of ref
@@ -181,8 +171,9 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
       // connect Db
       await this.connectDB();
 
+      const graphQl = Container.get(GraphQl);
       // boot GraphQL and add endpoints
-      this.dbMeta = await graphQl.bootGraphQl(this);
+      this.dbMeta = await graphQl.boot();
       this.emit('dbMeta.set');
 
       // run auto migration, if enabled
@@ -195,7 +186,7 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
       await this.startServer();
 
       // add GraphQL endpoints
-      await graphQl.addEndpoints(this);
+      await graphQl.addEndpoints();
 
       // execute book scripts
       await this.executeBootScripts();
