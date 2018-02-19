@@ -542,7 +542,7 @@ function addConstraint(pConstraintType,
       constraintType = 'CHECK'; // validate turns into check
       const validateType = gQlSchemaNode.name.value;
       options = {
-        param1: `_meta.validate('${validateType}'::text, ("${refDbMetaCurrentTableColumn.name}")::text, '${gQlSchemaNode.value.value}'::text)`
+        param1: `_meta.validate('${validateType}'::text, (${refDbMetaCurrentTableColumn.name})::text, '${gQlSchemaNode.value.value}'::text)`
       };
       constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_${validateType}_check`;
       break;

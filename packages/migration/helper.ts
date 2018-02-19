@@ -141,14 +141,18 @@ export function cleanObject(obj: {}) {
 // returns simple object without nested objects
 export function getPropertiesWithoutNested(obj, propertiesToIgnore: string[] = []) {
   if (obj != null) {
-    return Object.entries(obj).reduce((result, entry) => {
-      const key = entry[0];
-      const val = entry[1];
-      if (!isObject(val) && propertiesToIgnore.indexOf(key) === -1) {
-        result[key] = val;
-      }
-      return result;
-    }, {});
+    if (Array.isArray(obj)) {
+      return [...obj];
+    } else {
+      return Object.entries(obj).reduce((result, entry) => {
+        const key = entry[0];
+        const val = entry[1];
+        if (!isObject(val) && propertiesToIgnore.indexOf(key) === -1) {
+          result[key] = val;
+        }
+        return result;
+      }, {});
+    }
   }
   return obj;
 }

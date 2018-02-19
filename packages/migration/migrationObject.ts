@@ -81,7 +81,7 @@ export namespace migrationObject {
           }
 
         } /* both sides */ else {
-          // both not an object?
+          // both sides not an object?
           if (!isObject(recursiveFromDbMeta[key]) && !isObject(recursiveToDbMeta[key])) {
 
             // not equal? -> use new value, mark parent as changed / otherwise ignore
@@ -96,7 +96,7 @@ export namespace migrationObject {
                 pResult[key] = recursiveToDbMeta[key];
               }
             }
-          } else { // nested object
+          } else { // nested object or array
 
             // getSqlFromMigrationObj empty node
             pResult[key] = pResult[key] || {};
@@ -192,6 +192,7 @@ export namespace migrationObject {
 
             enumColumnDefinitionMigration[ACTION_KEY] = enumColumnDefinitionMigration[ACTION_KEY] || {};
             enumColumnDefinitionMigration[ACTION_KEY].change = true;
+
             // keep needed type information from "to" state
             enumColumnDefinitionMigration.type        = enumColumnDefinitionTo.type;
             enumColumnDefinitionMigration.customType  = enumColumnDefinitionTo.customType;

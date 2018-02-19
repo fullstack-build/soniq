@@ -79,6 +79,7 @@ export class PgToDbMeta {
         n.nspname as enum_schema,
         t.typname as enum_name,
         array_to_json(array_agg(e.enumlabel)) as enum_values,
+        array_to_json(array_agg(e.enumlabel ORDER BY e.enumsortorder ASC)) as enum_values,
         c.table_schema as used_schema,
         c.table_name as used_table,
         c.column_name as used_column
