@@ -272,7 +272,7 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
         const value = customSqlQuery.values[index];
         values.push(value);
 
-        // Return $n for pg client
+        // Return $n for pg pgClient
         return '$' + values.length;
       },
       // Gets a correct expression for a field e.g.: "COALESCE("_local_4_"."title", "_local_5_"."title", null)"

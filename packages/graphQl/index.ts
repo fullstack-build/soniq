@@ -44,18 +44,11 @@ export namespace graphQl {
       // load schema
       const gQlSchemaPattern = $one.ENVIRONMENT.path + graphQlConfig.schemaPattern;
       gQlSchema = await ONE.helper.loadFilesByGlobPattern(gQlSchemaPattern);
-      // emit event
-      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.load.success`);
 
       const gQlSchemaCombined = gQlSchema.join('\n');
       gQlJsonSchema = gQLHelper.helper.parseGraphQlSchema(gQlSchemaCombined);
-      // emit event
-      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed`);
 
       dbMeta = parseGraphQlJsonSchemaToDbMeta(gQlJsonSchema);
-
-      // emit event
-      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.schema.parsed.to.dbMeta`);
 
       // load permissions and expressions and generate views and put them into schemas
       try {
@@ -64,15 +57,11 @@ export namespace graphQl {
         const viewsPattern = $one.ENVIRONMENT.path + graphQlConfig.viewsPattern;
         const viewsArray = await ONE.helper.requireFilesByGlobPattern(viewsPattern);
         views = [].concat.apply([], viewsArray);
-        // emit event
-        ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.permissions.load.success`);
 
         // load expressions
         const expressionsPattern = $one.ENVIRONMENT.path + graphQlConfig.expressionsPattern;
         const expressionsArray = await ONE.helper.requireFilesByGlobPattern(expressionsPattern);
         expressions = [].concat.apply([], expressionsArray);
-        // emit event
-        ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.expressions.load.success`);
 
         const combinedSchemaInformation = runtimeParser(gQlJsonSchema, views, expressions, dbMeta, $one);
 
@@ -109,8 +98,6 @@ export namespace graphQl {
       console.log('ERR', err);
 
       logger.warn('bootGraphQl.error', err);
-      // emit event
-      ONE.Container.get(ONE.EventEmitter).emit(`${$one.ENVIRONMENT.namespace}.graphQl.bootGraphQl.error`, err);
     }
 
   };
@@ -181,80 +168,3 @@ export namespace graphQl {
 
   };
 }
-
-/*
-const generatedTestSchema = `
-
-type User_Author @view {
-  id: ID! @isUnique
-  firstLetterOfUserName: String @computed(expression: "FirstNofField", params: {n: 1})
-}
-
-type User_Me @view {
-  id: ID! @isUnique
-  email: String @isUnique
-  username: String
-}
-
-type User_Fusion @viewfusion {
-  id: ID! @isUnique
-  email: String @isUnique
-  username: String
-  firstLetterOfUserName: String @computed(expression: "FirstNofField", params: {n: 1})
-}
-
-union User = User_Author | User_Me | User_Fusion
-
-schema {
-  query: RootQuery
-}
-
-type RootQuery {
-  users(sql: String): [User!]!
-}
-`;
-
-const testResolvers = {
-  RootQuery: {
-    users: (obj, args, context, info) => {
-      console.log(JSON.stringify(info, null, 2));
-
-      // return [{id:13, firstLetterOfUserName: 'A'}];
-      return [{ id: 12, email: 'dustin@fullstack.build', __type: 'User_Me' },{ id:13, firstLetterOfUserName: 'A', __type: 'User_Author' }];
-    },
-  },
-  User_Me: {
-
-  },
-  User_Author: {
-    // firstLetterOfUserName: () => {
-    //  return 'B'
-    // }
-  },
-  User_Fusion: {
-
-  },
-  User: {
-    __resolveType(obj, context, info) {
-      return obj.__type;
-      // console.log(obj);
-
-      /*if(obj.firstLetterOfUserName){
-        return 'User_Author';
-      }
-      return 'User_Me';
-
-      if(obj.email && obj.username){
-        return 'User_Fusion';
-      }
-
-      if(obj.email){
-        return 'User_Me';
-      }
-
-      return 'User_Fusion';* /
-    },
-  },
-};
-
-*/

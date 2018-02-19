@@ -52,8 +52,8 @@ export class Migration {
   }
 
   public async initDb(): Promise<void> {
-    // get DB client from DI container
-    const dbClient = ONE.Container.get(ONE.DbAppClient).client;
+    // get DB pgClient from DI container
+    const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
 
     // check latest version migrated
     let latestVersion = 0;
@@ -184,8 +184,8 @@ export class Migration {
 
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
 
-    // get DB client from DI container
-    const dbClient = ONE.Container.get(ONE.DbAppClient).client;
+    // get DB pgClient from DI container
+    const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
 
     // init DB
     await this.initDb();

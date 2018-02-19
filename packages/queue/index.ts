@@ -4,11 +4,14 @@ export { PgBoss };
 import * as ONE from '../core';
 
 @ONE.Service()
-export class Queue extends ONE.AbstractPackage {
-  private queue;
+export class QueueFactory extends ONE.AbstractPackage {
+
+  private queue: PgBoss;
 
   // DI
   private logger: ONE.ILogger;
+  @ONE.Inject()
+  private generalPool: ONE.DbGeneralPool;
 
   constructor(
     @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
@@ -19,7 +22,16 @@ export class Queue extends ONE.AbstractPackage {
     this.logger = loggerFactory.create('Queue');
   }
 
-  public async start(): Promise<PgBoss> {
+  public async getQueue(): Promise<PgBoss> {
+    // create queue if not yet available
+    if (this.queue == null) {
+      await this.start();
+    }
+
+    return this.queue;
+  }
+
+  private async start(): Promise<PgBoss> {
 
     let boss;
     const queueConfig = this.getConfig('queue');
@@ -34,11 +46,8 @@ export class Queue extends ONE.AbstractPackage {
       boss = new PgBoss(queueConfig);
     } else {
 
-      // get connection pool from DI container
-      const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
-
       // get new connection from the pool
-      const pgCon = await pool.connect();
+      const pgCon = await this.generalPool.connect();
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = Object.assign(pgCon, {
@@ -52,17 +61,12 @@ export class Queue extends ONE.AbstractPackage {
 
     // log errors to warn
     boss.on('error', this.logger.warn);
-
+    // try to start PgBoss
     try {
       this.queue = await boss.start();
     } catch (err) {
       this.logger.warn('start.error', err);
     }
-
-    return this.queue;
-  }
-
-  public getQueue(): PgBoss {
     return this.queue;
   }
 

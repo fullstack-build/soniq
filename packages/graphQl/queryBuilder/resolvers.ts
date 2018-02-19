@@ -11,6 +11,7 @@ import {
 } from './sqlGenerator/mutate';
 
 import * as ONE from '../../core';
+import { Auth } from '../../auth';
 
 /* ======================================================= */
 
@@ -31,8 +32,8 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
 
   // DI
   // todo needs refactoring @dustin
+  const auth = ONE.Container.get(Auth);
   const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
-  const auth = ONE.Container.get(ONE.Auth);
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -49,7 +50,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
         // Generate select sql query
         const selectQuery = queryResolver(obj, args, context, info, isAuthenticated);
 
-        // Get a client from pool
+        // Get a pgClient from pool
         const client = await pool.connect();
 
         try {
@@ -77,7 +78,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           // Commit transaction
           await client.query('COMMIT');
 
-          // Respond data it to client
+          // Respond data it to pgClient
           return data;
 
         } catch (e) {
@@ -85,7 +86,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('ROLLBACK');
           throw e;
         } finally {
-          // Release client to pool
+          // Release pgClient to pool
           client.release();
         }
     };
@@ -104,7 +105,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
         const mutationQuery = mutationResolver(obj, args, context, info);
         context.ctx.state.includesMutation = true;
 
-        // Get a client from pool
+        // Get a pgClient from pool
         const client = await pool.connect();
 
         try {
@@ -160,7 +161,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           // Commit transaction
           await client.query('COMMIT');
 
-          // Respond data it to client
+          // Respond data it to pgClient
           return returnData;
 
         } catch (e) {
@@ -168,7 +169,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
           await client.query('ROLLBACK');
           throw e;
         } finally {
-          // Release client to pool
+          // Release pgClient to pool
           client.release();
         }
     };

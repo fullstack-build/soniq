@@ -19,11 +19,8 @@ export abstract class AbstractPackage implements IAbstractPackage {
       // return copy instead of a ref
       return { ... config };
     } else {
-      // find config key by name case insensitive
-      const configKey = Object.keys(config).find(key => key.toLowerCase() === pModuleName.toLowerCase());
-
       // return copy instead of a ref
-      return { ... config[configKey] };
+      return { ... config[pModuleName] };
     }
   }
 

@@ -34,7 +34,7 @@ export class PgToDbMeta {
   private async iterateAndAddSchemas(): Promise<void> {
 
     try {
-      const { rows } = await this.dbAppClient.client.query(
+      const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
           schema_name
         FROM
@@ -74,7 +74,7 @@ export class PgToDbMeta {
 
   private async iterateEnumTypes(schemaName): Promise<void> {
     // iterate ENUM Types with columns its used in
-    const { rows } =  await this.dbAppClient.client.query(
+    const { rows } =  await this.dbAppClient.pgClient.query(
       `SELECT
         n.nspname as enum_schema,
         t.typname as enum_name,
@@ -120,7 +120,7 @@ export class PgToDbMeta {
   private async iterateAndAddTables(schemaName): Promise<void> {
 
     try {
-      const { rows } = await this.dbAppClient.client.query(
+      const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
             table_name
         FROM
@@ -174,7 +174,7 @@ export class PgToDbMeta {
 
     try {
 
-      const { rows } = await this.dbAppClient.client.query(
+      const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
         c.column_name AS column_name,
         c.column_default AS column_default,
@@ -269,7 +269,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
-    const { rows } = await this.dbAppClient.client.query(
+    const { rows } = await this.dbAppClient.pgClient.query(
       `SELECT
         tc.constraint_type    AS constraint_type,
         tc.constraint_name    AS constraint_name,
@@ -384,7 +384,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // load triggers for table
-    const { rows } = await this.dbAppClient.client.query(
+    const { rows } = await this.dbAppClient.pgClient.query(
       `SELECT DISTINCT trigger_name
                  FROM  information_schema.triggers
                  WHERE

@@ -2,6 +2,7 @@ import { createTestAccount, createTransport, getTestMessageUrl } from 'nodemaile
 import { htmlToText } from 'nodemailer-html-to-text';
 
 import * as ONE from '../core';
+import { QueueFactory } from '../queue';
 
 ONE.Service();
 export class Email extends ONE.AbstractPackage {
@@ -11,20 +12,21 @@ export class Email extends ONE.AbstractPackage {
 
   // DI dependencies
   private CONFIG: any;
-  private readonly queue: any;
   private logger: ONE.ILogger;
   @ONE.Inject()
   private eventEmitter: ONE.EventEmitter;
 
+  private readonly queueFactory: QueueFactory;
+
   constructor(
-    @ONE.Inject(type => ONE.Queue) queue?,
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
-  ) {
+    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?,
+    @ONE.Inject(type => QueueFactory) queueFactory?) {
     super();
 
     // set DI dependencies
     this.CONFIG = this.getConfig('email');
-    this.queue = queue.getQueue();
+    this.queueFactory = queueFactory;
+
     this.logger = loggerFactory.create('Email');
 
     if (this.CONFIG.testing) {
@@ -54,13 +56,16 @@ export class Email extends ONE.AbstractPackage {
 
     }
 
-    // subscribe to sendmail jobs
-    this.queue.subscribe('sendmail', this._sendMail.bind(this))
-    .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-    .catch((err) => {
-      this.logger.warn('subscribed.job.sendmail.error', err);
-      throw err;
-    });
+    // subscribe to sendmail jobs in queue
+    (async () => {
+      const queue = await this.queueFactory.getQueue();
+      queue.subscribe('sendmail', this._sendMail.bind(this))
+      .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+      .catch((err) => {
+        this.logger.warn('subscribed.job.sendmail.error', err);
+        throw err;
+      });
+    })();
 
   }
 
@@ -76,7 +81,9 @@ export class Email extends ONE.AbstractPackage {
           ... this.CONFIG.queue
         };
 
-        const jobId = await this.queue.publish('sendmail', message, jobOptions);
+        // create sendmail job in queue
+        const queue = await this.queueFactory.getQueue();
+        const jobId = await queue.publish('sendmail', message, jobOptions);
         this.logger.trace('sendMessage.job.creation.success', jobId);
         return jobId;
 

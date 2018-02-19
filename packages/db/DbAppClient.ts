@@ -6,7 +6,7 @@ export { PgClient };
 @ONE.Service()
 export class DbAppClient extends ONE.AbstractPackage implements IDb {
 
-  public readonly client: PgClient;
+  public readonly pgClient: PgClient;
 
   private readonly applicationName: string;
   // todo application_name not available in pg.ClientConfig <- check and add it there
@@ -35,11 +35,11 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
     this.credentials  = configDB.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
-    // create PG client
-    this.client  = new PgClient(this.credentials);
+    // create PG pgClient
+    this.pgClient  = new PgClient(this.credentials);
 
-    this.logger.debug('Postgres setup client created');
-    this.eventEmitter.emit('db.application.client.created', this.applicationName);
+    this.logger.debug('Postgres setup pgClient created');
+    this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
 
     // collect known nodes
     this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
@@ -61,43 +61,43 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
   public async connect(): Promise<PgClient> {
 
     try {
-      this.eventEmitter.emit('db.application.client.connect.start', this.applicationName);
+      this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);
 
       // getSqlFromMigrationObj connection
-      await this.client.connect();
+      await this.pgClient.connect();
 
-      this.logger.info('Postgres setup connection created');
-      this.eventEmitter.emit('db.application.client.connect.success', this.applicationName);
+      this.logger.trace('Postgres setup connection created');
+      this.eventEmitter.emit('db.application.pgClient.connect.success', this.applicationName);
 
     } catch (err) {
 
       this.logger.warn('Postgres setup connection creation error', err);
-      this.eventEmitter.emit('db.application.client.connect.error', this.applicationName, err);
+      this.eventEmitter.emit('db.application.pgClient.connect.error', this.applicationName, err);
 
       throw err;
     }
 
-    return this.client;
+    return this.pgClient;
   }
 
   public async end(): Promise<void> {
 
     this.logger.trace('Postgres connection ending initiated');
-    this.eventEmitter.emit('db.application.client.end.start', this.applicationName);
+    this.eventEmitter.emit('db.application.pgClient.end.start', this.applicationName);
 
     try {
 
-      const clientEndResult = await this.client.end();
+      const clientEndResult = await this.pgClient.end();
 
       this.logger.trace('Postgres connection ended successfully');
       // can only be caught locally (=> db connection ended)
-      this.eventEmitter.emit('db.application.client.end.success', this.applicationName);
+      this.eventEmitter.emit('db.application.pgClient.end.success', this.applicationName);
 
       return clientEndResult;
     } catch (err) {
 
       this.logger.warn('Postgres connection ended with an error', err);
-      this.eventEmitter.emit('db.application.client.end.error', this.applicationName, err);
+      this.eventEmitter.emit('db.application.pgClient.end.error', this.applicationName, err);
 
       throw err;
     }
@@ -109,7 +109,7 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
     try {
       const dbName = this.credentials.database;
       const applicationNamePrefix = `${this.ENVIRONMENT.namespace}_client_`;
-      const dbNodes = await this.client.query(
+      const dbNodes = await this.pgClient.query(
         `SELECT * FROM pg_stat_activity WHERE datname = '${dbName}' AND application_name LIKE '${applicationNamePrefix}%';`
       );
 
@@ -132,12 +132,12 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
         // update known IDs in DI
         ONE.Container.set('knownNodeIds', knownNodeIds);
 
-        this.logger.info('Postgres number connected clients changed', knownNodeIds);
+        this.logger.debug('Postgres number connected clients changed', knownNodeIds);
         this.eventEmitter.emit('connected.nodes.changed');
       }
 
     } catch (err) {
-      this.logger.warn(err);
+      this.logger.warn('updateNodeIdsFromDb', err);
     }
   }
 

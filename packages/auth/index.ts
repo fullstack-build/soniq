@@ -97,7 +97,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -137,7 +137,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -166,7 +166,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -196,7 +196,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -222,7 +222,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -249,7 +249,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -275,7 +275,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }
@@ -301,7 +301,7 @@ export class Auth extends ONE.AbstractPackage {
       await client.query('ROLLBACK');
       throw err;
     } finally {
-      // Release client to pool
+      // Release pgClient to pool
       client.release();
     }
   }

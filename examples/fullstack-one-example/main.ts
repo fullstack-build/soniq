@@ -1,12 +1,22 @@
 import * as ONE from '../../';
+import { Email } from '../../packages/notifications';
 
 const $one = ONE.getInstance();
 
-ONE.Container.get(ONE.EventEmitter).on('f1.ready',() => {
+ONE.Container.get(ONE.EventEmitter).on('one.ready',async () => {
   console.log('EVENT: ready');
+
+  // get Email from DI and init
+  const email = ONE.Container.get(Email);
+
+  // send test mail
+  await email.sendMessage('test@test.de', 'test subject', 'html content');
+  // tslint:disable-next-line:no-console
+  console.error('***>> sending email');
+
 });
 
-ONE.Container.get(ONE.EventEmitter).on('f1.not-ready',(err) => {
+ONE.Container.get(ONE.EventEmitter).on('one.not-ready',(err) => {
   console.error('Error-EVENT: not-ready', err);
 });
 
@@ -21,7 +31,7 @@ ONE.Container.get(ONE.EventEmitter).on('f1.not-ready',(err) => {
 
 // catch another system event as a promise
 (async () => {
-  const payloadArray = await ONE.eventToPromise('f1.dbObject.set');
+  const payloadArray = await ONE.eventToPromise('one.dbObject.set');
   console.log('!!! PROMISED event caught fullstack-one.*.dbObject.set');
 })();
 

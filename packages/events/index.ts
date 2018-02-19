@@ -65,9 +65,9 @@ export class EventEmitter extends ONE.AbstractPackage implements IEventEmitter {
   private async finishInitialisation() {
     try {
       // catch events from other nodes
-      this.dbClient.client.on('notification', (msg: any) => this.receiveEventFromPg(msg));
+      this.dbClient.pgClient.on('notification', (msg: any) => this.receiveEventFromPg(msg));
 
-      this.dbClient.client.query(`LISTEN ${this.namespace}`);
+      this.dbClient.pgClient.query(`LISTEN ${this.namespace}`);
 
     } catch (err) {
       throw err;
@@ -86,7 +86,7 @@ export class EventEmitter extends ONE.AbstractPackage implements IEventEmitter {
 
     // send event to PG (if connection available)
     if (this.dbClient != null) {
-      this.dbClient.client.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+      this.dbClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
     }
   }
 

@@ -4,44 +4,40 @@ import * as dotenv from 'dotenv-safe';
 import 'reflect-metadata';
 import { Container, Inject, Service } from 'typedi';
 export * from 'typedi';
-
 // graceful exit
 import * as onExit from 'signal-exit';
 import * as terminus from '@godaddy/terminus';
-// other npm dependencies
-import * as fastGlob from 'fast-glob';
+// node dependencies
+import * as path from 'path';
 import * as fs from 'fs';
 import * as http from 'http';
+// other npm dependencies
+import * as fastGlob from 'fast-glob';
 import * as Koa from 'koa';
 import * as _ from 'lodash';
-import * as path from 'path';
+
 import { randomBytes } from 'crypto';
 
 // fullstack-one interfaces
-import { AbstractPackage } from './AbstractPackage';
-export { AbstractPackage };
 import { IFullstackOneCore } from './IFullstackOneCore';
 import { IConfig } from './IConfigObject';
 import { IEnvironment } from './IEnvironment';
 import { IDbMeta, IDbRelation } from './IDbMeta';
-export { IFullstackOneCore, IEnvironment, IDbMeta, IDbRelation };
 
-// fullstack-one imports
+// fullstack-one necessary imports
+import { AbstractPackage } from './AbstractPackage';
 import { helper } from '../helper';
-export { helper } from '../helper';
+import { LoggerFactory, ILogger } from '../logger';
 import { EventEmitter } from '../events';
 import { DbAppClient, DbGeneralPool, PgClient, PgPool, PgToDbMeta } from '../db';
-import { LoggerFactory, ILogger } from '../logger';
+
+// fullstack.one optional imports
 import { graphQl } from '../graphQl/index';
 import { Migration } from '../migration';
-import { Auth } from '../auth';
-import { Queue, PgBoss } from '../queue';
-import { Email } from '../notifications';
-export { LoggerFactory, EventEmitter, ILogger, DbAppClient, DbGeneralPool, IConfig, Queue, Auth };
 
-// helper
-// import { graphQlHelper } from '../graphQlHelper/main';
-// import { getMigrationsUp } from '../graphQlHelper/migration';
+// fullstack-one exports
+export { IFullstackOneCore, IConfig, IEnvironment, IDbMeta, IDbRelation, ILogger };
+export { AbstractPackage, helper, LoggerFactory, EventEmitter, DbAppClient, DbGeneralPool };
 
 // init .env -- check if all are set
 try {
@@ -66,7 +62,7 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private eventEmitter: EventEmitter;
 
   @Inject()
-  private dbAppClientObj: DbAppClient;
+  private dbAppClient: DbAppClient;
 
   @Inject()
   private dbPoolObj: DbGeneralPool;
@@ -74,9 +70,6 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private server: http.Server;
   private APP: Koa;
   private dbMeta: IDbMeta;
-  private auth;
-  private queue;
-  private email;
 
   constructor(@Inject(type => LoggerFactory) loggerFactory?) {
     super();
@@ -201,23 +194,8 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
       // start server
       await this.startServer();
 
-      // get Auth from DI
-      this.auth = Container.get(Auth);
-
       // add GraphQL endpoints
       await graphQl.addEndpoints(this);
-
-      // get Queue from DI and init
-      const queue = Container.get(Queue);
-      this.queue = await queue.start();
-
-      // get Email from DI and init
-      this.email = Container.get(Email);
-
-      // send test mail
-      await this.email.sendMessage('test@test.de', 'test subject', 'html content');
-      // tslint:disable-next-line:no-console
-      console.error('***>> sending email');
 
       // execute book scripts
       await this.executeBootScripts();
@@ -279,8 +257,8 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private async connectDB() {
 
     try {
-      // create single app client
-      await this.dbAppClientObj.connect();
+      // create dbAppClient
+      await this.dbAppClient.connect();
       // managed pool creation will be automatically triggered
       // by the changed number of connected clients
 
@@ -293,9 +271,9 @@ export class FullstackOneCore extends AbstractPackage implements IFullstackOneCo
   private async disconnectDB() {
 
     try {
-      // end setup client and pool
+      // end setup pgClient and pool
       await Promise.all([
-          this.dbAppClientObj.end(),
+          this.dbAppClient.end(),
           this.dbPoolObj.end()
         ]);
       return true;
