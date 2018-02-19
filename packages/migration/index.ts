@@ -113,7 +113,7 @@ export class Migration {
           if (loadFilesOrder[suffix] != null) {
             for (const entry of Object.entries(loadFilesOrder[suffix])) {
               const path = entry[0];
-              const statement = entry[1];
+              const statement = entry[1].toString();
               try {
                 this.logger.trace('migration.db.init.mandatory.file', path);
                 await  dbClient.query(statement, null);
@@ -141,7 +141,7 @@ export class Migration {
         if (loadFilesOrder[suffix] != null) {
           for (const entry of Object.entries(loadFilesOrder[suffix])) {
             const path = entry[0];
-            const statement = entry[1];
+            const statement = entry[1].toString();
             try {
               this.logger.trace('migration.db.init.optional.file', path);
               await  dbClient.query(statement, null);

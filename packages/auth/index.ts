@@ -74,7 +74,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async register(username, tenant) {
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -104,7 +104,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async login(username, tenant, provider, password, userIdentifier) {
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -148,7 +148,7 @@ export class Auth extends ONE.AbstractPackage {
     const providerSignature = getProviderSignature(provider, uid);
     const pwData: any = await newHash(password + providerSignature, this.sodiumConfig);
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -173,7 +173,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async forgotPassword(username, tenant) {
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -204,7 +204,7 @@ export class Auth extends ONE.AbstractPackage {
   public async removeProvider(accessToken, provider) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -230,7 +230,7 @@ export class Auth extends ONE.AbstractPackage {
   public async isTokenValid(accessToken, tempSecret = false, tempTime = false) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -257,7 +257,7 @@ export class Auth extends ONE.AbstractPackage {
   public async invalidateUserToken(accessToken) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction
@@ -283,7 +283,7 @@ export class Auth extends ONE.AbstractPackage {
   public async invalidateAllUserTokens(accessToken) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.pool.connect();
+    const client = await this.dbGeneralPool.connect();
 
     try {
       // Begin transaction

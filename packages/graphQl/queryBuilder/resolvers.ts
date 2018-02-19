@@ -25,7 +25,7 @@ const graphqlTypeJson = require('graphql-type-json');
 
 /* ======================================================= */
 
-export function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -33,13 +33,13 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   // DI
   // todo needs refactoring @dustin
   const auth = ONE.Container.get(Auth);
-  const pool = ONE.Container.get(ONE.DbGeneralPool).pool;
+  const pool = ONE.Container.get(ONE.DbGeneralPool);
 
   const queryResolvers = {};
   const mutationResolvers = {};
 
   // Generate querie resolvers
-  Object.values(queries).forEach((query) => {
+  Object.values(queries).forEach((query: any) => {
     // Add async resolver function to queryResolvers
     queryResolvers[query.name] = async (obj, args, context, info) => {
 
@@ -93,7 +93,7 @@ export function getResolvers(gQlTypes, dbObject, queries, mutations, customOpera
   });
 
   // Generate mutation resolvers
-  Object.values(mutations).forEach((mutation) => {
+  Object.values(mutations).forEach((mutation: any) => {
     // Add async resolver function to mutationResolvers
     mutationResolvers[mutation.name] = async (obj, args, context, info) => {
 
