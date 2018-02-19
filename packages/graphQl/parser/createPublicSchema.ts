@@ -1,3 +1,6 @@
+// fullstack-one core
+import * as ONE from '../../core';
+
 import {
   IExpressions,
   IViews
@@ -27,7 +30,7 @@ import { graphiqlKoa } from 'apollo-server-koa/dist/koaApollo';
 
 const JSON_SPLIT = '.';
 
-export default (classification: any, views: IViews, expressions: IExpressions, dbObject, $one) => {
+export default (classification: any, views: IViews, expressions: IExpressions, dbObject) => {
 
   const {
     tables,
@@ -50,7 +53,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
   const queries = [];
   const mutations = [];
   const customFields = {};
-  const viewSchemaName = $one.getConfig('db').viewSchemaName;
+  const viewSchemaName = ONE.Container.get(ONE.FullstackOneCore).getConfig('db').viewSchemaName;
 
   const filteredViews = mergeDeleteViews(views);
 
