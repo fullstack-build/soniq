@@ -101,6 +101,7 @@ export class Migration {
         loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
       }
     }
+
     // only if there are migration folders left
     if (Object.keys(loadFilesOrder).length > 0) {
       // run migration sql - mandatory

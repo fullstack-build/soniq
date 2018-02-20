@@ -1,13 +1,13 @@
 INSERT INTO "_meta"."Auth"("key","value")
 VALUES
 (E'admin_token_secret',E'boss'),
-(E'auth_field_password',E'password'),
+(E'auth_table_schema',NULL),
+(E'auth_table',NULL),
 (E'auth_field_tenant',NULL),
-(E'auth_field_username',E'email'),
+(E'auth_field_username',NULL),
+(E'auth_field_password',NULL),
 (E'auth_providers',E'password:facebook:twitter'),
 (E'auth_pw_secret',E'gehtdichnixan'),
-(E'auth_table',E'User'),
-(E'auth_table_schema',E'public'),
 (E'bf_iter_count',E'6'),
 (E'pw_bf_iter_count',E'6'),
 (E'transaction_token_max_age_in_seconds',E'86400'),

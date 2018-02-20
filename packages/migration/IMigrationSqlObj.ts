@@ -48,4 +48,7 @@ export interface IMigrationSqlObj {
       sql: ISqlObj;
     };
   };
+  auth?: {
+    sql: ISqlObj;
+  };
 }

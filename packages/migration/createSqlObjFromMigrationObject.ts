@@ -40,9 +40,9 @@ export namespace sqlObjFromMigrationObject {
     if (sqlMigrationObj.enums != null) {
       Object.values(sqlMigrationObj.enums).forEach((enumSqlObj) => {
         // add down statements first (enum change or rename)
-        _addStatemensArrayToSqlStatemts(enumSqlObj.sql.down);
+        _addStatemensArrayToSqlStatements(enumSqlObj.sql.down);
         // add up statements
-        _addStatemensArrayToSqlStatemts(enumSqlObj.sql.up);
+        _addStatemensArrayToSqlStatements(enumSqlObj.sql.up);
       });
     }
 
@@ -54,40 +54,40 @@ export namespace sqlObjFromMigrationObject {
         if (schemaSqlObj.tables != null) {
           Object.values(schemaSqlObj.tables).forEach((tableSqlObj) => {
             // add table up statements
-            _addStatemensArrayToSqlStatemts(tableSqlObj.sql.up);
+            _addStatemensArrayToSqlStatements(tableSqlObj.sql.up);
 
             // drop relations
             if (sqlMigrationObj.relations != null) {
               Object.values(sqlMigrationObj.relations).forEach((relationSqlObj) => {
                 // add drop statements
-                _addStatemensArrayToSqlStatemts(relationSqlObj.sql.down);
+                _addStatemensArrayToSqlStatements(relationSqlObj.sql.down);
               });
             }
 
             // drop constraints
             if (tableSqlObj.constraints != null) {
               // add down statements reversed order
-              _addStatemensArrayToSqlStatemts(tableSqlObj.constraints.sql.down.reverse());
+              _addStatemensArrayToSqlStatements(tableSqlObj.constraints.sql.down.reverse());
             }
 
             // getSqlFromMigrationObj columns
             if (tableSqlObj.columns != null) {
               Object.values(tableSqlObj.columns).forEach((columnSqlObj) => {
                 // add up statements
-                _addStatemensArrayToSqlStatemts(columnSqlObj.sql.up);
+                _addStatemensArrayToSqlStatements(columnSqlObj.sql.up);
                 // add down statements reversed order
-                _addStatemensArrayToSqlStatemts(columnSqlObj.sql.down.reverse());
+                _addStatemensArrayToSqlStatements(columnSqlObj.sql.down.reverse());
               });
             }
 
             // getSqlFromMigrationObj constraints
             if (tableSqlObj.constraints != null) {
               // add up statements
-              _addStatemensArrayToSqlStatemts(tableSqlObj.constraints.sql.up);
+              _addStatemensArrayToSqlStatements(tableSqlObj.constraints.sql.up);
             }
 
             // add table down statements
-            _addStatemensArrayToSqlStatemts(tableSqlObj.sql.down);
+            _addStatemensArrayToSqlStatements(tableSqlObj.sql.down);
 
           });
         }
@@ -98,7 +98,7 @@ export namespace sqlObjFromMigrationObject {
     if (sqlMigrationObj.relations != null) {
       Object.values(sqlMigrationObj.relations).forEach((relationSqlObj) => {
         // add up statements
-        _addStatemensArrayToSqlStatemts(relationSqlObj.sql.up);
+        _addStatemensArrayToSqlStatements(relationSqlObj.sql.up);
       });
     }
 
@@ -106,11 +106,21 @@ export namespace sqlObjFromMigrationObject {
     if (sqlMigrationObj.schemas != null) {
       Object.values(sqlMigrationObj.schemas).forEach((schemasSqlObj) => {
         // add down statements
-        _addStatemensArrayToSqlStatemts(schemasSqlObj.sql.down);
+        _addStatemensArrayToSqlStatements(schemasSqlObj.sql.down);
       });
     }
 
-    function _addStatemensArrayToSqlStatemts(statementsArray) {
+    // set auth data
+    if (sqlMigrationObj.auth != null && sqlMigrationObj.auth.sql != null) {
+      // add down statements
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.auth.sql.down);
+      // add up statements
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.auth.sql.up);
+
+    }
+
+    // helper to put collect unique statements
+    function _addStatemensArrayToSqlStatements(statementsArray) {
       Object.values(statementsArray).forEach((statement) => {
         // only push each ones
         if (sqlStatements.indexOf(statement) === -1) {
@@ -455,6 +465,11 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
+    // set auth settings
+    if (node.auth != null) {
+      setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
+    }
+
   }
 
   function createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableName, constraintName, constraintObject) {
@@ -562,6 +577,70 @@ export namespace sqlObjFromMigrationObject {
           // check does not have to be renamed
         }
         break;
+    }
+
+  }
+
+  function setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, authNode?) {
+    // create, set ref and keek ref for later
+    const thisSqlObj = (sqlMigrationObj.auth = sqlMigrationObj.auth || {
+      sql: {
+        up: [],
+        down: []
+      }
+    }).sql;
+
+    const authNodeObj = _splitActionFromNode(authNode);
+    const authNodeAction = authNodeObj.action;
+    const authNodeDefinition = authNodeObj.node;
+
+    // in case of a change, multiple can happen at the same time -> no else if/switch
+    // set username and table information
+    if (authNodeDefinition.isUsername) {
+      if (authNodeAction.remove) {
+        // down
+        thisSqlObj.down.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+        thisSqlObj.down.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+        thisSqlObj.down.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+      } else {
+        // up
+        thisSqlObj.up.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', '${schemaName}') ` +
+          `ON CONFLICT ("key") DO UPDATE SET "value"='${schemaName}';`);
+        thisSqlObj.up.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', '${tableName}') ` +
+          `ON CONFLICT ("key") DO UPDATE SET "value"='${tableName}';`);
+        thisSqlObj.up.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', '${columnName}') ` +
+          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+      }
+    }
+
+    // password
+    if (authNodeDefinition.isPassword) {
+      if (authNodeAction.remove) {
+        thisSqlObj.down.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+      } else {
+        thisSqlObj.up.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', '${columnName}') ` +
+          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+      }
+    }
+
+    // tenant
+    if (authNodeDefinition.isTenant) {
+      if (authNodeAction.remove) {
+        thisSqlObj.down.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+      } else {
+        thisSqlObj.up.push(
+          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', '${columnName}') ` +
+          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+      }
     }
 
   }

@@ -21,8 +21,12 @@ export class PgToDbMeta {
 
   public async getPgDbMeta(): Promise<IDbMeta> {
     try {
-
+      // start with schemas
       await this.iterateAndAddSchemas();
+
+      // add auth settings when schemas were found
+      await this.getAuthSettings();
+
       // return copy instead of ref
       return deepmerge({}, this.dbMeta);
     } catch (err) {
@@ -529,6 +533,45 @@ export class PgToDbMeta {
 
     // remove FK column
     delete this.dbMeta.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
+
+  }
+
+  // AUTH
+  private async getAuthSettings(): Promise<void> {
+
+    try {
+      const { rows } = await this.dbAppClient.pgClient.query(
+        `SELECT * FROM _meta."Auth" WHERE key IN
+        ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`
+      );
+      const authObj = rows.reduce((result, row) => {result[row.key] = row.value; return result;}, {});
+
+      // get relevant table
+      const thisTable = this.dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
+      // mark table as auth
+      thisTable.isAuth = true;
+      // set username
+      if (authObj.auth_field_username != null) {
+        thisTable.columns[authObj.auth_field_username].auth = {
+          isUsername: true
+        };
+      }
+      // set password
+      if (authObj.auth_field_password != null) {
+        thisTable.columns[authObj.auth_field_password].auth = {
+          isPassword: true
+        };
+      }
+      // set tenant
+      if (authObj.auth_field_tenant != null) {
+        thisTable.columns[authObj.auth_field_tenant].auth = {
+          isTenant: true
+        };
+      }
+
+    } catch (err) {
+      // ignore error in case settings -> not setted up yet
+    }
 
   }
 

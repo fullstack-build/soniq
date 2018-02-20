@@ -12,6 +12,7 @@ export interface IDbMeta {
           oldName?: string;
           exposedNames?: [string];
           description?: string;
+          isAuth?: boolean;
           versioning?: {
             isActive: boolean;
           };
@@ -33,6 +34,11 @@ export interface IDbMeta {
                 };
                 constraintNames?: [string];
                 relationName?: string;
+                auth?: {
+                  isTenant?: boolean;
+                  isUsername?: boolean,
+                  isPassword?: boolean
+                }
               }
           };
           constraints?: {
