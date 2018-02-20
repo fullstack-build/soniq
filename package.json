@@ -35,7 +35,7 @@
   "devDependencies": {
     "@types/node": "^8.0.31",
     "git-hooks": "^1.1.9",
-    "lerna": "^2.5.1",
+    "lerna": "^2.9.0",
     "nodemon": "^1.12.1",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.3.0"

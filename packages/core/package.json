@@ -17,10 +17,12 @@
     "@godaddy/terminus": "^2.0.0",
     "debug-logger": "^0.4.1",
     "dotenv": "^4.0.0",
+    "dotenv-safe": "^4.0.4",
     "eventemitter2": "^5.0.0",
     "fast-glob": "^1.0.1",
     "koa": "^2.4.1",
     "le_node": "^1.7.1",
+    "reflect-metadata": "^0.1.12",
     "tracer": "^0.8.11"
   }
 }
