@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/logger",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "fullstack.one logger package",
   "main": "index.ts",
   "scripts": {
@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "debug-logger": "^0.4.1",
+    "fullstack-one": "latest",
     "tracer": "^0.8.11"
   }
 }

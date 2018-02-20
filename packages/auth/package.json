@@ -1,6 +1,6 @@
 {
-  "name": "@fullstack-one/example-package",
-  "version": "0.1.0",
+  "name": "@fullstack-one/auth",
+  "version": "0.1.2",
   "description": "fullstack.one example package",
   "main": "index.ts",
   "scripts": {
@@ -10,6 +10,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/db": "latest",
+    "fullstack-one": "latest",
     "jsonwebtoken": "^8.1.0",
     "koa-bodyparser": "^4.2.0",
     "koa-passport": "^4.0.1",
@@ -17,6 +19,5 @@
     "koa-session": "^5.7.1",
     "passport-local": "^1.0.0",
     "sodium-native": "^2.1.3"
-  },
-  "devDependencies": {}
+  }
 }

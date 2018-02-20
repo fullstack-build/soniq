@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/migration",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "fullstack.one migration package",
   "main": "index.ts",
   "scripts": {
@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "deep-equal": "^1.0.1",
-    "deepmerge": "^2.0.1"
+    "deepmerge": "^2.0.1",
+    "fullstack-one": "latest"
   }
 }

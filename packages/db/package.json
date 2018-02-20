@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/db",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "fullstack.one db connector package",
   "main": "index.ts",
   "scripts": {
@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "deepmerge": "^2.0.1",
+    "fullstack-one": "latest",
     "massive": "^4.6.3",
     "pg": "^7.4.1"
   },

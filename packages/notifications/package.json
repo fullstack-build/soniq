@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/notifications",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "fullstack.one notifications package",
   "main": "index.ts",
   "scripts": {
@@ -10,6 +10,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/queue": "latest",
+    "fullstack-one": "latest",
     "nodemailer": "^4.4.2",
     "nodemailer-direct-transport": "^3.3.2",
     "nodemailer-html-to-text": "^2.1.0"

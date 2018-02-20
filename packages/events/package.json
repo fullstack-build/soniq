@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "fullstack.one events package",
   "main": "index.ts",
   "scripts": {
@@ -10,7 +10,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "eventemitter2": "^5.0.1"
-  },
-  "devDependencies": {}
+    "eventemitter2": "^5.0.1",
+    "fullstack-one": "latest"
+  }
 }
