@@ -1,11 +1,14 @@
 {
   "name": "fullstack-one",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "fullstack.one main server package",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "echo \"Error: no start specified\" && exit 1"
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc",
+    "prepublish": "npm run build"
   },
   "publishConfig": {
     "access": "public"
@@ -21,7 +24,8 @@
     "@fullstack-one/migration": "latest",
     "@types/dotenv": "^4.0.2",
     "@types/koa": "^2.0.39",
-    "fullstack-one": "latest"
+    "fullstack-one": "latest",
+    "typescript": "^2.7.2"
   },
   "dependencies": {
     "@godaddy/terminus": "^2.0.0",
