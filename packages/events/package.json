@@ -1,14 +1,13 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "fullstack.one events package",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "echo \"Error: no start specified\" && exit 1",
-    "build": "tsc",
-    "prepublish": "npm run build"
+    "build": "tsc"
   },
   "publishConfig": {
     "access": "public"
