@@ -10,6 +10,8 @@ CREATE OR REPLACE FUNCTION _meta.sanitize(
     COST 100
     VOLATILE
 AS $BODY$
+  // init plv8 require
+  plv8.execute( 'SELECT _meta.plv8_require();' );
 
   var validator = require('validator');
   // parse if parameter is json

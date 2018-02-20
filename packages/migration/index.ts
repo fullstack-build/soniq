@@ -84,7 +84,7 @@ export class Migration {
       }, []);
     }
 
-    const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'insert', 'set', 'select'];
+    const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'set', 'insert', 'select'];
     // will try, but ignore any errors
     const loadOptionalSuffixOrder = ['operator_class'];
     const loadFilesOrder  = {};

@@ -1,4 +1,8 @@
 CREATE OR REPLACE FUNCTION _meta.create_version() RETURNS trigger AS $$
+
+  // init plv8 require
+  plv8.execute( 'SELECT _meta.plv8_require();' );
+
   const jsonPatch = require('rfc6902');
   const diff = jsonPatch.createPatch({}, NEW);
 
