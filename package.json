@@ -1,5 +1,5 @@
 {
-  "name": "fullstack-one",
+  "name": "fullstack-one-repo",
   "version": "0.1.0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
@@ -9,7 +9,8 @@
   "scripts": {
     "start": "echo \"Error: no start specified\" && exit 1",
     "tslint": "tslint --project '.' --fix",
-    "test": "mocha -r ts-node/register test/*.ts"
+    "test": "mocha -r ts-node/register test/*.ts",
+    "lerna": "lerna bootstrap && lerna link --force-local"
   },
   "repository": {
     "type": "git",

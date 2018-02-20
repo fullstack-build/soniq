@@ -1,0 +1,20 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "lib": ["ES2017"],
+        "target": "es6",
+        "module": "commonjs",
+        "types": ["node"],
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": false,
+        "declaration": true,
+        "outDir": "./dist",
+        "strict": false
+    },
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
