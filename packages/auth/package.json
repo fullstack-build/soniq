@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "fullstack.one example package",
   "main": "index.ts",
   "scripts": {
