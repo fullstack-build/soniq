@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/queue",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "fullstack.one queue package",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

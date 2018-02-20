@@ -1,6 +1,6 @@
 {
   "name": "fullstack-one",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "fullstack.one main server package",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,6 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@fullstack-one/db": "latest",
     "@fullstack-one/events": "latest",
     "@fullstack-one/graphql": "latest",
     "@fullstack-one/helper": "latest",
