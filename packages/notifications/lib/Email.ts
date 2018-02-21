@@ -1,30 +1,32 @@
 import { createTestAccount, createTransport, getTestMessageUrl } from 'nodemailer';
 import { htmlToText } from 'nodemailer-html-to-text';
 
-import * as ONE from 'fullstack-one';
 import { QueueFactory } from '@fullstack-one/queue';
+import { Service, Inject, Container } from '@fullstack-one/di';
+import { Config } from '@fullstack-one/config';
+import { EventEmitter } from '@fullstack-one/events';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 
-@ONE.Service()
-export class Email extends ONE.AbstractPackage {
+@Service()
+export class Email {
 
   private isReady = false;
   private transport;
 
   // DI dependencies
   private CONFIG: any;
-  private logger: ONE.ILogger;
-  @ONE.Inject()
-  private eventEmitter: ONE.EventEmitter;
+  private logger: ILogger;
+  @Inject()
+  private eventEmitter: EventEmitter;
 
   private readonly queueFactory: QueueFactory;
 
   constructor(
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?,
-    @ONE.Inject(type => QueueFactory) queueFactory?) {
-    super();
+    @Inject(type => LoggerFactory) loggerFactory?,
+    @Inject(type => QueueFactory) queueFactory?) {
 
     // set DI dependencies
-    this.CONFIG = this.getConfig('email');
+    this.CONFIG = Container.get(Config).getConfig('email');
     this.queueFactory = queueFactory;
 
     this.logger = loggerFactory.create('Email');

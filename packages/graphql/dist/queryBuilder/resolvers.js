@@ -10,8 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const read_1 = require("./sqlGenerator/read");
 const mutate_1 = require("./sqlGenerator/mutate");
-const ONE = require("fullstack-one");
-const auth_1 = require("@fullstack-one/auth");
 /* ======================================================= */
 // Note: The normal import isn't working here for some reason. This is why I import via require.
 // tslint:disable-next-line:import-name
@@ -19,14 +17,14 @@ const auth_1 = require("@fullstack-one/auth");
 // tslint:disable-next-line:no-var-requires
 const graphqlTypeJson = require('graphql-type-json');
 /* ======================================================= */
-function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject) {
+function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, auth, pool) {
     // Initialize stuff / get instances / etc.
     const queryResolver = read_1.getQueryResolver(gQlTypes, dbObject);
     const mutationResolver = mutate_1.getMutationResolver(gQlTypes, dbObject, mutations);
     // DI
     // todo needs refactoring @dustin
-    const auth = ONE.Container.get(auth_1.Auth);
-    const pool = ONE.Container.get(ONE.DbGeneralPool);
+    // const auth: any = ONE.Container.get(Auth);
+    // const pool: any = ONE.Container.get(ONE.DbGeneralPool);
     const queryResolvers = {};
     const mutationResolvers = {};
     // Generate querie resolvers
@@ -147,7 +145,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Query "${operation.name}".`);
         }
         queryResolvers[operation.name] = (obj, args, context, info) => {
-            return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+            return resolversObject[operation.resolver](obj, args, context, info, operation.params);
         };
     });
     // Add custom mutations to mutationResolvers
@@ -156,7 +154,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             throw new Error(`The custom resolver "${operation.resolver}" is not defined. You used it in custom Mutation "${operation.name}".`);
         }
         mutationResolvers[operation.name] = (obj, args, context, info) => {
-            return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+            return resolversObject[operation.resolver](obj, args, context, info, operation.params);
         };
     });
     const resolvers = {
@@ -175,7 +173,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             resolvers[operation.gqlTypeName] = {};
         }
         resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
-            return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+            return resolversObject[operation.resolver](obj, args, context, info, operation.params);
         };
     });
     return resolvers;

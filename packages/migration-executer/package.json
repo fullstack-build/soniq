@@ -1,0 +1,29 @@
+{
+  "name": "@fullstack-one/migration-executer",
+  "version": "0.1.7",
+  "description": "fullstack.one helper package",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/boot-loader": "^0.1.7",
+    "@fullstack-one/config": "^0.1.6",
+    "@fullstack-one/di": "^0.1.6",
+    "@fullstack-one/events": "^0.1.7",
+    "@fullstack-one/logger": "^0.1.7",
+    "fast-glob": "^2.0.4",
+    "koa": "^2.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  }
+}

@@ -1,8 +1,7 @@
-import * as ONE from 'fullstack-one';
 import { IDb } from './IDb';
-import { Pool as PgPool, Client as PgClient } from 'pg';
+import { Pool as PgPool } from 'pg';
 export { PgPool };
-export declare class DbGeneralPool extends ONE.AbstractPackage implements IDb {
+export declare class DbGeneralPool implements IDb {
     private readonly config;
     private readonly applicationName;
     private credentials;
@@ -12,7 +11,6 @@ export declare class DbGeneralPool extends ONE.AbstractPackage implements IDb {
     constructor(eventEmitter?: any, loggerFactory?: any);
     end(): Promise<void>;
     readonly pgPool: PgPool;
-    connect(): Promise<PgClient>;
     private gracefullyAdjustPoolSize();
     private initConnect();
 }

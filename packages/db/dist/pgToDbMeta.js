@@ -18,7 +18,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const deepmerge = require("deepmerge");
-const ONE = require("fullstack-one");
+const di_1 = require("@fullstack-one/di");
+const DbAppClient_1 = require("./DbAppClient");
 // https://www.alberton.info/postgresql_meta_info.html
 let PgToDbMeta = class PgToDbMeta {
     // https://www.alberton.info/postgresql_meta_info.html
@@ -522,10 +523,10 @@ let PgToDbMeta = class PgToDbMeta {
     }
 };
 __decorate([
-    ONE.Inject(type => ONE.DbAppClient),
-    __metadata("design:type", ONE.DbAppClient)
+    di_1.Inject(type => DbAppClient_1.DbAppClient),
+    __metadata("design:type", DbAppClient_1.DbAppClient)
 ], PgToDbMeta.prototype, "dbAppClient", void 0);
 PgToDbMeta = __decorate([
-    ONE.Service()
+    di_1.Service()
 ], PgToDbMeta);
 exports.PgToDbMeta = PgToDbMeta;

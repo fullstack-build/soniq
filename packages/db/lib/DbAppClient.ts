@@ -1,10 +1,14 @@
-import * as ONE from 'fullstack-one';
+import { Service, Inject, Container } from '@fullstack-one/di';
+import { EventEmitter } from '@fullstack-one/events';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
+import { IEnvironment, Config } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
 import { IDb } from './IDb';
 import { Client as PgClient, ClientConfig as PgClientConfig } from 'pg';
 export { PgClient };
 
-@ONE.Service()
-export class DbAppClient extends ONE.AbstractPackage implements IDb {
+@Service()
+export class DbAppClient implements IDb {
 
   public readonly pgClient: PgClient;
 
@@ -14,24 +18,23 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
   private credentials: any;
 
   // DI
-  private ENVIRONMENT: ONE.IEnvironment;
-  private logger: ONE.ILogger;
-  private eventEmitter: ONE.EventEmitter;
+  private ENVIRONMENT: IEnvironment;
+  private logger: ILogger;
+  private eventEmitter: EventEmitter;
 
   constructor(
-    @ONE.Inject(type => ONE.EventEmitter) eventEmitter?,
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
+    @Inject(type => EventEmitter) eventEmitter?,
+    @Inject(type => LoggerFactory) loggerFactory?
   ) {
-    super();
 
     // set DI dependencies
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbAppClient');
 
     // get settings from DI container
-    this.ENVIRONMENT = ONE.Container.get('ENVIRONMENT');
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    const configDB = this.getConfig('db');
+    const configDB = Container.get(Config).getConfig('db');
     this.credentials  = configDB.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
@@ -56,28 +59,7 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
     const updateClientListInterval = configDB.updateClientListInterval || 10000;
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
-  }
-
-  public async connect(): Promise<PgClient> {
-
-    try {
-      this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);
-
-      // getSqlFromMigrationObj connection
-      await this.pgClient.connect();
-
-      this.logger.trace('Postgres setup connection created');
-      this.eventEmitter.emit('db.application.pgClient.connect.success', this.applicationName);
-
-    } catch (err) {
-
-      this.logger.warn('Postgres setup connection creation error', err);
-      this.eventEmitter.emit('db.application.pgClient.connect.error', this.applicationName, err);
-
-      throw err;
-    }
-
-    return this.pgClient;
+    Container.get(BootLoader).addBootFunction(this.boot);
   }
 
   public async end(): Promise<void> {
@@ -104,6 +86,28 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
 
   }
 
+  private async boot(): Promise<PgClient> {
+
+    try {
+      this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);
+
+      // getSqlFromMigrationObj connection
+      await this.pgClient.connect();
+
+      this.logger.trace('Postgres setup connection created');
+      this.eventEmitter.emit('db.application.pgClient.connect.success', this.applicationName);
+
+    } catch (err) {
+
+      this.logger.warn('Postgres setup connection creation error', err);
+      this.eventEmitter.emit('db.application.pgClient.connect.error', this.applicationName, err);
+
+      throw err;
+    }
+
+    return this.pgClient;
+  }
+
   private async updateNodeIdsFromDb(): Promise<void> {
 
     try {
@@ -122,7 +126,7 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
       // check if number of nodes has changed
       let knownNodeIds: string[] = [];
       try {
-        knownNodeIds = ONE.Container.get('knownNodeIds');
+        knownNodeIds = Container.get('knownNodeIds');
       } catch {
         // ignore error
       }
@@ -130,7 +134,7 @@ export class DbAppClient extends ONE.AbstractPackage implements IDb {
       if (knownNodeIds.length !== nodeIds.length) {
         knownNodeIds = nodeIds;
         // update known IDs in DI
-        ONE.Container.set('knownNodeIds', knownNodeIds);
+        Container.set('knownNodeIds', knownNodeIds);
 
         this.logger.debug('Postgres number connected clients changed', knownNodeIds);
         this.eventEmitter.emit('connected.nodes.changed');

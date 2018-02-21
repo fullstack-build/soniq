@@ -5,23 +5,23 @@ const operationMapper = {
   DELETE: 'DELETE'
 };
 
-export default (dbMeta, applicationUserName, includePrivileges) => {
+export default (dbMeta: any, applicationUserName: any, includePrivileges: any) => {
   const statements = [];
   const viewSchemas = {};
 
   if (includePrivileges === true) {
-    Object.values(dbMeta.schemas).forEach((schema) => {
-      Object.values(schema.tables).forEach((table) => {
+    Object.values(dbMeta.schemas).forEach((schema: any) => {
+      Object.values(schema.tables).forEach((table: any) => {
         statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
       });
     });
   }
 
   // todo @Dustin: Can be null if relation table was not found
-  Object.values(dbMeta.schemas).forEach((schema) => {
-    Object.values(schema.views).forEach((dbView) => {
+  Object.values(dbMeta.schemas).forEach((schema: any) => {
+    Object.values(schema.views).forEach((dbView: any) => {
       let security = '';
-      const fieldSelects = dbView.fields.map((field) => {
+      const fieldSelects = dbView.fields.map((field: any) => {
         return field.expression;
       });
 
@@ -42,7 +42,7 @@ export default (dbMeta, applicationUserName, includePrivileges) => {
     });
   });
 
-  Object.values(viewSchemas).forEach((schemaName) => {
+  Object.values(viewSchemas).forEach((schemaName: any) => {
     statements.unshift(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
   });
 

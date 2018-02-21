@@ -1,5 +1,4 @@
-import * as ONE from 'fullstack-one';
-export declare class Email extends ONE.AbstractPackage {
+export declare class Email {
     private isReady;
     private transport;
     private CONFIG;

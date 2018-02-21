@@ -1,22 +1,24 @@
 import * as PgBoss from 'pg-boss';
 export { PgBoss };
 
-import * as ONE from 'fullstack-one';
+import { Service, Inject, Container } from '@fullstack-one/di';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
+import { DbGeneralPool } from '@fullstack-one/db';
+import { Config } from '@fullstack-one/config';
 
-@ONE.Service()
-export class QueueFactory extends ONE.AbstractPackage {
+@Service()
+export class QueueFactory {
 
   private queue: PgBoss;
 
   // DI
-  private logger: ONE.ILogger;
-  @ONE.Inject()
-  private generalPool: ONE.DbGeneralPool;
+  private logger: ILogger;
+  @Inject()
+  private generalPool: DbGeneralPool;
 
   constructor(
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
+    @Inject(type => LoggerFactory) loggerFactory?
   ) {
-    super();
 
     // set DI dependencies
     this.logger = loggerFactory.create('Queue');
@@ -34,7 +36,7 @@ export class QueueFactory extends ONE.AbstractPackage {
   private async start(): Promise<PgBoss> {
 
     let boss;
-    const queueConfig = this.getConfig('queue');
+    const queueConfig = Container.get(Config).getConfig('queue');
 
     // create new connection if set in config, otherwise use one from the pool
     if (queueConfig != null &&

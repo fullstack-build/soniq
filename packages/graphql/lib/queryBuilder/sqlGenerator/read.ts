@@ -1,7 +1,6 @@
 import {
   parseResolveInfo
 } from 'graphql-parse-resolve-info';
-import { log } from 'util';
 import { _ } from 'lodash';
 
 // Generate local alias name for views/tables

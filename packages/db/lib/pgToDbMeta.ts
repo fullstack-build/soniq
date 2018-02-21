@@ -1,17 +1,18 @@
 import * as deepmerge from 'deepmerge';
 
-import * as ONE from 'fullstack-one';
-// tslint:disable-next-line:no-duplicate-imports
-import { IDbMeta, IDbRelation } from 'fullstack-one';
+import { Service, Inject } from '@fullstack-one/di';
+
+import { IDbMeta, IDbRelation } from './IDbMeta';
+import { DbAppClient } from './DbAppClient';
 
 // https://www.alberton.info/postgresql_meta_info.html
-@ONE.Service()
+@Service()
 export class PgToDbMeta {
 
   private readonly DELETED_PREFIX = '_deleted:';
 
-  @ONE.Inject(type => ONE.DbAppClient)
-  private dbAppClient: ONE.DbAppClient;
+  @Inject(type => DbAppClient)
+  private dbAppClient: DbAppClient;
 
   private readonly dbMeta: IDbMeta = {
     version: 1.0,

@@ -1,7 +1,6 @@
 import {
   parseResolveInfo
 } from 'graphql-parse-resolve-info';
-import { log } from 'util';
 
 function resolveCreateMutation(query, mutation) {
   const fieldNames = Object.keys(query.args.input);

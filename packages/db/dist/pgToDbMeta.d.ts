@@ -1,4 +1,4 @@
-import { IDbMeta } from 'fullstack-one';
+import { IDbMeta } from './IDbMeta';
 export declare class PgToDbMeta {
     private readonly DELETED_PREFIX;
     private dbAppClient;

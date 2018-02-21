@@ -22,14 +22,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer_1 = require("nodemailer");
 const nodemailer_html_to_text_1 = require("nodemailer-html-to-text");
-const ONE = require("fullstack-one");
 const queue_1 = require("@fullstack-one/queue");
-let Email = class Email extends ONE.AbstractPackage {
+const di_1 = require("@fullstack-one/di");
+const config_1 = require("@fullstack-one/config");
+const events_1 = require("@fullstack-one/events");
+const logger_1 = require("@fullstack-one/logger");
+let Email = class Email {
     constructor(loggerFactory, queueFactory) {
-        super();
         this.isReady = false;
         // set DI dependencies
-        this.CONFIG = this.getConfig('email');
+        this.CONFIG = di_1.Container.get(config_1.Config).getConfig('email');
         this.queueFactory = queueFactory;
         this.logger = loggerFactory.create('Email');
         if (this.CONFIG.testing) {
@@ -135,13 +137,13 @@ let Email = class Email extends ONE.AbstractPackage {
     }
 };
 __decorate([
-    ONE.Inject(),
-    __metadata("design:type", ONE.EventEmitter)
+    di_1.Inject(),
+    __metadata("design:type", events_1.EventEmitter)
 ], Email.prototype, "eventEmitter", void 0);
 Email = __decorate([
-    ONE.Service(),
-    __param(0, ONE.Inject(type => ONE.LoggerFactory)),
-    __param(1, ONE.Inject(type => queue_1.QueueFactory)),
+    di_1.Service(),
+    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject(type => queue_1.QueueFactory)),
     __metadata("design:paramtypes", [Object, Object])
 ], Email);
 exports.Email = Email;

@@ -22,10 +22,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const PgBoss = require("pg-boss");
 exports.PgBoss = PgBoss;
-const ONE = require("fullstack-one");
-let QueueFactory = class QueueFactory extends ONE.AbstractPackage {
+const di_1 = require("@fullstack-one/di");
+const logger_1 = require("@fullstack-one/logger");
+const db_1 = require("@fullstack-one/db");
+const config_1 = require("@fullstack-one/config");
+let QueueFactory = class QueueFactory {
     constructor(loggerFactory) {
-        super();
         // set DI dependencies
         this.logger = loggerFactory.create('Queue');
     }
@@ -41,7 +43,7 @@ let QueueFactory = class QueueFactory extends ONE.AbstractPackage {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             let boss;
-            const queueConfig = this.getConfig('queue');
+            const queueConfig = di_1.Container.get(config_1.Config).getConfig('queue');
             // create new connection if set in config, otherwise use one from the pool
             if (queueConfig != null &&
                 queueConfig.host &&
@@ -76,12 +78,12 @@ let QueueFactory = class QueueFactory extends ONE.AbstractPackage {
     }
 };
 __decorate([
-    ONE.Inject(),
-    __metadata("design:type", ONE.DbGeneralPool)
+    di_1.Inject(),
+    __metadata("design:type", db_1.DbGeneralPool)
 ], QueueFactory.prototype, "generalPool", void 0);
 QueueFactory = __decorate([
-    ONE.Service(),
-    __param(0, ONE.Inject(type => ONE.LoggerFactory)),
+    di_1.Service(),
+    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __metadata("design:paramtypes", [Object])
 ], QueueFactory);
 exports.QueueFactory = QueueFactory;

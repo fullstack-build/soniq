@@ -3,18 +3,18 @@ import { isObject } from 'util';
 import * as _ from 'lodash';
 import * as deepEqual from 'deep-equal';
 
-import * as One from 'fullstack-one';
 import * as helper from './helper';
 import { IAction } from './IMigrationSqlObj';
+import { IDbMeta } from '@fullstack-one/db';
 
 export namespace migrationObject {
   const ACTION_KEY: string = '$$action$$';
-  let fromDbMeta: One.IDbMeta = null;
-  let toDbMeta: One.IDbMeta = null;
-  let migrationObj: One.IDbMeta = null;
+  let fromDbMeta: IDbMeta = null;
+  let toDbMeta: IDbMeta = null;
+  let migrationObj: IDbMeta = null;
 
-  export function createFromTwoDbMetaObjects(pFromDbMeta: One.IDbMeta,
-                                             pToDbMeta: One.IDbMeta): One.IDbMeta {
+  export function createFromTwoDbMetaObjects(pFromDbMeta: IDbMeta,
+                                             pToDbMeta: IDbMeta): IDbMeta {
 
     // check if toDbMeta is empty -> Parsing error
     if (pToDbMeta == null || Object.keys(pToDbMeta).length === 0) {
@@ -42,7 +42,7 @@ export namespace migrationObject {
     return helper.splitActionFromNode(ACTION_KEY, node);
   }
 
-  function _diffAndAddActions(pFromDbMeta: One.IDbMeta, pToDbMeta: One.IDbMeta): One.IDbMeta {
+  function _diffAndAddActions(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta {
 
     return iterateAndMark(pFromDbMeta, pToDbMeta, {});
     function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, pFromObjParent: {} = {}, pToObjParent: {} = {}, pResultParent: {} = {}) {
@@ -126,7 +126,7 @@ export namespace migrationObject {
 
   }
 
-  function _adjustDeltaDbMeta(pMigrationDbMeta: One.IDbMeta): One.IDbMeta {
+  function _adjustDeltaDbMeta(pMigrationDbMeta: IDbMeta): IDbMeta {
 
     // iterate schemas
     if (pMigrationDbMeta.schemas != null) {
@@ -183,7 +183,7 @@ export namespace migrationObject {
 
           // mark columns as changed to force type cast to new enum type
           const enumColumns = _splitActionFromNode(enumDef.columns).node;
-          Object.values(enumColumns).forEach((enumColumn) => {
+          Object.values(enumColumns).forEach((enumColumn: any) => {
             // access column using enum
             const enumColumnDefinitionMigration =
               pMigrationDbMeta.schemas[enumColumn.schemaName].tables[enumColumn.tableName].columns[enumColumn.columnName];

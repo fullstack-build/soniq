@@ -1,4 +1,4 @@
-import * as One from 'fullstack-one';
+import { IDbMeta } from '@fullstack-one/db';
 export declare namespace migrationObject {
-    function createFromTwoDbMetaObjects(pFromDbMeta: One.IDbMeta, pToDbMeta: One.IDbMeta): One.IDbMeta;
+    function createFromTwoDbMetaObjects(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta;
 }

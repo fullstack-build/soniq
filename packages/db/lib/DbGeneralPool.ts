@@ -1,38 +1,43 @@
-import * as ONE from 'fullstack-one';
+
 import { IDb } from './IDb';
 import { Pool as PgPool, PoolConfig as PgPoolConfig, Client as PgClient } from 'pg';
 export { PgPool };
+import { Service, Inject, Container } from '@fullstack-one/di';
+import { EventEmitter } from '@fullstack-one/events';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
+import { IEnvironment, Config } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
 
-@ONE.Service()
-export class DbGeneralPool extends ONE.AbstractPackage implements IDb  {
+@Service()
+export class DbGeneralPool implements IDb  {
   private readonly config: any;
   private readonly applicationName: string;
   private credentials: PgPoolConfig;
   private managedPool: PgPool;
 
   // DI
-  private logger: ONE.ILogger;
-  private eventEmitter: ONE.EventEmitter;
+  private logger: ILogger;
+  private eventEmitter: EventEmitter;
 
   constructor(
-    @ONE.Inject(type => ONE.EventEmitter) eventEmitter?,
-    @ONE.Inject(type => ONE.LoggerFactory) loggerFactory?
+    @Inject(type => EventEmitter) eventEmitter?,
+    @Inject(type => LoggerFactory) loggerFactory?
     ) {
-    super ();
     // DI
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbGeneralPool');
 
-    const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
+    const env: IEnvironment = Container.get('ENVIRONMENT');
 
-    this.config = this.getConfig('db').general;
+    this.config = Container.get(Config).getConfig('db').general;
     this.applicationName = env.namespace + '_pool_' + env.nodeId;
 
     this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
 
     // calculate pool size and create pool
-    this.gracefullyAdjustPoolSize();
+    // this.gracefullyAdjustPoolSize();
 
+    Container.get(BootLoader).addBootFunction(this.gracefullyAdjustPoolSize);
   }
 
   public async end(): Promise<void> {
@@ -63,17 +68,13 @@ export class DbGeneralPool extends ONE.AbstractPackage implements IDb  {
     return this.managedPool;
   }
 
-  public async connect(): Promise<PgClient> {
-    return await this.pgPool.connect();
-  }
-
   // calculate number of max conections and adjust pool based on number of connected nodes
-  private gracefullyAdjustPoolSize(): void {
+  private async gracefullyAdjustPoolSize(): Promise<PgPool> {
 
     // get known nodes from container, initially assume we are the first one
     let knownNodesCount: number = 1;
     try {
-      const knownNodes: string[] = ONE.Container.get('knownNodeIds');
+      const knownNodes: string[] = Container.get('knownNodeIds');
       knownNodesCount = knownNodes.length;
     } catch {
       // ignore error and continue assuming we are the first client
@@ -106,7 +107,7 @@ export class DbGeneralPool extends ONE.AbstractPackage implements IDb  {
       this.eventEmitter.emit('db.general.pool.created', this.applicationName);
 
       // init first connection (ignore promise, connection only for "pre-heating" purposes)
-      this.initConnect();
+      return await this.initConnect();
 
     }
 

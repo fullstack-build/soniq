@@ -1,11 +1,11 @@
-import * as ONE from 'fullstack-one';
+import { IDbMeta } from '@fullstack-one/db';
 export declare class Migration {
     private readonly fromDbMeta;
     private readonly toDbMeta;
     private readonly migrationObject;
     private logger;
-    constructor(fromDbMeta: ONE.IDbMeta, toDbMeta: ONE.IDbMeta);
-    getMigrationDbMeta(): ONE.IDbMeta;
+    constructor(fromDbMeta: IDbMeta, toDbMeta: IDbMeta);
+    getMigrationDbMeta(): IDbMeta;
     initDb(): Promise<void>;
     getMigrationSqlStatements(renameInsteadOfDrop?: boolean): string[];
     getViewsSql(): any[];

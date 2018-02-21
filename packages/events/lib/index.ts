@@ -1,5 +1,7 @@
 import { EventEmitter2 } from 'eventemitter2';
-import * as ONE from 'fullstack-one';
+import { Container, Service, Inject } from '@fullstack-one/di';
+import { DbAppClient } from '@fullstack-one/db';
+import { Config, IEnvironment } from '@fullstack-one/config';
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) =>  void;
@@ -7,24 +9,25 @@ export interface IEventEmitter {
   onAnyInstance: (eventName: string, listener: (...args: any[]) => void) => void;
 }
 
-@ONE.Service()
-export class EventEmitter extends ONE.AbstractPackage implements IEventEmitter {
+@Service()
+export class EventEmitter implements IEventEmitter {
 
   private eventEmitter: EventEmitter2;
 
   private nodeId: string;
-  @ONE.Inject(type => ONE.DbAppClient)
-  private dbClient: ONE.DbAppClient;
+  private dbClient: DbAppClient;
   private namespace: string = 'one';
 
-  constructor() {
-    super();
+  constructor(@Inject(type => Config) c?, @Inject(type => DbAppClient) dbClient?) {
 
-    const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
-    const config: any = this.getConfig('config');
+    this.dbClient = dbClient;
+
+    const env: IEnvironment = Container.get('ENVIRONMENT');
+    const config: any = c.getConfig('config');
+    const coreConfig = c.getConfig('core');
 
     this.nodeId = env.nodeId;
-    this.namespace = this.getConfig('core').namespace;
+    this.namespace = c.getConfig('core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',

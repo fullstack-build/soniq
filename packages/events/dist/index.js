@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -18,15 +21,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const eventemitter2_1 = require("eventemitter2");
-const ONE = require("fullstack-one");
-let EventEmitter = class EventEmitter extends ONE.AbstractPackage {
-    constructor() {
-        super();
+const di_1 = require("@fullstack-one/di");
+const db_1 = require("@fullstack-one/db");
+const config_1 = require("@fullstack-one/config");
+let EventEmitter = class EventEmitter {
+    constructor(c, dbClient) {
         this.namespace = 'one';
-        const env = ONE.Container.get('ENVIRONMENT');
-        const config = this.getConfig('config');
+        this.dbClient = dbClient;
+        const env = di_1.Container.get('ENVIRONMENT');
+        const config = c.getConfig('config');
+        const coreConfig = c.getConfig('core');
         this.nodeId = env.nodeId;
-        this.namespace = this.getConfig('core').namespace;
+        this.namespace = c.getConfig('core').namespace;
         this.eventEmitter = new eventemitter2_1.EventEmitter2({
             wildcard: true,
             delimiter: '.',
@@ -91,12 +97,9 @@ let EventEmitter = class EventEmitter extends ONE.AbstractPackage {
         }
     }
 };
-__decorate([
-    ONE.Inject(type => ONE.DbAppClient),
-    __metadata("design:type", ONE.DbAppClient)
-], EventEmitter.prototype, "dbClient", void 0);
 EventEmitter = __decorate([
-    ONE.Service(),
-    __metadata("design:paramtypes", [])
+    di_1.Service(),
+    __param(0, di_1.Inject(type => config_1.Config)), __param(1, di_1.Inject(type => db_1.DbAppClient)),
+    __metadata("design:paramtypes", [Object, Object])
 ], EventEmitter);
 exports.EventEmitter = EventEmitter;

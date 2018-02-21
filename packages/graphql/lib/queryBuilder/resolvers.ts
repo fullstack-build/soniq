@@ -10,9 +10,6 @@ import {
   getMutationResolver
 } from './sqlGenerator/mutate';
 
-import * as ONE from 'fullstack-one';
-import { Auth } from '@fullstack-one/auth';
-
 /* ======================================================= */
 
 // Note: The normal import isn't working here for some reason. This is why I import via require.
@@ -25,15 +22,15 @@ const graphqlTypeJson = require('graphql-type-json');
 
 /* ======================================================= */
 
-export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, auth, pool) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
 
   // DI
   // todo needs refactoring @dustin
-  const auth: any = ONE.Container.get(Auth);
-  const pool: any = ONE.Container.get(ONE.DbGeneralPool);
+  // const auth: any = ONE.Container.get(Auth);
+  // const pool: any = ONE.Container.get(ONE.DbGeneralPool);
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -182,7 +179,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
     }
 
     queryResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
     };
   });
 
@@ -193,7 +190,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
     }
 
     mutationResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
     };
   });
 
@@ -216,7 +213,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
     }
 
     resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params, ONE);
+      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
     };
   });
 

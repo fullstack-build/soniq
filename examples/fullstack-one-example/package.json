@@ -9,6 +9,7 @@
   "main": "main.ts",
   "scripts": {
     "start": "AUTH_JWT_SECRET=thisisasecretforjwt AUTH_ADMIN_SECRET=boss AUTH_PROVIDERS_SECRET=providersecret AUTH_COOKIE_SECRET=cookiesecret42 ts-node .",
+    "tistart": "AUTH_JWT_SECRET=thisisasecretforjwt AUTH_ADMIN_SECRET=boss AUTH_PROVIDERS_SECRET=providersecret AUTH_COOKIE_SECRET=cookiesecret42 ts-node index.ts",
     "dev": "nodemon --exec \"ts-node --inspect .\"",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"

@@ -1,0 +1,23 @@
+{
+  "name": "@fullstack-one/boot-loader",
+  "version": "0.1.8",
+  "description": "fullstack.one helper package",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/di": "^0.1.6"
+  },
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  }
+}

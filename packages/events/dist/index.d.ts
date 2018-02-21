@@ -1,15 +1,14 @@
-import * as ONE from 'fullstack-one';
 export interface IEventEmitter {
     emit: (eventName: string, ...args: any[]) => void;
     on: (eventName: string, listener: (...args: any[]) => void) => void;
     onAnyInstance: (eventName: string, listener: (...args: any[]) => void) => void;
 }
-export declare class EventEmitter extends ONE.AbstractPackage implements IEventEmitter {
+export declare class EventEmitter implements IEventEmitter {
     private eventEmitter;
     private nodeId;
     private dbClient;
     private namespace;
-    constructor();
+    constructor(c?: any, dbClient?: any);
     emit(eventName: string, ...args: any[]): void;
     on(eventName: string, listener: (...args: any[]) => void): void;
     onAnyInstance(eventName: string, listener: (...args: any[]) => void): void;

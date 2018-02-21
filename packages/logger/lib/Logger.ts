@@ -1,4 +1,6 @@
-import * as ONE from 'fullstack-one';
+
+import { Container, Service, Inject } from '@fullstack-one/di';
+import { Config } from '@fullstack-one/config';
 import * as DebugLogger from 'debug-logger';
 // import * as LE from 'le_node';
 import * as Tracer from 'tracer';
@@ -20,18 +22,20 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor(moduleName: string = 'root') {
+  constructor(moduleName: string = 'root', config) {
 
-    const env: ONE.IEnvironment = ONE.Container.get('ENVIRONMENT');
-    const config: any = ONE.Container.get('CONFIG');
+    const env: any = Container.get('ENVIRONMENT');
+    // const config: any = Container.get('CONFIG');
 
     this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
 
+    const loggerConfig = config.getConfig('logger');
+
     // setup tracer
     const tracerConfig: any = {
       // min level
-      level: config.logger.minLevel,
+      level: loggerConfig.minLevel,
       // set log levels
       methods: this.LEVELS,
       // override tracer transport with logToDebug

@@ -1,4 +1,4 @@
-import * as One from 'fullstack-one';
+import { IDbMeta } from '@fullstack-one/db';
 export declare namespace sqlObjFromMigrationObject {
-    function getSqlFromMigrationObj(pMigrationObj: One.IDbMeta, pToDbMeta: One.IDbMeta, pRenameInsteadOfDrop?: boolean): string[];
+    function getSqlFromMigrationObj(pMigrationObj: IDbMeta, pToDbMeta: IDbMeta, pRenameInsteadOfDrop?: boolean): string[];
 }

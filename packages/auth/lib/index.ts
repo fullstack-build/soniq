@@ -1,4 +1,8 @@
-import * as ONE from 'fullstack-one';
+import { Service, Inject, Container } from '@fullstack-one/di';
+import { DbGeneralPool } from '@fullstack-one/db';
+import { Server } from '@fullstack-one/server';
+import { BootLoader } from '@fullstack-one/boot-loader';
+import { Config } from '@fullstack-one/config';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature, getCookieSecret } from './sign';
@@ -11,26 +15,32 @@ import * as koaSession from 'koa-session';
 import oAuthCallback from './oAuthCallback';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
-@ONE.Service()
-export class Auth extends ONE.AbstractPackage {
+@Service()
+export class Auth {
 
   private sodiumConfig;
   private authConfig;
 
   // DI
-  private $one: ONE.FullstackOneCore;
-  @ONE.Inject()
-  private dbGeneralPool: ONE.DbGeneralPool;
+  private dbGeneralPool: DbGeneralPool;
+  private server: Server;
 
-  constructor(@ONE.Inject(type => ONE.FullstackOneCore) $one?) {
-    super();
+  constructor(
+    @Inject(type => DbGeneralPool) dbGeneralPool?,
+    @Inject(type => Server) server?,
+    @Inject(type => BootLoader) bootLoader?,
+    @Inject(type => Config) config?
+  ) {
 
-    this.$one = $one;
+    this.server = server;
+    this.dbGeneralPool = dbGeneralPool;
 
-    this.authConfig = this.getConfig('auth');
+    this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    this.linkPassport();
+    bootLoader.addBootFunction(this.boot);
+
+    // this.linkPassport();
   }
 
   public async setUser(client, accessToken) {
@@ -74,7 +84,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async register(username, tenant) {
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -104,7 +114,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async login(username, tenant, provider, password, userIdentifier) {
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -148,7 +158,7 @@ export class Auth extends ONE.AbstractPackage {
     const providerSignature = getProviderSignature(provider, uid);
     const pwData: any = await newHash(password + providerSignature, this.sodiumConfig);
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -173,7 +183,7 @@ export class Auth extends ONE.AbstractPackage {
 
   public async forgotPassword(username, tenant) {
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -204,7 +214,7 @@ export class Auth extends ONE.AbstractPackage {
   public async removeProvider(accessToken, provider) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -230,7 +240,7 @@ export class Auth extends ONE.AbstractPackage {
   public async isTokenValid(accessToken, tempSecret = false, tempTime = false) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -257,7 +267,7 @@ export class Auth extends ONE.AbstractPackage {
   public async invalidateUserToken(accessToken) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -283,7 +293,7 @@ export class Auth extends ONE.AbstractPackage {
   public async invalidateAllUserTokens(accessToken) {
     const payload = verifyJwt(accessToken);
 
-    const client = await this.dbGeneralPool.connect();
+    const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
@@ -306,8 +316,14 @@ export class Auth extends ONE.AbstractPackage {
     }
   }
 
-  public linkPassport() {
+  public getPassport() {
+    return passport;
+  }
+
+  private async boot() {
     const authRouter = new KoaRouter();
+
+    const app = this.server.getApp();
 
     authRouter.get('/test', async (ctx) => {
       ctx.body = 'Hallo';
@@ -315,13 +331,13 @@ export class Auth extends ONE.AbstractPackage {
 
     authRouter.use(koaBody());
 
-    this.$one.app.keys = [getCookieSecret()];
-    authRouter.use(koaSession(this.authConfig.oAuth.cookie, this.$one.app));
+    app.keys = [getCookieSecret()];
+    authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
 
     authRouter.use(passport.initialize());
     // authRouter.use(passport.session());
 
-    this.$one.app.use(async (ctx, next) => {
+    app.use(async (ctx, next) => {
       if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
         ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
         return next();
@@ -526,11 +542,7 @@ export class Auth extends ONE.AbstractPackage {
       });
     });
 
-    this.$one.app.use(authRouter.routes());
-    this.$one.app.use(authRouter.allowedMethods());
-  }
-
-  public getPassport() {
-    return passport;
+    app.use(authRouter.routes());
+    app.use(authRouter.allowedMethods());
   }
 }

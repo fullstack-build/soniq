@@ -1,17 +1,19 @@
-import * as One from 'fullstack-one';
+
 import * as helper from './helper';
 import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
+import { LoggerFactory, ILogger } from '@fullstack-one/logger';
+import { IDbMeta, IDbRelation } from '@fullstack-one/db';
 
 export namespace sqlObjFromMigrationObject {
 
   const ACTION_KEY: string = '$$action$$';
   const DELETED_PREFIX: string = '_deleted:';
-  const schemasToIgnore: [string] = ['_versions', 'graphql'];
+  const schemasToIgnore: any = ['_versions', 'graphql'];
   let renameInsteadOfDrop: boolean = true;
-  let migrationObj: One.IDbMeta = null;
-  let toDbMeta: One.IDbMeta = null;
+  let migrationObj: IDbMeta = null;
+  let toDbMeta: IDbMeta = null;
 
-  export function getSqlFromMigrationObj(pMigrationObj: One.IDbMeta, pToDbMeta: One.IDbMeta, pRenameInsteadOfDrop: boolean = true): string[] {
+  export function getSqlFromMigrationObj(pMigrationObj: IDbMeta, pToDbMeta: IDbMeta, pRenameInsteadOfDrop: boolean = true): string[] {
 
     renameInsteadOfDrop = pRenameInsteadOfDrop;
 
@@ -164,7 +166,7 @@ export namespace sqlObjFromMigrationObject {
       Object.entries(schemas).map((schemaEntry) => {
 
         const schemaName = schemaEntry[0];
-        const schemaDefinition = schemaEntry[1];
+        const schemaDefinition: any = schemaEntry[1];
 
         // avoid dropping or creating mandatory schemas (and tables)
         if (!schemasToIgnore.includes(schemaName)) {
@@ -188,9 +190,9 @@ export namespace sqlObjFromMigrationObject {
       const relations = _splitActionFromNode(migrationObj.relations).node;
 
       Object.values(relations).map((
-        relationObj: { [tableName: string]: One.IDbRelation }
+        relationObj: { [tableName: string]: IDbRelation }
       ) => {
-        const relationDefinition: One.IDbRelation[] = Object.values(_splitActionFromNode(relationObj).node);
+        const relationDefinition: IDbRelation[] = Object.values(_splitActionFromNode(relationObj).node);
 
         // write error for many-to-many
         if (relationDefinition[0].type === 'MANY' && relationDefinition[1] != null && relationDefinition[1].type === 'MANY') {
@@ -728,7 +730,7 @@ export namespace sqlObjFromMigrationObject {
     }
   }
 
-  function createRelation(sqlMigrationObj, relationName, relationObject: One.IDbRelation[]) {
+  function createRelation(sqlMigrationObj, relationName, relationObject: IDbRelation[]) {
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.relations[relationName] =
       sqlMigrationObj.relations[relationName] || _createEmptySqlObj(relationName);
@@ -739,7 +741,7 @@ export namespace sqlObjFromMigrationObject {
     relationObject.forEach((thisRelation) => {
       _createSqlRelation(thisRelation);
     });
-    function _createSqlRelation(oneRelation: One.IDbRelation, ignoreColumnsCreation: boolean = false) {
+    function _createSqlRelation(oneRelation: IDbRelation, ignoreColumnsCreation: boolean = false) {
       const { action, node } = _splitActionFromNode(oneRelation);
 
       // ignore the 'MANY' side
@@ -845,7 +847,7 @@ export namespace sqlObjFromMigrationObject {
         _createSqlRelation(fullRelationFromNodeOneSide, true);
         */
         // TO: find one side and copy and add "add" action
-        const fullRelationToNodeOneSide = { ...Object.values(toDbMeta.relations[node.name]).find((relation) => {
+        const fullRelationToNodeOneSide = { ...Object.values(toDbMeta.relations[node.name]).find((relation: any) => {
           return (relation.type === 'ONE');
         }), [ACTION_KEY]: {
           add: true
@@ -858,7 +860,7 @@ export namespace sqlObjFromMigrationObject {
 
   }
 
-  function createSqlManyToManyRelation(sqlMigrationObj, relationName, relationObject: One.IDbRelation[]) {
+  function createSqlManyToManyRelation(sqlMigrationObj, relationName, relationObject: IDbRelation[]) {
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.relations[relationName] =
       sqlMigrationObj.schemas[relationName] || _createEmptySqlObj(relationName);

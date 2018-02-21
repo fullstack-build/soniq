@@ -3,133 +3,67 @@ import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
-// fullstack-one core
-import * as ONE from 'fullstack-one';
-
-// import sub modules
-import { graphQl as gQLHelper } from './helper';
-
-import { runtimeParser } from './parser';
 import { getResolvers } from './queryBuilder/resolvers';
 
-// import interfaces
-import { IViews, IExpressions } from './interfaces';
-import { parseGraphQlJsonSchemaToDbMeta } from './graphQlSchemaToDbMeta';
+// fullstack-one core
+import { Service, Inject, Container } from '@fullstack-one/di';
 // DI imports
-import { LoggerFactory } from '@fullstack-one/logger';
+import { LoggerFactory, ILogger } from '@fullstack-one/logger';
+import { Config, IEnvironment } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
+import { GraphQlParser } from '@fullstack-one/graphql-parser';
+import { helper } from '@fullstack-one/helper';
+import { Server } from '@fullstack-one/server';
+import { Auth } from '@fullstack-one/auth';
+import { DbGeneralPool } from '@fullstack-one/db';
 
-@ONE.Service()
-export class GraphQl extends ONE.AbstractPackage {
+@Service()
+export class GraphQl {
 
   private graphQlConfig: any;
-  private sdlSchema: any;
-  private astSchema: any;
-  private views: IViews;
-  private expressions: IExpressions;
-  private gQlRuntimeDocument: any;
-  private gQlRuntimeSchema: string;
-  private gQlTypes: any;
-  private dbMeta: any;
-  private mutations: any;
-  private queries: any;
-  private customOperations: any;
 
   // DI
-  @ONE.Inject(type => ONE.FullstackOneCore)
-  private $one: ONE.FullstackOneCore;
-  private logger: ONE.ILogger;
-  @ONE.Inject('ENVIRONMENT')
-  private ENVIRONMENT: ONE.IEnvironment;
+  private logger: ILogger;
+  private ENVIRONMENT: IEnvironment;
+  private gqlParser: GraphQlParser;
+  private server: Server;
+  private dbGeneralPool: DbGeneralPool;
+  private auth: Auth;
 
-  constructor (@ONE.Inject(type => LoggerFactory) loggerFactory?) {
-    super();
+  constructor (
+    @Inject(type => LoggerFactory) loggerFactory?,
+    @Inject(type => Config) config?,
+    @Inject(type => BootLoader) bootLoader?,
+    @Inject(type => GraphQlParser) gqlParser?,
+    @Inject(type => Server) server?,
+    @Inject(type => DbGeneralPool) dbGeneralPool?,
+    @Inject(type => Auth) auth?
+    ) {
+    this.dbGeneralPool = dbGeneralPool;
+    this.auth = auth;
+    this.server = server;
+    this.gqlParser = gqlParser;
     this.logger = loggerFactory.create('GraphQl');
-    this.graphQlConfig = this.getConfig('graphql');
+    this.graphQlConfig = config.getConfig('graphql');
+    this.ENVIRONMENT = config.ENVIRONMENT;
+
+    bootLoader.addBootFunction(this.boot);
   }
 
-  public async boot(): Promise<any> {
-
-    try {
-
-      // load schema
-      const sdlSchemaPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
-      this.sdlSchema = await ONE.helper.loadFilesByGlobPattern(sdlSchemaPattern);
-
-      const sdlSchemaCombined = this.sdlSchema.join('\n');
-      this.astSchema = gQLHelper.helper.parseGraphQlSchema(sdlSchemaCombined);
-
-      this.dbMeta = parseGraphQlJsonSchemaToDbMeta(this.astSchema);
-
-      // load permissions and expressions and generate views and put them into schemas
-      try {
-
-        // load permissions
-        const viewsPattern = this.ENVIRONMENT.path + this.graphQlConfig.viewsPattern;
-        const viewsArray = await ONE.helper.requireFilesByGlobPattern(viewsPattern);
-        this.views = [].concat.apply([], viewsArray);
-
-        // load expressions
-        const expressionsPattern = this.ENVIRONMENT.path + this.graphQlConfig.expressionsPattern;
-        const expressionsArray = await ONE.helper.requireFilesByGlobPattern(expressionsPattern);
-        this.expressions = [].concat.apply([], expressionsArray);
-
-        const combinedSchemaInformation = runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta);
-
-        this.gQlRuntimeDocument = combinedSchemaInformation.document;
-        this.gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(this.gQlRuntimeDocument);
-        this.gQlTypes = combinedSchemaInformation.gQlTypes;
-        this.queries = combinedSchemaInformation.queries;
-        this.mutations = combinedSchemaInformation.mutations;
-
-        this.customOperations = {
-          fields: combinedSchemaInformation.customFields,
-          queries: combinedSchemaInformation.customQueries,
-          mutations: combinedSchemaInformation.customMutations
-        };
-
-        Object.values(combinedSchemaInformation.dbViews).forEach((dbView: any) => {
-          if (this.dbMeta.schemas[dbView.viewSchemaName] == null) {
-            this.dbMeta.schemas[dbView.viewSchemaName] = {
-              tables: {},
-              views: {}
-            };
-          }
-          this.dbMeta.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
-        });
-
-      } catch (err) {
-        throw err;
-      }
-
-      return this.dbMeta;
-
-    } catch (err) {
-      this.logger.warn('boot.error', err);
-    }
-
-  }
-
-  public getGraphQlSchema() {
-    // return copy insted of ref
-    return { ... this.sdlSchema };
-  }
-
-  public getGraphQlJsonSchema() {
-    // return copy insted of ref
-    return { ... this.astSchema };
-  }
-
-  public async addEndpoints() {
+  private async boot() {
 
     const gqlRouter = new KoaRouter();
 
     // Load resolvers
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-    const resolversObject = await ONE.helper.requireFilesByGlobPatternAsObject(resolversPattern);
+    const resolversObject = await helper.requireFilesByGlobPatternAsObject(resolversPattern);
+
+    const rd = this.gqlParser.getGqlRuntimeData();
 
     const schema = makeExecutableSchema({
-      typeDefs: this.gQlRuntimeSchema,
-      resolvers: getResolvers(this.gQlTypes, this.dbMeta, this.queries, this.mutations, this.customOperations, resolversObject),
+      typeDefs: rd.gQlRuntimeSchema,
+      resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
+      rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool.pgPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
@@ -169,8 +103,10 @@ export class GraphQl extends ONE.AbstractPackage {
 
     gqlRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
 
-    this.$one.app.use(gqlRouter.routes());
-    this.$one.app.use(gqlRouter.allowedMethods());
+    const app = this.server.getApp();
+
+    app.use(gqlRouter.routes());
+    app.use(gqlRouter.allowedMethods());
 
   }
 

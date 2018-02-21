@@ -2,27 +2,29 @@ import * as _ from 'lodash';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 
-import * as ONE from 'fullstack-one';
+import { Service, Container } from '@fullstack-one/di';
+import { LoggerFactory, ILogger } from '@fullstack-one/logger';
+import { IDbMeta, DbAppClient } from '@fullstack-one/db';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
-@ONE.Service()
+@Service()
 export class Migration {
 
-  private readonly fromDbMeta: ONE.IDbMeta;
-  private readonly toDbMeta: ONE.IDbMeta;
-  private readonly migrationObject: ONE.IDbMeta;
+  private readonly fromDbMeta: IDbMeta;
+  private readonly toDbMeta: IDbMeta;
+  private readonly migrationObject: IDbMeta;
 
   // DI
-  private logger: ONE.ILogger;
+  private logger: ILogger;
 
-  constructor(fromDbMeta: ONE.IDbMeta,
-              toDbMeta: ONE.IDbMeta) {
+  constructor(fromDbMeta: IDbMeta,
+              toDbMeta: IDbMeta) {
 
     // create logger
-    this.logger = ONE.Container.get(ONE.LoggerFactory).create('Migration');
+    this.logger = Container.get(LoggerFactory).create('Migration');
 
     // check if toDbMeta is empty -> Parsing error
     if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
@@ -47,13 +49,13 @@ export class Migration {
 
   }
 
-  public getMigrationDbMeta(): ONE.IDbMeta {
+  public getMigrationDbMeta(): IDbMeta {
     return _.cloneDeep(this.migrationObject);
   }
 
   public async initDb(): Promise<void> {
     // get DB pgClient from DI container
-    const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
+    const dbClient = Container.get(DbAppClient).pgClient;
 
     // check latest version migrated
     let latestVersion = 0;
@@ -186,7 +188,7 @@ export class Migration {
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
 
     // get DB pgClient from DI container
-    const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
+    const dbClient = Container.get(DbAppClient).pgClient;
 
     // init DB
     await this.initDb();

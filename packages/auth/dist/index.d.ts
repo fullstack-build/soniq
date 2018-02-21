@@ -1,10 +1,9 @@
-import * as ONE from 'fullstack-one';
-export declare class Auth extends ONE.AbstractPackage {
+export declare class Auth {
     private sodiumConfig;
     private authConfig;
-    private $one;
     private dbGeneralPool;
-    constructor($one?: any);
+    private server;
+    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any);
     setUser(client: any, accessToken: any): Promise<boolean>;
     loginOrRegister(username: any, tenant: any, provider: any, password: any, userIdentifier: any): Promise<any>;
     register(username: any, tenant: any): Promise<{
@@ -27,6 +26,6 @@ export declare class Auth extends ONE.AbstractPackage {
     isTokenValid(accessToken: any, tempSecret?: boolean, tempTime?: boolean): Promise<boolean>;
     invalidateUserToken(accessToken: any): Promise<boolean>;
     invalidateAllUserTokens(accessToken: any): Promise<boolean>;
-    linkPassport(): void;
     getPassport(): any;
+    private boot();
 }

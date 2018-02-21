@@ -1,24 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const ONE = require("fullstack-one");
+const di_1 = require("@fullstack-one/di");
 const DebugLogger = require("debug-logger");
 // import * as LE from 'le_node';
 const Tracer = require("tracer");
 class Logger {
-    constructor(moduleName = 'root') {
+    constructor(moduleName = 'root', config) {
         this.LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
         // tracer
         this.tracerLogger = null;
         // debug
         this.debugLogger = null;
-        const env = ONE.Container.get('ENVIRONMENT');
-        const config = ONE.Container.get('CONFIG');
+        const env = di_1.Container.get('ENVIRONMENT');
+        // const config: any = Container.get('CONFIG');
         this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
         this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
+        const loggerConfig = config.getConfig('logger');
         // setup tracer
         const tracerConfig = {
             // min level
-            level: config.logger.minLevel,
+            level: loggerConfig.minLevel,
             // set log levels
             methods: this.LEVELS,
             // override tracer transport with logToDebug

@@ -20,14 +20,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const fastGlob = require("fast-glob");
 const fs = require("fs");
-const ONE = require("fullstack-one");
+const di_1 = require("@fullstack-one/di");
+const logger_1 = require("@fullstack-one/logger");
+const db_1 = require("@fullstack-one/db");
 const migrationObject_1 = require("./migrationObject");
 const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
 const createSqlObjFromMigrationObject_1 = require("./createSqlObjFromMigrationObject");
 let Migration = class Migration {
     constructor(fromDbMeta, toDbMeta) {
         // create logger
-        this.logger = ONE.Container.get(ONE.LoggerFactory).create('Migration');
+        this.logger = di_1.Container.get(logger_1.LoggerFactory).create('Migration');
         // check if toDbMeta is empty -> Parsing error
         if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
             throw new Error(`Migration Error: Provided migration final state is empty.`);
@@ -52,7 +54,7 @@ let Migration = class Migration {
     initDb() {
         return __awaiter(this, void 0, void 0, function* () {
             // get DB pgClient from DI container
-            const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
+            const dbClient = di_1.Container.get(db_1.DbAppClient).pgClient;
             // check latest version migrated
             let latestVersion = 0;
             try {
@@ -171,7 +173,7 @@ let Migration = class Migration {
     migrate(renameInsteadOfDrop = true) {
         return __awaiter(this, void 0, void 0, function* () {
             // get DB pgClient from DI container
-            const dbClient = ONE.Container.get(ONE.DbAppClient).pgClient;
+            const dbClient = di_1.Container.get(db_1.DbAppClient).pgClient;
             // init DB
             yield this.initDb();
             // get migration statements
@@ -219,7 +221,7 @@ let Migration = class Migration {
     }
 };
 Migration = __decorate([
-    ONE.Service(),
+    di_1.Service(),
     __metadata("design:paramtypes", [Object, Object])
 ], Migration);
 exports.Migration = Migration;

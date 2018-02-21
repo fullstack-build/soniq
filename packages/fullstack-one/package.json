@@ -1,6 +1,6 @@
 {
   "name": "fullstack-one",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "fullstack.one main server package",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,26 +15,13 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@fullstack-one/events": "latest",
-    "@fullstack-one/graphql": "latest",
-    "@fullstack-one/helper": "latest",
-    "@fullstack-one/logger": "latest",
-    "@fullstack-one/migration": "latest",
     "@types/dotenv": "^4.0.2",
-    "@types/koa": "^2.0.39",
-    "fullstack-one": "latest",
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "@godaddy/terminus": "^2.0.0",
-    "debug-logger": "^0.4.1",
-    "dotenv": "^4.0.0",
-    "dotenv-safe": "^4.0.4",
-    "eventemitter2": "^5.0.0",
-    "fast-glob": "^1.0.1",
-    "koa": "^2.4.1",
-    "le_node": "^1.7.1",
-    "reflect-metadata": "^0.1.12",
-    "tracer": "^0.8.11"
+    "@fullstack-one/boot-loader": "^0.1.8",
+    "@fullstack-one/config": "^0.1.6",
+    "@fullstack-one/di": "^0.1.6",
+    "dotenv-safe": "^5.0.1"
   }
 }

@@ -1,7 +1,6 @@
 import * as PgBoss from 'pg-boss';
 export { PgBoss };
-import * as ONE from 'fullstack-one';
-export declare class QueueFactory extends ONE.AbstractPackage {
+export declare class QueueFactory {
     private queue;
     private logger;
     private generalPool;

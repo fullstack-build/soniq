@@ -7,7 +7,7 @@ export interface IAction {
   change: boolean;
 }
 
-interface ISqlObj {
+export interface ISqlObj {
   up: undefined[];
   down: undefined[];
 }
