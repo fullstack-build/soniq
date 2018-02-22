@@ -21,16 +21,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
-const events_1 = require("@fullstack-one/events");
-const logger_1 = require("@fullstack-one/logger");
+const config_1 = require("@fullstack-one/config");
+// import { EventEmitter } from '@fullstack-one/events';
+// import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const http = require("http");
 // other npm dependencies
 const Koa = require("koa");
 let Server = class Server {
-    constructor(eventEmitter, loggerFactory, bootLoader) {
-        this.eventEmitter = eventEmitter;
-        this.logger = loggerFactory.create('Server');
+    // private logger: ILogger;
+    // private eventEmitter: EventEmitter;
+    constructor(
+    // @Inject(type => EventEmitter) eventEmitter?,
+    // @Inject(type => LoggerFactory) loggerFactory?,
+    config, bootLoader) {
+        // this.eventEmitter = eventEmitter;
+        // this.logger = loggerFactory.create('Server');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         bootLoader.addBootFunction(this.boot);
@@ -43,31 +49,35 @@ let Server = class Server {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.app = new Koa();
-            // start KOA on PORT
-            this.server = http.createServer(this.app.callback()).listen(this.ENVIRONMENT.port);
-            // emit event
-            this.emit('server.up', this.ENVIRONMENT.port);
-            // success log
-            this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+            try {
+                this.app = new Koa();
+                // start KOA on PORT
+                this.server = http.createServer(this.app.callback()).listen(this.ENVIRONMENT.port);
+                // emit event
+                this.emit('server.up', this.ENVIRONMENT.port);
+                // success log
+                // this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+            }
+            catch (e) {
+                console.error(e);
+            }
         });
     }
     emit(eventName, ...args) {
         // add namespace
         const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-        this.eventEmitter.emit(eventNamespaceName, this.ENVIRONMENT.nodeId, ...args);
+        // this.eventEmitter.emit(eventNamespaceName, this.ENVIRONMENT.nodeId, ...args);
     }
     on(eventName, listener) {
         // add namespace
         const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-        this.eventEmitter.on(eventNamespaceName, listener);
+        // this.eventEmitter.on(eventNamespaceName, listener);
     }
 };
 Server = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => events_1.EventEmitter)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(tpye => boot_loader_1.BootLoader)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __param(0, di_1.Inject(type => config_1.Config)),
+    __param(1, di_1.Inject(tpye => boot_loader_1.BootLoader)),
+    __metadata("design:paramtypes", [Object, Object])
 ], Server);
 exports.Server = Server;
