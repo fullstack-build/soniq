@@ -2,7 +2,7 @@
   "name": "@fullstack-one/notifications",
   "version": "0.1.7",
   "description": "fullstack.one notifications package",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

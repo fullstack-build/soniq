@@ -2,7 +2,7 @@
   "name": "@fullstack-one/boot-loader",
   "version": "0.1.9",
   "description": "fullstack.one helper package",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
