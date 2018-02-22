@@ -18,7 +18,7 @@ export class QueueFactory {
   constructor(
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => DbGeneralPool) generalPool?,
-    @Inject(type => Config) config?
+    @Inject(type => Config) config?: Config
   ) {
 
     // set DI dependencies

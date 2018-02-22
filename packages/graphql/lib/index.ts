@@ -52,7 +52,7 @@ export class GraphQl {
 
   private async boot() {
 
-    const gqlRouter = new KoaRouter();
+    const gqlKoaRouter = new KoaRouter();
 
     // Load resolvers
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
@@ -63,7 +63,7 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: rd.gQlRuntimeSchema,
       resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
-      rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool.pgPool),
+      rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
@@ -98,15 +98,15 @@ export class GraphQl {
     };
 
     // koaBody is needed just for POST.
-    gqlRouter.post('/graphql', koaBody(), setCacheHeaders, graphqlKoa(gQlParam));
-    gqlRouter.get('/graphql', setCacheHeaders, graphqlKoa(gQlParam));
+    gqlKoaRouter.post('/graphql', koaBody(), setCacheHeaders, graphqlKoa(gQlParam));
+    gqlKoaRouter.get('/graphql', setCacheHeaders, graphqlKoa(gQlParam));
 
-    gqlRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+    gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
 
     const app = this.server.getApp();
 
-    app.use(gqlRouter.routes());
-    app.use(gqlRouter.allowedMethods());
+    app.use(gqlKoaRouter.routes());
+    app.use(gqlKoaRouter.allowedMethods());
 
   }
 

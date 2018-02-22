@@ -2,7 +2,8 @@ import * as _ from 'lodash';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 
-import { Service, Container } from '@fullstack-one/di';
+import { Service, Container, Inject } from '@fullstack-one/di';
+import { Config } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { IDbMeta, DbAppClient } from '@fullstack-one/db';
 import { migrationObject } from './migrationObject';
@@ -10,21 +11,27 @@ import createViewsFromDbMeta from './createViewsFromDbMeta';
 
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
+// TODO: @eugene: Migration should be a Migration-Factory
 @Service()
 export class Migration {
 
   private readonly fromDbMeta: IDbMeta;
   private readonly toDbMeta: IDbMeta;
   private readonly migrationObject: IDbMeta;
+  private dbAppClient: DbAppClient;
 
   // DI
   private logger: ILogger;
 
   constructor(fromDbMeta: IDbMeta,
-              toDbMeta: IDbMeta) {
+              toDbMeta: IDbMeta,
+              @Inject(type => Config) config?: Config,
+              @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory,
+              @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
     // create logger
-    this.logger = Container.get(LoggerFactory).create('Migration');
+    this.logger = loggerFactory.create('Migration');
+    this.dbAppClient = dbAppClient;
 
     // check if toDbMeta is empty -> Parsing error
     if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
@@ -73,7 +80,7 @@ export class Migration {
     // find init scripts to ignore
     let initFoldersToIgnore = [];
     if (latestVersion > 0) {
-      const initFolders = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]`, {
+      const initFolders = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]`, {
         deep: false,
         onlyDirs: true,
       });
@@ -91,7 +98,7 @@ export class Migration {
     const loadOptionalSuffixOrder = ['operator_class'];
     const loadFilesOrder  = {};
     for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
-      const paths = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
+      const paths = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
         ignore: initFoldersToIgnore,
         deep: true,
         onlyFiles: true,
@@ -188,7 +195,7 @@ export class Migration {
   public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
 
     // get DB pgClient from DI container
-    const dbClient = Container.get(DbAppClient).pgClient;
+    const dbClient = this.dbAppClient.pgClient;
 
     // init DB
     await this.initDb();

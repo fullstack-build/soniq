@@ -22,7 +22,7 @@ const graphqlTypeJson = require('graphql-type-json');
 
 /* ======================================================= */
 
-export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, auth, pool) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, auth, dbGeneralPool) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -48,7 +48,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
         const selectQuery = queryResolver(obj, args, context, info, isAuthenticated);
 
         // Get a pgClient from pool
-        const client = await pool.connect();
+        const client = await dbGeneralPool.pgPool.connect();
 
         try {
           // Begin transaction
@@ -103,7 +103,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
         context.ctx.state.includesMutation = true;
 
         // Get a pgClient from pool
-        const client = await pool.connect();
+        const client = await dbGeneralPool.pgPool.connect();
 
         try {
           // Begin transaction

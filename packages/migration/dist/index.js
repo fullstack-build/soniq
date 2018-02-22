@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -21,15 +24,18 @@ const _ = require("lodash");
 const fastGlob = require("fast-glob");
 const fs = require("fs");
 const di_1 = require("@fullstack-one/di");
+const config_1 = require("@fullstack-one/config");
 const logger_1 = require("@fullstack-one/logger");
 const db_1 = require("@fullstack-one/db");
 const migrationObject_1 = require("./migrationObject");
 const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
 const createSqlObjFromMigrationObject_1 = require("./createSqlObjFromMigrationObject");
+// TODO: @eugene: Migration should be a Migration-Factory
 let Migration = class Migration {
-    constructor(fromDbMeta, toDbMeta) {
+    constructor(fromDbMeta, toDbMeta, config, loggerFactory, dbAppClient) {
         // create logger
-        this.logger = di_1.Container.get(logger_1.LoggerFactory).create('Migration');
+        this.logger = loggerFactory.create('Migration');
+        this.dbAppClient = dbAppClient;
         // check if toDbMeta is empty -> Parsing error
         if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
             throw new Error(`Migration Error: Provided migration final state is empty.`);
@@ -70,7 +76,7 @@ let Migration = class Migration {
             // find init scripts to ignore
             let initFoldersToIgnore = [];
             if (latestVersion > 0) {
-                const initFolders = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]`, {
+                const initFolders = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]`, {
                     deep: false,
                     onlyDirs: true,
                 });
@@ -87,7 +93,7 @@ let Migration = class Migration {
             const loadOptionalSuffixOrder = ['operator_class'];
             const loadFilesOrder = {};
             for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
-                const paths = fastGlob.sync(`${__dirname}/init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
+                const paths = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
                     ignore: initFoldersToIgnore,
                     deep: true,
                     onlyFiles: true,
@@ -173,7 +179,7 @@ let Migration = class Migration {
     migrate(renameInsteadOfDrop = true) {
         return __awaiter(this, void 0, void 0, function* () {
             // get DB pgClient from DI container
-            const dbClient = di_1.Container.get(db_1.DbAppClient).pgClient;
+            const dbClient = this.dbAppClient.pgClient;
             // init DB
             yield this.initDb();
             // get migration statements
@@ -222,6 +228,11 @@ let Migration = class Migration {
 };
 Migration = __decorate([
     di_1.Service(),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __param(3, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(4, di_1.Inject(type => db_1.DbAppClient)),
+    __metadata("design:paramtypes", [Object, Object, config_1.Config,
+        logger_1.LoggerFactory,
+        db_1.DbAppClient])
 ], Migration);
 exports.Migration = Migration;

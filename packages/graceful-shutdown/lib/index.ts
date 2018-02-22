@@ -24,10 +24,10 @@ export class GracefulShutdown {
   constructor(
     @Inject(type => EventEmitter) eventEmitter?,
     @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(tpye => BootLoader) bootLoader?,
-    @Inject(tpye => DbAppClient) dbAppClient?,
-    @Inject(tpye => DbGeneralPool) dbPoolObj?,
-    @Inject(tpye => Config) config?) {
+    @Inject(type => BootLoader) bootLoader?,
+    @Inject(type => DbAppClient) dbAppClient?,
+    @Inject(type => DbGeneralPool) dbPoolObj?,
+    @Inject(type => Config) config?) {
 
     this.eventEmitter = eventEmitter;
     this.dbAppClient = dbAppClient;
@@ -37,7 +37,7 @@ export class GracefulShutdown {
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    bootLoader.addBootFunction(this.boot);
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
    private async disconnectDB() {

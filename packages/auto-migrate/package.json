@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-one/migration-executer",
+  "name": "@fullstack-one/auto-migrate",
   "version": "0.1.7",
   "description": "fullstack.one helper package",
   "main": "dist/index.js",
@@ -20,8 +20,9 @@
     "@fullstack-one/di": "^0.1.6",
     "@fullstack-one/events": "^0.1.7",
     "@fullstack-one/logger": "^0.1.7",
-    "fast-glob": "^2.0.4",
-    "koa": "^2.5.0"
+    "@fullstack-one/migration": "^0.1.7",
+    "@fullstack-one/db": "^0.1.7",
+    "@fullstack-one/graphql-parser": "^0.1.6"
   },
   "devDependencies": {
     "typescript": "^2.7.2"

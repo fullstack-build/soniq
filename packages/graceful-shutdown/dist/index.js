@@ -38,7 +38,7 @@ let GracefulShutdown = class GracefulShutdown {
         this.logger = loggerFactory.create('GracefulShutdown');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        bootLoader.addBootFunction(this.boot);
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     disconnectDB() {
         return __awaiter(this, void 0, void 0, function* () {

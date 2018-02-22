@@ -17,7 +17,7 @@ const mutate_1 = require("./sqlGenerator/mutate");
 // tslint:disable-next-line:no-var-requires
 const graphqlTypeJson = require('graphql-type-json');
 /* ======================================================= */
-function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, auth, pool) {
+function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, auth, dbGeneralPool) {
     // Initialize stuff / get instances / etc.
     const queryResolver = read_1.getQueryResolver(gQlTypes, dbObject);
     const mutationResolver = mutate_1.getMutationResolver(gQlTypes, dbObject, mutations);
@@ -38,7 +38,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             // Generate select sql query
             const selectQuery = queryResolver(obj, args, context, info, isAuthenticated);
             // Get a pgClient from pool
-            const client = yield pool.connect();
+            const client = yield dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
@@ -83,7 +83,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             const mutationQuery = mutationResolver(obj, args, context, info);
             context.ctx.state.includesMutation = true;
             // Get a pgClient from pool
-            const client = yield pool.connect();
+            const client = yield dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');

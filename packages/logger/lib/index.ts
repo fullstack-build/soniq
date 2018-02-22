@@ -8,7 +8,7 @@ export { ILogger } from './ILogger';
 export class LoggerFactory {
   private config: Config;
 
-  constructor(@Inject(type => Config) config?) {
+  constructor(@Inject() config: Config) {
     this.config = config;
   }
   public create(moduleName) {

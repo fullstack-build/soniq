@@ -23,7 +23,7 @@ export class BootScripts {
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    bootLoader.addBootFunction(this.boot);
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   // execute all boot scripts in the boot folder
