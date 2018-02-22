@@ -46,7 +46,7 @@ export class GraphQlParser {
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
-    bootLoader.addBootFunction(this.boot);
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   public getDbMeta() {

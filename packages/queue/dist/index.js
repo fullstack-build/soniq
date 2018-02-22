@@ -27,8 +27,9 @@ const logger_1 = require("@fullstack-one/logger");
 const db_1 = require("@fullstack-one/db");
 const config_1 = require("@fullstack-one/config");
 let QueueFactory = class QueueFactory {
-    constructor(loggerFactory) {
+    constructor(loggerFactory, generalPool, config) {
         // set DI dependencies
+        this.generalPool = generalPool;
         this.logger = loggerFactory.create('Queue');
     }
     getQueue() {
@@ -55,7 +56,7 @@ let QueueFactory = class QueueFactory {
             }
             else {
                 // get new connection from the pool
-                const pgCon = yield this.generalPool.connect();
+                const pgCon = yield this.generalPool.pgPool.connect();
                 // Add `close` and `executeSql` functions for PgBoss to function
                 const pgBossDB = Object.assign(pgCon, {
                     close: pgCon.end,
@@ -77,13 +78,11 @@ let QueueFactory = class QueueFactory {
         });
     }
 };
-__decorate([
-    di_1.Inject(),
-    __metadata("design:type", db_1.DbGeneralPool)
-], QueueFactory.prototype, "generalPool", void 0);
 QueueFactory = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __metadata("design:paramtypes", [Object])
+    __param(1, di_1.Inject(type => db_1.DbGeneralPool)),
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], QueueFactory);
 exports.QueueFactory = QueueFactory;

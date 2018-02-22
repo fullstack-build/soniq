@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/boot-loader",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "fullstack.one helper package",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

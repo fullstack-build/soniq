@@ -40,7 +40,7 @@ let Auth = class Auth {
         this.dbGeneralPool = dbGeneralPool;
         this.authConfig = config.getConfig('auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
-        bootLoader.addBootFunction(this.boot);
+        bootLoader.addBootFunction(this.boot.bind(this));
         // this.linkPassport();
     }
     setUser(client, accessToken) {

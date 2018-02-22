@@ -47,7 +47,7 @@ export class GraphQl {
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
-    bootLoader.addBootFunction(this.boot);
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   private async boot() {

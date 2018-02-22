@@ -3,6 +3,7 @@ export declare class PgToDbMeta {
     private readonly DELETED_PREFIX;
     private dbAppClient;
     private readonly dbMeta;
+    constructor(dbAppClient?: any);
     getPgDbMeta(): Promise<IDbMeta>;
     private iterateAndAddSchemas();
     private iterateEnumTypes(schemaName);

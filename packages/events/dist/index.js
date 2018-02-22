@@ -24,10 +24,10 @@ const eventemitter2_1 = require("eventemitter2");
 const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
 const config_1 = require("@fullstack-one/config");
+const boot_loader_1 = require("@fullstack-one/boot-loader");
 let EventEmitter = class EventEmitter {
-    constructor(c, dbClient) {
+    constructor(c, bootLoader) {
         this.namespace = 'one';
-        this.dbClient = dbClient;
         const env = di_1.Container.get('ENVIRONMENT');
         const config = c.getConfig('config');
         const coreConfig = c.getConfig('core');
@@ -40,8 +40,9 @@ let EventEmitter = class EventEmitter {
             maxListeners: 100,
             verboseMemoryLeak: true,
         });
-        // finish initialization after ready event
-        this.on(`${this.namespace}.ready`, () => this.finishInitialisation());
+        // finish initialization after ready event => out because ready never gets called due to resolving circular deps
+        // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
+        bootLoader.onBootReady(this.boot.bind(this));
     }
     emit(eventName, ...args) {
         // emit on this node
@@ -56,6 +57,12 @@ let EventEmitter = class EventEmitter {
     onAnyInstance(eventName, listener) {
         const eventNameForAnyInstance = `*.${eventName}`;
         this.eventEmitter.on(eventNameForAnyInstance, listener);
+    }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.dbClient = di_1.Container.get(db_1.DbAppClient);
+            yield this.finishInitialisation();
+        });
     }
     /* private methods */
     _emit(eventName, instanceId, ...args) {
@@ -99,7 +106,8 @@ let EventEmitter = class EventEmitter {
 };
 EventEmitter = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => config_1.Config)), __param(1, di_1.Inject(type => db_1.DbAppClient)),
+    __param(0, di_1.Inject(type => config_1.Config)),
+    __param(1, di_1.Inject(type => boot_loader_1.BootLoader)),
     __metadata("design:paramtypes", [Object, Object])
 ], EventEmitter);
 exports.EventEmitter = EventEmitter;

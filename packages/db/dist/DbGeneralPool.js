@@ -28,17 +28,17 @@ const logger_1 = require("@fullstack-one/logger");
 const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let DbGeneralPool = class DbGeneralPool {
-    constructor(eventEmitter, loggerFactory) {
+    constructor(eventEmitter, loggerFactory, config) {
         // DI
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbGeneralPool');
         const env = di_1.Container.get('ENVIRONMENT');
-        this.config = di_1.Container.get(config_1.Config).getConfig('db').general;
+        this.config = config.getConfig('db').general;
         this.applicationName = env.namespace + '_pool_' + env.nodeId;
         this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
         // calculate pool size and create pool
         // this.gracefullyAdjustPoolSize();
-        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.gracefullyAdjustPoolSize);
+        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.gracefullyAdjustPoolSize.bind(this));
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -122,6 +122,7 @@ DbGeneralPool = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => events_1.EventEmitter)),
     __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], DbGeneralPool);
 exports.DbGeneralPool = DbGeneralPool;

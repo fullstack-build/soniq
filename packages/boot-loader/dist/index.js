@@ -24,9 +24,15 @@ let BootLoader = class BootLoader {
     addBootFunction(fn) {
         this.bootFunctions.push(fn);
     }
+    onBootReady(fn) {
+        if (this.hasBooted) {
+            return fn();
+        }
+        this.bootReadyFunctions.push(fn);
+    }
     getReadyPromise() {
         return new Promise((resolve, reject) => {
-            if (this.hasBooted === true) {
+            if (this.hasBooted) {
                 return resolve();
             }
             this.bootReadyFunctions.push(resolve);

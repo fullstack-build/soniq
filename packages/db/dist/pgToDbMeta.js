@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -22,8 +25,7 @@ const di_1 = require("@fullstack-one/di");
 const DbAppClient_1 = require("./DbAppClient");
 // https://www.alberton.info/postgresql_meta_info.html
 let PgToDbMeta = class PgToDbMeta {
-    // https://www.alberton.info/postgresql_meta_info.html
-    constructor() {
+    constructor(dbAppClient) {
         this.DELETED_PREFIX = '_deleted:';
         this.dbMeta = {
             version: 1.0,
@@ -31,6 +33,7 @@ let PgToDbMeta = class PgToDbMeta {
             enums: {},
             relations: {}
         };
+        this.dbAppClient = dbAppClient;
     }
     getPgDbMeta() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -522,11 +525,9 @@ let PgToDbMeta = class PgToDbMeta {
         });
     }
 };
-__decorate([
-    di_1.Inject(type => DbAppClient_1.DbAppClient),
-    __metadata("design:type", DbAppClient_1.DbAppClient)
-], PgToDbMeta.prototype, "dbAppClient", void 0);
 PgToDbMeta = __decorate([
-    di_1.Service()
+    di_1.Service(),
+    __param(0, di_1.Inject(type => DbAppClient_1.DbAppClient)),
+    __metadata("design:paramtypes", [Object])
 ], PgToDbMeta);
 exports.PgToDbMeta = PgToDbMeta;

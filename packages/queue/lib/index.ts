@@ -13,14 +13,16 @@ export class QueueFactory {
 
   // DI
   private logger: ILogger;
-  @Inject()
   private generalPool: DbGeneralPool;
 
   constructor(
-    @Inject(type => LoggerFactory) loggerFactory?
+    @Inject(type => LoggerFactory) loggerFactory?,
+    @Inject(type => DbGeneralPool) generalPool?,
+    @Inject(type => Config) config?
   ) {
 
     // set DI dependencies
+    this.generalPool = generalPool;
     this.logger = loggerFactory.create('Queue');
   }
 
@@ -49,7 +51,7 @@ export class QueueFactory {
     } else {
 
       // get new connection from the pool
-      const pgCon = await this.generalPool.connect();
+      const pgCon = await this.generalPool.pgPool.connect();
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = Object.assign(pgCon, {

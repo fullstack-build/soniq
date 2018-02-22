@@ -38,7 +38,7 @@ export class Auth {
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    bootLoader.addBootFunction(this.boot);
+    bootLoader.addBootFunction(this.boot.bind(this));
 
     // this.linkPassport();
   }

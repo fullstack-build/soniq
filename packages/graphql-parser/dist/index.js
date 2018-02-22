@@ -20,12 +20,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// fullstack-one core
-const di_1 = require("@fullstack-one/di");
 // import sub modules
 const helper_1 = require("./helper");
 const parser_1 = require("./parser");
 const graphQlSchemaToDbMeta_1 = require("./graphQlSchemaToDbMeta");
+// fullstack-one core
+const di_1 = require("@fullstack-one/di");
 // DI imports
 const logger_1 = require("@fullstack-one/logger");
 const config_1 = require("@fullstack-one/config");
@@ -36,7 +36,7 @@ let GraphQlParser = class GraphQlParser {
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
-        bootLoader.addBootFunction(this.boot);
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     getDbMeta() {
         return this.dbMeta;
@@ -53,6 +53,14 @@ let GraphQlParser = class GraphQlParser {
             queries: this.queries,
             customOperations: this.customOperations
         };
+    }
+    getGraphQlSchema() {
+        // return copy insted of ref
+        return Object.assign({}, this.sdlSchema);
+    }
+    getGraphQlJsonSchema() {
+        // return copy insted of ref
+        return Object.assign({}, this.astSchema);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -104,14 +112,6 @@ let GraphQlParser = class GraphQlParser {
                 this.logger.warn('boot.error', err);
             }
         });
-    }
-    getGraphQlSchema() {
-        // return copy insted of ref
-        return Object.assign({}, this.sdlSchema);
-    }
-    getGraphQlJsonSchema() {
-        // return copy insted of ref
-        return Object.assign({}, this.astSchema);
     }
 };
 GraphQlParser = __decorate([

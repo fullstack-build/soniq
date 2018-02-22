@@ -21,7 +21,8 @@ export class DbGeneralPool implements IDb  {
 
   constructor(
     @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?
+    @Inject(type => LoggerFactory) loggerFactory?,
+    @Inject(type => Config) config?
     ) {
     // DI
     this.eventEmitter = eventEmitter;
@@ -29,7 +30,7 @@ export class DbGeneralPool implements IDb  {
 
     const env: IEnvironment = Container.get('ENVIRONMENT');
 
-    this.config = Container.get(Config).getConfig('db').general;
+    this.config = config.getConfig('db').general;
     this.applicationName = env.namespace + '_pool_' + env.nodeId;
 
     this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
@@ -37,7 +38,7 @@ export class DbGeneralPool implements IDb  {
     // calculate pool size and create pool
     // this.gracefullyAdjustPoolSize();
 
-    Container.get(BootLoader).addBootFunction(this.gracefullyAdjustPoolSize);
+    Container.get(BootLoader).addBootFunction(this.gracefullyAdjustPoolSize.bind(this));
   }
 
   public async end(): Promise<void> {

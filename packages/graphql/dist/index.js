@@ -45,55 +45,60 @@ let GraphQl = class GraphQl {
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
-        bootLoader.addBootFunction(this.boot);
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            const gqlRouter = new KoaRouter();
-            // Load resolvers
-            const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-            const resolversObject = yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern);
-            const rd = this.gqlParser.getGqlRuntimeData();
-            const schema = graphql_tools_1.makeExecutableSchema({
-                typeDefs: rd.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool.pgPool),
-            });
-            const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
-                yield next();
-                let cacheHeader = 'no-store';
-                // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
-                // || (ctx.body != null && ctx.body.errors != null && ctx.body.errors.length > 0)
-                if (ctx.state.includesMutation === true) {
-                    cacheHeader = 'no-store';
-                }
-                else {
-                    if (ctx.state.authRequired === true) {
-                        cacheHeader = 'privat, max-age=600';
+            try {
+                const gqlRouter = new KoaRouter();
+                // Load resolvers
+                const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
+                const resolversObject = yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern);
+                const rd = this.gqlParser.getGqlRuntimeData();
+                const schema = graphql_tools_1.makeExecutableSchema({
+                    typeDefs: rd.gQlRuntimeSchema,
+                    resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool.pgPool),
+                });
+                const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
+                    yield next();
+                    let cacheHeader = 'no-store';
+                    // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
+                    // || (ctx.body != null && ctx.body.errors != null && ctx.body.errors.length > 0)
+                    if (ctx.state.includesMutation === true) {
+                        cacheHeader = 'no-store';
                     }
                     else {
-                        cacheHeader = 'public, max-age=600';
+                        if (ctx.state.authRequired === true) {
+                            cacheHeader = 'privat, max-age=600';
+                        }
+                        else {
+                            cacheHeader = 'public, max-age=600';
+                        }
                     }
-                }
-                ctx.set('Cache-Control', cacheHeader);
-            });
-            const gQlParam = (ctx) => {
-                ctx.state.authRequired = false;
-                ctx.state.includesMutation = false;
-                return {
-                    schema,
-                    context: {
-                        ctx,
-                        accessToken: ctx.state.accessToken
-                    }
+                    ctx.set('Cache-Control', cacheHeader);
+                });
+                const gQlParam = (ctx) => {
+                    ctx.state.authRequired = false;
+                    ctx.state.includesMutation = false;
+                    return {
+                        schema,
+                        context: {
+                            ctx,
+                            accessToken: ctx.state.accessToken
+                        }
+                    };
                 };
-            };
-            // koaBody is needed just for POST.
-            gqlRouter.post('/graphql', koaBody(), setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlRouter.get('/graphql', setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
-            const app = this.server.getApp();
-            app.use(gqlRouter.routes());
-            app.use(gqlRouter.allowedMethods());
+                // koaBody is needed just for POST.
+                gqlRouter.post('/graphql', koaBody(), setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+                gqlRouter.get('/graphql', setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+                gqlRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+                const app = this.server.getApp();
+                app.use(gqlRouter.routes());
+                app.use(gqlRouter.allowedMethods());
+            }
+            catch (e) {
+                console.error(e);
+            }
         });
     }
 };

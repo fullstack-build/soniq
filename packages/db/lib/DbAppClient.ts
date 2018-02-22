@@ -24,7 +24,8 @@ export class DbAppClient implements IDb {
 
   constructor(
     @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?
+    @Inject(type => LoggerFactory) loggerFactory?,
+    @Inject(type => Config) config?
   ) {
 
     // set DI dependencies
@@ -34,7 +35,7 @@ export class DbAppClient implements IDb {
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    const configDB = Container.get(Config).getConfig('db');
+    const configDB = config.getConfig('db');
     this.credentials  = configDB.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
@@ -59,7 +60,7 @@ export class DbAppClient implements IDb {
     const updateClientListInterval = configDB.updateClientListInterval || 10000;
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
-    Container.get(BootLoader).addBootFunction(this.boot);
+    Container.get(BootLoader).addBootFunction(this.boot.bind(this));
   }
 
   public async end(): Promise<void> {

@@ -23,23 +23,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
 // import { EventEmitter } from '@fullstack-one/events';
-// import { ILogger, LoggerFactory } from '@fullstack-one/logger';
+const logger_1 = require("@fullstack-one/logger");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const http = require("http");
 // other npm dependencies
 const Koa = require("koa");
 let Server = class Server {
-    // private logger: ILogger;
     // private eventEmitter: EventEmitter;
     constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
-    // @Inject(type => LoggerFactory) loggerFactory?,
-    config, bootLoader) {
+    loggerFactory, config, bootLoader) {
         // this.eventEmitter = eventEmitter;
-        // this.logger = loggerFactory.create('Server');
+        this.logger = loggerFactory.create('Server');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        bootLoader.addBootFunction(this.boot);
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     getApp() {
         return this.app;
@@ -56,9 +54,10 @@ let Server = class Server {
                 // emit event
                 this.emit('server.up', this.ENVIRONMENT.port);
                 // success log
-                // this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+                this.logger.info('Server listening on port', this.ENVIRONMENT.port);
             }
             catch (e) {
+                // tslint:disable-next-line:no-console
                 console.error(e);
             }
         });
@@ -76,8 +75,9 @@ let Server = class Server {
 };
 Server = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => config_1.Config)),
-    __param(1, di_1.Inject(tpye => boot_loader_1.BootLoader)),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject(type => config_1.Config)),
+    __param(2, di_1.Inject(tpye => boot_loader_1.BootLoader)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], Server);
 exports.Server = Server;

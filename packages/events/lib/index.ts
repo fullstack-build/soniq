@@ -2,6 +2,7 @@ import { EventEmitter2 } from 'eventemitter2';
 import { Container, Service, Inject } from '@fullstack-one/di';
 import { DbAppClient } from '@fullstack-one/db';
 import { Config, IEnvironment } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) =>  void;
@@ -18,9 +19,9 @@ export class EventEmitter implements IEventEmitter {
   private dbClient: DbAppClient;
   private namespace: string = 'one';
 
-  constructor(@Inject(type => Config) c?, @Inject(type => DbAppClient) dbClient?) {
-
-    this.dbClient = dbClient;
+  constructor(
+    @Inject(type => Config) c?,
+    @Inject(type => BootLoader) bootLoader?) {
 
     const env: IEnvironment = Container.get('ENVIRONMENT');
     const config: any = c.getConfig('config');
@@ -36,8 +37,9 @@ export class EventEmitter implements IEventEmitter {
       verboseMemoryLeak: true,
     });
 
-    // finish initialization after ready event
-    this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
+    // finish initialization after ready event => out because ready never gets called due to resolving circular deps
+    // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
+    bootLoader.onBootReady(this.boot.bind(this));
   }
 
   public emit(eventName: string, ...args: any[]): void {
@@ -57,6 +59,11 @@ export class EventEmitter implements IEventEmitter {
   public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
     this.eventEmitter.on(eventNameForAnyInstance, listener);
+  }
+
+  private async boot() {
+    this.dbClient = Container.get(DbAppClient);
+    await this.finishInitialisation();
   }
 
   /* private methods */

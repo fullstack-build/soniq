@@ -11,7 +11,6 @@ export class PgToDbMeta {
 
   private readonly DELETED_PREFIX = '_deleted:';
 
-  @Inject(type => DbAppClient)
   private dbAppClient: DbAppClient;
 
   private readonly dbMeta: IDbMeta = {
@@ -20,6 +19,10 @@ export class PgToDbMeta {
     enums: {},
     relations: {}
   };
+
+  constructor(@Inject(type => DbAppClient) dbAppClient?) {
+    this.dbAppClient = dbAppClient;
+  }
 
   public async getPgDbMeta(): Promise<IDbMeta> {
     try {

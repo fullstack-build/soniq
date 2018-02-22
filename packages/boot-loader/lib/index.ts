@@ -11,6 +11,13 @@ export class BootLoader {
     this.bootFunctions.push(fn);
   }
 
+  public onBootReady(fn: any) {
+    if (this.hasBooted) {
+      return fn();
+    }
+    this.bootReadyFunctions.push(fn);
+  }
+
   public getReadyPromise() {
     return new Promise((resolve, reject) => {
       if (this.hasBooted) {

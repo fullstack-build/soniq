@@ -1,4 +1,5 @@
 import { IViews, IExpressions } from './interfaces';
+export { IViews, IExpressions };
 export declare class GraphQlParser {
     private graphQlConfig;
     private sdlSchema;
@@ -27,7 +28,7 @@ export declare class GraphQlParser {
         queries: any;
         customOperations: any;
     };
-    boot(): Promise<any>;
     getGraphQlSchema(): any;
     getGraphQlJsonSchema(): any;
+    private boot();
 }

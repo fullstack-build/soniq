@@ -28,13 +28,13 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 const pg_1 = require("pg");
 exports.PgClient = pg_1.Client;
 let DbAppClient = class DbAppClient {
-    constructor(eventEmitter, loggerFactory) {
+    constructor(eventEmitter, loggerFactory, config) {
         // set DI dependencies
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbAppClient');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        const configDB = di_1.Container.get(config_1.Config).getConfig('db');
+        const configDB = config.getConfig('db');
         this.credentials = configDB.appClient;
         this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
         // create PG pgClient
@@ -53,7 +53,7 @@ let DbAppClient = class DbAppClient {
         // check connected clients every x secons
         const updateClientListInterval = configDB.updateClientListInterval || 10000;
         setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
-        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.boot);
+        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.boot.bind(this));
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -127,6 +127,7 @@ DbAppClient = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => events_1.EventEmitter)),
     __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], DbAppClient);
 exports.DbAppClient = DbAppClient;
