@@ -23,6 +23,7 @@ import { Container } from '@fullstack-one/di'
 import { FullstackOneCore } from 'fullstack-one'
 import { GraphQl } from '@fullstack-one/graphql'
 import { AutoMigrate } from '@fullstack-one/auto-migrate'
+import { Auth } from '@fullstack-one/auth'
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
 //const $server: Server = Container.get(Server);
@@ -32,5 +33,6 @@ const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
 //const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
+const $auth: Auth = Container.get(Auth);
 //const $email: Email = Container.get(Email);
 $one.boot();

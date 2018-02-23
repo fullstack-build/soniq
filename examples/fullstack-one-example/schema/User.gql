@@ -3,8 +3,8 @@ type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 
   id: ID! @unique
   tenantId: String @tenant
   email: String @unique @username @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
-  password: String @password
-  gender: Gender!
+  password: String @password @type(name: "jsonb")
+  gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")

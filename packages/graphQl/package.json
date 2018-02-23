@@ -15,7 +15,6 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.1.7",
     "@fullstack-one/boot-loader": "^0.1.8",
     "@fullstack-one/config": "^0.1.6",
     "@fullstack-one/db": "^0.1.8",

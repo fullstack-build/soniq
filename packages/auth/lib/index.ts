@@ -3,6 +3,7 @@ import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
 import { Config } from '@fullstack-one/config';
+import { GraphQl } from '@fullstack-one/graphql';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature, getCookieSecret } from './sign';
@@ -24,19 +25,24 @@ export class Auth {
   // DI
   private dbGeneralPool: DbGeneralPool;
   private server: Server;
+  private graphQl: GraphQl;
 
   constructor(
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => Config) config?
+    @Inject(type => Config) config?,
+    @Inject(type => GraphQl) graphQl?
   ) {
 
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
+    this.graphQl = graphQl;
 
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
+
+    graphQl.addPreQueryHook(this.preQueryHook.bind(this));
 
     bootLoader.addBootFunction(this.boot.bind(this));
 
@@ -544,5 +550,11 @@ export class Auth {
 
     app.use(authRouter.routes());
     app.use(authRouter.allowedMethods());
+  }
+
+  private async preQueryHook(client, context, authRequired) {
+    if (authRequired === true && context.accessToken != null) {
+      await this.setUser(client, context.accessToken);
+    }
   }
 }

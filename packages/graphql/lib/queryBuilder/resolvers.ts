@@ -22,15 +22,10 @@ const graphqlTypeJson = require('graphql-type-json');
 
 /* ======================================================= */
 
-export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, auth, dbGeneralPool) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
-
-  // DI
-  // todo needs refactoring @dustin
-  // const auth: any = ONE.Container.get(Auth);
-  // const pool: any = ONE.Container.get(ONE.DbGeneralPool);
 
   const queryResolvers = {};
   const mutationResolvers = {};
@@ -55,9 +50,19 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           await client.query('BEGIN');
 
           // Set current user for permissions
-          if (context.accessToken != null && selectQuery.authRequired) {
+          /*if (context.accessToken != null && selectQuery.authRequired) {
             context.ctx.state.authRequired = true;
             await auth.setUser(client, context.accessToken);
+          }*/
+
+          // Set authRequired in koa state for cache headers
+          if (context.accessToken != null && selectQuery.authRequired) {
+            context.ctx.state.authRequired = true;
+          }
+
+          // PreQueryHook (for auth)
+          for (const fn of preQueryHooks) {
+            await fn(client, context, selectQuery.authRequired);
           }
 
           // tslint:disable-next-line:no-console
@@ -109,8 +114,13 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           // Begin transaction
           await client.query('BEGIN');
           // Set current user for permissions
-          if (context.accessToken != null) {
+          /*if (context.accessToken != null) {
             await auth.setUser(client, context.accessToken);
+          }*/
+
+          // PreQueryHook (for auth)
+          for (const fn of preQueryHooks) {
+            await fn(client, context, context.accessToken != null);
           }
 
           // tslint:disable-next-line:no-console

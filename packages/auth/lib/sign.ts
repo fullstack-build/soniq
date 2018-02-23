@@ -11,15 +11,15 @@ const requiredSecrets = {
 };
 
 const secrets: any = {};
-/*
+
 // Is checked through .env.example
 Object.keys(requiredSecrets).forEach((key) => {
   if (process.env[requiredSecrets[key]] != null) {
     secrets[key] = process.env[requiredSecrets[key]];
   } else {
-    throw new Error(`Environment variable ${requiredSecrets[key]} is required.`);
+    throw new Error(`Environment variable ${requiredSecrets[key]} is required for auth.`);
   }
-});*/
+});
 
 export function getAdminSignature() {
   const ts = Date.now().toString();

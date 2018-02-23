@@ -14,7 +14,6 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { GraphQlParser } from '@fullstack-one/graphql-parser';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
-import { Auth } from '@fullstack-one/auth';
 import { DbGeneralPool } from '@fullstack-one/db';
 
 @Service()
@@ -28,7 +27,8 @@ export class GraphQl {
   private gqlParser: GraphQlParser;
   private server: Server;
   private dbGeneralPool: DbGeneralPool;
-  private auth: Auth;
+
+  private preQueryHooks = [];
 
   constructor (
     @Inject(type => LoggerFactory) loggerFactory?,
@@ -36,11 +36,9 @@ export class GraphQl {
     @Inject(type => BootLoader) bootLoader?,
     @Inject(type => GraphQlParser) gqlParser?,
     @Inject(type => Server) server?,
-    @Inject(type => DbGeneralPool) dbGeneralPool?,
-    @Inject(type => Auth) auth?
+    @Inject(type => DbGeneralPool) dbGeneralPool?
     ) {
     this.dbGeneralPool = dbGeneralPool;
-    this.auth = auth;
     this.server = server;
     this.gqlParser = gqlParser;
     this.logger = loggerFactory.create('GraphQl');
@@ -48,6 +46,10 @@ export class GraphQl {
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  public addPreQueryHook(fn) {
+    this.preQueryHooks.push(fn);
   }
 
   private async boot() {
@@ -63,7 +65,7 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: rd.gQlRuntimeSchema,
       resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
-      rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool),
+      rd.mutations, rd.customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
