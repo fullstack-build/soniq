@@ -3,5 +3,10 @@
   "packages": [
     "packages/*"
   ],
-  "version": "independent"
+  "commands": {
+    "init": {
+      "exact": true
+    }
+  },
+  "version": "0.2.1"
 }

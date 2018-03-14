@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql-parser",
-  "version": "0.1.6",
+  "version": "0.2.1",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/auth": "latest",
-    "@fullstack-one/boot-loader": "^0.1.8",
-    "@fullstack-one/config": "^0.1.6",
-    "@fullstack-one/db": "^0.1.8",
-    "@fullstack-one/di": "^0.1.6",
-    "@fullstack-one/helper": "^0.1.6",
-    "@fullstack-one/logger": "^0.1.7",
+    "@fullstack-one/boot-loader": "^0.2.1",
+    "@fullstack-one/config": "^0.2.1",
+    "@fullstack-one/db": "^0.2.1",
+    "@fullstack-one/di": "^0.2.1",
+    "@fullstack-one/helper": "^0.2.1",
+    "@fullstack-one/logger": "^0.2.1",
     "graphql": "^0.11.7",
     "lodash": "^4.17.4"
   },

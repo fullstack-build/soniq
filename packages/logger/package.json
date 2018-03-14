@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/logger",
-  "version": "0.1.7",
+  "version": "0.2.1",
   "description": "fullstack.one logger package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -15,8 +15,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/config": "^0.1.6",
-    "@fullstack-one/di": "^0.1.6",
+    "@fullstack-one/config": "^0.2.1",
+    "@fullstack-one/di": "^0.2.1",
     "debug-logger": "^0.4.1",
     "tracer": "^0.8.12"
   },
