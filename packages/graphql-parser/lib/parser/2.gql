@@ -1,0 +1,118 @@
+type PayloadData {
+  title: String
+  content: String
+}
+
+type Payload {
+  data: PayloadData
+  secret: Int!
+}
+
+input PayloadDataInput {
+  title: String!
+  content: String!
+}
+
+input PayloadInput {
+  data: PayloadDataInput!
+  secret: Int!
+}
+
+type AdditionPayload {
+  sum: Int!
+}
+
+extend type Query {
+  add(a: Int!, b: Int!): AdditionPayload @custom(resolver: "add")
+}
+
+enum UserType {
+  private
+  business
+}
+
+enum Gender {
+  male
+  female
+}
+
+scalar JSON
+
+input create_Post_Owner @view @migrate(from: "PostOld") {
+  title: String
+  content: String
+  images: [String]
+  ownerId: ID
+  ownerSecret: String
+}
+
+input update_Post_Owner @view @migrate(from: "PostOld") {
+  id: ID! @unique
+  title: String
+  content: String
+  ownerSecret: String
+}
+
+input update_User_Me @view @auth @versioning @check(notGenericAddress: "(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))") {
+  id: ID! @unique
+  email: String @unique @username @default(value: "test@test.de") @validate(isEmail: null, contains: "fullstack.build")
+  payload: PayloadInput @json @migrate(from: "payloadOld")
+  postContributionsIdsArray: [ID!]
+}
+
+input delete_Post @view @migrate(from: "PostOld") {
+  id: ID! @unique
+}
+
+enum POST_VIEWS {
+  POST_PUBLIC
+  POST_OWNER
+}
+
+type Post @table @migrate(from: "PostOld") {
+  id: ID @unique
+  title: String
+  content: String
+  images: [String]
+  owner(viewnames: [USER_VIEWS!], sql: SqlQuery): User @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict")
+  ownerSecret: String
+  _viewnames: [POST_VIEWS!]!
+}
+
+enum USER_VIEWS {
+  USER_AUTHOR
+  USER_ME
+}
+
+type User @table @auth @versioning @check(notGenericAddress: "(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))") {
+  id: ID @unique
+  email: String @unique @username @default(value: "test@test.de") @validate(isEmail: null, contains: "fullstack.build")
+  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
+  payload: Payload @json @migrate(from: "payloadOld")
+  posts(viewnames: [POST_VIEWS!], sql: SqlQuery): [Post!] @relation(name: "PostOwner")
+  postContributions(viewnames: [POST_VIEWS!], sql: SqlQuery): [Post!] @relation(name: "PostContributors")
+  stripeAccount: String @custom(resolver: "stripeAccount")
+  _viewnames: [USER_VIEWS!]!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  posts(viewnames: [POST_VIEWS!], sql: SqlQuery): [Post!]!
+  users(viewnames: [USER_VIEWS!], sql: SqlQuery): [User!]!
+}
+
+type Mutation {
+  create_Post_Owner(input: create_Post_Owner!, viewnames: [POST_VIEWS!]): Post
+  update_Post_Owner(input: update_Post_Owner!, viewnames: [POST_VIEWS!]): Post
+  update_User_Me(input: update_User_Me!, viewnames: [USER_VIEWS!]): User
+  delete_Post(input: delete_Post!, viewnames: [POST_VIEWS!]): ID
+}
+
+input SqlQuery {
+  text: String
+  values: [String]
+}

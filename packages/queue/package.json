@@ -1,8 +1,8 @@
 {
   "name": "@fullstack-one/queue",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "fullstack.one queue package",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,8 +15,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "fullstack-one": "latest",
-    "pg-boss": "^2.4.0"
+    "@fullstack-one/config": "^0.1.6",
+    "@fullstack-one/db": "^0.1.7",
+    "@fullstack-one/di": "^0.1.6",
+    "@fullstack-one/logger": "^0.1.7",
+    "pg-boss": "^2.4.3"
   },
   "devDependencies": {
     "typescript": "^2.7.2"

@@ -1,0 +1,22 @@
+
+cd packages/fullstack-one
+npm publish
+cd ../db
+npm publish
+cd ../migration
+npm publish
+cd ../graphql
+npm publish
+cd ../events
+npm publish
+cd ../helper
+npm publish
+cd ../queue
+npm publish
+cd ../auth
+npm publish
+cd ../logger
+npm publish
+cd ../notifications
+npm publish
+cd ../../

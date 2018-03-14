@@ -1,8 +1,8 @@
 {
   "name": "@fullstack-one/auth",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "fullstack.one example package",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,8 +12,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/db": "latest",
-    "fullstack-one": "latest",
+    "@fullstack-one/boot-loader": "^0.1.8",
+    "@fullstack-one/db": "^0.1.8",
+    "@fullstack-one/di": "^0.1.6",
+    "@fullstack-one/graphql": "^0.1.8",
+    "@fullstack-one/server": "^0.1.7",
     "jsonwebtoken": "^8.1.0",
     "koa-bodyparser": "^4.2.0",
     "koa-passport": "^4.0.1",

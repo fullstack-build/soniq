@@ -1,1 +1,1 @@
-export * from './packages/core';
+export * from './packages/fullstack-one';

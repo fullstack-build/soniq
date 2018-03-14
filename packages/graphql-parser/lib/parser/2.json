@@ -1,0 +1,2714 @@
+{
+  "document": {
+    "kind": "Document",
+    "definitions": [
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "PayloadData"
+        },
+        "interfaces": [],
+        "directives": [],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "title"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "content"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Payload"
+        },
+        "interfaces": [],
+        "directives": [],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "data"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "PayloadData"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "secret"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "Int"
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "PayloadDataInput"
+        },
+        "directives": [],
+        "fields": [
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "title"
+            },
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "String"
+                }
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          },
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "content"
+            },
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "String"
+                }
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "PayloadInput"
+        },
+        "directives": [],
+        "fields": [
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "data"
+            },
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "PayloadDataInput"
+                }
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          },
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "secret"
+            },
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "Int"
+                }
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "AdditionPayload"
+        },
+        "interfaces": [],
+        "directives": [],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "sum"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "Int"
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "TypeExtensionDefinition",
+        "definition": {
+          "kind": "ObjectTypeDefinition",
+          "name": {
+            "kind": "Name",
+            "value": "Query"
+          },
+          "interfaces": [],
+          "directives": [],
+          "fields": [
+            {
+              "kind": "FieldDefinition",
+              "name": {
+                "kind": "Name",
+                "value": "add"
+              },
+              "arguments": [
+                {
+                  "kind": "InputValueDefinition",
+                  "name": {
+                    "kind": "Name",
+                    "value": "a"
+                  },
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "Int"
+                      }
+                    }
+                  },
+                  "defaultValue": null,
+                  "directives": []
+                },
+                {
+                  "kind": "InputValueDefinition",
+                  "name": {
+                    "kind": "Name",
+                    "value": "b"
+                  },
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "Int"
+                      }
+                    }
+                  },
+                  "defaultValue": null,
+                  "directives": []
+                }
+              ],
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "AdditionPayload"
+                }
+              },
+              "directives": [
+                {
+                  "kind": "Directive",
+                  "name": {
+                    "kind": "Name",
+                    "value": "custom"
+                  },
+                  "arguments": [
+                    {
+                      "kind": "Argument",
+                      "name": {
+                        "kind": "Name",
+                        "value": "resolver"
+                      },
+                      "value": {
+                        "kind": "StringValue",
+                        "value": "add"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "kind": "EnumTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "UserType"
+        },
+        "directives": [],
+        "values": [
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "private"
+            },
+            "directives": []
+          },
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "business"
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "EnumTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Gender"
+        },
+        "directives": [],
+        "values": [
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "male"
+            },
+            "directives": []
+          },
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "female"
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ScalarTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "JSON"
+        },
+        "directives": []
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "CREATE_POST_OWNER"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "view"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "migrate"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "from"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "PostOld"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "ID"
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "title"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "content"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "images"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "String"
+                }
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "ownerId"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "ID"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "ownerSecret"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "UPDATE_POST_OWNER"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "view"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "migrate"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "from"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "PostOld"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "ID"
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "title"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "content"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "ownerSecret"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "UPDATE_USER_ME"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "view"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "auth"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "versioning"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "check"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "notGenericAddress"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "ID"
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "email"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "username"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "default"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "value"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "test@test.de"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "validate"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "isEmail"
+                    },
+                    "value": {
+                      "kind": "NullValue"
+                    }
+                  },
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "contains"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "fullstack.build"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "payload"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "PayloadInput"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "json"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "migrate"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "from"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "payloadOld"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "postContributionsIdsArray"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NonNullType",
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "ID"
+                  }
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "DELETE_POST"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "view"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "migrate"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "from"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "PostOld"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "ID"
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "EnumTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "POST_VIEWS"
+        },
+        "directives": [],
+        "values": [
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "POST_PUBLIC"
+            },
+            "directives": []
+          },
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "POST_OWNER"
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Post"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "table"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "migrate"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "from"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "PostOld"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "ID"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "title"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "content"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "images"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "String"
+                }
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "owner"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "USER_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "sql"
+                },
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "SqlQuery"
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "User"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "relation"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "name"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "PostOwner"
+                    }
+                  },
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "onDelete"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "restrict"
+                    }
+                  },
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "onUpdate"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "restrict"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "ownerSecret"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "_viewnames"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "ListType",
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "POST_VIEWS"
+                    }
+                  }
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "EnumTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "USER_VIEWS"
+        },
+        "directives": [],
+        "values": [
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "USER_AUTHOR"
+            },
+            "directives": []
+          },
+          {
+            "kind": "EnumValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "USER_ME"
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "User"
+        },
+        "interfaces": [],
+        "directives": [
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "table"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "auth"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "versioning"
+            },
+            "arguments": []
+          },
+          {
+            "kind": "Directive",
+            "name": {
+              "kind": "Name",
+              "value": "check"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "notGenericAddress"
+                },
+                "value": {
+                  "kind": "StringValue",
+                  "value": "(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "ID"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "email"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "unique"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "username"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "default"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "value"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "test@test.de"
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "validate"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "isEmail"
+                    },
+                    "value": {
+                      "kind": "NullValue"
+                    }
+                  },
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "contains"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "fullstack.build"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "firstLetterOfUserName"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "computed"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "expression"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "FirstNOfField"
+                    }
+                  },
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "params"
+                    },
+                    "value": {
+                      "kind": "ObjectValue",
+                      "fields": [
+                        {
+                          "kind": "ObjectField",
+                          "name": {
+                            "kind": "Name",
+                            "value": "n"
+                          },
+                          "value": {
+                            "kind": "IntValue",
+                            "value": "1"
+                          }
+                        },
+                        {
+                          "kind": "ObjectField",
+                          "name": {
+                            "kind": "Name",
+                            "value": "field"
+                          },
+                          "value": {
+                            "kind": "StringValue",
+                            "value": "username"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "payload"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "Payload"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "json"
+                },
+                "arguments": []
+              },
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "migrate"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "from"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "payloadOld"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "posts"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "sql"
+                },
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "SqlQuery"
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NonNullType",
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "Post"
+                  }
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "relation"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "name"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "PostOwner"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "postContributions"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "sql"
+                },
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "SqlQuery"
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NonNullType",
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "Post"
+                  }
+                }
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "relation"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "name"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "PostContributors"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "stripeAccount"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "directives": [
+              {
+                "kind": "Directive",
+                "name": {
+                  "kind": "Name",
+                  "value": "custom"
+                },
+                "arguments": [
+                  {
+                    "kind": "Argument",
+                    "name": {
+                      "kind": "Name",
+                      "value": "resolver"
+                    },
+                    "value": {
+                      "kind": "StringValue",
+                      "value": "stripeAccount"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "_viewnames"
+            },
+            "arguments": [],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "ListType",
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "USER_VIEWS"
+                    }
+                  }
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "SchemaDefinition",
+        "directives": [],
+        "operationTypes": [
+          {
+            "kind": "OperationTypeDefinition",
+            "operation": "query",
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "Query"
+              }
+            }
+          },
+          {
+            "kind": "OperationTypeDefinition",
+            "operation": "mutation",
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "Mutation"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Query"
+        },
+        "interfaces": [],
+        "directives": [],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "posts"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "sql"
+                },
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "SqlQuery"
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "ListType",
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "Post"
+                    }
+                  }
+                }
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "users"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "USER_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "sql"
+                },
+                "type": {
+                  "kind": "NamedType",
+                  "name": {
+                    "kind": "Name",
+                    "value": "SqlQuery"
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NonNullType",
+              "type": {
+                "kind": "ListType",
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "User"
+                    }
+                  }
+                }
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "ObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Mutation"
+        },
+        "interfaces": [],
+        "directives": [],
+        "fields": [
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "CREATE_POST_OWNER"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "input"
+                },
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "CREATE_POST_OWNER"
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "Post"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "UPDATE_POST_OWNER"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "input"
+                },
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "UPDATE_POST_OWNER"
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "Post"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "UPDATE_USER_ME"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "input"
+                },
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "UPDATE_USER_ME"
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "USER_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "User"
+              }
+            },
+            "directives": []
+          },
+          {
+            "kind": "FieldDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "DELETE_POST"
+            },
+            "arguments": [
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "input"
+                },
+                "type": {
+                  "kind": "NonNullType",
+                  "type": {
+                    "kind": "NamedType",
+                    "name": {
+                      "kind": "Name",
+                      "value": "DELETE_POST"
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              },
+              {
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": "viewnames"
+                },
+                "type": {
+                  "kind": "ListType",
+                  "type": {
+                    "kind": "NonNullType",
+                    "type": {
+                      "kind": "NamedType",
+                      "name": {
+                        "kind": "Name",
+                        "value": "POST_VIEWS"
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "directives": []
+              }
+            ],
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "ID"
+              }
+            },
+            "directives": []
+          }
+        ]
+      },
+      {
+        "kind": "InputObjectTypeDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "SqlQuery"
+        },
+        "directives": [],
+        "fields": [
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "text"
+            },
+            "type": {
+              "kind": "NamedType",
+              "name": {
+                "kind": "Name",
+                "value": "String"
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          },
+          {
+            "kind": "InputValueDefinition",
+            "name": {
+              "kind": "Name",
+              "value": "values"
+            },
+            "type": {
+              "kind": "ListType",
+              "type": {
+                "kind": "NamedType",
+                "name": {
+                  "kind": "Name",
+                  "value": "String"
+                }
+              }
+            },
+            "defaultValue": null,
+            "directives": []
+          }
+        ]
+      }
+    ]
+  },
+  "dbViews": [
+    {
+      "gqlTypeName": "Post",
+      "tableName": "Post",
+      "schemaName": "public",
+      "viewName": "POST_PUBLIC",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "title",
+          "expression": "\"title\""
+        },
+        {
+          "name": "content",
+          "expression": "\"content\""
+        },
+        {
+          "name": "images",
+          "expression": "\"images\""
+        },
+        {
+          "name": "owner",
+          "expression": "\"ownerId\""
+        },
+        {
+          "name": "_viewnames",
+          "expression": "ARRAY['POST_PUBLIC'] AS _viewnames"
+        }
+      ],
+      "expressions": [
+        "TRUE"
+      ],
+      "operation": "READ"
+    },
+    {
+      "gqlTypeName": "Post",
+      "tableName": "Post",
+      "schemaName": "public",
+      "viewName": "POST_OWNER",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "title",
+          "expression": "\"title\""
+        },
+        {
+          "name": "content",
+          "expression": "\"content\""
+        },
+        {
+          "name": "owner",
+          "expression": "\"ownerId\""
+        },
+        {
+          "name": "ownerSecret",
+          "expression": "\"ownerSecret\""
+        },
+        {
+          "name": "_viewnames",
+          "expression": "ARRAY['POST_OWNER'] AS _viewnames"
+        }
+      ],
+      "expressions": [
+        "\"public\".\"Post\".\"ownerId\" = _meta.current_user_id()"
+      ],
+      "operation": "READ"
+    },
+    {
+      "gqlTypeName": "Post",
+      "tableName": "Post",
+      "schemaName": "public",
+      "viewName": "CREATE_POST_OWNER",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "title",
+          "expression": "\"title\""
+        },
+        {
+          "name": "content",
+          "expression": "\"content\""
+        },
+        {
+          "name": "images",
+          "expression": "\"images\""
+        },
+        {
+          "name": "owner",
+          "expression": "\"ownerId\""
+        },
+        {
+          "name": "ownerSecret",
+          "expression": "\"ownerSecret\""
+        }
+      ],
+      "expressions": [
+        "\"public\".\"Post\".\"ownerId\" = _meta.current_user_id()"
+      ],
+      "operation": "CREATE"
+    },
+    {
+      "gqlTypeName": "Post",
+      "tableName": "Post",
+      "schemaName": "public",
+      "viewName": "UPDATE_POST_OWNER",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "title",
+          "expression": "\"title\""
+        },
+        {
+          "name": "content",
+          "expression": "\"content\""
+        },
+        {
+          "name": "ownerSecret",
+          "expression": "\"ownerSecret\""
+        }
+      ],
+      "expressions": [
+        "\"public\".\"Post\".\"ownerId\" = _meta.current_user_id()"
+      ],
+      "operation": "UPDATE"
+    },
+    {
+      "gqlTypeName": "User",
+      "tableName": "User",
+      "schemaName": "public",
+      "viewName": "USER_AUTHOR",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "firstLetterOfUserName",
+          "expression": "('TEST') AS \"firstLetterOfUserName\""
+        },
+        {
+          "name": "payload",
+          "expression": "jsonb_build_object('data', jsonb_build_object('title', \"User\".\"payload\" -> 'data' -> 'title'), 'secret', \"User\".\"payload\" -> 'secret') AS payload"
+        },
+        {
+          "name": "postContributions",
+          "expression": "\"postContributionsIdsArray\""
+        },
+        {
+          "name": "stripeAccount",
+          "expression": "NULL::text AS \"stripeAccount\""
+        },
+        {
+          "name": "_viewnames",
+          "expression": "ARRAY['USER_AUTHOR'] AS _viewnames"
+        }
+      ],
+      "expressions": [
+        "TRUE"
+      ],
+      "operation": "READ"
+    },
+    {
+      "gqlTypeName": "User",
+      "tableName": "User",
+      "schemaName": "public",
+      "viewName": "USER_ME",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "email",
+          "expression": "\"email\""
+        },
+        {
+          "name": "firstLetterOfUserName",
+          "expression": "('TEST') AS \"firstLetterOfUserName\""
+        },
+        {
+          "name": "payload",
+          "expression": "jsonb_build_object('data', jsonb_build_object('content', \"User\".\"payload\" -> 'data' -> 'content')) AS payload"
+        },
+        {
+          "name": "postContributions",
+          "expression": "\"postContributionsIdsArray\""
+        },
+        {
+          "name": "_viewnames",
+          "expression": "ARRAY['USER_ME'] AS _viewnames"
+        }
+      ],
+      "expressions": [
+        "\"public\".\"User\".\"id\" = _meta.current_user_id()"
+      ],
+      "operation": "READ"
+    },
+    {
+      "gqlTypeName": "User",
+      "tableName": "User",
+      "schemaName": "public",
+      "viewName": "UPDATE_USER_ME",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        },
+        {
+          "name": "email",
+          "expression": "\"email\""
+        },
+        {
+          "name": "payload",
+          "expression": "\"payload\""
+        },
+        {
+          "name": "postContributions",
+          "expression": "\"postContributionsIdsArray\""
+        }
+      ],
+      "expressions": [
+        "\"public\".\"User\".\"id\" = _meta.current_user_id()"
+      ],
+      "operation": "UPDATE"
+    },
+    {
+      "gqlTypeName": "Post",
+      "tableName": "Post",
+      "schemaName": "public",
+      "viewName": "DELETE_POST",
+      "viewSchemaName": "graphql",
+      "type": "VIEW",
+      "fields": [
+        {
+          "name": "id",
+          "expression": "\"id\""
+        }
+      ],
+      "expressions": [
+        "\"public\".\"Post\".\"ownerId\" = _meta.current_user_id()"
+      ],
+      "operation": "DELETE"
+    }
+  ],
+  "gQlTypes": {
+    "Post": {
+      "gqlTypeName": "Post",
+      "fieldNames": [
+        "id",
+        "title",
+        "content",
+        "images",
+        "owner",
+        "ownerSecret"
+      ],
+      "viewNames": [
+        "POST_PUBLIC",
+        "POST_OWNER"
+      ],
+      "authViewNames": [
+        "POST_OWNER",
+        "CREATE_POST_OWNER",
+        "UPDATE_POST_OWNER",
+        "DELETE_POST"
+      ],
+      "noAuthViewNames": [
+        "POST_PUBLIC"
+      ],
+      "views": {
+        "POST_PUBLIC": {
+          "viewName": "POST_PUBLIC",
+          "viewSchemaName": "graphql",
+          "operation": "READ",
+          "nativeFieldNames": [
+            "id",
+            "title",
+            "content",
+            "images",
+            "ownerId"
+          ]
+        },
+        "POST_OWNER": {
+          "viewName": "POST_OWNER",
+          "viewSchemaName": "graphql",
+          "operation": "READ",
+          "nativeFieldNames": [
+            "id",
+            "title",
+            "content",
+            "ownerId",
+            "ownerSecret"
+          ]
+        },
+        "CREATE_POST_OWNER": {
+          "viewName": "CREATE_POST_OWNER",
+          "viewSchemaName": "graphql",
+          "operation": "CREATE",
+          "nativeFieldNames": [
+            "id",
+            "title",
+            "content",
+            "images",
+            "ownerId",
+            "ownerSecret"
+          ]
+        },
+        "UPDATE_POST_OWNER": {
+          "viewName": "UPDATE_POST_OWNER",
+          "viewSchemaName": "graphql",
+          "operation": "UPDATE",
+          "nativeFieldNames": [
+            "id",
+            "title",
+            "content",
+            "ownerSecret"
+          ]
+        },
+        "DELETE_POST": {
+          "viewName": "DELETE_POST",
+          "viewSchemaName": "graphql",
+          "operation": "DELETE",
+          "nativeFieldNames": [
+            "id"
+          ]
+        }
+      },
+      "relationByField": {
+        "owner": {
+          "relationName": "PostOwner",
+          "foreignGqlTypeName": "User",
+          "foreignTableName": "User",
+          "foreignSchemaName": "public",
+          "relationType": "ONE",
+          "columnName": "ownerId"
+        }
+      }
+    },
+    "User": {
+      "gqlTypeName": "User",
+      "fieldNames": [
+        "id",
+        "firstLetterOfUserName",
+        "payload",
+        "postContributions",
+        "stripeAccount",
+        "email",
+        "posts"
+      ],
+      "viewNames": [
+        "USER_AUTHOR",
+        "USER_ME"
+      ],
+      "authViewNames": [
+        "USER_ME",
+        "UPDATE_USER_ME"
+      ],
+      "noAuthViewNames": [
+        "USER_AUTHOR"
+      ],
+      "views": {
+        "USER_AUTHOR": {
+          "viewName": "USER_AUTHOR",
+          "viewSchemaName": "graphql",
+          "operation": "READ",
+          "nativeFieldNames": [
+            "id",
+            "firstLetterOfUserName",
+            "postContributionsIdsArray",
+            "stripeAccount"
+          ],
+          "jsonFieldNames": [
+            "payload"
+          ]
+        },
+        "USER_ME": {
+          "viewName": "USER_ME",
+          "viewSchemaName": "graphql",
+          "operation": "READ",
+          "nativeFieldNames": [
+            "id",
+            "email",
+            "firstLetterOfUserName",
+            "postContributionsIdsArray"
+          ],
+          "jsonFieldNames": [
+            "payload"
+          ]
+        },
+        "UPDATE_USER_ME": {
+          "viewName": "UPDATE_USER_ME",
+          "viewSchemaName": "graphql",
+          "operation": "UPDATE",
+          "nativeFieldNames": [
+            "id",
+            "email",
+            "payload",
+            "postContributionsIdsArray"
+          ]
+        }
+      },
+      "relationByField": {
+        "postContributions": {
+          "relationName": "PostContributors",
+          "foreignGqlTypeName": "Post",
+          "foreignTableName": "Post",
+          "foreignSchemaName": "public",
+          "relationType": "MANY",
+          "columnName": "postContributionsId"
+        },
+        "posts": {
+          "relationName": "PostOwner",
+          "foreignGqlTypeName": "Post",
+          "foreignTableName": "Post",
+          "foreignSchemaName": "public",
+          "relationType": "MANY",
+          "columnName": "postsId"
+        }
+      }
+    }
+  },
+  "queries": [
+    {
+      "name": "posts",
+      "type": "Post",
+      "viewsEnumName": "POST_VIEWS"
+    },
+    {
+      "name": "users",
+      "type": "User",
+      "viewsEnumName": "USER_VIEWS"
+    }
+  ],
+  "mutations": [
+    {
+      "name": "CREATE_POST_OWNER",
+      "type": "CREATE",
+      "inputType": "CREATE_POST_OWNER",
+      "returnType": "Post",
+      "viewsEnumName": "POST_VIEWS",
+      "viewName": "CREATE_POST_OWNER",
+      "viewSchemaName": "graphql"
+    },
+    {
+      "name": "UPDATE_POST_OWNER",
+      "type": "UPDATE",
+      "inputType": "UPDATE_POST_OWNER",
+      "returnType": "Post",
+      "viewsEnumName": "POST_VIEWS",
+      "viewName": "UPDATE_POST_OWNER",
+      "viewSchemaName": "graphql"
+    },
+    {
+      "name": "UPDATE_USER_ME",
+      "type": "UPDATE",
+      "inputType": "UPDATE_USER_ME",
+      "returnType": "User",
+      "viewsEnumName": "USER_VIEWS",
+      "viewName": "UPDATE_USER_ME",
+      "viewSchemaName": "graphql"
+    },
+    {
+      "name": "DELETE_POST",
+      "type": "DELETE",
+      "inputType": "DELETE_POST",
+      "returnType": "ID",
+      "viewsEnumName": "POST_VIEWS",
+      "viewName": "DELETE_POST",
+      "viewSchemaName": "graphql"
+    }
+  ],
+  "customFields": {
+    "User_stripeAccount": {
+      "type": "Field",
+      "gqlTypeName": "User",
+      "fieldName": "stripeAccount",
+      "resolver": "stripeAccount",
+      "params": {}
+    }
+  }
+}

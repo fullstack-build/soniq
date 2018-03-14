@@ -1,8 +1,8 @@
 {
   "name": "@fullstack-one/migration",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "fullstack.one migration package",
-  "main": "dist/index.js",
+  "main": "index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,9 +15,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/config": "^0.1.7",
+    "@fullstack-one/db": "^0.1.7",
+    "@fullstack-one/di": "^0.1.6",
+    "@fullstack-one/logger": "^0.1.7",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1",
-    "fullstack-one": "latest"
+    "lodash": "^4.17.5",
+    "util": "^0.10.3"
   },
   "devDependencies": {
     "typescript": "^2.7.2"

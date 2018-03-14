@@ -1,0 +1,23 @@
+{
+  "name": "@fullstack-one/di",
+  "version": "0.1.6",
+  "description": "fullstack.one helper package",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "typedi": "^0.6.1"
+  },
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  }
+}
