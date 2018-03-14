@@ -53,6 +53,7 @@ let AutoMigrate = class AutoMigrate {
             try {
                 const fromDbMeta = yield (new db_1.PgToDbMeta()).getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
+                // TODO: @eugene: Migration should be a Migration-Factory
                 const migration = new migration_1.Migration(fromDbMeta, toDbMeta, this.config, di_1.Container.get(logger_1.LoggerFactory), di_1.Container.get(db_1.DbAppClient));
                 return migration.getMigrationSqlStatements(configDB.renameInsteadOfDrop);
             }
@@ -69,6 +70,7 @@ let AutoMigrate = class AutoMigrate {
                 const pgToDbMeta = di_1.Container.get(db_1.PgToDbMeta);
                 const fromDbMeta = yield pgToDbMeta.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
+                // TODO: @eugene: Migration should be a Migration-Factory
                 const migration = new migration_1.Migration(fromDbMeta, toDbMeta, this.config, di_1.Container.get(logger_1.LoggerFactory), di_1.Container.get(db_1.DbAppClient));
                 return yield migration.migrate(configDB.renameInsteadOfDrop);
             }

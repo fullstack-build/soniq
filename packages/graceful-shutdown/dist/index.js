@@ -106,10 +106,10 @@ GracefulShutdown = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => events_1.EventEmitter)),
     __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(tpye => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(tpye => db_1.DbAppClient)),
-    __param(4, di_1.Inject(tpye => db_1.DbGeneralPool)),
-    __param(5, di_1.Inject(tpye => config_1.Config)),
+    __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(3, di_1.Inject(type => db_1.DbAppClient)),
+    __param(4, di_1.Inject(type => db_1.DbGeneralPool)),
+    __param(5, di_1.Inject(type => config_1.Config)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], GracefulShutdown);
 exports.GracefulShutdown = GracefulShutdown;

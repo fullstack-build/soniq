@@ -17,14 +17,10 @@ const mutate_1 = require("./sqlGenerator/mutate");
 // tslint:disable-next-line:no-var-requires
 const graphqlTypeJson = require('graphql-type-json');
 /* ======================================================= */
-function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, auth, dbGeneralPool) {
+function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
     // Initialize stuff / get instances / etc.
     const queryResolver = read_1.getQueryResolver(gQlTypes, dbObject);
     const mutationResolver = mutate_1.getMutationResolver(gQlTypes, dbObject, mutations);
-    // DI
-    // todo needs refactoring @dustin
-    // const auth: any = ONE.Container.get(Auth);
-    // const pool: any = ONE.Container.get(ONE.DbGeneralPool);
     const queryResolvers = {};
     const mutationResolvers = {};
     // Generate querie resolvers
@@ -43,9 +39,18 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                 // Begin transaction
                 yield client.query('BEGIN');
                 // Set current user for permissions
+                /*if (context.accessToken != null && selectQuery.authRequired) {
+                  context.ctx.state.authRequired = true;
+                  await auth.setUser(client, context.accessToken);
+                }*/
+                // Set authRequired in koa state for cache headers
+                // console.log(context.accessToken);
                 if (context.accessToken != null && selectQuery.authRequired) {
                     context.ctx.state.authRequired = true;
-                    yield auth.setUser(client, context.accessToken);
+                }
+                // PreQueryHook (for auth)
+                for (const fn of preQueryHooks) {
+                    yield fn(client, context, selectQuery.authRequired);
                 }
                 // tslint:disable-next-line:no-console
                 console.log('RUN QUERY', selectQuery.sql, selectQuery.values);
@@ -88,8 +93,12 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                 // Begin transaction
                 yield client.query('BEGIN');
                 // Set current user for permissions
-                if (context.accessToken != null) {
-                    yield auth.setUser(client, context.accessToken);
+                /*if (context.accessToken != null) {
+                  await auth.setUser(client, context.accessToken);
+                }*/
+                // PreQueryHook (for auth)
+                for (const fn of preQueryHooks) {
+                    yield fn(client, context, context.accessToken != null);
                 }
                 // tslint:disable-next-line:no-console
                 console.log('RUN MUTATION', mutationQuery.sql, mutationQuery.values);

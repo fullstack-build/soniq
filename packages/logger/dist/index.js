@@ -26,6 +26,6 @@ let LoggerFactory = class LoggerFactory {
 LoggerFactory = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [config_1.Config])
 ], LoggerFactory);
 exports.LoggerFactory = LoggerFactory;

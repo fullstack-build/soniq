@@ -1,15 +1,7 @@
-/// <reference types="node" />
-import * as http from 'http';
-export declare class Server {
-    private server;
-    private app;
+export declare class BootScripts {
     private ENVIRONMENT;
     private logger;
     private eventEmitter;
-    constructor(eventEmitter?: any, loggerFactory?: any, bootLoader?: any);
-    getApp(): any;
-    getServer(): http.Server;
+    constructor(loggerFactory?: any, bootLoader?: any);
     private boot();
-    private emit(eventName, ...args);
-    private on(eventName, listener);
 }

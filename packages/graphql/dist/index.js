@@ -34,18 +34,20 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 const graphql_parser_1 = require("@fullstack-one/graphql-parser");
 const helper_1 = require("@fullstack-one/helper");
 const server_1 = require("@fullstack-one/server");
-const auth_1 = require("@fullstack-one/auth");
 const db_1 = require("@fullstack-one/db");
 let GraphQl = class GraphQl {
-    constructor(loggerFactory, config, bootLoader, gqlParser, server, dbGeneralPool, auth) {
+    constructor(loggerFactory, config, bootLoader, gqlParser, server, dbGeneralPool) {
+        this.preQueryHooks = [];
         this.dbGeneralPool = dbGeneralPool;
-        this.auth = auth;
         this.server = server;
         this.gqlParser = gqlParser;
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
         bootLoader.addBootFunction(this.boot.bind(this));
+    }
+    addPreQueryHook(fn) {
+        this.preQueryHooks.push(fn);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -56,7 +58,7 @@ let GraphQl = class GraphQl {
             const rd = this.gqlParser.getGqlRuntimeData();
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: rd.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, rd.customOperations, resolversObject, this.auth, this.dbGeneralPool),
+                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, rd.customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();
@@ -105,7 +107,6 @@ GraphQl = __decorate([
     __param(3, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
     __param(4, di_1.Inject(type => server_1.Server)),
     __param(5, di_1.Inject(type => db_1.DbGeneralPool)),
-    __param(6, di_1.Inject(type => auth_1.Auth)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object, Object])
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], GraphQl);
 exports.GraphQl = GraphQl;

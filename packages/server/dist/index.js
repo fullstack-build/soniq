@@ -37,7 +37,8 @@ let Server = class Server {
         this.logger = loggerFactory.create('Server');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        bootLoader.addBootFunction(this.boot.bind(this));
+        // bootLoader.addBootFunction(this.boot.bind(this));
+        this.boot();
     }
     getApp() {
         return this.app;

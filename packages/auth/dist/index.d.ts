@@ -3,7 +3,8 @@ export declare class Auth {
     private authConfig;
     private dbGeneralPool;
     private server;
-    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any);
+    private graphQl;
+    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any, graphQl?: any);
     setUser(client: any, accessToken: any): Promise<boolean>;
     loginOrRegister(username: any, tenant: any, provider: any, password: any, userIdentifier: any): Promise<any>;
     register(username: any, tenant: any): Promise<{
@@ -27,5 +28,7 @@ export declare class Auth {
     invalidateUserToken(accessToken: any): Promise<boolean>;
     invalidateAllUserTokens(accessToken: any): Promise<boolean>;
     getPassport(): any;
+    private addMiddleware();
     private boot();
+    private preQueryHook(client, context, authRequired);
 }

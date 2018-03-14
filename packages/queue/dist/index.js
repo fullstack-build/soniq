@@ -83,6 +83,6 @@ QueueFactory = __decorate([
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => db_1.DbGeneralPool)),
     __param(2, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __metadata("design:paramtypes", [Object, Object, config_1.Config])
 ], QueueFactory);
 exports.QueueFactory = QueueFactory;

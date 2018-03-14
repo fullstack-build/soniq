@@ -52,9 +52,9 @@ let FullstackOneCore = class FullstackOneCore {
     }
     // draw CLI art
     cliArt() {
-        process.stdout.write('┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n' +
-            '├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
-            '└  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n');
+        process.stdout.write('  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n' +
+            '  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
+            '  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n');
         process.stdout.write('name: ' + this.ENVIRONMENT.name + '\n');
         process.stdout.write('version: ' + this.ENVIRONMENT.version + '\n');
         process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');

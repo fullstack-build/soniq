@@ -10,15 +10,15 @@ const requiredSecrets = {
     cookie: 'AUTH_COOKIE_SECRET'
 };
 const secrets = {};
-/*
 // Is checked through .env.example
 Object.keys(requiredSecrets).forEach((key) => {
-  if (process.env[requiredSecrets[key]] != null) {
-    secrets[key] = process.env[requiredSecrets[key]];
-  } else {
-    throw new Error(`Environment variable ${requiredSecrets[key]} is required.`);
-  }
-});*/
+    if (process.env[requiredSecrets[key]] != null) {
+        secrets[key] = process.env[requiredSecrets[key]];
+    }
+    else {
+        throw new Error(`Environment variable ${requiredSecrets[key]} is required for auth.`);
+    }
+});
 function getAdminSignature() {
     const ts = Date.now().toString();
     const payload = `${ts}:${secrets.admin}`;

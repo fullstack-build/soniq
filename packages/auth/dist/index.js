@@ -25,6 +25,7 @@ const db_1 = require("@fullstack-one/db");
 const server_1 = require("@fullstack-one/server");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const config_1 = require("@fullstack-one/config");
+const graphql_1 = require("@fullstack-one/graphql");
 const crypto_1 = require("./crypto");
 const sign_1 = require("./sign");
 // tslint:disable-next-line:no-var-requires
@@ -35,12 +36,15 @@ const koaSession = require("koa-session");
 const oAuthCallback_1 = require("./oAuthCallback");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 let Auth = class Auth {
-    constructor(dbGeneralPool, server, bootLoader, config) {
+    constructor(dbGeneralPool, server, bootLoader, config, graphQl) {
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
+        this.graphQl = graphQl;
         this.authConfig = config.getConfig('auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
+        graphQl.addPreQueryHook(this.preQueryHook.bind(this));
         bootLoader.addBootFunction(this.boot.bind(this));
+        this.addMiddleware();
         // this.linkPassport();
     }
     setUser(client, accessToken) {
@@ -52,6 +56,8 @@ let Auth = class Auth {
                 return true;
             }
             catch (err) {
+                // tslint:disable-next-line:no-console
+                console.log('Failed to SetUser', err);
                 throw err;
             }
         });
@@ -156,6 +162,8 @@ let Auth = class Auth {
                 return true;
             }
             catch (err) {
+                // tslint:disable-next-line:no-console
+                console.log(err);
                 yield client.query('ROLLBACK');
                 throw err;
             }
@@ -288,6 +296,24 @@ let Auth = class Auth {
     getPassport() {
         return passport;
     }
+    addMiddleware() {
+        const app = this.server.getApp();
+        app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
+            if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
+                ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
+                return next();
+            }
+            if (ctx.request.header.authorization != null && ctx.request.header.authorization.startsWith('Bearer ')) {
+                ctx.state.accessToken = ctx.request.header.authorization.slice(7);
+                return next();
+            }
+            const accessToken = ctx.cookies.get(this.authConfig.cookie.name, this.authConfig.cookie);
+            if (accessToken != null) {
+                ctx.state.accessToken = accessToken;
+            }
+            return next();
+        }));
+    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             const authRouter = new KoaRouter();
@@ -300,21 +326,6 @@ let Auth = class Auth {
             authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
             authRouter.use(passport.initialize());
             // authRouter.use(passport.session());
-            app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
-                if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
-                    ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
-                    return next();
-                }
-                if (ctx.request.header.authorization != null && ctx.request.header.authorization.startsWith('Bearer ')) {
-                    ctx.state.accessToken = ctx.request.header.authorization.slice(7);
-                    return next();
-                }
-                const accessToken = ctx.cookies.get(this.authConfig.cookie.name, this.authConfig.cookie);
-                if (accessToken != null) {
-                    ctx.state.accessToken = accessToken;
-                }
-                return next();
-            }));
             authRouter.post('/auth/invalidateAccessToken', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 let success;
                 try {
@@ -483,6 +494,13 @@ let Auth = class Auth {
             app.use(authRouter.allowedMethods());
         });
     }
+    preQueryHook(client, context, authRequired) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (authRequired === true && context.accessToken != null) {
+                yield this.setUser(client, context.accessToken);
+            }
+        });
+    }
 };
 Auth = __decorate([
     di_1.Service(),
@@ -490,6 +508,7 @@ Auth = __decorate([
     __param(1, di_1.Inject(type => server_1.Server)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
     __param(3, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object])
+    __param(4, di_1.Inject(type => graphql_1.GraphQl)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], Auth);
 exports.Auth = Auth;

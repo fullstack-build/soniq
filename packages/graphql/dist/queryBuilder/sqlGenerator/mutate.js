@@ -11,7 +11,11 @@ function resolveCreateMutation(query, mutation) {
     }).join(', ');
     // Generate values to be inserted
     const v = fieldValues.map((value) => {
-        values.push(value);
+        let insertValue = value;
+        if (typeof value === 'object') {
+            insertValue = JSON.stringify(value);
+        }
+        values.push(insertValue);
         return '$' + values.length;
     }).join(', ');
     // Build insert query
@@ -31,7 +35,11 @@ function resolveUpdateMutation(query, mutation) {
         const fieldValue = query.args.input[fieldName];
         if (fieldName !== 'id') {
             // Add field to update set list and it's value to values
-            values.push(fieldValue);
+            let updateValue = fieldValue;
+            if (typeof updateValue === 'object') {
+                updateValue = JSON.stringify(updateValue);
+            }
+            values.push(updateValue);
             setFields.push(`"${fieldName}" = $${values.length}`);
         }
         else {
