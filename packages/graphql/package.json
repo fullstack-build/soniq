@@ -1,0 +1,38 @@
+{
+  "name": "@fullstack-one/graphql",
+  "version": "0.2.1",
+  "description": "fullstack.one GraphQL package",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/boot-loader": "^0.2.1",
+    "@fullstack-one/config": "^0.2.1",
+    "@fullstack-one/db": "^0.2.1",
+    "@fullstack-one/di": "^0.2.1",
+    "@fullstack-one/graphql-parser": "^0.2.1",
+    "@fullstack-one/helper": "^0.2.1",
+    "@fullstack-one/logger": "^0.2.1",
+    "@fullstack-one/server": "^0.2.1",
+    "apollo-server-koa": "^1.2.0",
+    "graphql": "^0.11.7",
+    "graphql-parse-resolve-info": "0.1.0-alpha.18",
+    "graphql-tools": "^2.21.0",
+    "graphql-type-json": "^0.1.4",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.3.0",
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  }
+}
