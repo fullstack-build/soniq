@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const findDirectiveIndex_1 = require("../findDirectiveIndex");
-const getArgumentByName_1 = require("../getArgumentByName");
-const getRelationForeignGqlTypeName_1 = require("../getRelationForeignGqlTypeName");
-const createIdArrayField_1 = require("../createIdArrayField");
-const createIdField_1 = require("../createIdField");
+const findDirectiveIndex_1 = require("../utils/findDirectiveIndex");
+const getArgumentByName_1 = require("../utils/getArgumentByName");
+const getRelationForeignGqlTypeName_1 = require("../utils/getRelationForeignGqlTypeName");
+const createIdArrayField_1 = require("../utils/createIdArrayField");
+const createIdField_1 = require("../utils/createIdField");
+const getQueryArguments_1 = require("../utils/getQueryArguments");
 function parseField(field, ctx) {
     const fieldName = field.name.value;
     const isIncluded = ctx.view.fields.indexOf(fieldName) >= 0;
@@ -49,19 +50,23 @@ function parseField(field, ctx) {
             name: fieldName,
             expression: `"${ownRelation.columnName}"`
         });
-        // Add relation-field-name to GQL Input for mutating it
-        if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
-            // In case of ManyToMany it's an array
-            ctx.tableView.fields.push(createIdArrayField_1.default(ownRelation.columnName));
-        }
-        else {
-            // In case of ManyToOne it is an id
-            ctx.tableView.fields.push(createIdField_1.default(ownRelation.columnName));
+        if (ctx.view.type !== 'READ') {
+            // Add relation-field-name to GQL Input for mutating it
+            if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+                // In case of ManyToMany it's an array
+                ctx.tableView.fields.push(createIdArrayField_1.default(ownRelation.columnName));
+            }
+            else {
+                // In case of ManyToOne it is an id
+                ctx.tableView.fields.push(createIdField_1.default(ownRelation.columnName));
+            }
         }
         ctx.gQlTypes[gqlTypeName].views[viewName].nativeFieldNames.push(ownRelation.columnName);
     }
     // This field cannot be set with a mutation
     if (ctx.view.type === 'READ') {
+        const foreignTypesEnumName = (foreignNativeTable.tableName + '_VIEWS').toUpperCase();
+        field.arguments = getQueryArguments_1.default(foreignTypesEnumName);
         ctx.tableView.fields.push(field);
     }
     return true;

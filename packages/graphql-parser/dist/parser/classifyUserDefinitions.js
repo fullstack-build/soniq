@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const findDirectiveIndex_1 = require("./findDirectiveIndex");
+const findDirectiveIndex_1 = require("./utils/findDirectiveIndex");
 exports.default = (source) => {
     const tables = {};
     const otherDefinitions = [];

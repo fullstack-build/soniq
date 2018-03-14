@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const findDirectiveIndex_1 = require("../findDirectiveIndex");
-const getArgumentByName_1 = require("../getArgumentByName");
-const parseObjectArgument_1 = require("../parseObjectArgument");
+const findDirectiveIndex_1 = require("../utils/findDirectiveIndex");
+const getArgumentByName_1 = require("../utils/getArgumentByName");
+const parseObjectArgument_1 = require("../utils/parseObjectArgument");
 function parseField(field, ctx) {
     const fieldName = field.name.value;
     const isIncluded = ctx.view.fields.indexOf(fieldName) >= 0;

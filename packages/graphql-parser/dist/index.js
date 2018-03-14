@@ -31,12 +31,18 @@ const logger_1 = require("@fullstack-one/logger");
 const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const helper_2 = require("@fullstack-one/helper");
+const utils = require("./parser/utils");
+exports.utils = utils;
 let GraphQlParser = class GraphQlParser {
     constructor(loggerFactory, config, bootLoader) {
+        this.parsers = [];
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
         bootLoader.addBootFunction(this.boot.bind(this));
+    }
+    addParser(parser) {
+        this.parsers.push(parser);
     }
     getDbMeta() {
         return this.dbMeta;
@@ -82,7 +88,7 @@ let GraphQlParser = class GraphQlParser {
                     const expressionsArray = yield helper_2.helper.requireFilesByGlobPattern(expressionsPattern);
                     this.expressions = [].concat.apply([], expressionsArray);
                     const viewSchemaName = di_1.Container.get(config_1.Config).getConfig('db').viewSchemaName;
-                    const combinedSchemaInformation = parser_1.runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName);
+                    const combinedSchemaInformation = parser_1.runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
                     this.gQlRuntimeDocument = combinedSchemaInformation.document;
                     this.gQlRuntimeSchema = helper_1.graphQl.helper.printGraphQlDocument(this.gQlRuntimeDocument);
                     this.gQlTypes = combinedSchemaInformation.gQlTypes;

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const createScalar_1 = require("../createScalar");
-const findDirectiveIndex_1 = require("../findDirectiveIndex");
-const getJsonObjectBuilderExpression_1 = require("../getJsonObjectBuilderExpression");
+const createScalar_1 = require("../utils/createScalar");
+const findDirectiveIndex_1 = require("../utils/findDirectiveIndex");
+const getJsonObjectBuilderExpression_1 = require("../utils/getJsonObjectBuilderExpression");
 const lodash_1 = require("lodash");
 const JSON_SPLIT = '.';
 function init(graphQlDocument) {

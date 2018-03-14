@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const getArgumentByName_1 = require("./getArgumentByName");
-const findDirectiveIndex_1 = require("./findDirectiveIndex");
-const parseObjectArgument_1 = require("./parseObjectArgument");
+const getArgumentByName_1 = require("./utils/getArgumentByName");
+const findDirectiveIndex_1 = require("./utils/findDirectiveIndex");
+const parseObjectArgument_1 = require("./utils/parseObjectArgument");
 exports.default = (classification) => {
     const customQueries = [];
     const customMutations = [];

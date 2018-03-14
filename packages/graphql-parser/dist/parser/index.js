@@ -2,22 +2,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const classifyUserDefinitions_1 = require("./classifyUserDefinitions");
 const createPublicSchema_1 = require("./createPublicSchema");
-// import createPublicSchemaNew from './createPublicSchemaNew';
 const getCustomOperations_1 = require("./getCustomOperations");
-function runtimeParser(userSchema, views, expressions, dbObject, viewSchemaName) {
+const jsonParser = require("./mods/json");
+const idParser = require("./mods/id");
+const computedParser = require("./mods/computed");
+const customParser = require("./mods/custom");
+const relationParser = require("./mods/relation");
+const defaultParser = require("./mods/default");
+const viewnamesParser = require("./mods/viewnames");
+const expressionsParser = require("./mods/expressions");
+const mutationsParser = require("./mods/mutations");
+const parsers = [
+    jsonParser,
+    idParser,
+    computedParser,
+    customParser,
+    relationParser,
+    defaultParser,
+    viewnamesParser,
+    expressionsParser,
+    mutationsParser
+];
+function runtimeParser(userSchema, views, expressions, dbObject, viewSchemaName, customParsers) {
+    const currentParsers = parsers.slice().concat(customParsers.slice());
     const classification = classifyUserDefinitions_1.default(userSchema);
-    // const oldData = createPublicSchema(classification, views, expressions, dbObject, viewSchemaName);
-    // fs.writeFileSync(__dirname + '/1.json', JSON.stringify(oldData, null, 2), 'utf8');
-    // const newData = createPublicSchemaNew(classification, views, expressions, dbObject, viewSchemaName);
-    // fs.writeFileSync(__dirname + '/2.json', JSON.stringify(newData, null, 2), 'utf8');
-    const { document, dbViews, gQlTypes, queries, mutations, customFields } = createPublicSchema_1.default(classification, views, expressions, dbObject, viewSchemaName);
-    // console.log(JSON.stringify(document, null, 2));
-    // console.log(JSON.stringify(dbViews, null, 2));
+    const { document, dbViews, gQlTypes, queries, mutations, customFields } = createPublicSchema_1.default(classification, views, expressions, dbObject, viewSchemaName, currentParsers);
     const { customQueries, customMutations } = getCustomOperations_1.default(classification);
-    // console.log(customQueries, customMutations, customFields)
-    // console.log('doc', JSON.stringify(document, null, 2));
-    // console.log(print(document), views, viewFusions);
-    // console.log(print(document));
     /* console.log('> NEW GQL:');
     console.log(print(document));
     console.log('>');
