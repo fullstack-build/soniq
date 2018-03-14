@@ -27,6 +27,10 @@ export class GraphQl {
   private gqlParser: GraphQlParser;
   private server: Server;
   private dbGeneralPool: DbGeneralPool;
+  private resolvers: any = {};
+  private customQueries: any = [];
+  private customMutations: any = [];
+  private customFields: any = {};
 
   private preQueryHooks = [];
 
@@ -52,6 +56,22 @@ export class GraphQl {
     this.preQueryHooks.push(fn);
   }
 
+  public addResolvers(resolversObject) {
+    this.resolvers = Object.assign(this.resolvers, resolversObject);
+  }
+
+  public addCustomQuery(operation) {
+    this.customQueries.push(operation);
+  }
+
+  public addCustomMutation(operation) {
+    this.customMutations.push(operation);
+  }
+
+  public addCustomFields(operations) {
+    this.customFields = Object.assign(this.customFields, operations);
+  }
+
   private async boot() {
 
     const gqlKoaRouter = new KoaRouter();
@@ -62,10 +82,16 @@ export class GraphQl {
 
     const rd = this.gqlParser.getGqlRuntimeData();
 
+    const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
+
+    customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
+    customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
+    customOperations.fields = Object.assign(customOperations.fields, this.customFields);
+
     const schema = makeExecutableSchema({
       typeDefs: rd.gQlRuntimeSchema,
       resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
-      rd.mutations, rd.customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
+      rd.mutations, customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
