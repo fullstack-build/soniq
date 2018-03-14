@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/server",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -15,11 +15,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.2.4",
-    "@fullstack-one/config": "^0.2.4",
-    "@fullstack-one/di": "^0.2.4",
-    "@fullstack-one/events": "^0.2.4",
-    "@fullstack-one/logger": "^0.2.4",
+    "@fullstack-one/boot-loader": "^0.2.5",
+    "@fullstack-one/config": "^0.2.5",
+    "@fullstack-one/di": "^0.2.5",
+    "@fullstack-one/events": "^0.2.5",
+    "@fullstack-one/logger": "^0.2.5",
     "koa": "^2.5.0"
   },
   "devDependencies": {

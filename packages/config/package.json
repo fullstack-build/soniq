@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/config",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/di": "^0.2.4",
+    "@fullstack-one/di": "^0.2.5",
     "lodash": "^4.17.5"
   },
   "devDependencies": {
