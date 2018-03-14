@@ -1,6 +1,6 @@
 {
   "name": "fullstack-one",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "fullstack.one main server package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -19,9 +19,9 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.2.2",
-    "@fullstack-one/config": "^0.2.2",
-    "@fullstack-one/di": "^0.2.2",
+    "@fullstack-one/boot-loader": "^0.2.3",
+    "@fullstack-one/config": "^0.2.3",
+    "@fullstack-one/di": "^0.2.3",
     "dotenv-safe": "^5.0.1"
   }
 }
