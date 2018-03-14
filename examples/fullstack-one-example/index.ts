@@ -18,6 +18,8 @@ process.on('unhandledRejection', (reason, p) => {
 //import { Email } from '../../packages/notifications/lib'
 
 //import { DbGeneralPool } from '@fullstack-one/db';
+
+
 import { Container } from '@fullstack-one/di'
 
 import { FullstackOneCore } from 'fullstack-one'
@@ -26,10 +28,6 @@ import { AutoMigrate } from '@fullstack-one/auto-migrate'
 import { Auth } from '@fullstack-one/auth'
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
-//const $server: Server = Container.get(Server);
-//const $dbAppClient: DbAppClient = Container.get(DbAppClient);
-//const $dbGeneralPool: DbGeneralPool = Container.get(DbGeneralPool);
-//const $gqlParser: GraphQlParser = Container.get(GraphQlParser);
 const $gql: GraphQl = Container.get(GraphQl);
 //const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);

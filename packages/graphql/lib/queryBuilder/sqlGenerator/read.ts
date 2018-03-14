@@ -41,7 +41,10 @@ export function getFieldExpression(name, viewNames, gQlType, localNameByType) {
     if (gQlType.views[viewName] != null && gQlType.views[viewName].nativeFieldNames.indexOf(name) >= 0 && localNameByType[viewName] != null) {
       fields.push(`"${localNameByType[viewName]}"."${name}"`);
     } else {
-      if (gQlType.views[viewName] != null && gQlType.views[viewName].jsonFieldNames.indexOf(name) >= 0 && localNameByType[viewName] != null) {
+      if (gQlType.views[viewName] != null
+        && gQlType.views[viewName].jsonFieldNames != null
+        && gQlType.views[viewName].jsonFieldNames.indexOf(name) >= 0
+        && localNameByType[viewName] != null) {
         isJson = true;
         fields.push(`"${localNameByType[viewName]}"."${name}"`);
       }
@@ -94,7 +97,6 @@ export function getFromExpression(viewNames, gQlType, localNameByType) {
           viewName,
           nativeViewName: gQlType.views[viewName].viewName,
           viewSchemaName: gQlType.views[viewName].viewSchemaName,
-          tableName: gQlType.views[viewName].tableName,
           localName: localNameByType[viewName]
         };
       } else {
@@ -103,7 +105,6 @@ export function getFromExpression(viewNames, gQlType, localNameByType) {
           viewName,
           nativeViewName: gQlType.views[viewName].viewName,
           viewSchemaName: gQlType.views[viewName].viewSchemaName,
-          tableName: gQlType.views[viewName].tableName,
           localName: localNameByType[viewName]
         });
       }

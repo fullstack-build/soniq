@@ -31,7 +31,8 @@ export class Server {
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    bootLoader.addBootFunction(this.boot.bind(this));
+    // bootLoader.addBootFunction(this.boot.bind(this));
+    this.boot();
   }
 
   public getApp() {

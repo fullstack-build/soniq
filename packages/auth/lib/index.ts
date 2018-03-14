@@ -46,6 +46,8 @@ export class Auth {
 
     bootLoader.addBootFunction(this.boot.bind(this));
 
+    this.addMiddleware();
+
     // this.linkPassport();
   }
 
@@ -59,6 +61,8 @@ export class Auth {
 
       return true;
     } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.log('Failed to SetUser', err);
       throw err;
     }
   }
@@ -179,6 +183,8 @@ export class Auth {
       await client.query('COMMIT');
       return true;
     } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.log(err);
       await client.query('ROLLBACK');
       throw err;
     } finally {
@@ -326,22 +332,8 @@ export class Auth {
     return passport;
   }
 
-  private async boot() {
-    const authRouter = new KoaRouter();
-
+  private addMiddleware() {
     const app = this.server.getApp();
-
-    authRouter.get('/test', async (ctx) => {
-      ctx.body = 'Hallo';
-    });
-
-    authRouter.use(koaBody());
-
-    app.keys = [getCookieSecret()];
-    authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
-
-    authRouter.use(passport.initialize());
-    // authRouter.use(passport.session());
 
     app.use(async (ctx, next) => {
       if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
@@ -361,6 +353,24 @@ export class Auth {
 
       return next();
     });
+  }
+
+  private async boot() {
+    const authRouter = new KoaRouter();
+
+    const app = this.server.getApp();
+
+    authRouter.get('/test', async (ctx) => {
+      ctx.body = 'Hallo';
+    });
+
+    authRouter.use(koaBody());
+
+    app.keys = [getCookieSecret()];
+    authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
+
+    authRouter.use(passport.initialize());
+    // authRouter.use(passport.session());
 
     authRouter.post('/auth/invalidateAccessToken', async (ctx) => {
       let success;

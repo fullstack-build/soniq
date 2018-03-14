@@ -1,7 +1,8 @@
-type Post @table @immutable @migrate(from:"PostOld"){
+type Post @table @migrate(from:"PostOld"){
   id: ID! @unique
   title: String
   content: String
+  images: [String]
   owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict")
   ownerSecret: String
   titleImage: PrivateFile @relation(name: "TitleImage")

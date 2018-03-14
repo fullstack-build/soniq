@@ -56,6 +56,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           }*/
 
           // Set authRequired in koa state for cache headers
+          // console.log(context.accessToken);
           if (context.accessToken != null && selectQuery.authRequired) {
             context.ctx.state.authRequired = true;
           }
