@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/di",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "dist/index.d.ts",
