@@ -1,7 +1,7 @@
 
-import getArgumentByName from './getArgumentByName';
-import findDirectiveIndex from './findDirectiveIndex';
-import parseObjectArgument from './parseObjectArgument';
+import getArgumentByName from './utils/getArgumentByName';
+import findDirectiveIndex from './utils/findDirectiveIndex';
+import parseObjectArgument from './utils/parseObjectArgument';
 
 export default (classification) => {
   const customQueries = [];

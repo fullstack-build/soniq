@@ -1,6 +1,6 @@
-import createScalar from '../createScalar';
-import findDirectiveIndex from '../findDirectiveIndex';
-import getJsonObjectBuilderExpression from '../getJsonObjectBuilderExpression';
+import createScalar from '../utils/createScalar';
+import findDirectiveIndex from '../utils/findDirectiveIndex';
+import getJsonObjectBuilderExpression from '../utils/getJsonObjectBuilderExpression';
 import {
   _
 } from 'lodash';

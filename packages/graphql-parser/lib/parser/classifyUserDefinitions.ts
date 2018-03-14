@@ -1,4 +1,4 @@
-import findDirectiveIndex from './findDirectiveIndex';
+import findDirectiveIndex from './utils/findDirectiveIndex';
 
 export default (source) => {
 

@@ -1,7 +1,6 @@
-import createScalar from '../createScalar';
-import findDirectiveIndex from '../findDirectiveIndex';
-import getArgumentByName from '../getArgumentByName';
-import parseObjectArgument from '../parseObjectArgument';
+import findDirectiveIndex from '../utils/findDirectiveIndex';
+import getArgumentByName from '../utils/getArgumentByName';
+import parseObjectArgument from '../utils/parseObjectArgument';
 import {
   _
 } from 'lodash';

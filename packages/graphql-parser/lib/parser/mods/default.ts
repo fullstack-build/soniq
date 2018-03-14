@@ -1,4 +1,3 @@
-
 export function parseField(field, ctx) {
   const fieldName = field.name.value;
   const gqlTypeName = ctx.view.gqlTypeName;

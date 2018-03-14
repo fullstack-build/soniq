@@ -17,6 +17,9 @@ import { helper } from '@fullstack-one/helper';
 
 export { IViews, IExpressions };
 
+import * as utils from './parser/utils';
+export { utils };
+
 @Service()
 export class GraphQlParser {
 
@@ -32,6 +35,7 @@ export class GraphQlParser {
   private mutations: any;
   private queries: any;
   private customOperations: any;
+  private parsers: any = [];
 
   // DI
   private logger: ILogger;
@@ -47,6 +51,10 @@ export class GraphQlParser {
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  public addParser(parser) {
+    this.parsers.push(parser);
   }
 
   public getDbMeta() {
@@ -105,7 +113,7 @@ export class GraphQlParser {
 
         const viewSchemaName = Container.get(Config).getConfig('db').viewSchemaName;
 
-        const combinedSchemaInformation = runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName);
+        const combinedSchemaInformation = runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
 
         this.gQlRuntimeDocument = combinedSchemaInformation.document;
         this.gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(this.gQlRuntimeDocument);

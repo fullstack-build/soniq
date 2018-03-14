@@ -1,10 +1,9 @@
-import createScalar from '../createScalar';
-import findDirectiveIndex from '../findDirectiveIndex';
-import getArgumentByName from '../getArgumentByName';
-import parseObjectArgument from '../parseObjectArgument';
-import getRelationForeignGqlTypeName from '../getRelationForeignGqlTypeName';
-import createIdArrayField from '../createIdArrayField';
-import createIdField from '../createIdField';
+import findDirectiveIndex from '../utils/findDirectiveIndex';
+import getArgumentByName from '../utils/getArgumentByName';
+import getRelationForeignGqlTypeName from '../utils/getRelationForeignGqlTypeName';
+import createIdArrayField from '../utils/createIdArrayField';
+import createIdField from '../utils/createIdField';
+import getQueryArguments from '../utils/getQueryArguments';
 import {
   _
 } from 'lodash';
@@ -67,13 +66,15 @@ export function parseField(field, ctx) {
       expression: `"${ownRelation.columnName}"`
     });
 
-    // Add relation-field-name to GQL Input for mutating it
-    if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
-      // In case of ManyToMany it's an array
-      ctx.tableView.fields.push(createIdArrayField(ownRelation.columnName));
-    } else {
-      // In case of ManyToOne it is an id
-      ctx.tableView.fields.push(createIdField(ownRelation.columnName));
+    if (ctx.view.type !== 'READ') {
+      // Add relation-field-name to GQL Input for mutating it
+      if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+        // In case of ManyToMany it's an array
+        ctx.tableView.fields.push(createIdArrayField(ownRelation.columnName));
+      } else {
+        // In case of ManyToOne it is an id
+        ctx.tableView.fields.push(createIdField(ownRelation.columnName));
+      }
     }
 
     ctx.gQlTypes[gqlTypeName].views[viewName].nativeFieldNames.push(ownRelation.columnName);
@@ -81,6 +82,8 @@ export function parseField(field, ctx) {
 
   // This field cannot be set with a mutation
   if (ctx.view.type === 'READ') {
+    const foreignTypesEnumName = (foreignNativeTable.tableName + '_VIEWS').toUpperCase();
+    field.arguments = getQueryArguments(foreignTypesEnumName);
     ctx.tableView.fields.push(field);
   }
   return true;

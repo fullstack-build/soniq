@@ -4,38 +4,15 @@ import {
   IViews
 } from '../interfaces';
 
-import getBasicSchema from './getBasicSchema';
-import arrayToNamedArray from './arrayToNamedArray';
-import getQueryArguments from './getQueryArguments';
-import getViewsEnum from './getViewsEnum';
-import getViewnamesField from './getViewnamesField';
-import mergeDeleteViews from './mergeDeleteViews';
-import getViewName from './getViewName';
+import getBasicSchema from './utils/getBasicSchema';
+import arrayToNamedArray from './utils/arrayToNamedArray';
+import getQueryArguments from './utils/getQueryArguments';
+import getViewsEnum from './utils/getViewsEnum';
+import mergeDeleteViews from './utils/mergeDeleteViews';
+import getViewName from './utils/getViewName';
 import {
   _
 } from 'lodash';
-
-import * as jsonParser from './mods/json';
-import * as idParser from './mods/id';
-import * as computedParser from './mods/computed';
-import * as customParser from './mods/custom';
-import * as relationParser from './mods/relation';
-import * as defaultParser from './mods/default';
-import * as viewnamesParser from './mods/viewnames';
-import * as expressionsParser from './mods/expressions';
-import * as mutationsParser from './mods/mutations';
-
-const parsers = [
-  jsonParser,
-  idParser,
-  computedParser,
-  customParser,
-  relationParser,
-  defaultParser,
-  viewnamesParser,
-  expressionsParser,
-  mutationsParser
-];
 
 import {
   introspectionQuery
@@ -43,7 +20,7 @@ import {
 
 const JSON_SPLIT = '.';
 
-export default (classification: any, views: IViews, expressions: IExpressions, dbObject, viewSchemaName) => {
+export default (classification: any, views: IViews, expressions: IExpressions, dbObject, viewSchemaName, parsers) => {
 
   const {
     tables,
@@ -65,6 +42,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
   const gQlTypes: any = {};
   const dbViews = [];
   const expressionsByName = arrayToNamedArray(expressions);
+  const tableViewsByGqlTypeName = {};
   let queries = [];
   let mutations = [];
   let customFields = {};
@@ -183,6 +161,13 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     graphQlDocument = ctx.graphQlDocument;
     customFields = ctx.customFields;
 
+    if (view.type === 'READ') {
+      if (tableViewsByGqlTypeName[gqlTypeName] == null) {
+        tableViewsByGqlTypeName[gqlTypeName] = [];
+      }
+
+      tableViewsByGqlTypeName[gqlTypeName].push(ctx.tableView);
+    }
   });
 
   // build GraphQL gQlTypes based on DB dbViews
@@ -196,19 +181,19 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     const tableView = JSON.parse(JSON.stringify(table));
 
     tableView.name.value = gQlType.gqlTypeName;
+    tableView.fields = [];
 
-    // Filter fields for gqlDefinition of the table
-    tableView.fields = tableView.fields.filter((field) => {
-      return gQlType.fieldNames.indexOf(field.name.value) >= 0;
+    const alreadyAddedFieldNames = [];
+
+    tableViewsByGqlTypeName[gqlTypeName].forEach((tempTableView) => {
+      tempTableView.fields.forEach((field) => {
+        if (alreadyAddedFieldNames.indexOf(field.name.value) < 0) { // gQlType.fieldNames.indexOf(field.name.value) >= 0 &&
+          alreadyAddedFieldNames.push(field.name.value);
+          tableView.fields.push(field);
+        }
+      });
     });
-
-    // Add arguments to relation fields
     tableView.fields = tableView.fields.map((field, key) => {
-      if (gQlType.relationByField[field.name.value]) {
-        const foreignTypesEnumName = (gQlType.relationByField[field.name.value].foreignTableName + '_VIEWS').toUpperCase();
-        field.arguments = getQueryArguments(foreignTypesEnumName);
-      }
-
       // Remove NonNullType because a field can be NULL if a user has no views
       if (field.type.kind === 'NonNullType') {
         field.type = field.type.type;
@@ -216,9 +201,6 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
 
       return field;
     });
-
-    // Add _viewnames field to type
-    tableView.fields.push(getViewnamesField(viewsEnumName));
 
     // Add views-enum definition of table to graphQlDocument
     graphQlDocument.definitions.push(getViewsEnum(viewsEnumName, gQlType.viewNames));
