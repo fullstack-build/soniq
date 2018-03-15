@@ -33,6 +33,9 @@ BEGIN
 
         -- Set transaction_token_secret to the current time to flag the secret as updated.
         UPDATE "_meta"."Auth" SET "value"=round(extract(epoch from now()))::text WHERE "key"='transaction_token_timestamp';
+
+        -- Reload new secret for transaction usage
+        SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';
     END IF;
 
     -- Create a transaction-token
