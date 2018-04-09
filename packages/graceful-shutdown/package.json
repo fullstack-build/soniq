@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graceful-shutdown",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "dist/index.d.ts",
@@ -15,12 +15,12 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.2.5",
-    "@fullstack-one/config": "^0.2.5",
-    "@fullstack-one/di": "^0.2.5",
-    "@fullstack-one/events": "^0.2.5",
-    "@fullstack-one/logger": "^0.2.5",
-    "@fullstack-one/server": "^0.2.5",
+    "@fullstack-one/boot-loader": "^0.2.6",
+    "@fullstack-one/config": "^0.2.6",
+    "@fullstack-one/di": "^0.2.6",
+    "@fullstack-one/events": "^0.2.6",
+    "@fullstack-one/logger": "^0.2.6",
+    "@fullstack-one/server": "^0.2.6",
     "@godaddy/terminus": "^2.2.0",
     "signal-exit": "^3.0.2"
   },
