@@ -1,0 +1,30 @@
+{
+  "name": "@fullstack-one/file-storage",
+  "version": "0.2.5",
+  "description": "fullstack.one example package",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/boot-loader": "^0.2.5",
+    "@fullstack-one/config": "^0.2.5",
+    "@fullstack-one/db": "^0.2.5",
+    "@fullstack-one/di": "^0.2.5",
+    "@fullstack-one/graphql": "^0.2.5",
+    "@fullstack-one/graphql-parser": "^0.2.5",
+    "@fullstack-one/server": "^0.2.5",
+    "jsonwebtoken": "^8.1.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.3.0",
+    "minio": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.7.2"
+  }
+}

@@ -35,6 +35,7 @@ const utils = require("./parser/utils");
 exports.utils = utils;
 let GraphQlParser = class GraphQlParser {
     constructor(loggerFactory, config, bootLoader) {
+        this.sdlSchemaExtensions = [];
         this.parsers = [];
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
@@ -46,6 +47,9 @@ let GraphQlParser = class GraphQlParser {
     }
     getDbMeta() {
         return this.dbMeta;
+    }
+    extendSchema(schema) {
+        this.sdlSchemaExtensions.push(schema);
     }
     getGqlRuntimeData() {
         return {
@@ -74,7 +78,8 @@ let GraphQlParser = class GraphQlParser {
                 // load schema
                 const sdlSchemaPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
                 this.sdlSchema = yield helper_2.helper.loadFilesByGlobPattern(sdlSchemaPattern);
-                const sdlSchemaCombined = this.sdlSchema.join('\n');
+                // Combine all Schemas to a big one and add extensions from other modules
+                const sdlSchemaCombined = this.sdlSchema.concat(this.sdlSchemaExtensions.slice()).join('\n');
                 this.astSchema = helper_1.graphQl.helper.parseGraphQlSchema(sdlSchemaCombined);
                 this.dbMeta = graphQlSchemaToDbMeta_1.parseGraphQlJsonSchemaToDbMeta(this.astSchema);
                 // load permissions and expressions and generate views and put them into schemas

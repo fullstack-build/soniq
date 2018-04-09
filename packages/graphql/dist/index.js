@@ -37,6 +37,10 @@ const server_1 = require("@fullstack-one/server");
 const db_1 = require("@fullstack-one/db");
 let GraphQl = class GraphQl {
     constructor(loggerFactory, config, bootLoader, gqlParser, server, dbGeneralPool) {
+        this.resolvers = {};
+        this.customQueries = [];
+        this.customMutations = [];
+        this.customFields = {};
         this.preQueryHooks = [];
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
@@ -49,6 +53,18 @@ let GraphQl = class GraphQl {
     addPreQueryHook(fn) {
         this.preQueryHooks.push(fn);
     }
+    addResolvers(resolversObject) {
+        this.resolvers = Object.assign(this.resolvers, resolversObject);
+    }
+    addCustomQuery(operation) {
+        this.customQueries.push(operation);
+    }
+    addCustomMutation(operation) {
+        this.customMutations.push(operation);
+    }
+    addCustomFields(operations) {
+        this.customFields = Object.assign(this.customFields, operations);
+    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             const gqlKoaRouter = new KoaRouter();
@@ -56,9 +72,13 @@ let GraphQl = class GraphQl {
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
             const resolversObject = yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern);
             const rd = this.gqlParser.getGqlRuntimeData();
+            const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
+            customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
+            customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
+            customOperations.fields = Object.assign(customOperations.fields, this.customFields);
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: rd.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, rd.customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
+                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();

@@ -6,7 +6,7 @@ VALUES
 (E'auth_field_tenant',NULL),
 (E'auth_field_username',NULL),
 (E'auth_field_password',NULL),
-(E'auth_providers',E'password:facebook:twitter'),
+(E'auth_providers',E'local:facebook:twitter'),
 (E'auth_pw_secret',E'gehtdichnixan'),
 (E'bf_iter_count',E'6'),
 (E'pw_bf_iter_count',E'6'),

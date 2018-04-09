@@ -1,0 +1,15 @@
+
+type UploadFile {
+  extension: String!
+  name: String!
+  putUrl: String!
+  getUrl: String!
+  bucket: String!
+  object: String!
+  ownerUserId: String!
+  createdAt: String!
+}
+
+extend type Mutation {
+  createFile(extension: String!): UploadFile @custom(resolver: "@fullstack-one/file-storage/createFile")
+}

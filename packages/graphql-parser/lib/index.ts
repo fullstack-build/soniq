@@ -25,6 +25,7 @@ export class GraphQlParser {
 
   private graphQlConfig: any;
   private sdlSchema: any;
+  private sdlSchemaExtensions: any = [];
   private astSchema: any;
   private views: IViews;
   private expressions: IExpressions;
@@ -61,6 +62,10 @@ export class GraphQlParser {
     return this.dbMeta;
   }
 
+  public extendSchema(schema: string) {
+    this.sdlSchemaExtensions.push(schema);
+  }
+
   public getGqlRuntimeData() {
     return {
       dbMeta: this.dbMeta,
@@ -93,7 +98,8 @@ export class GraphQlParser {
       const sdlSchemaPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
       this.sdlSchema = await helper.loadFilesByGlobPattern(sdlSchemaPattern);
 
-      const sdlSchemaCombined = this.sdlSchema.join('\n');
+      // Combine all Schemas to a big one and add extensions from other modules
+      const sdlSchemaCombined = this.sdlSchema.concat(this.sdlSchemaExtensions.slice()).join('\n');
       this.astSchema = gQLHelper.helper.parseGraphQlSchema(sdlSchemaCombined);
 
       this.dbMeta = parseGraphQlJsonSchemaToDbMeta(this.astSchema);

@@ -5,6 +5,7 @@ export { utils };
 export declare class GraphQlParser {
     private graphQlConfig;
     private sdlSchema;
+    private sdlSchemaExtensions;
     private astSchema;
     private views;
     private expressions;
@@ -21,6 +22,7 @@ export declare class GraphQlParser {
     constructor(loggerFactory?: any, config?: any, bootLoader?: any);
     addParser(parser: any): void;
     getDbMeta(): any;
+    extendSchema(schema: string): void;
     getGqlRuntimeData(): {
         dbMeta: any;
         views: IViews;

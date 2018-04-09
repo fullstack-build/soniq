@@ -78,7 +78,7 @@ export class GraphQl {
 
     // Load resolvers
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-    const resolversObject = await helper.requireFilesByGlobPatternAsObject(resolversPattern);
+    this.addResolvers(await helper.requireFilesByGlobPatternAsObject(resolversPattern));
 
     const rd = this.gqlParser.getGqlRuntimeData();
 
@@ -91,7 +91,7 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: rd.gQlRuntimeSchema,
       resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
-      rd.mutations, customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
+      rd.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
