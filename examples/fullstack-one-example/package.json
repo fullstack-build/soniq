@@ -8,9 +8,9 @@
   },
   "main": "main.ts",
   "scripts": {
-    "start": "AUTH_JWT_SECRET=thisisasecretforjwt AUTH_ADMIN_SECRET=boss AUTH_PROVIDERS_SECRET=providersecret AUTH_COOKIE_SECRET=cookiesecret42 ts-node .",
-    "tistart": "AUTH_JWT_SECRET=thisisasecretforjwt AUTH_ADMIN_SECRET=boss AUTH_PROVIDERS_SECRET=providersecret AUTH_COOKIE_SECRET=cookiesecret42 FULLSTACK_ONE_DEV=true ts-node index.ts",
-    "dev": "nodemon --exec \"ts-node --inspect .\"",
+    "start": "ts-node .",
+    "dev": "FULLSTACK_ONE_DEV=true ts-node --inspect=9229 --require ./node_modules/ts-node/register .",
+    "nodemon": "nodemon",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
@@ -40,7 +40,7 @@
     "dotenv": "^4.0.0",
     "fullstack-one": "git+https://github.com/fullstack-build/fullstack.one.git",
     "fullstack.one": "git+https://github.com/fullstack-build/fullstack.one.git",
-    "nodemon": "^1.12.5",
+    "nodemon": "^1.17.2",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   }

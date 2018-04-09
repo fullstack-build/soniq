@@ -411,7 +411,7 @@ export class Auth {
         ctx.body = Object.assign({}, lData, { success: true });
       } catch (err) {
         ctx.response.status = 400;
-        ctx.body = { success: false, error: 'May this user already exists.' };
+        ctx.body = { success: false, error: 'This user may already exist or another error occured.' };
       }
     });
 

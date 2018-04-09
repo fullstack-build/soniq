@@ -21,7 +21,6 @@ process.on('unhandledRejection', (reason, p) => {
 
 
 import { Container } from '@fullstack-one/di'
-
 import { FullstackOneCore } from 'fullstack-one'
 import { GraphQl } from '@fullstack-one/graphql'
 import { AutoMigrate } from '@fullstack-one/auto-migrate'

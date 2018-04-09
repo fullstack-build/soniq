@@ -1,5 +1,11 @@
 {
 	"watch": ["../../packages", "../../examples"],
+	"verbose": true,
 	"ext": "ts",
-	"exec": "ts-node ."
+	"exec": "npm run dev",
+	"ignore": [
+    ".git",
+	"node_modules/",
+	"*.js"
+  ]
 }
