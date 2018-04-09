@@ -10,6 +10,7 @@
   "scripts": {
     "start": "ts-node .",
     "dev": "FULLSTACK_ONE_DEV=true ts-node --inspect=9229 --require ./node_modules/ts-node/register .",
+    "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
     "nodemon": "nodemon",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
