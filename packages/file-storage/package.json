@@ -9,6 +9,9 @@
     "start": "echo \"Error: no start specified\" && exit 1",
     "build": "tsc"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [],
   "license": "MIT",
   "dependencies": {

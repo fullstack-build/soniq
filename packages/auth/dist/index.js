@@ -360,7 +360,7 @@ let Auth = class Auth {
                 }
                 catch (err) {
                     ctx.response.status = 400;
-                    ctx.body = { success: false, error: 'May this user already exists.' };
+                    ctx.body = { success: false, error: 'This user may already exist or another error occured.' };
                 }
             }));
             authRouter.post('/auth/local/login', (ctx) => __awaiter(this, void 0, void 0, function* () {
