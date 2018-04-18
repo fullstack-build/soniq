@@ -9,9 +9,9 @@
   "main": "main.ts",
   "scripts": {
     "start": "ts-node .",
-    "dev": "FULLSTACK_ONE_DEV=true ts-node --inspect=9229 --require ./node_modules/ts-node/register .",
+    "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --inspect=9229 .",
+    "dev": "FULLSTACK_ONE_DEV=true ts-node-dev .",
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
-    "nodemon": "nodemon",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
@@ -34,6 +34,7 @@
     "@types/node": "^8.0.57",
     "git-hooks": "^1.1.9",
     "lerna": "^2.5.1",
+    "ts-node-dev": "^1.0.0-pre.19",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.4.2"
   },
@@ -41,7 +42,6 @@
     "dotenv": "^4.0.0",
     "fullstack-one": "git+https://github.com/fullstack-build/fullstack.one.git",
     "fullstack.one": "git+https://github.com/fullstack-build/fullstack.one.git",
-    "nodemon": "^1.17.2",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   }

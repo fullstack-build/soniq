@@ -70,7 +70,7 @@ let GraphQl = class GraphQl {
             const gqlKoaRouter = new KoaRouter();
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-            const resolversObject = yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern);
+            this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
             const rd = this.gqlParser.getGqlRuntimeData();
             const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
             customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
@@ -78,7 +78,7 @@ let GraphQl = class GraphQl {
             customOperations.fields = Object.assign(customOperations.fields, this.customFields);
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: rd.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, customOperations, resolversObject, this.preQueryHooks, this.dbGeneralPool),
+                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();

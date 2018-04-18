@@ -29,10 +29,10 @@ const graphql_1 = require("@fullstack-one/graphql");
 const graphql_parser_1 = require("@fullstack-one/graphql-parser");
 const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
-const minio_1 = require("minio");
+const Minio = require("minio");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 const fs = require("fs");
-const schema = fs.readFileSync(require.resolve('./schema.gql'));
+const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
 let FileStorage = class FileStorage {
     constructor(dbGeneralPool, server, bootLoader, config, graphQl, graphQlParser) {
         this.server = server;
@@ -40,7 +40,7 @@ let FileStorage = class FileStorage {
         this.graphQl = graphQl;
         this.graphQlParser = graphQlParser;
         this.fileStorageConfig = config.getConfig('fileStorage');
-        this.client = new minio_1.Minio.Client(this.fileStorageConfig.minio);
+        this.client = new Minio.Client(this.fileStorageConfig.minio);
         this.graphQlParser.extendSchema(schema);
         this.graphQl.addResolvers(this.getResolvers());
         bootLoader.addBootFunction(this.boot.bind(this));
