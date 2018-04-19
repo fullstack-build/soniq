@@ -1,5 +1,5 @@
 npm install
-sh pkg.sh
+sh ./scripts/pkg.sh
 lerna link --force-local
 cd examples/fullstack-one-example
 npm link @fullstack-one/di

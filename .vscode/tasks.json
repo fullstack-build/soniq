@@ -4,13 +4,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "► nodemon dev",
-            "type": "npm",
-            "script": "nodemon",
-            "path": "examples/fullstack-one-example/",
-            "problemMatcher": []
-        },
-        {
             "label": "► node dev",
             "type": "npm",
             "script": "dev",
