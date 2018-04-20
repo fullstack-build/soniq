@@ -6,12 +6,17 @@ import { setDefaultValueForColumn, setAuthValueForColumn, addConstraint, addMigr
 
 // Directive Parse
 interface IDirectiveParser {
-  [name: string]: (gQlDirectiveNode, dbMetaNode,refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => void;
+  [name: string]: (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => void;
 }
 const directiveParser: IDirectiveParser = {};
 
-export const registerDirectiveParser = (name, fn): void => {
-  directiveParser[name] = fn;
+export const registerDirectiveParser = (nameInLowerCase: string,
+                                        fn: (gQlDirectiveNode,
+                                             dbMetaNode,
+                                             refDbMeta,
+                                             refDbMetaCurrentTable,
+                                             refDbMetaCurrentTableColumn) => void): void => {
+  directiveParser[nameInLowerCase] = fn;
 };
 
 export const parseGQlAstToDbMeta = (graphQlJsonSchema): IDbMeta => {
