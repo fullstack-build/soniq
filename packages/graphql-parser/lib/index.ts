@@ -6,7 +6,7 @@ import { runtimeParser } from './parser';
 
 // import interfaces
 import { IViews, IExpressions } from './interfaces';
-import { parseGraphQlJsonSchemaToDbMeta } from './graphQlSchemaToDbMeta';
+import { parseGQlAstToDbMeta } from './gQlAstToDbMeta';
 // fullstack-one core
 import { Service, Inject, Container } from '@fullstack-one/di';
 // DI imports
@@ -24,9 +24,9 @@ export { utils };
 export class GraphQlParser {
 
   private graphQlConfig: any;
-  private sdlSchema: any;
-  private sdlSchemaExtensions: any = [];
-  private astSchema: any;
+  private gQlSdl: any;
+  private gQlSdlExtensions: any = [];
+  private gQlAst: any;
   private views: IViews;
   private expressions: IExpressions;
   private gQlRuntimeDocument: any;
@@ -63,7 +63,7 @@ export class GraphQlParser {
   }
 
   public extendSchema(schema: string) {
-    this.sdlSchemaExtensions.push(schema);
+    this.gQlSdlExtensions.push(schema);
   }
 
   public getGqlRuntimeData() {
@@ -80,14 +80,14 @@ export class GraphQlParser {
     };
   }
 
-  public getGraphQlSchema() {
+  public getGQlSdl() {
     // return copy insted of ref
-    return { ... this.sdlSchema };
+    return { ... this.gQlSdl };
   }
 
-  public getGraphQlJsonSchema() {
+  public getGQlAst() {
     // return copy insted of ref
-    return { ... this.astSchema };
+    return { ... this.gQlAst };
   }
 
   private async boot(): Promise<any> {
@@ -95,14 +95,14 @@ export class GraphQlParser {
     try {
 
       // load schema
-      const sdlSchemaPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
-      this.sdlSchema = await helper.loadFilesByGlobPattern(sdlSchemaPattern);
+      const gQlSdlPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
+      this.gQlSdl = await helper.loadFilesByGlobPattern(gQlSdlPattern);
 
       // Combine all Schemas to a big one and add extensions from other modules
-      const sdlSchemaCombined = this.sdlSchema.concat(this.sdlSchemaExtensions.slice()).join('\n');
-      this.astSchema = gQLHelper.helper.parseGraphQlSchema(sdlSchemaCombined);
+      const gQlSdlCombined = this.gQlSdl.concat(this.gQlSdlExtensions.slice()).join('\n');
+      this.gQlAst = gQLHelper.helper.parseGraphQlSchema(gQlSdlCombined);
 
-      this.dbMeta = parseGraphQlJsonSchemaToDbMeta(this.astSchema);
+      this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
 
       // load permissions and expressions and generate views and put them into schemas
       try {
@@ -119,7 +119,7 @@ export class GraphQlParser {
 
         const viewSchemaName = Container.get(Config).getConfig('db').viewSchemaName;
 
-        const combinedSchemaInformation = runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
+        const combinedSchemaInformation = runtimeParser(this.gQlAst, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
 
         this.gQlRuntimeDocument = combinedSchemaInformation.document;
         this.gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(this.gQlRuntimeDocument);

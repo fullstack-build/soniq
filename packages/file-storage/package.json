@@ -3,7 +3,7 @@
   "version": "0.2.6",
   "description": "fullstack.one example package",
   "main": "index.js",
-  "types": "dist/index.d.ts",
+  "types": "lib/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "echo \"Error: no start specified\" && exit 1",
@@ -11,6 +11,10 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
   },
   "keywords": [],
   "license": "MIT",

@@ -94,7 +94,7 @@ export class GraphQl {
       rd.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
     });
 
-    const setCacheHeaders = async (ctx, next) => {
+    const setCacheHeaders = async (ctx, next) => {
       await next();
       let cacheHeader = 'no-store';
       // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
