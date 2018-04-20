@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { IDbMeta, IDbRelation } from '@fullstack-one/db';
 
 export function setDefaultValueForColumn(gQlSchemaNode,
                                          dbMetaNode,
