@@ -6,7 +6,9 @@ import { runtimeParser } from './parser';
 
 // import interfaces
 import { IViews, IExpressions } from './interfaces';
-import { parseGQlAstToDbMeta } from './gQlAstToDbMeta';
+import { registerDirectiveParser, parseGQlAstToDbMeta } from './gQlAstToDbMeta';
+export { registerDirectiveParser };
+
 // fullstack-one core
 import { Service, Inject, Container } from '@fullstack-one/di';
 // DI imports

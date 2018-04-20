@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { registerDirectiveParser } from './gQlAstToDbMeta';
-import { addConstraint, setDefaultValueForColumn, addMigration, setAuthValueForColumn } from './gQlAstToDbMetaHelper';
+import { addConstraint, setDefaultValueForColumn, addMigration } from './gQlAstToDbMetaHelper';
 
 // ignore table, just make it available
 registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
@@ -97,41 +97,4 @@ registerDirectiveParser('immutable', (gQlDirectiveNode, dbMetaNode, refDbMeta, r
         isUpdatable: false,
         isDeletable: false
     };
-});
-// Auth directives
-registerDirectiveParser('auth', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    const directiveKind = gQlDirectiveNode.name.value;
-    setAuthValueForColumn(directiveKind,
-                          gQlDirectiveNode,
-                          dbMetaNode,
-                          refDbMeta,
-                          refDbMetaCurrentTable,
-                          refDbMetaCurrentTableColumn);
-});
-registerDirectiveParser('tenant', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    const directiveKind = gQlDirectiveNode.name.value;
-    setAuthValueForColumn(directiveKind,
-                          gQlDirectiveNode,
-                          dbMetaNode,
-                          refDbMeta,
-                          refDbMetaCurrentTable,
-                          refDbMetaCurrentTableColumn);
-});
-registerDirectiveParser('username', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    const directiveKind = gQlDirectiveNode.name.value;
-    setAuthValueForColumn(directiveKind,
-                          gQlDirectiveNode,
-                          dbMetaNode,
-                          refDbMeta,
-                          refDbMetaCurrentTable,
-                          refDbMetaCurrentTableColumn);
-});
-registerDirectiveParser('password', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    const directiveKind = gQlDirectiveNode.name.value;
-    setAuthValueForColumn(directiveKind,
-                          gQlDirectiveNode,
-                          dbMetaNode,
-                          refDbMeta,
-                          refDbMetaCurrentTable,
-                          refDbMetaCurrentTableColumn);
 });

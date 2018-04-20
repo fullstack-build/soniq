@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { readdirSync } from 'fs';
 
 import { IDbMeta, IDbRelation } from '@fullstack-one/db';
-import { setDefaultValueForColumn, setAuthValueForColumn, addConstraint, addMigration, relationBuilderHelper } from './gQlAstToDbMetaHelper';
+import { setDefaultValueForColumn, addConstraint, addMigration, relationBuilderHelper } from './gQlAstToDbMetaHelper';
 
 // Directive Parse
 interface IDirectiveParser {

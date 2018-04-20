@@ -16,6 +16,9 @@ import * as koaSession from 'koa-session';
 import oAuthCallback from './oAuthCallback';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
+// migration helper
+import * as migrationHelper from './migrationHelper';
+
 @Service()
 export class Auth {
 

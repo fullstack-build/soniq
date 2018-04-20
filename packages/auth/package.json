@@ -21,6 +21,7 @@
     "@fullstack-one/db": "^0.2.6",
     "@fullstack-one/di": "^0.2.6",
     "@fullstack-one/graphql": "^0.2.6",
+    "@fullstack-one/graphql-parser": "^0.2.6",
     "@fullstack-one/server": "^0.2.6",
     "jsonwebtoken": "^8.1.0",
     "koa-bodyparser": "^4.2.0",

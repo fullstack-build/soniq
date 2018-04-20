@@ -1,4 +1,3 @@
-
 import { isObject } from 'util';
 import * as _ from 'lodash';
 import * as deepEqual from 'deep-equal';
@@ -17,7 +16,7 @@ export namespace migrationObject {
                                              pToDbMeta: IDbMeta): IDbMeta {
 
     // check if toDbMeta is empty -> Parsing error
-    if (pToDbMeta == null || Object.keys(pToDbMeta).length === 0) {
+    if (pToDbMeta == null || Object.keys(pFromDbMeta).length === 0) {
       throw new Error(`Migration Error: Provided migration final state is empty.`);
     }
 
