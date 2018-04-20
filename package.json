@@ -25,7 +25,7 @@
     "TypeScript",
     "API",
     "Framework"
-  ],
+  ], 
   "authors": [
     "Eugene Terehov <eugene@fullstack.build>",
     "Dustin Hoffner <dustin@fullstack.build>"
