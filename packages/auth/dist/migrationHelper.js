@@ -1,19 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const graphql_parser_1 = require("@fullstack-one/graphql-parser");
 // Auth directives
-registerDirectiveParser('auth', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+graphql_parser_1.registerDirectiveParser('auth', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
     setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 });
-registerDirectiveParser('tenant', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+graphql_parser_1.registerDirectiveParser('tenant', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
     setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 });
-registerDirectiveParser('username', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+graphql_parser_1.registerDirectiveParser('username', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
     setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 });
-registerDirectiveParser('password', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+graphql_parser_1.registerDirectiveParser('password', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
     setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 });

@@ -17,6 +17,7 @@ declare const _default: () => {
                 kind: string;
                 value: string;
             };
+            type?: undefined;
         };
         defaultValue: any;
         directives: any[];
@@ -35,6 +36,7 @@ declare const _default: () => {
                     value: string;
                 };
             };
+            name?: undefined;
         };
         defaultValue: any;
         directives: any[];

@@ -23,7 +23,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import sub modules
 const helper_1 = require("./helper");
 const parser_1 = require("./parser");
-const graphQlSchemaToDbMeta_1 = require("./graphQlSchemaToDbMeta");
+const gQlAstToDbMeta_1 = require("./gQlAstToDbMeta");
+exports.registerDirectiveParser = gQlAstToDbMeta_1.registerDirectiveParser;
 // fullstack-one core
 const di_1 = require("@fullstack-one/di");
 // DI imports
@@ -35,7 +36,7 @@ const utils = require("./parser/utils");
 exports.utils = utils;
 let GraphQlParser = class GraphQlParser {
     constructor(loggerFactory, config, bootLoader) {
-        this.sdlSchemaExtensions = [];
+        this.gQlSdlExtensions = [];
         this.parsers = [];
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
@@ -49,7 +50,7 @@ let GraphQlParser = class GraphQlParser {
         return this.dbMeta;
     }
     extendSchema(schema) {
-        this.sdlSchemaExtensions.push(schema);
+        this.gQlSdlExtensions.push(schema);
     }
     getGqlRuntimeData() {
         return {
@@ -64,24 +65,24 @@ let GraphQlParser = class GraphQlParser {
             customOperations: this.customOperations
         };
     }
-    getGraphQlSchema() {
+    getGQlSdl() {
         // return copy insted of ref
-        return Object.assign({}, this.sdlSchema);
+        return Object.assign({}, this.gQlSdl);
     }
-    getGraphQlJsonSchema() {
+    getGQlAst() {
         // return copy insted of ref
-        return Object.assign({}, this.astSchema);
+        return Object.assign({}, this.gQlAst);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // load schema
-                const sdlSchemaPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
-                this.sdlSchema = yield helper_2.helper.loadFilesByGlobPattern(sdlSchemaPattern);
+                const gQlSdlPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
+                this.gQlSdl = yield helper_2.helper.loadFilesByGlobPattern(gQlSdlPattern);
                 // Combine all Schemas to a big one and add extensions from other modules
-                const sdlSchemaCombined = this.sdlSchema.concat(this.sdlSchemaExtensions.slice()).join('\n');
-                this.astSchema = helper_1.graphQl.helper.parseGraphQlSchema(sdlSchemaCombined);
-                this.dbMeta = graphQlSchemaToDbMeta_1.parseGraphQlJsonSchemaToDbMeta(this.astSchema);
+                const gQlSdlCombined = this.gQlSdl.concat(this.gQlSdlExtensions.slice()).join('\n');
+                this.gQlAst = helper_1.graphQl.helper.parseGraphQlSchema(gQlSdlCombined);
+                this.dbMeta = gQlAstToDbMeta_1.parseGQlAstToDbMeta(this.gQlAst);
                 // load permissions and expressions and generate views and put them into schemas
                 try {
                     // load permissions
@@ -93,7 +94,7 @@ let GraphQlParser = class GraphQlParser {
                     const expressionsArray = yield helper_2.helper.requireFilesByGlobPattern(expressionsPattern);
                     this.expressions = [].concat.apply([], expressionsArray);
                     const viewSchemaName = di_1.Container.get(config_1.Config).getConfig('db').viewSchemaName;
-                    const combinedSchemaInformation = parser_1.runtimeParser(this.astSchema, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
+                    const combinedSchemaInformation = parser_1.runtimeParser(this.gQlAst, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
                     this.gQlRuntimeDocument = combinedSchemaInformation.document;
                     this.gQlRuntimeSchema = helper_1.graphQl.helper.printGraphQlDocument(this.gQlRuntimeDocument);
                     this.gQlTypes = combinedSchemaInformation.gQlTypes;

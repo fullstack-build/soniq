@@ -1,12 +1,14 @@
 import { IViews, IExpressions } from './interfaces';
+import { registerDirectiveParser } from './gQlAstToDbMeta';
+export { registerDirectiveParser };
 export { IViews, IExpressions };
 import * as utils from './parser/utils';
 export { utils };
 export declare class GraphQlParser {
     private graphQlConfig;
-    private sdlSchema;
-    private sdlSchemaExtensions;
-    private astSchema;
+    private gQlSdl;
+    private gQlSdlExtensions;
+    private gQlAst;
     private views;
     private expressions;
     private gQlRuntimeDocument;
@@ -34,7 +36,7 @@ export declare class GraphQlParser {
         queries: any;
         customOperations: any;
     };
-    getGraphQlSchema(): any;
-    getGraphQlJsonSchema(): any;
+    getGQlSdl(): any;
+    getGQlAst(): any;
     private boot();
 }

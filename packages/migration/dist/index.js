@@ -73,10 +73,10 @@ let Migration = class Migration {
             catch (err) {
                 this.logger.info('migration.db.init.not.found');
             }
-            // find init scripts to ignore
+            // find init scripts to ignore (version lower than the current one)
             let initFoldersToIgnore = [];
             if (latestVersion > 0) {
-                const initFolders = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]`, {
+                const initFolders = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]`, {
                     deep: false,
                     onlyDirs: true,
                 });
@@ -93,7 +93,7 @@ let Migration = class Migration {
             const loadOptionalSuffixOrder = ['operator_class'];
             const loadFilesOrder = {};
             for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
-                const paths = fastGlob.sync(`${__dirname}/../init_scripts/[0-9].[0-9]/*/*.${suffix}.sql`, {
+                const paths = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]/*.${suffix}.sql`, {
                     ignore: initFoldersToIgnore,
                     deep: true,
                     onlyFiles: true,
@@ -203,9 +203,11 @@ let Migration = class Migration {
                         this.logger.trace('migration.view.sql.statement', sql);
                         yield dbClient.query(sql);
                     }
+                    // current framework db versin
+                    const dbVersion = (yield dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0].value;
                     // last step, save final dbMeta in _meta
                     this.logger.trace('migration.state.saved');
-                    yield dbClient.query(`INSERT INTO "_meta"."migrations"(state) VALUES($1)`, [this.toDbMeta]);
+                    yield dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, this.toDbMeta]);
                     // commit
                     this.logger.trace('migration.commit');
                     yield dbClient.query('COMMIT');

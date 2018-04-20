@@ -44,6 +44,8 @@ let Auth = class Auth {
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
         graphQl.addPreQueryHook(this.preQueryHook.bind(this));
         bootLoader.addBootFunction(this.boot.bind(this));
+        // register directive parser
+        require('./migrationHelper');
         this.addMiddleware();
         // this.linkPassport();
     }

@@ -16,9 +16,6 @@ import * as koaSession from 'koa-session';
 import oAuthCallback from './oAuthCallback';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
-// migration helper
-import * as migrationHelper from './migrationHelper';
-
 @Service()
 export class Auth {
 
@@ -48,6 +45,9 @@ export class Auth {
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
 
     bootLoader.addBootFunction(this.boot.bind(this));
+
+    // register directive parser
+    require('./migrationHelper');
 
     this.addMiddleware();
 
