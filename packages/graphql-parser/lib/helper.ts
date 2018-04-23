@@ -7,7 +7,7 @@ import { IDbMeta } from '@fullstack-one/db';
 
 export namespace graphQl.helper {
 
-  export const parseGraphQlSchema = (graphQlSchema) => {
+  export const parseGraphQlSchema: any = (graphQlSchema) => {
     try {
       return parse(graphQlSchema, { noLocation: true });
     } catch (err) {
