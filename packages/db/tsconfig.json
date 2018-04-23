@@ -1,7 +1,7 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
-        "lib": ["es2017"],
+        "lib": ["ES2017", "esnext.asynciterable"],
         "target": "es6",
         "module": "commonjs",
         "types": ["node"],

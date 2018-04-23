@@ -4,7 +4,7 @@ export declare class Auth {
     private dbGeneralPool;
     private server;
     private graphQl;
-    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any, graphQl?: any);
+    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, migration?: any, config?: any, graphQl?: any);
     setUser(client: any, accessToken: any): Promise<boolean>;
     loginOrRegister(username: any, tenant: any, provider: any, password: any, userIdentifier: any): Promise<any>;
     register(username: any, tenant: any): Promise<{

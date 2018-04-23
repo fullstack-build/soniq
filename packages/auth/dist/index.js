@@ -24,6 +24,7 @@ const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
 const server_1 = require("@fullstack-one/server");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
+const migration_1 = require("@fullstack-one/migration");
 const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
 const crypto_1 = require("./crypto");
@@ -36,14 +37,17 @@ const koaSession = require("koa-session");
 const oAuthCallback_1 = require("./oAuthCallback");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 let Auth = class Auth {
-    constructor(dbGeneralPool, server, bootLoader, config, graphQl) {
+    constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl) {
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
         this.authConfig = config.getConfig('auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
         graphQl.addPreQueryHook(this.preQueryHook.bind(this));
+        // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
+        // add migration path
+        migration.addMigrationPath(__dirname + '/..');
         // register directive parser
         require('./migrationHelper');
         this.addMiddleware();
@@ -509,8 +513,9 @@ Auth = __decorate([
     __param(0, di_1.Inject(type => db_1.DbGeneralPool)),
     __param(1, di_1.Inject(type => server_1.Server)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => config_1.Config)),
-    __param(4, di_1.Inject(type => graphql_1.GraphQl)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
+    __param(3, di_1.Inject(type => migration_1.Migration)),
+    __param(4, di_1.Inject(type => config_1.Config)),
+    __param(5, di_1.Inject(type => graphql_1.GraphQl)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], Auth);
 exports.Auth = Auth;

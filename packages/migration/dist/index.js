@@ -32,27 +32,15 @@ const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
 const createSqlObjFromMigrationObject_1 = require("./createSqlObjFromMigrationObject");
 // TODO: @eugene: Migration should be a Migration-Factory
 let Migration = class Migration {
-    constructor(fromDbMeta, toDbMeta, config, loggerFactory, dbAppClient) {
+    constructor(config, loggerFactory, dbAppClient) {
+        this.initSqlPaths = [__dirname + '/..'];
         // create logger
         this.logger = loggerFactory.create('Migration');
         this.dbAppClient = dbAppClient;
-        // check if toDbMeta is empty -> Parsing error
-        if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
-            throw new Error(`Migration Error: Provided migration final state is empty.`);
-        }
-        // crete copy of objects
-        // new
-        this.fromDbMeta = _.cloneDeep(fromDbMeta);
-        // remove views and exposed names
-        delete fromDbMeta.exposedNames;
-        // old
-        this.toDbMeta = _.cloneDeep(toDbMeta);
-        // remove views and exposed names
-        delete toDbMeta.exposedNames;
-        // remove graphql // todo graphql from config
-        delete toDbMeta.schemas.graphql;
-        // getSqlFromMigrationObj diff with actions
-        this.migrationObject = migrationObject_1.migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
+    }
+    // add paths with migration sql scripts
+    addMigrationPath(path) {
+        this.initSqlPaths.push(path);
     }
     getMigrationDbMeta() {
         return _.cloneDeep(this.migrationObject);
@@ -66,7 +54,7 @@ let Migration = class Migration {
             try {
                 const dbInitVersion = (yield dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
                 if (dbInitVersion != null && dbInitVersion.value != null) {
-                    latestVersion = parseFloat(dbInitVersion.value);
+                    latestVersion = parseInt(dbInitVersion.value, 100);
                     this.logger.debug('migration.db.init.version.detected', latestVersion);
                 }
             }
@@ -74,36 +62,41 @@ let Migration = class Migration {
                 this.logger.info('migration.db.init.not.found');
             }
             // find init scripts to ignore (version lower than the current one)
-            let initFoldersToIgnore = [];
-            if (latestVersion > 0) {
-                const initFolders = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]`, {
+            const initSqlFolders = [];
+            // run through all registered mpackages
+            this.initSqlPaths.map((initSqlPath) => {
+                // find all init_sql folders
+                fastGlob.sync(`${initSqlPath}/init_sql/[[0-9]*`, {
                     deep: false,
                     onlyDirs: true,
-                });
-                initFoldersToIgnore = initFolders.reduce((result, path) => {
-                    const pathVersion = parseFloat(path.split('/').pop());
-                    if (pathVersion <= latestVersion) {
-                        result.push(path + '/**');
+                }).map((path) => {
+                    const pathVersion = parseInt(path.split('/').pop(), 10);
+                    // keep only those with a higher version than the currently installed
+                    if (latestVersion < pathVersion) {
+                        initSqlFolders.push(path);
                     }
-                    return result;
-                }, []);
-            }
+                });
+            });
+            // iterate all active paths and collect all files grouped by types (suffix)
+            const loadFilesOrder = {};
+            // suffix types
             const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'set', 'insert', 'select'];
             // will try, but ignore any errors
             const loadOptionalSuffixOrder = ['operator_class'];
-            const loadFilesOrder = {};
-            for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
-                const paths = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]/*.${suffix}.sql`, {
-                    ignore: initFoldersToIgnore,
-                    deep: true,
-                    onlyFiles: true,
-                });
-                // load content
-                for (const filePath of paths) {
-                    loadFilesOrder[suffix] = loadFilesOrder[suffix] || [];
-                    loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
+            initSqlFolders.map((initSqlFolder) => {
+                // iterate all soffixes
+                for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
+                    const paths = fastGlob.sync(`${initSqlFolder}/*.${suffix}.sql`, {
+                        deep: true,
+                        onlyFiles: true,
+                    });
+                    // load content
+                    for (const filePath of paths) {
+                        loadFilesOrder[suffix] = loadFilesOrder[suffix] || [];
+                        loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
+                    }
                 }
-            }
+            });
             // only if there are migration folders left
             if (Object.keys(loadFilesOrder).length > 0) {
                 // run migration sql - mandatory
@@ -158,7 +151,24 @@ let Migration = class Migration {
             }
         });
     }
-    getMigrationSqlStatements(renameInsteadOfDrop = true) {
+    getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop = true) {
+        // check if toDbMeta is empty -> Parsing error
+        if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
+            throw new Error(`Migration Error: Provided migration final state is empty.`);
+        }
+        // crete copy of objects
+        // new
+        this.fromDbMeta = _.cloneDeep(fromDbMeta);
+        // remove views and exposed names
+        delete fromDbMeta.exposedNames;
+        // old
+        this.toDbMeta = _.cloneDeep(toDbMeta);
+        // remove views and exposed names
+        delete toDbMeta.exposedNames;
+        // remove graphql // todo graphql from config
+        delete toDbMeta.schemas.graphql;
+        // getSqlFromMigrationObj diff with actions
+        this.migrationObject = migrationObject_1.migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
         return createSqlObjFromMigrationObject_1.sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
     }
     getViewsSql() {
@@ -176,14 +186,14 @@ let Migration = class Migration {
         }
         return bootSql;
     }
-    migrate(renameInsteadOfDrop = true) {
+    migrate(fromDbMeta, toDbMeta, renameInsteadOfDrop = true) {
         return __awaiter(this, void 0, void 0, function* () {
             // get DB pgClient from DI container
             const dbClient = this.dbAppClient.pgClient;
             // init DB
             yield this.initDb();
             // get migration statements
-            const migrationSqlStatements = this.getMigrationSqlStatements(renameInsteadOfDrop);
+            const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
             // anything to migrate?
             if (migrationSqlStatements.length > 0) {
                 // get view statements
@@ -230,10 +240,10 @@ let Migration = class Migration {
 };
 Migration = __decorate([
     di_1.Service(),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __param(3, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(4, di_1.Inject(type => db_1.DbAppClient)),
-    __metadata("design:paramtypes", [Object, Object, config_1.Config,
+    __param(0, di_1.Inject(type => config_1.Config)),
+    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(2, di_1.Inject(type => db_1.DbAppClient)),
+    __metadata("design:paramtypes", [config_1.Config,
         logger_1.LoggerFactory,
         db_1.DbAppClient])
 ], Migration);
