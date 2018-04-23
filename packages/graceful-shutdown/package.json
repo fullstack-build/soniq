@@ -22,6 +22,7 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.2.7",
     "@fullstack-one/config": "^0.2.7",
+    "@fullstack-one/db": "^0.2.7",
     "@fullstack-one/di": "^0.2.7",
     "@fullstack-one/events": "^0.2.7",
     "@fullstack-one/logger": "^0.2.7",
