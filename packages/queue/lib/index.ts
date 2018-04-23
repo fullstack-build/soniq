@@ -55,7 +55,7 @@ export class QueueFactory {
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = Object.assign(pgCon, {
-        close: pgCon.end, // Not required
+        close: pgCon.release, // Not required
         executeSql: pgCon.query
       });
 

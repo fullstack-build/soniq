@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/migration",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "fullstack.one migration package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,10 +20,10 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/config": "^0.2.6",
-    "@fullstack-one/db": "^0.2.6",
-    "@fullstack-one/di": "^0.2.6",
-    "@fullstack-one/logger": "^0.2.6",
+    "@fullstack-one/config": "^0.2.7",
+    "@fullstack-one/db": "^0.2.7",
+    "@fullstack-one/di": "^0.2.7",
+    "@fullstack-one/logger": "^0.2.7",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1",
     "lodash": "^4.17.5",

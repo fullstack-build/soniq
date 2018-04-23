@@ -63,7 +63,7 @@ let Migration = class Migration {
             }
             // find init scripts to ignore (version lower than the current one)
             const initSqlFolders = [];
-            // run through all registered mpackages
+            // run through all registered packages
             this.initSqlPaths.map((initSqlPath) => {
                 // find all init_sql folders
                 fastGlob.sync(`${initSqlPath}/init_sql/[[0-9]*`, {
@@ -194,8 +194,11 @@ let Migration = class Migration {
             yield this.initDb();
             // get migration statements
             const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
-            // anything to migrate?
-            if (migrationSqlStatements.length > 0) {
+            // get previous migration and compare to current
+            const previousMigrationRow = (yield dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
+            const previousMigrationStateJSON = (previousMigrationRow == null) ? '{}' : JSON.stringify(previousMigrationRow.state);
+            // anything to migrate and not the same as last time?
+            if (migrationSqlStatements.length > 0 && previousMigrationStateJSON !== JSON.stringify(toDbMeta)) {
                 // get view statements
                 const viewsSqlStatements = this.getViewsSql();
                 // run DB migrations
