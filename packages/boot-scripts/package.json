@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/boot-scripts",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,11 +20,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.2.6",
-    "@fullstack-one/config": "^0.2.6",
-    "@fullstack-one/di": "^0.2.6",
-    "@fullstack-one/events": "^0.2.6",
-    "@fullstack-one/logger": "^0.2.6",
+    "@fullstack-one/boot-loader": "^0.2.7",
+    "@fullstack-one/config": "^0.2.7",
+    "@fullstack-one/di": "^0.2.7",
+    "@fullstack-one/events": "^0.2.7",
+    "@fullstack-one/logger": "^0.2.7",
     "fast-glob": "^2.0.4",
     "koa": "^2.5.0"
   },
