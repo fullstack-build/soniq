@@ -9,7 +9,7 @@ export namespace graphQl.helper {
 
   export const parseGraphQlSchema = (graphQlSchema) => {
     try {
-      return parse(graphQlSchema, { noLocation: true, noSource: true });
+      return parse(graphQlSchema, { noLocation: true });
     } catch (err) {
       throw err;
     }
