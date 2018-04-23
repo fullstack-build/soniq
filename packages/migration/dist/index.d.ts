@@ -2,16 +2,18 @@ import { Config } from '@fullstack-one/config';
 import { LoggerFactory } from '@fullstack-one/logger';
 import { IDbMeta, DbAppClient } from '@fullstack-one/db';
 export declare class Migration {
-    private readonly fromDbMeta;
-    private readonly toDbMeta;
-    private readonly migrationObject;
+    private fromDbMeta;
+    private toDbMeta;
+    private migrationObject;
     private dbAppClient;
+    private initSqlPaths;
     private logger;
-    constructor(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
+    constructor(config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
+    addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
     initDb(): Promise<void>;
-    getMigrationSqlStatements(renameInsteadOfDrop?: boolean): string[];
+    getMigrationSqlStatements(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, renameInsteadOfDrop?: boolean): string[];
     getViewsSql(): any[];
     getBootSql(): any[];
-    migrate(renameInsteadOfDrop?: boolean): Promise<void>;
+    migrate(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, renameInsteadOfDrop?: boolean): Promise<void>;
 }

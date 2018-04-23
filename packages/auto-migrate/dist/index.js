@@ -29,10 +29,11 @@ const db_1 = require("@fullstack-one/db");
 const graphql_parser_1 = require("@fullstack-one/graphql-parser");
 const _ = require("lodash");
 let AutoMigrate = class AutoMigrate {
-    constructor(loggerFactory, bootLoader, config, gqlParser, dbAppClient) {
+    constructor(loggerFactory, bootLoader, migration, config, gqlParser, dbAppClient) {
         this.logger = loggerFactory.create('AutoMigrate');
         this.gqlParser = gqlParser;
         this.config = config;
+        this.migration = migration;
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         bootLoader.addBootFunction(this.boot.bind(this));
@@ -53,13 +54,10 @@ let AutoMigrate = class AutoMigrate {
             try {
                 const fromDbMeta = yield (new db_1.PgToDbMeta()).getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
-                // TODO: @eugene: Migration should be a Migration-Factory
-                const migration = new migration_1.Migration(fromDbMeta, toDbMeta, this.config, di_1.Container.get(logger_1.LoggerFactory), di_1.Container.get(db_1.DbAppClient));
-                return migration.getMigrationSqlStatements(configDB.renameInsteadOfDrop);
+                return this.migration.getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
-                // tslint:disable-next-line:no-console
-                console.error('ERROR', err);
+                this.logger.warn('getMigrationSql.error', err);
             }
         });
     }
@@ -70,12 +68,9 @@ let AutoMigrate = class AutoMigrate {
                 const pgToDbMeta = di_1.Container.get(db_1.PgToDbMeta);
                 const fromDbMeta = yield pgToDbMeta.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
-                // TODO: @eugene: Migration should be a Migration-Factory
-                const migration = new migration_1.Migration(fromDbMeta, toDbMeta, this.config, di_1.Container.get(logger_1.LoggerFactory), di_1.Container.get(db_1.DbAppClient));
-                return yield migration.migrate(configDB.renameInsteadOfDrop);
+                return yield this.migration.migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
-                // tslint:disable-next-line:no-console
                 this.logger.warn('runMigration.error', err);
             }
         });
@@ -85,11 +80,13 @@ AutoMigrate = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __param(3, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
-    __param(4, di_1.Inject(type => db_1.DbAppClient)),
+    __param(2, di_1.Inject(type => migration_1.Migration)),
+    __param(3, di_1.Inject(type => config_1.Config)),
+    __param(4, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
+    __param(5, di_1.Inject(type => db_1.DbAppClient)),
     __metadata("design:paramtypes", [logger_1.LoggerFactory,
         boot_loader_1.BootLoader,
+        migration_1.Migration,
         config_1.Config,
         graphql_parser_1.GraphQlParser,
         db_1.DbAppClient])

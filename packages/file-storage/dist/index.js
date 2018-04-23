@@ -24,6 +24,7 @@ const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
 const server_1 = require("@fullstack-one/server");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
+const migration_1 = require("@fullstack-one/migration");
 const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
 const graphql_parser_1 = require("@fullstack-one/graphql-parser");
@@ -34,11 +35,13 @@ const Minio = require("minio");
 const fs = require("fs");
 const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
 let FileStorage = class FileStorage {
-    constructor(dbGeneralPool, server, bootLoader, config, graphQl, graphQlParser) {
+    constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl, graphQlParser) {
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
         this.graphQlParser = graphQlParser;
+        // add migration path
+        migration.addMigrationPath(__dirname + '/..');
         this.fileStorageConfig = config.getConfig('fileStorage');
         this.client = new Minio.Client(this.fileStorageConfig.minio);
         this.graphQlParser.extendSchema(schema);
@@ -79,10 +82,11 @@ FileStorage = __decorate([
     __param(0, di_1.Inject(type => db_1.DbGeneralPool)),
     __param(1, di_1.Inject(type => server_1.Server)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => config_1.Config)),
-    __param(4, di_1.Inject(type => graphql_1.GraphQl)),
-    __param(5, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
+    __param(3, di_1.Inject(type => migration_1.Migration)),
+    __param(4, di_1.Inject(type => config_1.Config)),
+    __param(5, di_1.Inject(type => graphql_1.GraphQl)),
+    __param(6, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object, Object])
 ], FileStorage);
 exports.FileStorage = FileStorage;
 /*

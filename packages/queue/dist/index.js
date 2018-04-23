@@ -59,7 +59,7 @@ let QueueFactory = class QueueFactory {
                 const pgCon = yield this.generalPool.pgPool.connect();
                 // Add `close` and `executeSql` functions for PgBoss to function
                 const pgBossDB = Object.assign(pgCon, {
-                    close: pgCon.end,
+                    close: pgCon.release,
                     executeSql: pgCon.query
                 });
                 // create a PGBoss instance
