@@ -3,7 +3,7 @@ import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 
 import { Service, Container, Inject } from '@fullstack-one/di';
-import { Config } from '@fullstack-one/config';
+import { Config, IEnvironment } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { IDbMeta, DbAppClient } from '@fullstack-one/db';
 import { migrationObject } from './migrationObject';
@@ -15,17 +15,16 @@ import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 @Service()
 export class Migration {
 
-  private readonly fromDbMeta: IDbMeta;
-  private readonly toDbMeta: IDbMeta;
-  private readonly migrationObject: IDbMeta;
+  private fromDbMeta: IDbMeta;
+  private toDbMeta: IDbMeta;
+  private migrationObject: IDbMeta;
   private dbAppClient: DbAppClient;
+  private initSqlPaths = [__dirname + '/..'];
 
   // DI
   private logger: ILogger;
 
-  constructor(fromDbMeta: IDbMeta,
-              toDbMeta: IDbMeta,
-              @Inject(type => Config) config?: Config,
+  constructor(@Inject(type => Config) config?: Config,
               @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory,
               @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
@@ -33,27 +32,11 @@ export class Migration {
     this.logger = loggerFactory.create('Migration');
     this.dbAppClient = dbAppClient;
 
-    // check if toDbMeta is empty -> Parsing error
-    if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
-      throw new Error(`Migration Error: Provided migration final state is empty.`);
-    }
+  }
 
-    // crete copy of objects
-    // new
-    this.fromDbMeta = _.cloneDeep(fromDbMeta);
-    // remove views and exposed names
-    delete fromDbMeta.exposedNames;
-
-    // old
-    this.toDbMeta = _.cloneDeep(toDbMeta);
-    // remove views and exposed names
-    delete toDbMeta.exposedNames;
-    // remove graphql // todo graphql from config
-    delete toDbMeta.schemas.graphql;
-
-    // getSqlFromMigrationObj diff with actions
-    this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
-
+  // add paths with migration sql scripts
+  public addMigrationPath(path: string) {
+    this.initSqlPaths.push(path);
   }
 
   public getMigrationDbMeta(): IDbMeta {
@@ -70,7 +53,7 @@ export class Migration {
       const dbInitVersion = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
 
       if (dbInitVersion != null && dbInitVersion.value != null) {
-        latestVersion = parseFloat(dbInitVersion.value);
+        latestVersion = parseInt(dbInitVersion.value, 100);
         this.logger.debug('migration.db.init.version.detected', latestVersion);
       }
     } catch (err) {
@@ -78,38 +61,43 @@ export class Migration {
     }
 
     // find init scripts to ignore (version lower than the current one)
-    let initFoldersToIgnore = [];
-    if (latestVersion > 0) {
-      const initFolders = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]`, {
+    const initSqlFolders = [];
+    // run through all registered mpackages
+    this.initSqlPaths.map((initSqlPath) => {
+      // find all init_sql folders
+      fastGlob.sync(`${initSqlPath}/init_sql/[[0-9]*`, {
         deep: false,
         onlyDirs: true,
-      });
-      initFoldersToIgnore = initFolders.reduce((result, path) => {
-        const pathVersion = parseFloat(path.split('/').pop());
-        if (pathVersion <= latestVersion) {
-          result.push(path + '/**');
+      }).map((path) => {
+        const pathVersion: number = parseInt(path.split('/').pop(), 10);
+        // keep only those with a higher version than the currently installed
+        if (latestVersion < pathVersion) {
+          initSqlFolders.push(path);
         }
-        return result;
-      }, []);
-    }
+      });
+    });
 
+    // iterate all active paths and collect all files grouped by types (suffix)
+    const loadFilesOrder  = {};
+    // suffix types
     const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'set', 'insert', 'select'];
     // will try, but ignore any errors
     const loadOptionalSuffixOrder = ['operator_class'];
-    const loadFilesOrder  = {};
-    for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
-      const paths = fastGlob.sync(`${__dirname}/../../*/init_sql/[0-9].[0-9]/*.${suffix}.sql`, {
-        ignore: initFoldersToIgnore,
-        deep: true,
-        onlyFiles: true,
-      });
+    initSqlFolders.map((initSqlFolder) => {
+      // iterate all soffixes
+      for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
+        const paths = fastGlob.sync(`${initSqlFolder}/*.${suffix}.sql`, {
+          deep: true,
+          onlyFiles: true,
+        });
 
-      // load content
-      for (const filePath of paths) {
-        loadFilesOrder[suffix] = loadFilesOrder[suffix] || [];
-        loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
+        // load content
+        for (const filePath of paths) {
+          loadFilesOrder[suffix] = loadFilesOrder[suffix] || [];
+          loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
+        }
       }
-    }
+    });
 
     // only if there are migration folders left
     if (Object.keys(loadFilesOrder).length > 0) {
@@ -167,7 +155,31 @@ export class Migration {
 
   }
 
-  public getMigrationSqlStatements(renameInsteadOfDrop: boolean = true): string[] {
+  public getMigrationSqlStatements(fromDbMeta: IDbMeta,
+                                   toDbMeta: IDbMeta,
+                                   renameInsteadOfDrop: boolean = true): string[] {
+
+    // check if toDbMeta is empty -> Parsing error
+    if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
+      throw new Error(`Migration Error: Provided migration final state is empty.`);
+    }
+
+    // crete copy of objects
+    // new
+    this.fromDbMeta = _.cloneDeep(fromDbMeta);
+    // remove views and exposed names
+    delete fromDbMeta.exposedNames;
+
+    // old
+    this.toDbMeta = _.cloneDeep(toDbMeta);
+    // remove views and exposed names
+    delete toDbMeta.exposedNames;
+    // remove graphql // todo graphql from config
+    delete toDbMeta.schemas.graphql;
+
+    // getSqlFromMigrationObj diff with actions
+    this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
+
     return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
   }
 
@@ -192,7 +204,9 @@ export class Migration {
     return bootSql;
   }
 
-  public async migrate(renameInsteadOfDrop: boolean = true): Promise<void> {
+  public async migrate(fromDbMeta: IDbMeta,
+                       toDbMeta: IDbMeta,
+                       renameInsteadOfDrop: boolean = true): Promise<void> {
 
     // get DB pgClient from DI container
     const dbClient = this.dbAppClient.pgClient;
@@ -201,7 +215,7 @@ export class Migration {
     await this.initDb();
 
     // get migration statements
-    const migrationSqlStatements = this.getMigrationSqlStatements(renameInsteadOfDrop);
+    const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
 
     // anything to migrate?
     if (migrationSqlStatements.length > 0) {

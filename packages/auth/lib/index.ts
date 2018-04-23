@@ -2,6 +2,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
+import { Migration } from '@fullstack-one/migration';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 
@@ -31,6 +32,7 @@ export class Auth {
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
+    @Inject(type => Migration) migration?,
     @Inject(type => Config) config?,
     @Inject(type => GraphQl) graphQl?
   ) {
@@ -44,7 +46,11 @@ export class Auth {
 
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
 
+    // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
+
+    // add migration path
+    migration.addMigrationPath(__dirname + '/..');
 
     // register directive parser
     require('./migrationHelper');

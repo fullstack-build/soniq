@@ -6,6 +6,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { Config } from '@fullstack-one/config';
 import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
+import { Migration } from '@fullstack-one/migration';
 
 @Service()
 export class Email {
@@ -23,13 +24,17 @@ export class Email {
 
   constructor(
     @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => QueueFactory) queueFactory?) {
+    @Inject(type => QueueFactory) queueFactory?,
+    @Inject(type => Migration) migration?) {
 
     // set DI dependencies
     this.CONFIG = Container.get(Config).getConfig('email');
     this.queueFactory = queueFactory;
 
     this.logger = loggerFactory.create('Email');
+
+    // add migration path
+    migration.addMigrationPath(__dirname + '/..');
 
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {

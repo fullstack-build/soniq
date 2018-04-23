@@ -17,10 +17,12 @@ export class AutoMigrate {
   private eventEmitter: EventEmitter;
   private gqlParser: GraphQlParser;
   private config: Config;
+  private migration: Migration;
 
   constructor(
     @Inject(type => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject(type => BootLoader) bootLoader: BootLoader,
+    @Inject(type => Migration) migration: Migration,
     @Inject(type => Config) config: Config,
     @Inject(type => GraphQlParser) gqlParser: GraphQlParser,
     @Inject(type => DbAppClient) dbAppClient: DbAppClient) {
@@ -28,6 +30,7 @@ export class AutoMigrate {
     this.logger = loggerFactory.create('AutoMigrate');
     this.gqlParser = gqlParser;
     this.config = config;
+    this.migration = migration;
 
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
@@ -50,13 +53,10 @@ export class AutoMigrate {
     try {
       const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
-      // TODO: @eugene: Migration should be a Migration-Factory
-      const migration       = new Migration(fromDbMeta, toDbMeta, this.config, Container.get(LoggerFactory), Container.get(DbAppClient));
-      return migration.getMigrationSqlStatements(configDB.renameInsteadOfDrop);
+      return this.migration.getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
 
     } catch (err) {
-      // tslint:disable-next-line:no-console
-      console.error('ERROR', err);
+      this.logger.warn('getMigrationSql.error', err);
     }
   }
 
@@ -64,15 +64,12 @@ export class AutoMigrate {
 
     const configDB = this.config.getConfig('db');
     try {
-      const pgToDbMeta = Container.get(PgToDbMeta);
+      const pgToDbMeta      = Container.get(PgToDbMeta);
       const fromDbMeta      = await pgToDbMeta.getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
-      // TODO: @eugene: Migration should be a Migration-Factory
-      const migration       = new Migration(fromDbMeta, toDbMeta, this.config, Container.get(LoggerFactory), Container.get(DbAppClient));
-      return await migration.migrate(configDB.renameInsteadOfDrop);
+      return await this.migration.migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
 
     } catch (err) {
-      // tslint:disable-next-line:no-console
       this.logger.warn('runMigration.error', err);
     }
   }

@@ -2,6 +2,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
+import { Migration } from '@fullstack-one/migration';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 import { GraphQlParser } from '@fullstack-one/graphql-parser';
@@ -30,6 +31,7 @@ export class FileStorage {
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
+    @Inject(type => Migration) migration?,
     @Inject(type => Config) config?,
     @Inject(type => GraphQl) graphQl?,
     @Inject(type => GraphQlParser) graphQlParser?
@@ -39,6 +41,9 @@ export class FileStorage {
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
     this.graphQlParser = graphQlParser;
+
+    // add migration path
+    migration.addMigrationPath(__dirname + '/..');
 
     this.fileStorageConfig = config.getConfig('fileStorage');
 
