@@ -12,7 +12,8 @@
         "declaration": true,
         "outDir": "./dist",
         "strict": false,
-        "suppressImplicitAnyIndexErrors": true
+        "suppressImplicitAnyIndexErrors": true,
+        "allowSyntheticDefaultImports": true
     },
     "exclude": [
         "node_modules",

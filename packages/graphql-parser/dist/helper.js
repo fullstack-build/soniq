@@ -18,7 +18,7 @@ var graphQl;
     (function (helper) {
         helper.parseGraphQlSchema = (graphQlSchema) => {
             try {
-                return graphql_1.parse(graphQlSchema, { noLocation: true, noSource: true });
+                return graphql_1.parse(graphQlSchema, { noLocation: true });
             }
             catch (err) {
                 throw err;
