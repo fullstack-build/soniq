@@ -5,7 +5,7 @@ const DebugLogger = require("debug-logger");
 // import * as LE from 'le_node';
 const Tracer = require("tracer");
 class Logger {
-    constructor(moduleName = 'root', config) {
+    constructor(moduleName = 'root', loggerConfig) {
         this.LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
         // tracer
         this.tracerLogger = null;
@@ -15,7 +15,6 @@ class Logger {
         // const config: any = Container.get('CONFIG');
         this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
         this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
-        const loggerConfig = config.getConfig('logger');
         // setup tracer
         const tracerConfig = {
             // min level

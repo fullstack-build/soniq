@@ -11,14 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 const path = require("path");
-const fs = require("fs");
-const crypto_1 = require("crypto");
 const _ = require("lodash");
+const crypto_1 = require("crypto");
 let Config = class Config {
     constructor() {
+        this.configFolder = [];
+        this.config = {};
         // load project package.js
         const projectPath = path.dirname(require.main.filename);
-        const PROJECT_PACKAGE = require(`${projectPath}/package.json`);
+        // each package in the mono repo has the same version
+        const PROJECT_PACKAGE = require(`../package.json`);
         // ENV CONST
         this.ENVIRONMENT = {
             NODE_ENV: process.env.NODE_ENV,
@@ -26,12 +28,12 @@ let Config = class Config {
             path: projectPath,
             port: parseInt(process.env.PORT, 10),
             version: PROJECT_PACKAGE.version,
-            // getSqlFromMigrationObj unique instance ID (6 char)
+            // unique instance ID (6 char)
             nodeId: crypto_1.randomBytes(20).toString('hex').substr(5, 6),
             namespace: 'one' // default
         };
-        // load config
-        this.loadConfig();
+        // load package config
+        this.addConfigFolder(__dirname + '/../config');
         // set namespace from config
         this.ENVIRONMENT.namespace = this.getConfig('core').namespace;
         // put ENVIRONMENT into DI
@@ -49,25 +51,54 @@ let Config = class Config {
         }
     }
     // load config based on ENV
-    loadConfig() {
-        // framework config path
-        const frameworkConfigPath = `./default`;
-        // project config paths
-        const mainConfigPath = `${this.ENVIRONMENT.path}/config/default.ts`;
-        const envConfigPath = `${this.ENVIRONMENT.path}/config/${this.ENVIRONMENT.NODE_ENV}.ts`;
-        // load framework config file
-        let config = require(frameworkConfigPath);
-        // extend framework config
-        // with project config (so it can override framework settings
-        if (!!fs.existsSync(mainConfigPath)) {
-            config = _.merge(config, require(mainConfigPath));
+    addConfigFolder(configPath) {
+        // check if path was already included
+        if (!this.configFolder.includes(configPath)) {
+            this.configFolder.push(configPath);
         }
-        // extend with env config
-        if (!!fs.existsSync(envConfigPath)) {
+        // config files
+        const mainConfigPath = `${configPath}/default.js`;
+        const envConfigPath = `${configPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
+        // require config files
+        let config = null;
+        // require default config - fail if not found
+        try {
+            config = require(mainConfigPath);
+        }
+        catch (err) {
+            process.stderr.write('config.default.loading.error.not.found: ' + mainConfigPath + '\n');
+            process.exit();
+        }
+        // try to load env config – ignore if not found
+        try {
             config = _.merge(config, require(envConfigPath));
         }
+        catch (err) {
+            // ignore if not found
+        }
+        // check loaded config for undefined settings
+        let foundMissingConfig = false;
+        this.deepMapHelper(config, (val, key) => {
+            if (val == null) {
+                process.stderr.write(`config.not.set: ${key}` + '\n');
+                foundMissingConfig = true;
+            }
+        });
+        // missing config found?
+        if (!!foundMissingConfig) {
+            process.exit();
+        }
+        // everything seems to be fine so far -> merge with the global settings object
+        this.config = _.merge(this.config, config);
         // put config into DI
-        di_1.Container.set('CONFIG', config);
+        di_1.Container.set('CONFIG', this.config);
+    }
+    deepMapHelper(obj, iterator, context) {
+        return _.transform(obj, (result, val, key) => {
+            result[key] = _.isObject(val) /*&& !_.isDate(val)*/ ?
+                this.deepMapHelper(val, iterator, context) :
+                iterator.call(context, val, key, obj);
+        });
     }
 };
 Config = __decorate([

@@ -29,10 +29,12 @@ const events_1 = require("@fullstack-one/events");
 const logger_1 = require("@fullstack-one/logger");
 const migration_1 = require("@fullstack-one/migration");
 let Email = class Email {
-    constructor(loggerFactory, queueFactory, migration) {
+    constructor(loggerFactory, queueFactory, config, migration) {
         this.isReady = false;
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         // set DI dependencies
-        this.CONFIG = di_1.Container.get(config_1.Config).getConfig('email');
+        this.CONFIG = config.getConfig('email');
         this.queueFactory = queueFactory;
         this.logger = loggerFactory.create('Email');
         // add migration path
@@ -147,7 +149,8 @@ Email = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => queue_1.QueueFactory)),
-    __param(2, di_1.Inject(type => migration_1.Migration)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __param(3, di_1.Inject(type => migration_1.Migration)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], Email);
 exports.Email = Email;

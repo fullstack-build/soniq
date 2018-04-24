@@ -31,6 +31,8 @@ let QueueFactory = class QueueFactory {
         // set DI dependencies
         this.generalPool = generalPool;
         this.logger = loggerFactory.create('Queue');
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
     }
     getQueue() {
         return __awaiter(this, void 0, void 0, function* () {

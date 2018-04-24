@@ -49,6 +49,9 @@ export class GraphQlParser {
     @Inject(type => Config) config?,
     @Inject(type => BootLoader) bootLoader?
     ) {
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     this.logger = loggerFactory.create('GraphQl');
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;

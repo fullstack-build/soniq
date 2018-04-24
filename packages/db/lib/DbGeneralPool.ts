@@ -24,6 +24,9 @@ export class DbGeneralPool implements IDb  {
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => Config) config?
     ) {
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     // DI
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbGeneralPool');

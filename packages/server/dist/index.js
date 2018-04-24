@@ -33,9 +33,12 @@ let Server = class Server {
     constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
     loggerFactory, config, bootLoader) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         // this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('Server');
         // get settings from DI container
+        this.serverConfig = config.getConfig('server');
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         // bootLoader.addBootFunction(this.boot.bind(this));
         this.boot();
@@ -51,11 +54,11 @@ let Server = class Server {
             try {
                 this.app = new Koa();
                 // start KOA on PORT
-                this.server = http.createServer(this.app.callback()).listen(this.ENVIRONMENT.port);
+                this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
                 // emit event
-                this.emit('server.up', this.ENVIRONMENT.port);
+                this.emit('server.up', this.serverConfig.port);
                 // success log
-                this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+                this.logger.info('Server listening on port', this.serverConfig.port);
             }
             catch (e) {
                 // tslint:disable-next-line:no-console

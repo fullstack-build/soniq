@@ -7,9 +7,8 @@ import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
-import { signJwt, verifyJwt, getProviderSignature, getAdminSignature, getCookieSecret } from './sign';
-// tslint:disable-next-line:no-var-requires
-const passport = require('koa-passport');
+import { signJwt, verifyJwt, getProviderSignature, getAdminSignature } from './signHelper';
+import * as passport from 'koa-passport';
 import { LocalStrategy } from 'passport-local';
 import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
@@ -37,6 +36,10 @@ export class Auth {
     @Inject(type => GraphQl) graphQl?
   ) {
 
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
+    // DI
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
@@ -61,7 +64,7 @@ export class Auth {
   }
 
   public async setUser(client, accessToken) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     try {
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
@@ -109,7 +112,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const result = await client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
       const payload = result.rows[0].payload;
@@ -117,7 +120,7 @@ export class Auth {
       const ret = {
         userId: payload.userId,
         payload,
-        accessToken: signJwt(payload, payload.userTokenMaxAgeInSeconds)
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
       await client.query('COMMIT');
@@ -139,17 +142,17 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const metaResult = await client.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
       const data = metaResult.rows[0].data;
 
       const uid = userIdentifier || data.userId;
-      const providerSignature = getProviderSignature(provider, uid);
+      const providerSignature = getProviderSignature(this.authConfig.secrets.admin, provider, uid);
 
       const pwData: any = await hashByMeta(password + providerSignature, data.pwMeta);
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const loginResult = await client.query('SELECT _meta.login($1, $2, $3) AS payload', [data.userId, provider, pwData.hash]);
       const payload = loginResult.rows[0].payload;
@@ -157,7 +160,7 @@ export class Auth {
       const ret = {
         userId: data.userId,
         payload,
-        accessToken: signJwt(payload, payload.userTokenMaxAgeInSeconds)
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
       await client.query('COMMIT');
@@ -172,9 +175,9 @@ export class Auth {
   }
 
   public async setPassword(accessToken, provider, password, userIdentifier) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
     const uid = userIdentifier || payload.userId;
-    const providerSignature = getProviderSignature(provider, uid);
+    const providerSignature = getProviderSignature(this.authConfig.secrets.admin, provider, uid);
     const pwData: any = await newHash(password + providerSignature, this.sodiumConfig);
 
     const client = await this.dbGeneralPool.pgPool.connect();
@@ -185,7 +188,7 @@ export class Auth {
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       await client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
 
@@ -210,7 +213,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const result = await client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
       const payload = result.rows[0].data;
@@ -218,7 +221,7 @@ export class Auth {
       const ret = {
         userId: payload.userId,
         payload,
-        accessToken: signJwt(payload, payload.userTokenMaxAgeInSeconds)
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
       await client.query('COMMIT');
@@ -233,7 +236,7 @@ export class Auth {
   }
 
   public async removeProvider(accessToken, provider) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -241,7 +244,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider];
 
@@ -259,7 +262,7 @@ export class Auth {
   }
 
   public async isTokenValid(accessToken, tempSecret = false, tempTime = false) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -267,7 +270,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, tempSecret, tempTime];
 
@@ -286,7 +289,7 @@ export class Auth {
   }
 
   public async invalidateUserToken(accessToken) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -294,7 +297,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
@@ -312,7 +315,7 @@ export class Auth {
   }
 
   public async invalidateAllUserTokens(accessToken) {
-    const payload = verifyJwt(accessToken);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -320,7 +323,7 @@ export class Auth {
       // Begin transaction
       await client.query('BEGIN');
 
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature()}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
@@ -375,7 +378,7 @@ export class Auth {
 
     authRouter.use(koaBody());
 
-    app.keys = [getCookieSecret()];
+    app.keys = [this.authConfig.secrets.cookie];
     authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
 
     authRouter.use(passport.initialize());

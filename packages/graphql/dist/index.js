@@ -42,12 +42,15 @@ let GraphQl = class GraphQl {
         this.customMutations = [];
         this.customFields = {};
         this.preQueryHooks = [];
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
         this.gqlParser = gqlParser;
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
+        // add boot function to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     addPreQueryHook(fn) {

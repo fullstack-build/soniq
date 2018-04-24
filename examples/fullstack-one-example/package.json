@@ -6,7 +6,7 @@
     "node": ">=8.6",
     "npm": ">=5"
   },
-  "main": "main.ts",
+  "main": "index.ts",
   "scripts": {
     "start": "ts-node .",
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
@@ -41,7 +41,6 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "fullstack-one": "git+https://github.com/fullstack-build/fullstack.one.git",
-    "fullstack.one": "git+https://github.com/fullstack-build/fullstack.one.git",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   }

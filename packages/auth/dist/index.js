@@ -28,9 +28,8 @@ const migration_1 = require("@fullstack-one/migration");
 const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
 const crypto_1 = require("./crypto");
-const sign_1 = require("./sign");
-// tslint:disable-next-line:no-var-requires
-const passport = require('koa-passport');
+const signHelper_1 = require("./signHelper");
+const passport = require("koa-passport");
 const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
 const koaSession = require("koa-session");
@@ -38,6 +37,9 @@ const oAuthCallback_1 = require("./oAuthCallback");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
+        // DI
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
@@ -55,7 +57,7 @@ let Auth = class Auth {
     }
     setUser(client, accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             try {
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
                 yield client.query('SELECT _meta.set_user_token($1, $2, $3, $4)', values);
@@ -97,13 +99,13 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const result = yield client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
                 const payload = result.rows[0].payload;
                 const ret = {
                     userId: payload.userId,
                     payload,
-                    accessToken: sign_1.signJwt(payload, payload.userTokenMaxAgeInSeconds)
+                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
                 yield client.query('COMMIT');
                 return ret;
@@ -124,19 +126,19 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const metaResult = yield client.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
                 const data = metaResult.rows[0].data;
                 const uid = userIdentifier || data.userId;
-                const providerSignature = sign_1.getProviderSignature(provider, uid);
+                const providerSignature = signHelper_1.getProviderSignature(this.authConfig.secrets.admin, provider, uid);
                 const pwData = yield crypto_1.hashByMeta(password + providerSignature, data.pwMeta);
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const loginResult = yield client.query('SELECT _meta.login($1, $2, $3) AS payload', [data.userId, provider, pwData.hash]);
                 const payload = loginResult.rows[0].payload;
                 const ret = {
                     userId: data.userId,
                     payload,
-                    accessToken: sign_1.signJwt(payload, payload.userTokenMaxAgeInSeconds)
+                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
                 yield client.query('COMMIT');
                 return ret;
@@ -153,16 +155,16 @@ let Auth = class Auth {
     }
     setPassword(accessToken, provider, password, userIdentifier) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const uid = userIdentifier || payload.userId;
-            const providerSignature = sign_1.getProviderSignature(provider, uid);
+            const providerSignature = signHelper_1.getProviderSignature(this.authConfig.secrets.admin, provider, uid);
             const pwData = yield crypto_1.newHash(password + providerSignature, this.sodiumConfig);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 yield client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
                 yield client.query('COMMIT');
                 return true;
@@ -185,13 +187,13 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const result = yield client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
                 const payload = result.rows[0].data;
                 const ret = {
                     userId: payload.userId,
                     payload,
-                    accessToken: sign_1.signJwt(payload, payload.userTokenMaxAgeInSeconds)
+                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
                 yield client.query('COMMIT');
                 return ret;
@@ -208,12 +210,12 @@ let Auth = class Auth {
     }
     removeProvider(accessToken, provider) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider];
                 yield client.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
                 yield client.query('COMMIT');
@@ -231,12 +233,12 @@ let Auth = class Auth {
     }
     isTokenValid(accessToken, tempSecret = false, tempTime = false) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, tempSecret, tempTime];
                 const result = yield client.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
                 const isValid = result.rows[0].data === true;
@@ -255,12 +257,12 @@ let Auth = class Auth {
     }
     invalidateUserToken(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
                 yield client.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
                 yield client.query('COMMIT');
@@ -278,12 +280,12 @@ let Auth = class Auth {
     }
     invalidateAllUserTokens(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const payload = sign_1.verifyJwt(accessToken);
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${sign_1.getAdminSignature()}'`);
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
                 yield client.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
                 yield client.query('COMMIT');
@@ -328,7 +330,7 @@ let Auth = class Auth {
                 ctx.body = 'Hallo';
             }));
             authRouter.use(koaBody());
-            app.keys = [sign_1.getCookieSecret()];
+            app.keys = [this.authConfig.secrets.cookie];
             authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
             authRouter.use(passport.initialize());
             // authRouter.use(passport.session());

@@ -1,24 +1,14 @@
-import { Strategy } from 'passport-facebook';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+//const Strategy = require('passport-facebook').Strategy;
+//const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-export = {
-  core: {
-    namespace: 'one'
-  },
-  eventEmitter: {},
-  graphql: {
-    endpoint:           '/graphql',
-    graphiQlEndpoint:   '/graphiql',
-    schemaPattern:      '/schema/*.gql',
-    viewsPattern: '/views/*.ts',
-    expressionsPattern: '/expressions/*.ts',
-    resolversPattern: '/resolvers/*.ts'
-  },
-  db: {
-    viewSchemaName: 'graphql',
-    updateClientListInterval: 10000
-  },
+module.exports = {
   auth: {
+    secrets: {
+      jwt: 'abc',
+      admin: 'bcd',
+      provider: 'cde',
+      cookie: 'def',
+    },
     sodium: {},
     oAuth: {
       cookie: {
@@ -28,6 +18,7 @@ export = {
         signed: true
       },
       providers: {
+        /*
         facebook: {
           name: 'facebook',
           tenant: 'default',
@@ -48,6 +39,7 @@ export = {
             profileFields: ['id', 'email']
           }
         }
+        */
       },
       frontendOrigins: [
         'http://localhost:3000'

@@ -25,10 +25,14 @@ export class Email {
   constructor(
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => QueueFactory) queueFactory?,
+    @Inject(type => Config) config?,
     @Inject(type => Migration) migration?) {
 
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     // set DI dependencies
-    this.CONFIG = Container.get(Config).getConfig('email');
+    this.CONFIG = config.getConfig('email');
     this.queueFactory = queueFactory;
 
     this.logger = loggerFactory.create('Email');

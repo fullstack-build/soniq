@@ -27,7 +27,6 @@
     "@fullstack-one/boot-loader": "^0.2.8",
     "@fullstack-one/config": "^0.2.8",
     "@fullstack-one/di": "^0.2.8",
-    "dotenv-safe": "^5.0.1",
     "reflect-metadata": "^0.1.12"
   }
 }

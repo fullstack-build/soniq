@@ -29,6 +29,8 @@ const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let DbGeneralPool = class DbGeneralPool {
     constructor(eventEmitter, loggerFactory, config) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         // DI
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbGeneralPool');

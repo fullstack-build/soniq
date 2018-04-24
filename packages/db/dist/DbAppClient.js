@@ -29,6 +29,8 @@ const pg_1 = require("pg");
 exports.PgClient = pg_1.Client;
 let DbAppClient = class DbAppClient {
     constructor(eventEmitter, loggerFactory, config) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         // set DI dependencies
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbAppClient');

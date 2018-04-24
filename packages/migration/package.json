@@ -26,6 +26,7 @@
     "@fullstack-one/logger": "^0.2.8",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1",
+    "fast-glob": "^2.2.1",
     "lodash": "^4.17.5",
     "util": "^0.10.3"
   },

@@ -20,34 +20,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// ENV
-const dotenv = require("dotenv-safe");
 // DI
 require("reflect-metadata");
 const di_1 = require("@fullstack-one/di");
 // fullstack.one required imports
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const config_1 = require("@fullstack-one/config");
-// init .env -- check if all are set
-try {
-    dotenv.config({
-        // .env.example is in fullstack-one root folder
-        sample: `${__dirname}/../../../.env.example`,
-    });
-}
-catch (err) {
-    process.stderr.write(err.toString() + '\n');
-    process.exit(1);
-}
 let FullstackOneCore = class FullstackOneCore {
     constructor(bootLoader, config) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         this.ENVIRONMENT = config.ENVIRONMENT;
         this.bootLoader = bootLoader;
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            yield this.bootLoader.boot();
             this.cliArt();
-            return yield this.bootLoader.boot();
+            return;
         });
     }
     // draw CLI art
@@ -55,12 +45,7 @@ let FullstackOneCore = class FullstackOneCore {
         process.stdout.write('  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n' +
             '  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
             '  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n');
-        process.stdout.write('name: ' + this.ENVIRONMENT.name + '\n');
-        process.stdout.write('version: ' + this.ENVIRONMENT.version + '\n');
-        process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
-        process.stdout.write('env: ' + this.ENVIRONMENT.NODE_ENV + '\n');
-        process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
-        process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
+        process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2) + '\n');
         process.stdout.write('____________________________________\n');
     }
 };

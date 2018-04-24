@@ -20,10 +20,13 @@ export class QueueFactory {
     @Inject(type => DbGeneralPool) generalPool?,
     @Inject(type => Config) config?: Config
   ) {
-
     // set DI dependencies
     this.generalPool = generalPool;
     this.logger = loggerFactory.create('Queue');
+
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
   }
 
   public async getQueue(): Promise<PgBoss> {

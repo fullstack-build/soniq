@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import * as http from 'http';
 export declare class Server {
+    private serverConfig;
     private server;
     private app;
     private ENVIRONMENT;

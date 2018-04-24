@@ -67,9 +67,9 @@ export class Migration {
       // find all init_sql folders
       fastGlob.sync(`${initSqlPath}/init_sql/[[0-9]*`, {
         deep: false,
-        onlyDirs: true,
+        onlyDirectories: true,
       }).map((path) => {
-        const pathVersion: number = parseInt(path.split('/').pop(), 10);
+        const pathVersion: number = parseInt(path.toString().split('/').pop(), 10);
         // keep only those with a higher version than the currently installed
         if (latestVersion < pathVersion) {
           initSqlFolders.push(path);
@@ -84,7 +84,7 @@ export class Migration {
     // will try, but ignore any errors
     const loadOptionalSuffixOrder = ['operator_class'];
     initSqlFolders.map((initSqlFolder) => {
-      // iterate all soffixes
+      // iterate all suffixes
       for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {
         const paths = fastGlob.sync(`${initSqlFolder}/*.${suffix}.sql`, {
           deep: true,
@@ -94,7 +94,8 @@ export class Migration {
         // load content
         for (const filePath of paths) {
           loadFilesOrder[suffix] = loadFilesOrder[suffix] || [];
-          loadFilesOrder[suffix][filePath] = fs.readFileSync(filePath, 'utf8');
+          const filePathStr = filePath.toString();
+          loadFilesOrder[suffix][filePathStr] = fs.readFileSync(filePathStr, 'utf8');
         }
       }
     });
@@ -198,7 +199,8 @@ export class Migration {
 
     // load content
     for (const filePath of paths) {
-      bootSql.push(fs.readFileSync(filePath, 'utf8'));
+      const filePathStr = filePath.toString();
+      bootSql.push(fs.readFileSync(filePathStr, 'utf8'));
     }
 
     return bootSql;

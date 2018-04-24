@@ -17,10 +17,12 @@ const config_1 = require("@fullstack-one/config");
 const Logger_1 = require("./Logger");
 let LoggerFactory = class LoggerFactory {
     constructor(config) {
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         this.config = config;
     }
     create(moduleName) {
-        return new Logger_1.Logger(moduleName, this.config);
+        return new Logger_1.Logger(moduleName, this.config.getConfig('logger'));
     }
 };
 LoggerFactory = __decorate([

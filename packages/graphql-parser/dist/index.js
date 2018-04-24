@@ -38,6 +38,8 @@ let GraphQlParser = class GraphQlParser {
     constructor(loggerFactory, config, bootLoader) {
         this.gQlSdlExtensions = [];
         this.parsers = [];
+        // register package config
+        config.addConfigFolder(__dirname + '/../config');
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;

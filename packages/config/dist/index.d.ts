@@ -1,9 +1,11 @@
-import { IConfig } from './IConfigObject';
 import { IEnvironment } from './IEnvironment';
-export { IEnvironment, IConfig };
+export { IEnvironment };
 export declare class Config {
     readonly ENVIRONMENT: IEnvironment;
+    private configFolder;
+    private config;
     constructor();
-    getConfig(pModuleName?: string): IConfig | any;
-    private loadConfig();
+    getConfig(pModuleName?: string): any;
+    addConfigFolder(configPath: string): void;
+    private deepMapHelper(obj, iterator, context?);
 }

@@ -42,6 +42,9 @@ export class GraphQl {
     @Inject(type => Server) server?,
     @Inject(type => DbGeneralPool) dbGeneralPool?
     ) {
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     this.dbGeneralPool = dbGeneralPool;
     this.server = server;
     this.gqlParser = gqlParser;
@@ -49,6 +52,7 @@ export class GraphQl {
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
+    // add boot function to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
