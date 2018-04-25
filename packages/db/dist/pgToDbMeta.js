@@ -238,7 +238,7 @@ let PgToDbMeta = class PgToDbMeta {
                         // check if it is a known enum
                         newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
                     }
-                    else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') {
+                    else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') { // Array of _uuid is most certainly an n:m relation
                         // many to many arrays should have JSON description - check for that
                         try {
                             const mtmRelationPayload = JSON.parse(column.comment);
@@ -297,13 +297,13 @@ let PgToDbMeta = class PgToDbMeta {
       WHERE tc.table_schema = $1 AND tc.table_name = $2;`, [schemaName, tableName]);
             // other constraints
             Object.values(rows).forEach((constraint) => {
-                if (constraint.constraint_type === 'FOREIGN KEY') {
+                if (constraint.constraint_type === 'FOREIGN KEY') { // relations
                     this.relationBuilderHelper(constraint);
                 }
-                else if (constraint.constraint_type === 'CHECK') {
+                else if (constraint.constraint_type === 'CHECK') { // checks
                     this.addCheck(constraint, currentTable);
                 }
-                else {
+                else { // other constraints
                     this.addConstraint(constraint.constraint_type, constraint, currentTable);
                 }
             });

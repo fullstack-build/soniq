@@ -235,7 +235,7 @@ var sqlObjFromMigrationObject;
             if (!renameInsteadOfDrop) {
                 thisSql.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
             }
-            else {
+            else { // getSqlFromMigrationObj rename instead
                 thisSql.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${DELETED_PREFIX}${schemaName}";`);
             }
         }
@@ -268,7 +268,7 @@ var sqlObjFromMigrationObject;
                 if (!renameInsteadOfDrop) {
                     thisSql.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchemaDown};`);
                 }
-                else {
+                else { // getSqlFromMigrationObj rename instead, ignore if already renamed
                     if (tableDefinition.name.indexOf(DELETED_PREFIX) !== 0) {
                         thisSql.down.push(`ALTER TABLE ${tableNameWithSchemaDown} RENAME TO "${DELETED_PREFIX}${node.name}";`);
                     }
@@ -349,7 +349,7 @@ var sqlObjFromMigrationObject;
                 if (!renameInsteadOfDrop) {
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${node.name}" CASCADE;`);
                 }
-                else {
+                else { // getSqlFromMigrationObj rename instead
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${node.name}" TO "${DELETED_PREFIX}${node.name}";`);
                 }
             }
@@ -571,7 +571,7 @@ var sqlObjFromMigrationObject;
         // create versioning table and trigger
         if (immutabilityAction.add || immutabilityAction.change) {
             // create trigger for table: not updatable
-            if (immutabilityDef.isUpdatable === false) {
+            if (immutabilityDef.isUpdatable === false) { // has to be set EXACTLY to false
                 tableSql.up.push(`CREATE TRIGGER "table_is_not_updatable_${schemaName}_${tableName}"
           BEFORE UPDATE
           ON ${tableNameWithSchemaUp}
@@ -579,7 +579,7 @@ var sqlObjFromMigrationObject;
           EXECUTE PROCEDURE _meta.make_table_immutable();`);
             }
             // create trigger for table: not updatable
-            if (immutabilityDef.isDeletable === false) {
+            if (immutabilityDef.isDeletable === false) { // has to be set EXACTLY to false
                 tableSql.up.push(`CREATE TRIGGER "table_is_not_deletable_${schemaName}_${tableName}"
           BEFORE DELETE
           ON ${tableNameWithSchemaUp}
@@ -629,7 +629,7 @@ var sqlObjFromMigrationObject;
                     if (action.add) {
                         // does not have to be extra created -> will be created IF NOT EXISTS with the realtion itself
                     }
-                    else if (action.remove) {
+                    else if (action.remove) { // in case of FK recration, no need to remove column (removeConstraintOnly = true)
                         // drop or rename column
                         if (!renameInsteadOfDrop) {
                             thisSql.down.push(`ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${node.columnName}" CASCADE;`);
@@ -768,7 +768,7 @@ var sqlObjFromMigrationObject;
                 // remove meta information
                 thisSql.down.push(`COMMENT ON COLUMN ${tableName1}."${nodeRelation1.columnName}" IS NULL;`);
             }
-            else {
+            else { // getSqlFromMigrationObj rename instead
                 thisSql.down.push(`ALTER TABLE ${tableName1} RENAME COLUMN "${nodeRelation1.columnName}" TO "${DELETED_PREFIX}${nodeRelation1.columnName}";`);
             }
         }
@@ -791,7 +791,7 @@ var sqlObjFromMigrationObject;
                 // remove meta information
                 thisSql.down.push(`COMMENT ON COLUMN ${tableName2}."${nodeRelation2.columnName}" IS NULL;`);
             }
-            else {
+            else { // getSqlFromMigrationObj rename instead
                 thisSql.down.push(`ALTER TABLE ${tableName2} RENAME COLUMN "${nodeRelation2.columnName}" TO "${DELETED_PREFIX}${nodeRelation2.columnName}";`);
             }
         }

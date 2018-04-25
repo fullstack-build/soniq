@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Example project: how to use fullstack.one",
   "engines": {
-    "node": ">=8.6",
-    "npm": ">=5"
+    "node": ">=10",
+    "npm": ">=6"
   },
   "main": "index.ts",
   "scripts": {
@@ -32,8 +32,6 @@
   "devDependencies": {
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.0.57",
-    "git-hooks": "^1.1.9",
-    "lerna": "^2.5.1",
     "ts-node-dev": "^1.0.0-pre.19",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.4.2"
@@ -41,6 +39,8 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "fullstack-one": "git+https://github.com/fullstack-build/fullstack.one.git",
+    "passport-facebook": "^2.1.1",
+    "passport-google-oauth20": "^1.0.0",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   }

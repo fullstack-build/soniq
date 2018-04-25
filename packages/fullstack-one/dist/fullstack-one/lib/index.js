@@ -35,8 +35,9 @@ let FullstackOneCore = class FullstackOneCore {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            yield this.bootLoader.boot();
             this.cliArt();
-            return yield this.bootLoader.boot();
+            return;
         });
     }
     // draw CLI art
@@ -44,12 +45,7 @@ let FullstackOneCore = class FullstackOneCore {
         process.stdout.write('  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n' +
             '  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
             '  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n');
-        process.stdout.write('name: ' + this.ENVIRONMENT.name + '\n');
-        process.stdout.write('version: ' + this.ENVIRONMENT.version + '\n');
-        process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
-        process.stdout.write('env: ' + this.ENVIRONMENT.NODE_ENV + '\n');
-        process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
-        process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
+        process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2) + '\n');
         process.stdout.write('____________________________________\n');
     }
 };

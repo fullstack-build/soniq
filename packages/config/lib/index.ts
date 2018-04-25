@@ -4,9 +4,9 @@ import * as _ from 'lodash';
 import { randomBytes } from 'crypto';
 
 import { IEnvironment } from './IEnvironment';
-import {Inject} from "../../di/lib";
-import {BootLoader} from "../../boot-loader/lib";
-import oAuthCallback from "../../auth/lib/oAuthCallback";
+import { Inject } from '../../di/lib';
+import { BootLoader } from '../../boot-loader/lib';
+import oAuthCallback from '../../auth/lib/oAuthCallback';
 export { IEnvironment };
 
 @Service()

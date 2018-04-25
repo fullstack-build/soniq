@@ -28,12 +28,12 @@
     "@fullstack-one/graphql-parser": "^0.2.8",
     "@fullstack-one/migration": "^0.2.8",
     "@fullstack-one/server": "^0.2.8",
-    "jsonwebtoken": "^8.1.0",
+    "jsonwebtoken": "^8.2.1",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.3.0",
     "minio": "^4.0.0"
   },
   "devDependencies": {
-    "typescript": "^2.7.2"
+    "typescript": "^2.8.3"
   }
 }

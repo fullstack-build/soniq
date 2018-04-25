@@ -30,6 +30,6 @@
     "@fullstack-one/migration": "^0.2.8"
   },
   "devDependencies": {
-    "typescript": "^2.7.2"
+    "typescript": "^2.8.3"
   }
 }

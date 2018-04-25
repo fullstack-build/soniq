@@ -38,7 +38,7 @@ var migrationObject;
             // all keys
             const keys = _.union(Object.keys(recursiveFromDbMeta), Object.keys(recursiveToDbMeta));
             keys.map((key) => {
-                if (recursiveToDbMeta[key] == null) {
+                if /* only from */ (recursiveToDbMeta[key] == null) {
                     // is not object -> copy value
                     if (!util_1.isObject(recursiveFromDbMeta[key])) {
                         // ignore empty
@@ -46,7 +46,7 @@ var migrationObject;
                             pResult[key] = recursiveFromDbMeta[key];
                         }
                     }
-                    else {
+                    else { // nested object
                         // mark node as "remove" continue recursively
                         pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
                         pResult[key][ACTION_KEY] = pResult[key][ACTION_KEY] || {};
@@ -63,7 +63,7 @@ var migrationObject;
                             pResult[key] = recursiveToDbMeta[key];
                         }
                     }
-                    else {
+                    else { // nested object
                         // mark node as "add" continue recursively
                         pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
                         pResult[key][ACTION_KEY] = pResult[key][ACTION_KEY] || {};
@@ -88,7 +88,7 @@ var migrationObject;
                             }
                         }
                     }
-                    else {
+                    else { // nested object or array
                         // getSqlFromMigrationObj empty node
                         pResult[key] = pResult[key] || {};
                         // compare old and new (first level) and mark as changed if not equal
@@ -190,7 +190,7 @@ var migrationObject;
                     nextParentTo = parent[newSchemaName].tables;
                 }
             }
-            else {
+            else { // not table (probably column)
                 nodeFrom = parent[oldName];
                 nodeTo = parent[newName];
                 // for column both parents are equal (tables can be in different schemas)

@@ -25,10 +25,10 @@
     "@fullstack-one/di": "^0.2.8",
     "@fullstack-one/events": "^0.2.8",
     "@fullstack-one/logger": "^0.2.8",
-    "fast-glob": "^2.0.4",
+    "fast-glob": "^2.2.1",
     "koa": "^2.5.0"
   },
   "devDependencies": {
-    "typescript": "^2.7.2"
+    "typescript": "^2.8.3"
   }
 }

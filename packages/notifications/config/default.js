@@ -5,11 +5,6 @@ module.exports = {
       smtp: {
         host: 'username',
         port: 'password',
-
-        // we intentionally do not set any authentication
-        // options here as we are going to use message specific
-        // credentials
-
         // Security options to disallow using attachments from file or URL
         disableFileAccess: true,
         disableUrlAccess: true,
@@ -17,13 +12,11 @@ module.exports = {
         pool: true
       }
     },
-    defaults: {
-
-    },
+    defaults: {},
     htmlToText: {},
     queue: {
       retryLimit: 10,
-      expireIn: '60 min'
+      expireIn:   '60 min'
     }
   }
 };

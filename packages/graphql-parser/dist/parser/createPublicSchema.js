@@ -146,7 +146,7 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
         const alreadyAddedFieldNames = [];
         tableViewsByGqlTypeName[gqlTypeName].forEach((tempTableView) => {
             tempTableView.fields.forEach((field) => {
-                if (alreadyAddedFieldNames.indexOf(field.name.value) < 0) {
+                if (alreadyAddedFieldNames.indexOf(field.name.value) < 0) { // gQlType.fieldNames.indexOf(field.name.value) >= 0 &&
                     alreadyAddedFieldNames.push(field.name.value);
                     tableView.fields.push(field);
                 }

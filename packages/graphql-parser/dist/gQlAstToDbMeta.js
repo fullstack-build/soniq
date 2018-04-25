@@ -168,12 +168,12 @@ const GQL_JSON_PARSER = {
             // parse FieldDefinition properties
             Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
                 if (typeof gQlSchemaFieldNodeProperty === 'object' &&
-                    !Array.isArray(gQlSchemaFieldNodeProperty)) {
+                    !Array.isArray(gQlSchemaFieldNodeProperty)) { // object
                     // parse sub node
                     parseGraphQlJsonNode(gQlSchemaFieldNodeProperty, newField, refDbMeta, refDbMetaCurrentTable, newField);
                 }
                 else if (typeof gQlSchemaFieldNodeProperty === 'object' &&
-                    !!Array.isArray(gQlSchemaFieldNodeProperty)) {
+                    !!Array.isArray(gQlSchemaFieldNodeProperty)) { // array
                     // iterate over sub nodes (e.g. arguments, directives
                     Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
                         // parse sub node

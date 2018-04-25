@@ -36,12 +36,12 @@ function setAuthValueForColumn(directiveKind, gQlSchemaNode, dbMetaNode, refDbMe
             // set table to auth
             refDbMetaCurrentTable.isAuth = true;
         }
-        else {
+        else { // other table was marked already
             process.stderr.write('GraphQL.parser.error.table.auth.multiple.tables: ' +
                 pathToDirective + '.' + directiveKind + '\n');
         }
     }
-    else {
+    else { // mark field
         // only possible on tables that were marked as auth
         if (refDbMetaCurrentTable.isAuth) {
             // only one attribute per field is possible
@@ -56,7 +56,7 @@ function setAuthValueForColumn(directiveKind, gQlSchemaNode, dbMetaNode, refDbMe
                                 isTenant: true
                             };
                         }
-                        else {
+                        else { // multiple columns marked with same marker
                             process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
                                 pathToDirective + '.' + directiveKind + '\n');
                         }
@@ -69,7 +69,7 @@ function setAuthValueForColumn(directiveKind, gQlSchemaNode, dbMetaNode, refDbMe
                                 isUsername: true
                             };
                         }
-                        else {
+                        else { // multiple columns marked with same marker
                             process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
                                 pathToDirective + '.' + directiveKind + '\n');
                         }
@@ -85,7 +85,7 @@ function setAuthValueForColumn(directiveKind, gQlSchemaNode, dbMetaNode, refDbMe
                             // set type to json
                             dbMetaNode.type = 'jsonb';
                         }
-                        else {
+                        else { // multiple columns marked with same marker
                             process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
                                 pathToDirective + '.' + directiveKind + '\n');
                         }

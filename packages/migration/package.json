@@ -31,6 +31,6 @@
     "util": "^0.10.3"
   },
   "devDependencies": {
-    "typescript": "^2.7.2"
+    "typescript": "^2.8.3"
   }
 }

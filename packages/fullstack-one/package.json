@@ -20,8 +20,8 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@types/dotenv": "^4.0.2",
-    "typescript": "^2.7.2"
+    "@types/dotenv": "^4.0.3",
+    "typescript": "^2.8.3"
   },
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.2.8",
