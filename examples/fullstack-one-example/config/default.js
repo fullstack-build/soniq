@@ -3,8 +3,26 @@ const GoogleStrategy    = require('passport-google-oauth20');
 
 module.exports = {
   db: {
+    appClient: {
+      database: process.env.DB_DATABASE,
+      host:     process.env.DB_HOST,
+      user:     process.env.DB_USER,
+      password: process.env.DB_PASSWORD
+    },
+    general: {
+      database: process.env.DB_DATABASE,
+      host:     process.env.DB_HOST,
+      user:     process.env.DB_USER,
+      password: process.env.DB_PASSWORD
+    }
   },
   auth: {
+    secrets: {
+      jwt:      process.env.AUTH_JWT_SECRET,
+      admin:    process.env.AUTH_ADMIN_SECRET,
+      provider: process.env.AUTH_PROVIDERS_SECRET,
+      cookie:   process.env.AUTH_COOKIE_SECRET
+    },
     oAuth: {
       providers: {
         facebook: {

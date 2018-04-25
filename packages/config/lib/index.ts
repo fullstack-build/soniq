@@ -143,7 +143,7 @@ export class Config {
 
     // LAST STEP: check config for undefined settings
     let foundMissingConfig = false;
-    this.deepMapHelper(this.config, (val, key, nestedPath) => {
+    this.deepMapHelper(this.config, (key, val, nestedPath) => {
       if (val == null) {
         process.stderr.write(
           `config.not.set: ${nestedPath}` + '\n',
@@ -157,15 +157,13 @@ export class Config {
     }
   }
 
-  /*
-  HELPER
-   */
-  private deepMapHelper(obj, iterator, context?, nestedPath?) {
-    return _.transform(obj, (result, val, key) => {
-      const newNestedPath = (nestedPath != null) ? nestedPath + '.' + key : key;
-      result[key] = _.isObject(val) ?
-        this.deepMapHelper(val, iterator, context, newNestedPath) :
-        iterator.call(context, val, key, newNestedPath, obj);
+  /* HELPER */
+  private deepMapHelper(obj, callback, nestedPath = '') {
+    Object.entries(obj).map((entry) => {
+      const newPath = nestedPath + entry[0] + '.';
+      (typeof entry[1] === 'object' && entry[1] != null) ?
+        this.deepMapHelper(entry[1], callback, newPath) :
+        callback(entry[0], entry[1], newPath.slice(0, -1)); // remove last dot on last round
     });
   }
 
