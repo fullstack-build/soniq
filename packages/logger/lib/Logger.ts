@@ -22,15 +22,13 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor(moduleName: string = 'root', config) {
+  constructor(moduleName: string = 'root', loggerConfig) {
 
     const env: any = Container.get('ENVIRONMENT');
     // const config: any = Container.get('CONFIG');
 
     this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
-
-    const loggerConfig = config.getConfig('logger');
 
     // setup tracer
     const tracerConfig: any = {

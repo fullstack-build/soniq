@@ -20,15 +20,15 @@ export class EventEmitter implements IEventEmitter {
   private namespace: string = 'one';
 
   constructor(
-    @Inject(type => Config) c?,
+    @Inject(type => Config) config?,
     @Inject(type => BootLoader) bootLoader?) {
 
-    const env: IEnvironment = Container.get('ENVIRONMENT');
-    const config: any = c.getConfig('config');
-    const coreConfig = c.getConfig('core');
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
 
+    const env: IEnvironment = Container.get('ENVIRONMENT');
     this.nodeId = env.nodeId;
-    this.namespace = c.getConfig('core').namespace;
+    this.namespace = config.getConfig('core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',

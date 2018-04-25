@@ -36,6 +36,8 @@ export class FileStorage {
     @Inject(type => GraphQl) graphQl?,
     @Inject(type => GraphQlParser) graphQlParser?
   ) {
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
 
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;

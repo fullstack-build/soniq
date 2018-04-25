@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
-    "node": ">=8.6"
+    "node": ">=10",
+    "npm": ">=6"
   },
   "main": "packages/server/main",
   "scripts": {
@@ -12,7 +13,7 @@
     "test": "mocha -r ts-node/register test/*.ts",
     "lerna": "lerna bootstrap && lerna link --force-local",
     "link": "sh scripts/dev.sh",
-    "buildall": "sh scripts/buildall.sh"
+    "build": "sh scripts/buildall.sh"
   },
   "repository": {
     "type": "git",
@@ -36,29 +37,17 @@
   },
   "homepage": "https://github.com/fullstack-build/fullstack.one#readme",
   "devDependencies": {
-    "@types/node": "^8.0.31",
-    "git-hooks": "^1.1.9",
-    "lerna": "^2.9.0",
-    "nodemon": "^1.17.2",
-    "tslint": "^5.8.0",
-    "tslint-config-airbnb": "^5.3.0"
+    "@types/node": "^8.10.10",
+    "git-hooks": "^1.1.10",
+    "lerna": "^2.11.0",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.8.0"
   },
   "dependencies": {
-    "@godaddy/terminus": "^2.2.0",
-    "dotenv-safe": "^4.0.4",
-    "fast-glob": "^1.0.1",
-    "graphql": "^0.11.7",
-    "is-https": "^1.0.0",
-    "lodash": "^4.17.4",
-    "npm": "^5.6.0",
-    "passport-facebook": "^2.1.1",
-    "passport-google-oauth20": "^1.0.0",
-    "reflect-metadata": "^0.1.12",
-    "signal-exit": "^3.0.2",
+    "npm": "^5.8.0",
     "ts-node": "^3.3.0",
     "tslint-config-airbnb-base": "^0.1.0",
-    "tsutils": "^2.12.2",
-    "typedi": "^0.6.1",
-    "typescript": "^2.6.1"
+    "tsutils": "^2.26.1",
+    "typescript": "^2.8.3"
   }
 }

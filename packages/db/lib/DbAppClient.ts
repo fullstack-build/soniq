@@ -27,6 +27,8 @@ export class DbAppClient implements IDb {
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => Config) config?
   ) {
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
 
     // set DI dependencies
     this.eventEmitter = eventEmitter;

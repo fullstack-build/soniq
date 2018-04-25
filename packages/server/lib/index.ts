@@ -12,6 +12,7 @@ import * as Koa from 'koa';
 @Service()
 export class Server {
 
+  private serverConfig;
   private server: http.Server;
   private app: Koa;
 
@@ -25,10 +26,14 @@ export class Server {
     @Inject(type => Config) config?,
     @Inject(tpye => BootLoader) bootLoader?) {
 
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     // this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('Server');
 
     // get settings from DI container
+    this.serverConfig = config.getConfig('server');
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     // bootLoader.addBootFunction(this.boot.bind(this));
@@ -45,15 +50,15 @@ export class Server {
 
   private async boot(): Promise<void> {
     try {
-    this.app = new Koa();
+      this.app = new Koa();
 
-    // start KOA on PORT
-    this.server = http.createServer(this.app.callback()).listen(this.ENVIRONMENT.port);
+      // start KOA on PORT
+      this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
 
-    // emit event
-    this.emit('server.up', this.ENVIRONMENT.port);
-    // success log
-    this.logger.info('Server listening on port', this.ENVIRONMENT.port);
+      // emit event
+      this.emit('server.up', this.serverConfig.port);
+      // success log
+      this.logger.info('Server listening on port', this.serverConfig.port);
     } catch (e) {
       // tslint:disable-next-line:no-console
       console.error(e);

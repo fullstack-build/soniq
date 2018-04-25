@@ -1,5 +1,3 @@
-// ENV
-import * as dotenv from 'dotenv-safe';
 // DI
 import 'reflect-metadata';
 import { Container, Inject, Service } from '@fullstack-one/di';
@@ -13,30 +11,24 @@ import { IFullstackOneCore } from './IFullstackOneCore';
 import { BootLoader } from '@fullstack-one/boot-loader';
 import { Config, IEnvironment } from '@fullstack-one/config';
 
-// init .env -- check if all are set
-try {
-  dotenv.config({
-    // .env.example is in fullstack-one root folder
-    sample: `${__dirname}/../../../.env.example`,
-  });
-} catch (err) {
-  process.stderr.write(err.toString() + '\n');
-  process.exit(1);
-}
-
 @Service()
 export class FullstackOneCore implements IFullstackOneCore {
   private bootLoader: BootLoader;
   private ENVIRONMENT: IEnvironment;
 
   constructor(@Inject(type => BootLoader) bootLoader?, @Inject(type => Config) config?) {
+
+    // register package config
+    config.addConfigFolder(__dirname + '/../config');
+
     this.ENVIRONMENT = config.ENVIRONMENT;
     this.bootLoader = bootLoader;
   }
 
   public async boot() {
+    await this.bootLoader.boot();
     this.cliArt();
-    return await this.bootLoader.boot();
+    return;
   }
 
   // draw CLI art
@@ -46,12 +38,7 @@ export class FullstackOneCore implements IFullstackOneCore {
         '  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
         '  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n',
     );
-    process.stdout.write('name: ' + this.ENVIRONMENT.name + '\n');
-    process.stdout.write('version: ' + this.ENVIRONMENT.version + '\n');
-    process.stdout.write('path: ' + this.ENVIRONMENT.path + '\n');
-    process.stdout.write('env: ' + this.ENVIRONMENT.NODE_ENV + '\n');
-    process.stdout.write('port: ' + this.ENVIRONMENT.port + '\n');
-    process.stdout.write('node id: ' + this.ENVIRONMENT.nodeId + '\n');
+    process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2) + '\n');
     process.stdout.write('____________________________________\n');
   }
 }

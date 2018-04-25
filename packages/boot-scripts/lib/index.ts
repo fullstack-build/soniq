@@ -1,6 +1,6 @@
 
 import { Service, Container, Inject } from '@fullstack-one/di';
-import { Config, IEnvironment } from '@fullstack-one/config';
+import { IEnvironment } from '@fullstack-one/config';
 import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import { BootLoader } from '@fullstack-one/boot-loader';
