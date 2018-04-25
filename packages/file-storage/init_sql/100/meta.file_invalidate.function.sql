@@ -1,5 +1,5 @@
 -- file_validate function sets the entityId of a file if not already set or deleted
-CREATE OR REPLACE FUNCTION _meta.file_validate(i_file_id uuid, i_entity_id uuid) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION _meta.file_invalidate(i_file_id uuid, i_entity_id uuid) RETURNS void AS $$
 DECLARE
     v_user_id uuid;
     v_owner_user_id uuid;
@@ -13,7 +13,7 @@ BEGIN
     EXECUTE format(v_query, i_file_id) INTO v_entity_id;
 
     if v_entity_id != i_entity_id THEN
-        RAISE EXCEPTION 'You are not the owner of the file you are trying to add!';
+        RAISE EXCEPTION 'You are not the owner of the file you are trying to remove!';
     END IF;
 
     v_query := $tok$UPDATE _meta."Files" SET "deleted"=now() WHERE id = %L$tok$;
