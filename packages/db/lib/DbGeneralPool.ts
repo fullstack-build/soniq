@@ -10,8 +10,8 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 
 @Service()
 export class DbGeneralPool implements IDb  {
-  private readonly config: any;
-  private readonly applicationName: string;
+  private readonly config: Config;
+  private applicationName: string;
   private credentials: PgPoolConfig;
   private managedPool: PgPool;
 
@@ -20,28 +20,22 @@ export class DbGeneralPool implements IDb  {
   private eventEmitter: EventEmitter;
 
   constructor(
+    @Inject(type => BootLoader) bootLoader?,
     @Inject(type => EventEmitter) eventEmitter?,
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => Config) config?
     ) {
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    this.config = config;
+    this.config.addConfigFolder(__dirname + '/../config');
 
     // DI
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbGeneralPool');
 
-    const env: IEnvironment = Container.get('ENVIRONMENT');
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
 
-    this.config = config.getConfig('db').general;
-    this.applicationName = env.namespace + '_pool_' + env.nodeId;
-
-    this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
-
-    // calculate pool size and create pool
-    // this.gracefullyAdjustPoolSize();
-
-    Container.get(BootLoader).addBootFunction(this.gracefullyAdjustPoolSize.bind(this));
   }
 
   public async end(): Promise<void> {
@@ -72,8 +66,21 @@ export class DbGeneralPool implements IDb  {
     return this.managedPool;
   }
 
+  private async boot(): Promise<void> {
+
+    const env: IEnvironment = Container.get('ENVIRONMENT');
+    this.applicationName = env.namespace + '_pool_' + env.nodeId;
+    this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
+
+    // calculate pool size and create pool
+    await this.gracefullyAdjustPoolSize();
+  }
+
   // calculate number of max conections and adjust pool based on number of connected nodes
   private async gracefullyAdjustPoolSize(): Promise<PgPool> {
+
+    const configDB = this.config.getConfig('db');
+    const configDbGeneral  = configDB.general;
 
     // get known nodes from container, initially assume we are the first one
     let knownNodesCount: number = 1;
@@ -85,7 +92,7 @@ export class DbGeneralPool implements IDb  {
     }
 
     // reserve one for setup connection
-    const connectionsPerInstance: number = Math.floor((this.config.totalMax / knownNodesCount) - 1);
+    const connectionsPerInstance: number = Math.floor((configDbGeneral.totalMax / knownNodesCount) - 1);
 
     // readjust pool only if number of max connections has changed
     if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
@@ -99,7 +106,7 @@ export class DbGeneralPool implements IDb  {
 
       // credentials for general connection pool with calculated pool size
       this.credentials = {
-        ... this.config,
+        ... configDbGeneral,
         application_name: this.applicationName,
         max: connectionsPerInstance
       };

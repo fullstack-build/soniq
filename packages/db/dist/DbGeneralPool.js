@@ -28,19 +28,15 @@ const logger_1 = require("@fullstack-one/logger");
 const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let DbGeneralPool = class DbGeneralPool {
-    constructor(eventEmitter, loggerFactory, config) {
+    constructor(bootLoader, eventEmitter, loggerFactory, config) {
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        this.config = config;
+        this.config.addConfigFolder(__dirname + '/../config');
         // DI
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbGeneralPool');
-        const env = di_1.Container.get('ENVIRONMENT');
-        this.config = config.getConfig('db').general;
-        this.applicationName = env.namespace + '_pool_' + env.nodeId;
-        this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
-        // calculate pool size and create pool
-        // this.gracefullyAdjustPoolSize();
-        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.gracefullyAdjustPoolSize.bind(this));
+        // add to boot loader
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -64,9 +60,20 @@ let DbGeneralPool = class DbGeneralPool {
     get pgPool() {
         return this.managedPool;
     }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const env = di_1.Container.get('ENVIRONMENT');
+            this.applicationName = env.namespace + '_pool_' + env.nodeId;
+            this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
+            // calculate pool size and create pool
+            yield this.gracefullyAdjustPoolSize();
+        });
+    }
     // calculate number of max conections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {
         return __awaiter(this, void 0, void 0, function* () {
+            const configDB = this.config.getConfig('db');
+            const configDbGeneral = configDB.general;
             // get known nodes from container, initially assume we are the first one
             let knownNodesCount = 1;
             try {
@@ -77,7 +84,7 @@ let DbGeneralPool = class DbGeneralPool {
                 // ignore error and continue assuming we are the first client
             }
             // reserve one for setup connection
-            const connectionsPerInstance = Math.floor((this.config.totalMax / knownNodesCount) - 1);
+            const connectionsPerInstance = Math.floor((configDbGeneral.totalMax / knownNodesCount) - 1);
             // readjust pool only if number of max connections has changed
             if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
                 // gracefully end previous pool if already available
@@ -87,7 +94,7 @@ let DbGeneralPool = class DbGeneralPool {
                     this.end();
                 }
                 // credentials for general connection pool with calculated pool size
-                this.credentials = Object.assign({}, this.config, { application_name: this.applicationName, max: connectionsPerInstance });
+                this.credentials = Object.assign({}, configDbGeneral, { application_name: this.applicationName, max: connectionsPerInstance });
                 // create managed pool with calculated pool size
                 this.managedPool = new pg_1.Pool(this.credentials);
                 this.logger.debug(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);
@@ -122,9 +129,10 @@ let DbGeneralPool = class DbGeneralPool {
 };
 DbGeneralPool = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => events_1.EventEmitter)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject(type => events_1.EventEmitter)),
+    __param(2, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(3, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], DbGeneralPool);
 exports.DbGeneralPool = DbGeneralPool;

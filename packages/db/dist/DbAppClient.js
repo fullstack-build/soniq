@@ -28,34 +28,15 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 const pg_1 = require("pg");
 exports.PgClient = pg_1.Client;
 let DbAppClient = class DbAppClient {
-    constructor(eventEmitter, loggerFactory, config) {
+    constructor(bootLoader, eventEmitter, loggerFactory, config) {
+        this.config = config;
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        this.config.addConfigFolder(__dirname + '/../config');
         // set DI dependencies
         this.eventEmitter = eventEmitter;
         this.logger = loggerFactory.create('DbAppClient');
-        // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        const configDB = config.getConfig('db');
-        this.credentials = configDB.appClient;
-        this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
-        // create PG pgClient
-        this.pgClient = new pg_1.Client(this.credentials);
-        this.logger.debug('Postgres setup pgClient created');
-        this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
-        // collect known nodes
-        this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
-            this.updateNodeIdsFromDb();
-        });
-        // update number of clients on exit
-        this.eventEmitter.onAnyInstance(`db.application.client.end.start`, (nodeId) => {
-            // wait one tick until it actually finishes
-            process.nextTick(() => { this.updateNodeIdsFromDb(); });
-        });
-        // check connected clients every x secons
-        const updateClientListInterval = configDB.updateClientListInterval || 10000;
-        setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
-        di_1.Container.get(boot_loader_1.BootLoader).addBootFunction(this.boot.bind(this));
+        // add to boot loader
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -77,6 +58,27 @@ let DbAppClient = class DbAppClient {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            // get settings from DI container
+            this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+            const configDB = this.config.getConfig('db');
+            this.credentials = configDB.appClient;
+            this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
+            // create PG pgClient
+            this.pgClient = new pg_1.Client(this.credentials);
+            this.logger.debug('Postgres setup pgClient created');
+            this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
+            // collect known nodes
+            this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
+                this.updateNodeIdsFromDb();
+            });
+            // update number of clients on exit
+            this.eventEmitter.onAnyInstance(`db.application.client.end.start`, (nodeId) => {
+                // wait one tick until it actually finishes
+                process.nextTick(() => { this.updateNodeIdsFromDb(); });
+            });
+            // check connected clients every x secons
+            const updateClientListInterval = configDB.updateClientListInterval || 10000;
+            setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
             try {
                 this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);
                 // getSqlFromMigrationObj connection
@@ -127,9 +129,10 @@ let DbAppClient = class DbAppClient {
 };
 DbAppClient = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => events_1.EventEmitter)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object, Object, Object])
+    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject(type => events_1.EventEmitter)),
+    __param(2, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(3, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], DbAppClient);
 exports.DbAppClient = DbAppClient;
