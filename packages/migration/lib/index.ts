@@ -53,7 +53,7 @@ export class Migration {
       const dbInitVersion = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
 
       if (dbInitVersion != null && dbInitVersion.value != null) {
-        latestVersion = parseInt(dbInitVersion.value, 100);
+        latestVersion = parseInt(dbInitVersion.value, 10);
         this.logger.debug('migration.db.init.version.detected', latestVersion);
       }
     } catch (err) {
