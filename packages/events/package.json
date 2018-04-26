@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "fullstack.one events package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,7 +22,7 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.3.2",
     "@fullstack-one/config": "^0.3.2",
-    "@fullstack-one/db": "^0.3.3",
+    "@fullstack-one/db": "^0.3.4",
     "@fullstack-one/di": "^0.3.2",
     "eventemitter2": "^5.0.1"
   },
