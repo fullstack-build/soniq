@@ -74,7 +74,7 @@ let GraphQl = class GraphQl {
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
             this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
-            const rd = this.gqlParser.getGqlRuntimeData();
+            const rd = this.gqlParser.getGQlRuntimeObject();
             const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
             customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
             customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());

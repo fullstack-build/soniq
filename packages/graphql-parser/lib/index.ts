@@ -71,7 +71,7 @@ export class GraphQlParser {
     this.gQlSdlExtensions.push(schema);
   }
 
-  public getGqlRuntimeData() {
+  public getGQlRuntimeObject() {
     return {
       dbMeta: this.dbMeta,
       views: this.views,
@@ -102,6 +102,12 @@ export class GraphQlParser {
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
       this.gQlSdl = await helper.loadFilesByGlobPattern(gQlSdlPattern);
+
+      // check if any files were loaded
+      if (this.gQlSdl.length === 0) {
+        this.logger.warn('boot.no.sdl.files.found');
+        return;
+      }
 
       // Combine all Schemas to a big one and add extensions from other modules
       const gQlSdlCombined = this.gQlSdl.concat(this.gQlSdlExtensions.slice()).join('\n');

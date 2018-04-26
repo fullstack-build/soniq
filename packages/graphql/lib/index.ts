@@ -84,18 +84,23 @@ export class GraphQl {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await helper.requireFilesByGlobPatternAsObject(resolversPattern));
 
-    const rd = this.gqlParser.getGqlRuntimeData();
+    const gQlRuntimeObject = this.gqlParser.getGQlRuntimeObject();
 
-    const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
-
-    customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
-    customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
-    customOperations.fields = Object.assign(customOperations.fields, this.customFields);
+    let customOperations: any = {};
+    if (gQlRuntimeObject.customOperations == null) {
+      this.logger.warn('boot.no.resolver.files.found');
+      gQlRuntimeObject.customOperations = {};
+    } else {
+      customOperations = JSON.parse(JSON.stringify(gQlRuntimeObject.customOperations));
+      customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
+      customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
+      customOperations.fields = Object.assign(customOperations.fields, this.customFields);
+    }
 
     const schema = makeExecutableSchema({
-      typeDefs: rd.gQlRuntimeSchema,
-      resolvers: getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries,
-      rd.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
+      typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
+      resolvers: getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries,
+      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {
