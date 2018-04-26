@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/logger",
-  "version": "0.3.3-0",
+  "version": "0.3.3-0.3.3-1.0",
   "description": "fullstack.one logger package",
   "main": "index.js",
   "types": "lib/index.ts",
