@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/notifications",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "fullstack.one notifications package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,10 +22,10 @@
   "dependencies": {
     "@fullstack-one/config": "^0.3.2",
     "@fullstack-one/di": "^0.3.2",
-    "@fullstack-one/events": "^0.3.4",
+    "@fullstack-one/events": "^0.3.5",
     "@fullstack-one/logger": "^0.3.3",
-    "@fullstack-one/migration": "^0.3.4",
-    "@fullstack-one/queue": "^0.3.4",
+    "@fullstack-one/migration": "^0.3.5",
+    "@fullstack-one/queue": "^0.3.5",
     "nodemailer": "^4.6.4",
     "nodemailer-direct-transport": "^3.3.2",
     "nodemailer-html-to-text": "^2.1.0"
