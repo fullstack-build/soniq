@@ -679,7 +679,7 @@ export namespace sqlObjFromMigrationObject {
             table_id uuid,
             state jsonb,
             diff jsonb,
-            CONSTRAINT _version_pkey PRIMARY KEY (id)
+            CONSTRAINT _version_${schemaName}_${tableName}_pkey PRIMARY KEY (id)
         );`);
 
       // create trigger for table
