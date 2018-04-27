@@ -427,7 +427,7 @@ export class PgToDbMeta {
         // only of column exists (trigger could be there without column)
         if (currentTable.columns[columnName] != null) {
           currentTable.columns[columnName].triggerUpdatedAt = {
-            active: true
+            isActive: true
           };
         }
       }

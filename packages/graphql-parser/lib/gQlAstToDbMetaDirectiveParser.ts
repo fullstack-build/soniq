@@ -24,7 +24,7 @@ registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, r
     value: 'now()',
   };
   dbMetaNode.triggerUpdatedAt = {
-    active: true
+    isActive: true
   };
 });
 

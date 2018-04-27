@@ -479,7 +479,7 @@ export namespace sqlObjFromMigrationObject {
         thisSql.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
       }
       // create trigger when active
-      if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.active === true) {
+      if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.isActive === true) {
         thisSql.up.push(`CREATE TRIGGER "${triggerName}"
           BEFORE UPDATE
           ON ${tableNameWithSchema}

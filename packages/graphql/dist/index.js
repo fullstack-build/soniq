@@ -74,14 +74,22 @@ let GraphQl = class GraphQl {
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
             this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
-            const rd = this.gqlParser.getGQlRuntimeObject();
-            const customOperations = JSON.parse(JSON.stringify(rd.customOperations));
-            customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
-            customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
-            customOperations.fields = Object.assign(customOperations.fields, this.customFields);
+            const gQlRuntimeObject = this.gqlParser.getGQlRuntimeObject();
+            let customOperations = {};
+            if (gQlRuntimeObject.customOperations == null) {
+                this.logger.warn('boot.no.resolver.files.found');
+                gQlRuntimeObject.customOperations = {};
+                return;
+            }
+            else {
+                customOperations = JSON.parse(JSON.stringify(gQlRuntimeObject.customOperations));
+                customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
+                customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
+                customOperations.fields = Object.assign(customOperations.fields, this.customFields);
+            }
             const schema = graphql_tools_1.makeExecutableSchema({
-                typeDefs: rd.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(rd.gQlTypes, rd.dbMeta, rd.queries, rd.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
+                typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
+                resolvers: resolvers_1.getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries, gQlRuntimeObject.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();
@@ -113,9 +121,12 @@ let GraphQl = class GraphQl {
                 };
             };
             // koaBody is needed just for POST.
-            gqlKoaRouter.post('/graphql', koaBody(), setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlKoaRouter.get('/graphql', setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+            gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+            gqlKoaRouter.get(this.graphQlConfig.endpoint, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+            // graphiql
+            if (this.graphQlConfig.graphiQlEndpointActive) {
+                gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+            }
             const app = this.server.getApp();
             app.use(gqlKoaRouter.routes());
             app.use(gqlKoaRouter.allowedMethods());

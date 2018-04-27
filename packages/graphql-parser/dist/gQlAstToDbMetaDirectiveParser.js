@@ -7,6 +7,25 @@ const gQlAstToDbMetaHelper_1 = require("./gQlAstToDbMetaHelper");
 gQlAstToDbMeta_1.registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     // nothing to do here -> has been done in ObjectTypeDefinition
 });
+// createdAt
+gQlAstToDbMeta_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    dbMetaNode.type = 'timestamp';
+    dbMetaNode.defaultValue = {
+        isExpression: true,
+        value: 'now()'
+    };
+});
+// updatedAt
+gQlAstToDbMeta_1.registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    dbMetaNode.type = 'timestamp';
+    dbMetaNode.defaultValue = {
+        isExpression: true,
+        value: 'now()',
+    };
+    dbMetaNode.triggerUpdatedAt = {
+        isActive: true
+    };
+});
 // mark as computed
 gQlAstToDbMeta_1.registerDirectiveParser('computed', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     dbMetaNode.type = 'computed';

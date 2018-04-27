@@ -31,6 +31,9 @@ export interface IDbMeta {
                                 isExpression: boolean;
                                 value: 'string';
                             };
+                            triggerUpdatedAt?: {
+                                isActive: boolean;
+                            };
                             constraintNames?: [string];
                             relationName?: string;
                             auth?: {

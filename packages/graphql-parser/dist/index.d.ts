@@ -25,7 +25,7 @@ export declare class GraphQlParser {
     addParser(parser: any): void;
     getDbMeta(): any;
     extendSchema(schema: string): void;
-    getGqlRuntimeData(): {
+    getGQlRuntimeObject(): {
         dbMeta: any;
         views: IViews;
         expressions: IExpressions;

@@ -377,15 +377,26 @@ let PgToDbMeta = class PgToDbMeta {
                         isActive: true
                     };
                 }
-                else if (trigger.trigger_name.indexOf('table_is_not_updatable') >= 0) {
+                else if (trigger.trigger_name.includes('table_is_not_updatable')) {
                     // immutability active for table: non updatable
                     currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
                     currentTable.immutable.isUpdatable = false;
                 }
-                else if (trigger.trigger_name.indexOf('table_is_not_deletable') >= 0) {
+                else if (trigger.trigger_name.includes('table_is_not_deletable')) {
                     // immutability active for table: non deletable
                     currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
                     currentTable.immutable.isDeletable = false;
+                }
+                else if (trigger.trigger_name.includes('table_trigger_updatedat')) {
+                    // updatedAt trigger for column
+                    const triggerNameObj = trigger.trigger_name.split('_');
+                    const columnName = triggerNameObj[5];
+                    // only of column exists (trigger could be there without column)
+                    if (currentTable.columns[columnName] != null) {
+                        currentTable.columns[columnName].triggerUpdatedAt = {
+                            isActive: true
+                        };
+                    }
                 }
             });
         });

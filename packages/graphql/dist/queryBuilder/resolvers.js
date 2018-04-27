@@ -10,13 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const read_1 = require("./sqlGenerator/read");
 const mutate_1 = require("./sqlGenerator/mutate");
-/* ======================================================= */
-// Note: The normal import isn't working here for some reason. This is why I import via require.
-// tslint:disable-next-line:import-name
-// import GraphQLJSON from 'graphql-type-json';
-// tslint:disable-next-line:no-var-requires
-const graphqlTypeJson = require('graphql-type-json');
-/* ======================================================= */
+const gQlTypeJson = require("graphql-type-json");
 function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
     // Initialize stuff / get instances / etc.
     const queryResolver = read_1.getQueryResolver(gQlTypes, dbObject);
@@ -168,7 +162,7 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
     });
     const resolvers = {
         // Add JSON Scalar
-        JSON: graphqlTypeJson,
+        JSON: gQlTypeJson,
         Query: queryResolvers,
         Mutation: mutationResolvers
     };

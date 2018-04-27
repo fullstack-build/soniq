@@ -383,6 +383,25 @@ var sqlObjFromMigrationObject;
                 }
             }
         }
+        // add updatedAt trigger
+        if (node.triggerUpdatedAt != null) {
+            const triggerUpdatedAtActionObject = _splitActionFromNode(node.triggerUpdatedAt);
+            const triggerUpdatedAtAction = triggerUpdatedAtActionObject.action;
+            const triggerUpdatedAtDef = triggerUpdatedAtActionObject.node;
+            const triggerName = `table_trigger_updatedat_${schemaName}_${tableName}_${columnName}`;
+            // drop trigger for remove and before add (in case it's already there)
+            if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
+                thisSql.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
+            }
+            // create trigger when active
+            if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.isActive === true) {
+                thisSql.up.push(`CREATE TRIGGER "${triggerName}"
+          BEFORE UPDATE
+          ON ${tableNameWithSchema}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.triggerUpdateOrCreate("${columnName}");`);
+            }
+        }
         // set auth settings
         if (node.auth != null) {
             setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
@@ -546,7 +565,7 @@ var sqlObjFromMigrationObject;
             table_id uuid,
             state jsonb,
             diff jsonb,
-            CONSTRAINT _version_pkey PRIMARY KEY (id)
+            CONSTRAINT _version_${schemaName}_${tableName}_pkey PRIMARY KEY (id)
         );`);
             // create trigger for table
             tableSql.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableName}"
