@@ -90,6 +90,7 @@ export class GraphQl {
     if (gQlRuntimeObject.customOperations == null) {
       this.logger.warn('boot.no.resolver.files.found');
       gQlRuntimeObject.customOperations = {};
+      return;
     } else {
       customOperations = JSON.parse(JSON.stringify(gQlRuntimeObject.customOperations));
       customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
@@ -135,10 +136,12 @@ export class GraphQl {
     };
 
     // koaBody is needed just for POST.
-    gqlKoaRouter.post('/graphql', koaBody(), setCacheHeaders, graphqlKoa(gQlParam));
-    gqlKoaRouter.get('/graphql', setCacheHeaders, graphqlKoa(gQlParam));
-
-    gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+    gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), setCacheHeaders, graphqlKoa(gQlParam));
+    gqlKoaRouter.get(this.graphQlConfig.endpoint, setCacheHeaders, graphqlKoa(gQlParam));
+    // graphiql
+    if (this.graphQlConfig.graphiQlEndpointActive) {
+      gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+    }
 
     const app = this.server.getApp();
 

@@ -1,6 +1,7 @@
 module.exports = {
   graphql: {
-    endpoint:           '/graphql',
-    graphiQlEndpoint:   '/graphiql'
+    endpoint:               '/graphql',
+    graphiQlEndpointActive: true,
+    graphiQlEndpoint:       '/graphiql'
   }
 };
