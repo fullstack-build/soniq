@@ -326,7 +326,7 @@ export namespace sqlObjFromMigrationObject {
         thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${tableNameWithSchemaUp}();`);
         // create direct access updatable view
         thisSql.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
-                          SELECT * FROM ${viewTableNameWithSchemaUp} WHERE _meta.is_admin() = true;`);
+                          SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
 
       } else if (action.remove) {
 
