@@ -1,0 +1,7 @@
+type AdditionPayload {
+  sum: Int!
+}
+
+extend type Query {
+  add(a: Int! b: Int!): GQlOnlyType @custom(resolver: "add")
+}

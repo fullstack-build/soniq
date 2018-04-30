@@ -255,6 +255,7 @@ var sqlObjFromMigrationObject;
         const tableNameUp = node.name || tableName;
         const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
         const tableNameWithSchemaUp = `"${schemaName}"."${tableNameUp}"`;
+        const viewTableNameWithSchemaUp = `"${schemaName}"."V${tableNameUp}"`;
         const tableNameWithSchemaDown = `"${schemaName}"."${tableNameDown}"`;
         // only if table needs to be created
         if (tableDefinition.name != null) {
@@ -262,10 +263,16 @@ var sqlObjFromMigrationObject;
                 // getSqlFromMigrationObj table statement
                 thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
                 thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${tableNameWithSchemaUp}();`);
+                // create direct access updatable view
+                thisSql.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
+                          SELECT * FROM ${viewTableNameWithSchemaUp} WHERE _meta.is_admin() = true;`);
             }
             else if (action.remove) {
                 // getSqlFromMigrationObj or rename table
                 if (!renameInsteadOfDrop) {
+                    // drop direct access updatable view
+                    thisSql.up.push(`DROP VIEW ${viewTableNameWithSchemaUp}`);
+                    // drop table
                     thisSql.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchemaDown};`);
                 }
                 else { // getSqlFromMigrationObj rename instead, ignore if already renamed
