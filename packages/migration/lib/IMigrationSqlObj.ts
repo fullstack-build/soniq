@@ -23,8 +23,7 @@ export interface IMigrationSqlObj {
           name: string;
           sql: ISqlObj;
           columns: {
-            [name: string]:
-              {
+            [name: string]: {
                 name: string;
                 sql: ISqlObj;
               }
@@ -33,6 +32,12 @@ export interface IMigrationSqlObj {
             sql: ISqlObj;
           };
         };
+      },
+      views?: {
+        [name: string]: {
+            name: string;
+            sql: ISqlObj;
+          }
       }
     }
   };

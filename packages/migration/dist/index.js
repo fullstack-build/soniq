@@ -66,7 +66,7 @@ let Migration = class Migration {
             // run through all registered packages
             this.initSqlPaths.map((initSqlPath) => {
                 // find all init_sql folders
-                fastGlob.sync(`${initSqlPath}/init_sql/[[0-9]*`, {
+                fastGlob.sync(`${initSqlPath}/sql/[[0-9]*`, {
                     deep: false,
                     onlyDirectories: true,
                 }).map((path) => {
@@ -80,9 +80,9 @@ let Migration = class Migration {
             // iterate all active paths and collect all files grouped by types (suffix)
             const loadFilesOrder = {};
             // suffix types
-            const loadSuffixOrder = ['extension', 'schema', 'type', 'table', 'function', 'set', 'insert', 'select'];
+            const loadSuffixOrder = ['extension', 'schema', 'table', 'function', 'set', 'insert', 'select'];
             // will try, but ignore any errors
-            const loadOptionalSuffixOrder = ['operator_class'];
+            const loadOptionalSuffixOrder = ['type', 'operator_class'];
             initSqlFolders.map((initSqlFolder) => {
                 // iterate all suffixes
                 for (const suffix of [...loadSuffixOrder, ...loadOptionalSuffixOrder]) {

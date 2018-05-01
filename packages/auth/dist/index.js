@@ -19,6 +19,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
@@ -29,6 +32,7 @@ const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
 const crypto_1 = require("./crypto");
 const signHelper_1 = require("./signHelper");
+__export(require("./signHelper"));
 const passport = require("koa-passport");
 const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");

@@ -30,6 +30,12 @@ export interface IMigrationSqlObj {
                     };
                 };
             };
+            views?: {
+                [name: string]: {
+                    name: string;
+                    sql: ISqlObj;
+                };
+            };
         };
     };
     enums?: {

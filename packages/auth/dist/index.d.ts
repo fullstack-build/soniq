@@ -1,3 +1,4 @@
+export * from './signHelper';
 export declare class Auth {
     private sodiumConfig;
     private authConfig;

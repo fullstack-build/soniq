@@ -8,6 +8,7 @@ import { GraphQl } from '@fullstack-one/graphql';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature } from './signHelper';
+export * from './signHelper';
 import * as passport from 'koa-passport';
 import { LocalStrategy } from 'passport-local';
 import * as KoaRouter from 'koa-router';
