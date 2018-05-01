@@ -38,7 +38,8 @@ As soon as a schema becomes empty (no tables) it will get dropped.
 
 ## table
 ### create table
-Tables will also implicitly create needed schemas they should be placed in.
+* Tables will also implicitly create needed schemas they should be placed in.
+* Each table will create a corresponding updatable view with the name `V{TABLE_NAME}`. This view is used fo restricted access with a valid user. Direct table access should be forbidden.      
 
 #### basic example
 

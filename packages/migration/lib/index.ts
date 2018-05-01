@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
+import { diff } from 'deep-diff';
 
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
@@ -11,7 +12,6 @@ import createViewsFromDbMeta from './createViewsFromDbMeta';
 
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
-// TODO: @eugene: Migration should be a Migration-Factory
 @Service()
 export class Migration {
 
@@ -221,10 +221,11 @@ export class Migration {
 
     // get previous migration and compare to current
     const previousMigrationRow: any = (await dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
-    const  previousMigrationStateJSON = (previousMigrationRow == null) ? '{}' : JSON.stringify(previousMigrationRow.state);
+    const  previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
+    const  previousMigrationStateString = JSON.stringify(previousMigrationStateJSON);
 
     // anything to migrate and not the same as last time?
-    if (migrationSqlStatements.length > 0 && previousMigrationStateJSON !== JSON.stringify(toDbMeta)) {
+    if (migrationSqlStatements.length > 0 && diff(previousMigrationStateJSON, toDbMeta) != null) {
 
       // get view statements
       const viewsSqlStatements = this.getViewsSql();
@@ -247,12 +248,12 @@ export class Migration {
           await  dbClient.query(sql);
         }
 
-        // current framework db versin
+        // current framework db version
         const dbVersion: string = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0].value;
 
         // last step, save final dbMeta in _meta
         this.logger.trace('migration.state.saved');
-        await dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, this.toDbMeta]);
+        await dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, toDbMeta]);
 
         // commit
         this.logger.trace('migration.commit');

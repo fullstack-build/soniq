@@ -23,6 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const fastGlob = require("fast-glob");
 const fs = require("fs");
+const deep_diff_1 = require("deep-diff");
 const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
 const logger_1 = require("@fullstack-one/logger");
@@ -30,7 +31,6 @@ const db_1 = require("@fullstack-one/db");
 const migrationObject_1 = require("./migrationObject");
 const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
 const createSqlObjFromMigrationObject_1 = require("./createSqlObjFromMigrationObject");
-// TODO: @eugene: Migration should be a Migration-Factory
 let Migration = class Migration {
     constructor(config, loggerFactory, dbAppClient) {
         this.initSqlPaths = [__dirname + '/..'];
@@ -198,9 +198,10 @@ let Migration = class Migration {
             const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
             // get previous migration and compare to current
             const previousMigrationRow = (yield dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
-            const previousMigrationStateJSON = (previousMigrationRow == null) ? '{}' : JSON.stringify(previousMigrationRow.state);
+            const previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
+            const previousMigrationStateString = JSON.stringify(previousMigrationStateJSON);
             // anything to migrate and not the same as last time?
-            if (migrationSqlStatements.length > 0 && previousMigrationStateJSON !== JSON.stringify(toDbMeta)) {
+            if (migrationSqlStatements.length > 0 && deep_diff_1.diff(previousMigrationStateJSON, toDbMeta) != null) {
                 // get view statements
                 const viewsSqlStatements = this.getViewsSql();
                 // run DB migrations
@@ -218,11 +219,11 @@ let Migration = class Migration {
                         this.logger.trace('migration.view.sql.statement', sql);
                         yield dbClient.query(sql);
                     }
-                    // current framework db versin
+                    // current framework db version
                     const dbVersion = (yield dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0].value;
                     // last step, save final dbMeta in _meta
                     this.logger.trace('migration.state.saved');
-                    yield dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, this.toDbMeta]);
+                    yield dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, toDbMeta]);
                     // commit
                     this.logger.trace('migration.commit');
                     yield dbClient.query('COMMIT');

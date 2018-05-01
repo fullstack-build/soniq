@@ -318,7 +318,7 @@ var sqlObjFromMigrationObject;
         thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
                           SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
         // drop direct access updatable view
-        thisSqlView.down.push(`DROP VIEW ${viewTableNameWithSchemaUp}`);
+        thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaUp}`);
         // iterate columns
         if (tableDefinition.columns != null) {
             const columns = _splitActionFromNode(tableDefinition.columns).node;

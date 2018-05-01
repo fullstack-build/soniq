@@ -8,7 +8,6 @@ import { GraphQl } from '@fullstack-one/graphql';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature } from './signHelper';
-export * from './signHelper';
 import * as passport from 'koa-passport';
 import { LocalStrategy } from 'passport-local';
 import * as KoaRouter from 'koa-router';
@@ -16,6 +15,9 @@ import * as koaBody from 'koa-bodyparser';
 import * as koaSession from 'koa-session';
 import oAuthCallback from './oAuthCallback';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
+
+// export
+export * from './signHelper';
 
 @Service()
 export class Auth {
@@ -345,6 +347,16 @@ export class Auth {
     return passport;
   }
 
+  /* DB HELPER START */
+  public async createDbClientAdminTransaction(dbClient) {
+    // Begin transaction
+    await dbClient.query('BEGIN');
+    const SECRET = this.authConfig.secrets.admin;
+    await dbClient.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(SECRET)}'`);
+    return dbClient;
+  }
+  /* DB HELPER END */
+
   private addMiddleware() {
     const app = this.server.getApp();
 
@@ -580,4 +592,5 @@ export class Auth {
       await this.setUser(client, context.accessToken);
     }
   }
+
 }

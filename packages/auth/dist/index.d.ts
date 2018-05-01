@@ -29,6 +29,7 @@ export declare class Auth {
     invalidateUserToken(accessToken: any): Promise<boolean>;
     invalidateAllUserTokens(accessToken: any): Promise<boolean>;
     getPassport(): any;
+    createDbClientAdminTransaction(dbClient: any): Promise<any>;
     private addMiddleware();
     private boot();
     private preQueryHook(client, context, authRequired);

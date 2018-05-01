@@ -32,13 +32,14 @@ const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
 const crypto_1 = require("./crypto");
 const signHelper_1 = require("./signHelper");
-__export(require("./signHelper"));
 const passport = require("koa-passport");
 const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
 const koaSession = require("koa-session");
 const oAuthCallback_1 = require("./oAuthCallback");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
+// export
+__export(require("./signHelper"));
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl) {
         // register package config
@@ -308,6 +309,17 @@ let Auth = class Auth {
     getPassport() {
         return passport;
     }
+    /* DB HELPER START */
+    createDbClientAdminTransaction(dbClient) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Begin transaction
+            yield dbClient.query('BEGIN');
+            const SECRET = this.authConfig.secrets.admin;
+            yield dbClient.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(SECRET)}'`);
+            return dbClient;
+        });
+    }
+    /* DB HELPER END */
     addMiddleware() {
         const app = this.server.getApp();
         app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
