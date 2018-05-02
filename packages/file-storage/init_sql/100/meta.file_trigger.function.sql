@@ -2,12 +2,12 @@
 CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
     function validateFile(fileId, entityId) {
-        var plan = plv8.prepare( 'SELECT _meta."file_validate($1, $2)"', ['uuid', 'uuid'] );
+        var plan = plv8.prepare( 'SELECT _meta."file_validate"($1, $2);', ['uuid', 'uuid'] );
         var rows = plan.execute( [fileId, entityId] );
     }
 
     function invalidateFile(fileId, entityId) {
-        var plan = plv8.prepare( 'SELECT _meta."file_invalidate($1, $2)"', ['uuid', 'uuid'] );
+        var plan = plv8.prepare( 'SELECT _meta."file_invalidate"($1, $2);', ['uuid', 'uuid'] );
         var rows = plan.execute( [fileId, entityId] );
     }
 
@@ -24,8 +24,8 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
         return OLD;
     }
 
-    for(var i in rows) {
-        var fieldName = rows[i];
+    for(var i in rows[0].fields) {
+        var fieldName = rows[0].fields[i];
 
         if (TG_OP === 'INSERT') {
             // ID field is required
@@ -59,7 +59,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
             }
 
             // If the field is neither in NEW nor in OLD it can be ignored
-            if (NEW[fieldName] == null && OLD[fieldName] == NULL) {
+            if (NEW[fieldName] == null && OLD[fieldName] == null) {
                 return NEW;
             }
 
@@ -80,7 +80,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
             }
             
             // If the field is available in both, we need to diff
-            if (NEW[fieldName] != null && OLD[fieldName] != NULL) {
+            if (NEW[fieldName] != null && OLD[fieldName] != null) {
                 // Validate new files
                 for(var j in NEW[fieldName]) {
                     var fileId = NEW[fieldName][j];
@@ -91,49 +91,11 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
                 // Invalidate old files
                 for(var j in OLD[fieldName]) {
                     var fileId = OLD[fieldName][j];
-                    if(OLD[fieldName].indexOf(fileId) < 0) {
+                    if(NEW[fieldName].indexOf(fileId) < 0) {
                         invalidateFile(fileId, NEW.id)
                     }
                 }
             }
         }
     }
-
-    FOR v_field IN SELECT * FROM jsonb_array_elements(v_fields)
-    LOOP
-        RAISE NOTICE 'output from space %', v_field;
-        
-        IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-            EXECUTE format('SELECT ($1).%s::jsonb', v_field)
-            USING NEW
-            INTO v_new;
-        END IF;
-
-        IF TG_OP = 'DELETE' OR TG_OP = 'UPDATE' THEN
-            EXECUTE format('SELECT ($1).%s::jsonb', v_field)
-            USING OLD
-            INTO v_old;
-        END IF;
-
-        IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-            FOR v_field_value IN SELECT * FROM jsonb_array_elements(v_new)
-            LOOP
-
-            END LOOP;
-        END IF;
-
-
-    END LOOP;
-
-    IF TG_OP = 'INSERT' THEN
-        
-    END IF;
-
-    IF v_deleted IS NOT NULL THEN
-        RAISE EXCEPTION 'The file you are trying to add has been deleted!';
-    END IF;
-
-    IF v_entity_id IS NOT NULL THEN
-        RAISE EXCEPTION 'The file you are trying to add has already been added to an entity!';
-    END IF;
 $$ LANGUAGE "plv8";

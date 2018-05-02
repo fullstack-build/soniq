@@ -17,6 +17,6 @@ BEGIN
     END IF;
 
     v_query := $tok$UPDATE _meta."Files" SET "deleted"=now() WHERE id = %L$tok$;
-    EXECUTE format(v_query, i_entity_id, i_file_id);
+    EXECUTE format(v_query, i_file_id);
 END;
 $$ LANGUAGE plpgsql;
