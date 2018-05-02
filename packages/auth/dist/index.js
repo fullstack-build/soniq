@@ -57,7 +57,6 @@ let Auth = class Auth {
         migration.addMigrationPath(__dirname + '/..');
         // register directive parser
         require('./migrationHelper');
-        this.addMiddleware();
         // this.linkPassport();
     }
     setUser(client, accessToken) {
@@ -330,12 +329,11 @@ let Auth = class Auth {
     }
     getCurrentUserIdFromClient(dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
-            return (yield dbClient.query("SELECT _meta.current_user_id();")).rows[0].current_user_id;
+            return (yield dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
         });
     }
     /* DB HELPER END */
-    addMiddleware() {
-        const app = this.server.getApp();
+    addMiddleware(app) {
         app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
             if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
                 ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
@@ -356,6 +354,7 @@ let Auth = class Auth {
         return __awaiter(this, void 0, void 0, function* () {
             const authRouter = new KoaRouter();
             const app = this.server.getApp();
+            this.addMiddleware(app);
             authRouter.get('/test', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 ctx.body = 'Hallo';
             }));

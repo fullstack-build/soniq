@@ -51,5 +51,8 @@ module.exports = {
       ],
       serverApiAddress: 'http://localhost:3000'
     }
+  },
+  server: {
+    port: process.env.PORT
   }
 };

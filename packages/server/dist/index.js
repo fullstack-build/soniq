@@ -40,8 +40,8 @@ let Server = class Server {
         // get settings from DI container
         this.serverConfig = config.getConfig('server');
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        // bootLoader.addBootFunction(this.boot.bind(this));
-        this.boot();
+        // this.boot();
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
     getApp() {
         return this.app;

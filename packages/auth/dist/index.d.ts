@@ -32,7 +32,7 @@ export declare class Auth {
     createDbClientAdminTransaction(dbClient: any): Promise<any>;
     createDbClientUserTransaction(dbClient: any, accessToken: any): Promise<any>;
     getCurrentUserIdFromClient(dbClient: any): Promise<any>;
-    private addMiddleware();
+    private addMiddleware(app);
     private boot();
     private preQueryHook(client, context, authRequired);
 }

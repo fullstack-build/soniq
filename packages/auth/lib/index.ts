@@ -61,8 +61,6 @@ export class Auth {
     // register directive parser
     require('./migrationHelper');
 
-    this.addMiddleware();
-
     // this.linkPassport();
   }
 
@@ -369,8 +367,7 @@ export class Auth {
   }
   /* DB HELPER END */
 
-  private addMiddleware() {
-    const app = this.server.getApp();
+  private addMiddleware(app) {
 
     app.use(async (ctx, next) => {
       if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
@@ -396,6 +393,8 @@ export class Auth {
     const authRouter = new KoaRouter();
 
     const app = this.server.getApp();
+
+    this.addMiddleware(app);
 
     authRouter.get('/test', async (ctx) => {
       ctx.body = 'Hallo';

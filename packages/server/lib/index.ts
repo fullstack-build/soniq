@@ -36,8 +36,9 @@ export class Server {
     this.serverConfig = config.getConfig('server');
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    // bootLoader.addBootFunction(this.boot.bind(this));
-    this.boot();
+    // this.boot();
+    bootLoader.addBootFunction(this.boot.bind(this));
+
   }
 
   public getApp() {
