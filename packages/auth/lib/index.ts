@@ -358,13 +358,106 @@ export class Auth {
     // Begin transaction
     await dbClient.query('BEGIN');
     // set user for dbClient
-    this.setUser(dbClient, accessToken);
+    await this.setUser(dbClient, accessToken);
     return dbClient;
   }
 
   public async getCurrentUserIdFromClient(dbClient) {
     return (await dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
   }
+
+  public async adminTransaction(callback): Promise<any> {
+
+    const client = await this.dbGeneralPool.pgPool.connect();
+
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
+
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
+
+      const ret = await callback(client);
+
+      await client.query('COMMIT');
+      return ret;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      // Release pgClient to pool
+      client.release();
+    }
+  }
+
+  public async adminQuery(query): Promise<any> {
+
+    const client = await this.dbGeneralPool.pgPool.connect();
+
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
+
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
+
+      const ret = await client.query(query);
+
+      await client.query('COMMIT');
+      return ret;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      // Release pgClient to pool
+      client.release();
+    }
+  }
+
+  public async userTransaction(accessToken, callback): Promise<any> {
+
+    const client = await this.dbGeneralPool.pgPool.connect();
+
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
+
+      await this.setUser(client, accessToken);
+
+      const ret = await callback(client);
+
+      await client.query('COMMIT');
+      return ret;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      // Release pgClient to pool
+      client.release();
+    }
+  }
+
+  public async userQuery(accessToken, query): Promise<any> {
+
+    const client = await this.dbGeneralPool.pgPool.connect();
+
+    try {
+      // Begin transaction
+      await client.query('BEGIN');
+
+      await this.setUser(client, accessToken);
+
+      const ret = await client.query(query);
+
+      await client.query('COMMIT');
+      return ret;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      // Release pgClient to pool
+      client.release();
+    }
+  }
+
   /* DB HELPER END */
 
   private addMiddleware(app) {
