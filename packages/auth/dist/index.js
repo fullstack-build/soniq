@@ -319,6 +319,20 @@ let Auth = class Auth {
             return dbClient;
         });
     }
+    createDbClientUserTransaction(dbClient, accessToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Begin transaction
+            yield dbClient.query('BEGIN');
+            // set user for dbClient
+            this.setUser(dbClient, accessToken);
+            return dbClient;
+        });
+    }
+    getCurrentUserIdFromClient(dbClient) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (yield dbClient.query("SELECT _meta.current_user_id();")).rows[0].current_user_id;
+        });
+    }
     /* DB HELPER END */
     addMiddleware() {
         const app = this.server.getApp();

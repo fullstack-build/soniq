@@ -355,6 +355,18 @@ export class Auth {
     await dbClient.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(SECRET)}'`);
     return dbClient;
   }
+
+  public async createDbClientUserTransaction(dbClient, accessToken) {
+    // Begin transaction
+    await dbClient.query('BEGIN');
+    // set user for dbClient
+    this.setUser(dbClient, accessToken);
+    return dbClient;
+  }
+
+  public async getCurrentUserIdFromClient(dbClient) {
+    return (await dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
+  }
   /* DB HELPER END */
 
   private addMiddleware() {
