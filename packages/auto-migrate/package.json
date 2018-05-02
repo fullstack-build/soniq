@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auto-migrate",
-  "version": "0.3.8-2",
+  "version": "0.3.8-3",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,14 +20,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.3.8-2",
-    "@fullstack-one/config": "^0.3.8-2",
-    "@fullstack-one/db": "^0.3.8-2",
-    "@fullstack-one/di": "^0.3.8-2",
-    "@fullstack-one/events": "^0.3.8-2",
-    "@fullstack-one/graphql-parser": "^0.3.8-2",
-    "@fullstack-one/logger": "^0.3.8-2",
-    "@fullstack-one/migration": "^0.3.8-2"
+    "@fullstack-one/boot-loader": "^0.3.8-3",
+    "@fullstack-one/config": "^0.3.8-3",
+    "@fullstack-one/db": "^0.3.8-3",
+    "@fullstack-one/di": "^0.3.8-3",
+    "@fullstack-one/events": "^0.3.8-3",
+    "@fullstack-one/graphql-parser": "^0.3.8-3",
+    "@fullstack-one/logger": "^0.3.8-3",
+    "@fullstack-one/migration": "^0.3.8-3"
   },
   "devDependencies": {
     "typescript": "^2.8.3"
