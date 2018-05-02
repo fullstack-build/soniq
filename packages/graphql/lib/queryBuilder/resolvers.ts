@@ -1,26 +1,7 @@
-import {
-  parseResolveInfo
-} from 'graphql-parse-resolve-info';
-
-import {
-  getQueryResolver
-} from './sqlGenerator/read';
-
-import {
-  getMutationResolver
-} from './sqlGenerator/mutate';
-
-/* ======================================================= */
-
-// Note: The normal import isn't working here for some reason. This is why I import via require.
-
-// tslint:disable-next-line:import-name
-// import GraphQLJSON from 'graphql-type-json';
-
-// tslint:disable-next-line:no-var-requires
-const graphqlTypeJson = require('graphql-type-json');
-
-/* ======================================================= */
+import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { getQueryResolver } from './sqlGenerator/read';
+import { getMutationResolver } from './sqlGenerator/mutate';
+import * as gQlTypeJson from 'graphql-type-json';
 
 export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
   // Initialize stuff / get instances / etc.
@@ -207,7 +188,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
 
   const resolvers = {
     // Add JSON Scalar
-    JSON: graphqlTypeJson,
+    JSON: gQlTypeJson,
     Query: queryResolvers,
     Mutation: mutationResolvers
   };

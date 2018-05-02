@@ -10,9 +10,9 @@ export { PgClient };
 @Service()
 export class DbAppClient implements IDb {
 
-  public readonly pgClient: PgClient;
+  public pgClient: PgClient;
 
-  private readonly applicationName: string;
+  private applicationName: string;
   // todo application_name not available in pg.ClientConfig <- check and add it there
   // private credentials: PgClientConfig;
   private credentials: any;
@@ -21,48 +21,24 @@ export class DbAppClient implements IDb {
   private ENVIRONMENT: IEnvironment;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
+  private config: Config;
 
   constructor(
+    @Inject(type => BootLoader) bootLoader?,
     @Inject(type => EventEmitter) eventEmitter?,
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => Config) config?
   ) {
+    this.config = config;
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    this.config.addConfigFolder(__dirname + '/../config');
 
     // set DI dependencies
     this.eventEmitter = eventEmitter;
     this.logger = loggerFactory.create('DbAppClient');
 
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
-
-    const configDB = config.getConfig('db');
-    this.credentials  = configDB.appClient;
-    this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
-
-    // create PG pgClient
-    this.pgClient  = new PgClient(this.credentials);
-
-    this.logger.debug('Postgres setup pgClient created');
-    this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
-
-    // collect known nodes
-    this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
-      this.updateNodeIdsFromDb();
-    });
-
-    // update number of clients on exit
-    this.eventEmitter.onAnyInstance(`db.application.client.end.start`, (nodeId) => {
-      // wait one tick until it actually finishes
-      process.nextTick(() => { this.updateNodeIdsFromDb(); });
-    });
-
-    // check connected clients every x secons
-    const updateClientListInterval = configDB.updateClientListInterval || 10000;
-    setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
-
-    Container.get(BootLoader).addBootFunction(this.boot.bind(this));
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   public async end(): Promise<void> {
@@ -90,6 +66,34 @@ export class DbAppClient implements IDb {
   }
 
   private async boot(): Promise<PgClient> {
+
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+
+    const configDB = this.config.getConfig('db');
+    this.credentials  = configDB.appClient;
+    this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
+
+    // create PG pgClient
+    this.pgClient  = new PgClient(this.credentials);
+
+    this.logger.debug('Postgres setup pgClient created');
+    this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
+
+    // collect known nodes
+    this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
+      this.updateNodeIdsFromDb();
+    });
+
+    // update number of clients on exit
+    this.eventEmitter.onAnyInstance(`db.application.client.end.start`, (nodeId) => {
+      // wait one tick until it actually finishes
+      process.nextTick(() => { this.updateNodeIdsFromDb(); });
+    });
+
+    // check connected clients every x secons
+    const updateClientListInterval = configDB.updateClientListInterval || 10000;
+    setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
     try {
       this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);

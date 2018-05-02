@@ -19,6 +19,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
@@ -35,6 +38,8 @@ const koaBody = require("koa-bodyparser");
 const koaSession = require("koa-session");
 const oAuthCallback_1 = require("./oAuthCallback");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
+// export
+__export(require("./signHelper"));
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl) {
         // register package config
@@ -52,7 +57,6 @@ let Auth = class Auth {
         migration.addMigrationPath(__dirname + '/..');
         // register directive parser
         require('./migrationHelper');
-        this.addMiddleware();
         // this.linkPassport();
     }
     setUser(client, accessToken) {
@@ -304,8 +308,32 @@ let Auth = class Auth {
     getPassport() {
         return passport;
     }
-    addMiddleware() {
-        const app = this.server.getApp();
+    /* DB HELPER START */
+    createDbClientAdminTransaction(dbClient) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Begin transaction
+            yield dbClient.query('BEGIN');
+            const SECRET = this.authConfig.secrets.admin;
+            yield dbClient.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(SECRET)}'`);
+            return dbClient;
+        });
+    }
+    createDbClientUserTransaction(dbClient, accessToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Begin transaction
+            yield dbClient.query('BEGIN');
+            // set user for dbClient
+            this.setUser(dbClient, accessToken);
+            return dbClient;
+        });
+    }
+    getCurrentUserIdFromClient(dbClient) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (yield dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
+        });
+    }
+    /* DB HELPER END */
+    addMiddleware(app) {
         app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
             if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
                 ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
@@ -326,6 +354,7 @@ let Auth = class Auth {
         return __awaiter(this, void 0, void 0, function* () {
             const authRouter = new KoaRouter();
             const app = this.server.getApp();
+            this.addMiddleware(app);
             authRouter.get('/test', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 ctx.body = 'Hallo';
             }));

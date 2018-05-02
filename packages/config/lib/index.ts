@@ -1,12 +1,10 @@
-import { Service, Container } from '@fullstack-one/di';
+import { Inject, Service, Container } from '@fullstack-one/di';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { randomBytes } from 'crypto';
 
 import { IEnvironment } from './IEnvironment';
-import { Inject } from '../../di/lib';
-import { BootLoader } from '../../boot-loader/lib';
-import oAuthCallback from '../../auth/lib/oAuthCallback';
+import { BootLoader } from '@fullstack-one/boot-loader';
 export { IEnvironment };
 
 @Service()
@@ -15,13 +13,13 @@ export class Config {
   public readonly ENVIRONMENT: IEnvironment = {
     frameworkVersion: null,
     NODE_ENV: process.env.NODE_ENV,
-    name:     null,
-    version:  null,
-    path:     null,
-    port: null,
-    namespace: null,
+    name:       null,
+    version:    null,
+    path:       null,
+    port:       null,
+    namespace:  null,
     // unique instance ID (6 char)
-    nodeId:   null
+    nodeId:     null
   };
   private configFolder = [];
   private config: any = {};

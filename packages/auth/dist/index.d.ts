@@ -1,3 +1,4 @@
+export * from './signHelper';
 export declare class Auth {
     private sodiumConfig;
     private authConfig;
@@ -28,7 +29,10 @@ export declare class Auth {
     invalidateUserToken(accessToken: any): Promise<boolean>;
     invalidateAllUserTokens(accessToken: any): Promise<boolean>;
     getPassport(): any;
-    private addMiddleware();
+    createDbClientAdminTransaction(dbClient: any): Promise<any>;
+    createDbClientUserTransaction(dbClient: any, accessToken: any): Promise<any>;
+    getCurrentUserIdFromClient(dbClient: any): Promise<any>;
+    private addMiddleware(app);
     private boot();
     private preQueryHook(client, context, authRequired);
 }

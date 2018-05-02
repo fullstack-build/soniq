@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "dotenv": "^4.0.0",
-    "fullstack-one": "git+https://github.com/fullstack-build/fullstack.one.git",
     "passport-facebook": "^2.1.1",
     "passport-google-oauth20": "^1.0.0",
     "ts-node": "^4.1.0",

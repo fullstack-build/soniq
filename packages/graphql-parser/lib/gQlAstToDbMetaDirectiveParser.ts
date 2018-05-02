@@ -7,6 +7,27 @@ registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
     // nothing to do here -> has been done in ObjectTypeDefinition
 });
 
+// createdAt
+registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  dbMetaNode.type = 'timestamp';
+  dbMetaNode.defaultValue = {
+    isExpression: true,
+    value: 'now()'
+  };
+});
+
+// updatedAt
+registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  dbMetaNode.type = 'timestamp';
+  dbMetaNode.defaultValue = {
+    isExpression: true,
+    value: 'now()',
+  };
+  dbMetaNode.triggerUpdatedAt = {
+    isActive: true
+  };
+});
+
 // mark as computed
 registerDirectiveParser('computed', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     dbMetaNode.type = 'computed';

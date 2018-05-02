@@ -12,6 +12,8 @@ type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
 
+  updatedAt: String @updatedAt
+  createdAt: String @createdAt
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
