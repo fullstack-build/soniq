@@ -389,7 +389,7 @@ export class Auth {
     }
   }
 
-  public async adminQuery(query, values?: any[]): Promise<any> {
+  public async adminQuery(...queryArguments: any[]): Promise<any> {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -399,10 +399,11 @@ export class Auth {
 
       await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
-      const ret = await client.query(query, values);
+      // run query
+      const result = await client.query.apply(client, queryArguments);
 
       await client.query('COMMIT');
-      return ret;
+      return result;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -435,7 +436,7 @@ export class Auth {
     }
   }
 
-  public async userQuery(accessToken, query, values?: any[]): Promise<any> {
+  public async userQuery(accessToken, ...queryArguments: any[]): Promise<any> {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -445,10 +446,10 @@ export class Auth {
 
       await this.setUser(client, accessToken);
 
-      const ret = await client.query(query, values);
+      const result = await client.query.apply(client, queryArguments);
 
       await client.query('COMMIT');
-      return ret;
+      return result;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

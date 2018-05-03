@@ -33,9 +33,9 @@ export declare class Auth {
     createDbClientUserTransaction(dbClient: any, accessToken: any): Promise<any>;
     getCurrentUserIdFromClient(dbClient: any): Promise<any>;
     adminTransaction(callback: any): Promise<any>;
-    adminQuery(query: any, values?: any[]): Promise<any>;
+    adminQuery(...queryArguments: any[]): Promise<any>;
     userTransaction(accessToken: any, callback: any): Promise<any>;
-    userQuery(accessToken: any, query: any, values?: any[]): Promise<any>;
+    userQuery(accessToken: any, ...queryArguments: any[]): Promise<any>;
     private addMiddleware(app);
     private boot();
     private preQueryHook(client, context, authRequired);
