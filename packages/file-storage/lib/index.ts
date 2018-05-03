@@ -5,11 +5,13 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { Migration } from '@fullstack-one/migration';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
+import { Auth } from '@fullstack-one/auth';
 import { GraphQlParser } from '@fullstack-one/graphql-parser';
 import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
 import * as Minio from 'minio';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
+import * as filesParser from './parser';
 
 import * as fs from 'fs';
 
@@ -26,6 +28,8 @@ export class FileStorage {
   private server: Server;
   private graphQl: GraphQl;
   private graphQlParser: GraphQlParser;
+  private config: Config;
+  private auth: Auth;
 
   constructor(
     @Inject(type => DbGeneralPool) dbGeneralPool?,
@@ -34,7 +38,8 @@ export class FileStorage {
     @Inject(type => Migration) migration?,
     @Inject(type => Config) config?,
     @Inject(type => GraphQl) graphQl?,
-    @Inject(type => GraphQlParser) graphQlParser?
+    @Inject(type => GraphQlParser) graphQlParser?,
+    @Inject(type => Auth) auth?
   ) {
     // register package config
     config.addConfigFolder(__dirname + '/../config');
@@ -43,15 +48,15 @@ export class FileStorage {
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
     this.graphQlParser = graphQlParser;
+    this.config = config;
+    this.auth = auth;
 
     // add migration path
     migration.addMigrationPath(__dirname + '/..');
 
-    this.fileStorageConfig = config.getConfig('fileStorage');
-
-    this.client = new Minio.Client(this.fileStorageConfig.minio);
-
     this.graphQlParser.extendSchema(schema);
+
+    this.graphQlParser.addParser(filesParser);
 
     this.graphQl.addResolvers(this.getResolvers());
 
@@ -59,6 +64,10 @@ export class FileStorage {
   }
 
   private async boot() {
+    this.fileStorageConfig = this.config.getConfig('fileStorage');
+
+    this.client = new Minio.Client(this.fileStorageConfig.minio);
+
     const authRouter = new KoaRouter();
 
     const app = this.server.getApp();
@@ -73,19 +82,68 @@ export class FileStorage {
     app.use(authRouter.allowedMethods());
   }
 
+  private async presignedPutObject(fileName) {
+    return await this.client.presignedPutObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
+  }
+
+  private async presignedGetObject(fileName) {
+    return await this.client.presignedGetObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
+  }
+
   private getResolvers() {
     return {
       '@fullstack-one/file-storage/createFile': async (obj, args, context, info, params) => {
+        // console.log('**', args, context.accessToken);
+        const extension = args.extension.toLowerCase();
+
+        const result = await this.auth.userQuery(context.accessToken, `SELECT _meta.file_create($1) AS "fileId";`, [extension]);
+        // console.log('--', result);
+        const fileId = result.rows[0].fileId;
+        const fileName = fileId + '.' + extension;
+
+        const presignedPutUrl = await this.presignedPutObject(fileName);
+        const presignedGetUrl = await this.presignedGetObject(fileName);
+
         return {
-          extension: 'png',
-          name: 'testimage',
-          putUrl: 'http://minio.put.de/',
-          getUrl: 'http://minio.get.de/',
-          bucket: 'fullstackTestBucket',
-          object: 'testimage',
-          ownerUserId: 'ux4',
-          createdAt: 'Yesterday'
+          extension,
+          fileId,
+          fileName,
+          presignedPutUrl,
+          presignedGetUrl
         };
+      },
+      '@fullstack-one/file-storage/readFiles': async (obj, args, context, info, params) => {
+        const awaitingFileSignatures = [];
+
+        for (const fileName of obj) {
+          try {
+            awaitingFileSignatures.push({
+              fileName,
+              presignedGetUrlPromise: this.presignedGetObject(fileName)
+            });
+          } catch (err) {
+            // Errors can be ignored => Failed Signs are not returned
+            // TODO: Log this.
+          }
+        }
+
+        const results = [];
+
+        for (const fileObject of awaitingFileSignatures) {
+          try {
+            const presignedGetUrl = await fileObject.presignedGetUrlPromise;
+            const fileName = fileObject.fileName;
+            results.push({
+              fileName,
+              presignedGetUrl
+            });
+          } catch (err) {
+            // Errors can be ignored => Failed Signs are not returned
+            // TODO: Log this.
+          }
+        }
+
+        return results;
       }
     };
   }

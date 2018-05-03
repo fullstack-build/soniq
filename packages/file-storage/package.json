@@ -20,6 +20,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/auth": "^0.3.8",
     "@fullstack-one/boot-loader": "^0.3.8",
     "@fullstack-one/config": "^0.3.8",
     "@fullstack-one/db": "^0.3.8",
@@ -31,7 +32,7 @@
     "jsonwebtoken": "^8.2.1",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.3.0",
-    "minio": "^4.0.0"
+    "minio": "^5.0.1"
   },
   "devDependencies": {
     "typescript": "^2.8.3"

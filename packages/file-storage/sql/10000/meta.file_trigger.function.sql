@@ -1,13 +1,15 @@
 -- file_validate function sets the entityId of a file if not already set or deleted
 CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
-    function validateFile(fileId, entityId) {
+    function validateFile(fileName, entityId) {
         var plan = plv8.prepare( 'SELECT _meta."file_validate"($1, $2);', ['uuid', 'uuid'] );
+        var fileId = fileName.split('.')[0];
         var rows = plan.execute( [fileId, entityId] );
     }
 
-    function invalidateFile(fileId, entityId) {
+    function invalidateFile(fileName, entityId) {
         var plan = plv8.prepare( 'SELECT _meta."file_invalidate"($1, $2);', ['uuid', 'uuid'] );
+        var fileId = fileName.split('.')[0];
         var rows = plan.execute( [fileId, entityId] );
     }
 
