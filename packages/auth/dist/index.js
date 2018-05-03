@@ -323,13 +323,97 @@ let Auth = class Auth {
             // Begin transaction
             yield dbClient.query('BEGIN');
             // set user for dbClient
-            this.setUser(dbClient, accessToken);
+            yield this.setUser(dbClient, accessToken);
             return dbClient;
         });
     }
     getCurrentUserIdFromClient(dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
             return (yield dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
+        });
+    }
+    adminTransaction(callback) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            try {
+                // Begin transaction
+                yield client.query('BEGIN');
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                const ret = yield callback(client);
+                yield client.query('COMMIT');
+                return ret;
+            }
+            catch (err) {
+                yield client.query('ROLLBACK');
+                throw err;
+            }
+            finally {
+                // Release pgClient to pool
+                client.release();
+            }
+        });
+    }
+    adminQuery(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            try {
+                // Begin transaction
+                yield client.query('BEGIN');
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                const ret = yield client.query(query);
+                yield client.query('COMMIT');
+                return ret;
+            }
+            catch (err) {
+                yield client.query('ROLLBACK');
+                throw err;
+            }
+            finally {
+                // Release pgClient to pool
+                client.release();
+            }
+        });
+    }
+    userTransaction(accessToken, callback) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            try {
+                // Begin transaction
+                yield client.query('BEGIN');
+                yield this.setUser(client, accessToken);
+                const ret = yield callback(client);
+                yield client.query('COMMIT');
+                return ret;
+            }
+            catch (err) {
+                yield client.query('ROLLBACK');
+                throw err;
+            }
+            finally {
+                // Release pgClient to pool
+                client.release();
+            }
+        });
+    }
+    userQuery(accessToken, query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            try {
+                // Begin transaction
+                yield client.query('BEGIN');
+                yield this.setUser(client, accessToken);
+                const ret = yield client.query(query);
+                yield client.query('COMMIT');
+                return ret;
+            }
+            catch (err) {
+                yield client.query('ROLLBACK');
+                throw err;
+            }
+            finally {
+                // Release pgClient to pool
+                client.release();
+            }
         });
     }
     /* DB HELPER END */

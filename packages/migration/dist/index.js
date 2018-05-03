@@ -68,7 +68,6 @@ let Migration = class Migration {
                 // find all init_sql folders
                 fastGlob.sync(`${initSqlPath}/sql/[[0-9]*`, {
                     deep: false,
-                    onlyDirectories: true,
                 }).map((path) => {
                     const pathVersion = parseInt(path.toString().split('/').pop(), 10);
                     // keep only those with a higher version than the currently installed
