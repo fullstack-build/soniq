@@ -32,6 +32,7 @@ export declare class Auth {
     createDbClientAdminTransaction(dbClient: any): Promise<any>;
     createDbClientUserTransaction(dbClient: any, accessToken: any): Promise<any>;
     getCurrentUserIdFromClient(dbClient: any): Promise<any>;
+    getCurrentUserIdFromAccessToken(accessToken: any): Promise<any>;
     adminTransaction(callback: any): Promise<any>;
     adminQuery(...queryArguments: any[]): Promise<any>;
     userTransaction(accessToken: any, callback: any): Promise<any>;

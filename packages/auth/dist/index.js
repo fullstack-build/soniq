@@ -332,6 +332,22 @@ let Auth = class Auth {
             return (yield dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
         });
     }
+    getCurrentUserIdFromAccessToken(accessToken) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            // set user for dbClient
+            yield this.setUser(client, accessToken);
+            // get user ID from DB Client
+            let userId = null;
+            try {
+                userId = yield this.getCurrentUserIdFromClient(client);
+            }
+            catch ( /*ignore error, return empty userId */_a) { /*ignore error, return empty userId */ }
+            // Release pgClient to pool
+            yield client.release();
+            return userId;
+        });
+    }
     adminTransaction(callback) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield this.dbGeneralPool.pgPool.connect();

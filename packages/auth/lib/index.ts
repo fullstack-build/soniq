@@ -366,6 +366,20 @@ export class Auth {
     return (await dbClient.query('SELECT _meta.current_user_id();')).rows[0].current_user_id;
   }
 
+  public async getCurrentUserIdFromAccessToken(accessToken) {
+    const client = await this.dbGeneralPool.pgPool.connect();
+    // set user for dbClient
+    await this.setUser(client, accessToken);
+    // get user ID from DB Client
+    let userId = null;
+    try {
+      userId = await this.getCurrentUserIdFromClient(client);
+    } catch { /*ignore error, return empty userId */ }
+    // Release pgClient to pool
+    await client.release();
+    return userId;
+  }
+
   public async adminTransaction(callback): Promise<any> {
 
     const client = await this.dbGeneralPool.pgPool.connect();
