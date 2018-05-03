@@ -52,6 +52,8 @@ export class Auth {
 
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
 
+    this.addMiddleware();
+
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
 
@@ -475,7 +477,8 @@ export class Auth {
 
   /* DB HELPER END */
 
-  private addMiddleware(app) {
+  private addMiddleware() {
+    const app = this.server.getApp();
 
     app.use(async (ctx, next) => {
       if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
@@ -501,8 +504,6 @@ export class Auth {
     const authRouter = new KoaRouter();
 
     const app = this.server.getApp();
-
-    this.addMiddleware(app);
 
     authRouter.get('/test', async (ctx) => {
       ctx.body = 'Hallo';

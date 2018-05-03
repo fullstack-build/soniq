@@ -36,7 +36,7 @@ export class Server {
     this.serverConfig = config.getConfig('server');
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
-    // this.boot();
+    this.bootKoa();
     bootLoader.addBootFunction(this.boot.bind(this));
 
   }
@@ -49,10 +49,17 @@ export class Server {
     return this.server;
   }
 
-  private async boot(): Promise<void> {
+  private async bootKoa(): Promise<void> {
     try {
       this.app = new Koa();
+    } catch (e) {
+      // tslint:disable-next-line:no-console
+      console.error(e);
+    }
+  }
 
+  private async boot(): Promise<void> {
+    try {
       // start KOA on PORT
       this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
 
