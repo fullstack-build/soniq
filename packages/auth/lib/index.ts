@@ -389,7 +389,7 @@ export class Auth {
     }
   }
 
-  public async adminQuery(query): Promise<any> {
+  public async adminQuery(query, values?: any[]): Promise<any> {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -399,7 +399,7 @@ export class Auth {
 
       await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
 
-      const ret = await client.query(query);
+      const ret = await client.query(query, values);
 
       await client.query('COMMIT');
       return ret;
@@ -435,7 +435,7 @@ export class Auth {
     }
   }
 
-  public async userQuery(accessToken, query): Promise<any> {
+  public async userQuery(accessToken, query, values?: any[]): Promise<any> {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -445,7 +445,7 @@ export class Auth {
 
       await this.setUser(client, accessToken);
 
-      const ret = await client.query(query);
+      const ret = await client.query(query, values);
 
       await client.query('COMMIT');
       return ret;

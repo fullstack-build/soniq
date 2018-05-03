@@ -353,14 +353,14 @@ let Auth = class Auth {
             }
         });
     }
-    adminQuery(query) {
+    adminQuery(query, values) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
                 yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
-                const ret = yield client.query(query);
+                const ret = yield client.query(query, values);
                 yield client.query('COMMIT');
                 return ret;
             }
@@ -395,14 +395,14 @@ let Auth = class Auth {
             }
         });
     }
-    userQuery(accessToken, query) {
+    userQuery(accessToken, query, values) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
                 yield this.setUser(client, accessToken);
-                const ret = yield client.query(query);
+                const ret = yield client.query(query, values);
                 yield client.query('COMMIT');
                 return ret;
             }
