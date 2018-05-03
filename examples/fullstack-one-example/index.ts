@@ -25,25 +25,7 @@ const $auth: Auth = Container.get(Auth);
 (async () => {
   await $one.boot();
 
-  // try to access DB as an admin
-  const dbPool: DbGeneralPool = Container.get(DbGeneralPool);
-  // get pool connection
-  const dbClient = await dbPool.pgPool.connect();
+  const posts = (await $auth.adminQuery('SELECT * FROM "VPost"')).rows;
+  console.log('Posts: ', posts);
 
-  try {
-    // convert dbClient into Admin Client transaction
-    $auth.createDbClientAdminTransaction(dbClient);
-
-    // get general settings
-    const posts = (await dbClient.query('SELECT * FROM "VPost"')).rows;
-    console.log('Posts: ', posts);
-
-    await dbClient.query('COMMIT');
-  } catch (err) {
-    await dbClient.query('ROLLBACK');
-    throw err;
-  } finally {
-    // Release pgClient to pool
-    dbClient.release();
-  }
 })();
