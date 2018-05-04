@@ -119,3 +119,12 @@ registerDirectiveParser('immutable', (gQlDirectiveNode, dbMetaNode, refDbMeta, r
         isDeletable: false
     };
 });
+// file trigger
+registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    refDbMetaCurrentTable.fileTrigger = {
+        isActive: true
+    };
+    refDbMetaCurrentTableColumn.isFileColumn = {
+        isActive: true
+    };
+});

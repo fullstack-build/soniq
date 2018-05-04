@@ -31,6 +31,9 @@ export class PgToDbMeta {
       // add auth settings when schemas were found
       await this.getAuthSettings();
 
+      // add FileField settings when schemas were found
+      await this.getFileFieldSettings();
+
       // return copy instead of ref
       return deepmerge({}, this.dbMeta);
     } catch (err) {
@@ -424,12 +427,16 @@ export class PgToDbMeta {
         // updatedAt trigger for column
         const triggerNameObj = trigger.trigger_name.split('_');
         const columnName = triggerNameObj[5];
-        // only of column exists (trigger could be there without column)
+        // only if column exists (trigger could be there without column)
         if (currentTable.columns[columnName] != null) {
           currentTable.columns[columnName].triggerUpdatedAt = {
             isActive: true
           };
         }
+      } else if (trigger.trigger_name.includes('table_file_trigger')) {
+        currentTable.fileTrigger = {
+          isActive: true
+        };
       }
 
     });
@@ -587,6 +594,25 @@ export class PgToDbMeta {
         };
       }
 
+    } catch (err) {
+      // ignore error in case settings -> not setted up yet
+    }
+
+  }
+
+  // FileFieldSettings
+  private async getFileFieldSettings(): Promise<void> {
+    try {
+      const { rows } = await this.dbAppClient.pgClient.query(
+        `SELECT * FROM _meta."FileFields";`
+      );
+
+      rows.forEach((row) => {
+        const thisColumn = this.dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
+        thisColumn.isFileColumn = {
+          isActive: true
+        };
+      });
     } catch (err) {
       // ignore error in case settings -> not setted up yet
     }

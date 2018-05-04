@@ -137,6 +137,15 @@ export namespace sqlObjFromMigrationObject {
 
     }
 
+    // set file fields data
+    if (sqlMigrationObj.isFileColumn != null && sqlMigrationObj.isFileColumn.sql != null) {
+      // add down statements
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.isFileColumn.sql.down);
+      // add up statements
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.isFileColumn.sql.up);
+
+    }
+
     // helper to put collect unique statements
     function _addStatemensArrayToSqlStatements(statementsArray) {
       Object.values(statementsArray).forEach((statement) => {
@@ -414,6 +423,11 @@ export namespace sqlObjFromMigrationObject {
       makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
     }
 
+    // file trigger for table
+    if (tableDefinition.fileTrigger != null) {
+      createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
+    }
+
   }
 
   function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnObject: any) {
@@ -522,6 +536,11 @@ export namespace sqlObjFromMigrationObject {
     // set auth settings
     if (node.auth != null) {
       setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
+    }
+
+    // set auth settings
+    if (node.isFileColumn != null) {
+      setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.isFileColumn);
     }
 
   }
@@ -699,6 +718,34 @@ export namespace sqlObjFromMigrationObject {
 
   }
 
+  function setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, fileNode?) {
+    // create, set ref and keek ref for later
+    const thisSqlObj = (sqlMigrationObj.isFileColumn = sqlMigrationObj.isFileColumn || {
+      sql: {
+        up: [],
+        down: []
+      }
+    }).sql;
+
+    const fileNodeObj = _splitActionFromNode(fileNode);
+    const fileNodeAction = fileNodeObj.action;
+    const fileNodeDefinition = fileNodeObj.node;
+
+    // create entry
+    if (fileNodeDefinition.isActive === true) {
+      if (fileNodeAction.remove) {
+        thisSqlObj.down.push(
+          `DELETE FROM "_meta"."FileColumns" WHERE "schemaName" = '${schemaName}' ` +
+          `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
+      } else {
+        thisSqlObj.up.push(
+          `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName") VALUES('${schemaName}', '${tableName}', '${columnName}') ` +
+          `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "columnName"='${columnName}';`);
+      }
+    }
+
+  }
+
   function createVersioningForTable(tableSql, schemaName, tableName, versioningObjectWithAction) {
 
     const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
@@ -778,6 +825,35 @@ export namespace sqlObjFromMigrationObject {
           ON ${tableNameWithSchemaUp}
           FOR EACH ROW
           EXECUTE PROCEDURE _meta.make_table_immutable();`);
+      }
+    }
+  }
+
+  function createFileTriggerForTable(tableSql, schemaName, tableName, fileTriggerObjectWithAction) {
+
+    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
+
+    // create
+    const fileTriggerActionObject  = _splitActionFromNode(fileTriggerObjectWithAction);
+    const fileTriggerAction        = fileTriggerActionObject.action;
+    const fileTriggerDef           = fileTriggerActionObject.node;
+
+    // drop trigger for remove and before add (in case it's already there)
+    if (fileTriggerAction.remove || fileTriggerAction.add || fileTriggerAction.change) {
+      // drop trigger, keep table and data
+      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_file_trigger_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
+    }
+
+    // create file-trigger
+    if (fileTriggerAction.add || fileTriggerAction.change) {
+
+      // create file-trigger for table
+      if (fileTriggerDef.isActive === true) { // has to be set EXACTLY to true
+        tableSql.up.push(`CREATE TRIGGER "table_file_trigger_${schemaName}_${tableName}"
+          BEFORE UPDATE OR INSERT OR DELETE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.file_trigger();`);
       }
     }
   }

@@ -37,7 +37,7 @@ export = [
     type: 'UPDATE',
     gqlTypeName: 'Post',
     fields: [
-      'id', 'title', 'content', 'ownerSecret',
+      'id', 'title', 'content', 'ownerSecret', "images"
     ],
     expressions: [{
       name: 'Owner',

@@ -620,17 +620,6 @@ export class Auth {
       }
     });
 
-    authRouter.post('/auth/forgotPassword', async (ctx) => {
-      try {
-        const lData = await this.forgotPassword(ctx.request.body.username, ctx.request.body.tenant || 'default');
-
-        ctx.body = Object.assign({}, lData, { success: true });
-      } catch (err) {
-        ctx.body = { success: false };
-        ctx.response.status = 400;
-      }
-    });
-
     authRouter.post('/auth/setCookie', async (ctx) => {
       try {
         ctx.cookies.set(this.authConfig.cookie.name, ctx.state.accessToken, this.authConfig.cookie);
@@ -712,5 +701,61 @@ export class Auth {
       await this.setUser(client, context.accessToken);
     }
   }
+
+  /* private getResolvers() {
+    return {
+      '@fullstack-one/auth/register': async (obj, args, context, info, params) => {
+        return await this.register(args.username, args.tenant || 'default');
+      },
+      '@fullstack-one/auth/login': async (obj, args, context, info, params) => {
+        return await this.login(args.username, args.tenant || 'default', 'local', args.password, null);
+      },
+      '@fullstack-one/auth/forgotPassword': async (obj, args, context, info, params) => {
+        return await this.forgotPassword(args.username, args.tenant || 'default');
+      },
+      '@fullstack-one/auth/setPassword': async (obj, args, context, info, params) => {
+        return await this.setPassword(args.accessToken, 'local', args.password, null);
+      },
+
+      /*const isValid = await this.isTokenValid(ctx.state.accessToken, false, false);
+      success = await this.invalidateAllUserTokens(ctx.state.accessToken);
+      success = await this.invalidateUserToken(ctx.state.accessToken);
+      '@fullstack-one/file-storage/readFiles': async (obj, args, context, info, params) => {
+        const awaitingFileSignatures = [];
+
+        const data = obj[info.fieldName];
+
+        for (const fileName of data) {
+          try {
+            awaitingFileSignatures.push({
+              fileName,
+              presignedGetUrlPromise: this.presignedGetObject(fileName)
+            });
+          } catch (err) {
+            // Errors can be ignored => Failed Signs are not returned
+            // TODO: Log this.
+          }
+        }
+
+        const results = [];
+
+        for (const fileObject of awaitingFileSignatures) {
+          try {
+            const presignedGetUrl = await fileObject.presignedGetUrlPromise;
+            const fileName = fileObject.fileName;
+            results.push({
+              fileName,
+              presignedGetUrl
+            });
+          } catch (err) {
+            // Errors can be ignored => Failed Signs are not returned
+            // TODO: Log this.
+          }
+        }
+
+        return results;
+      }
+    };
+  }*/
 
 }

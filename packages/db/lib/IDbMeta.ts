@@ -20,6 +20,9 @@ export interface IDbMeta {
             isUpdatable?: boolean;
             isDeletable?: boolean;
           };
+          fileTrigger?: {
+            isActive: boolean;
+          };
           columns: {
             [name: string]:
               {
@@ -41,7 +44,10 @@ export interface IDbMeta {
                   isTenant?: boolean;
                   isUsername?: boolean,
                   isPassword?: boolean
-                }
+                };
+                isFileColumn?: {
+                  isActive: boolean
+                };
               }
           };
           constraints?: {

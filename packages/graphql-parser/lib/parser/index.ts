@@ -33,7 +33,7 @@ const parsers = [
 
 export function runtimeParser(userSchema: any, views: IViews, expressions: IExpressions, dbObject, viewSchemaName, customParsers): any {
 
-  const currentParsers = parsers.slice().concat(customParsers.slice());
+  const currentParsers = customParsers.slice().concat(parsers.slice());
 
   const classification = classifyUserDefinitions(userSchema);
 
