@@ -65,9 +65,9 @@ export class Migration {
     // run through all registered packages
     this.initSqlPaths.map((initSqlPath) => {
       // find all init_sql folders
-      fastGlob.sync(`${initSqlPath}/sql/[[0-9]*`, {
+      fastGlob.sync(`${initSqlPath}/sql/[0-9]*`, {
         deep: false,
-        // onlyDirectories: true,
+        onlyDirectories: true,
       }).map((path) => {
         const pathVersion: number = parseInt(path.toString().split('/').pop(), 10);
         // keep only those with a higher version than the currently installed
@@ -99,7 +99,7 @@ export class Migration {
         }
       }
     });
-
+    
     // only if there are migration folders left
     if (Object.keys(loadFilesOrder).length > 0) {
       // run migration sql - mandatory
