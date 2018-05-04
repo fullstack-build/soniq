@@ -20,6 +20,7 @@ export function parseField(field, ctx) {
   if (filesDirectiveIndex < 0) {
     return false;
   }
+
   const gqlTypeName = ctx.view.gqlTypeName;
   const viewName = ctx.view.viewName;
   const tableName = ctx.view.tableName;

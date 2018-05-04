@@ -115,7 +115,9 @@ export class FileStorage {
       '@fullstack-one/file-storage/readFiles': async (obj, args, context, info, params) => {
         const awaitingFileSignatures = [];
 
-        for (const fileName of obj) {
+        const data = obj[info.fieldName];
+
+        for (const fileName of data) {
           try {
             awaitingFileSignatures.push({
               fileName,
