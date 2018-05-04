@@ -128,21 +128,12 @@ export namespace sqlObjFromMigrationObject {
       });
     }
 
-    // set auth data
-    if (sqlMigrationObj.auth != null && sqlMigrationObj.auth.sql != null) {
+    // run CRUD commands
+    if (sqlMigrationObj.crud != null && sqlMigrationObj.crud.sql != null) {
       // add down statements
-      _addStatemensArrayToSqlStatements(sqlMigrationObj.auth.sql.down);
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.crud.sql.down);
       // add up statements
-      _addStatemensArrayToSqlStatements(sqlMigrationObj.auth.sql.up);
-
-    }
-
-    // set file fields data
-    if (sqlMigrationObj.isFileColumn != null && sqlMigrationObj.isFileColumn.sql != null) {
-      // add down statements
-      _addStatemensArrayToSqlStatements(sqlMigrationObj.isFileColumn.sql.down);
-      // add up statements
-      _addStatemensArrayToSqlStatements(sqlMigrationObj.isFileColumn.sql.up);
+      _addStatemensArrayToSqlStatements(sqlMigrationObj.crud.sql.up);
 
     }
 
@@ -173,7 +164,13 @@ export namespace sqlObjFromMigrationObject {
         }
       },
       enums: {},
-      relations: {}
+      relations: {},
+      crud: {
+        sql: {
+          up: [],
+          down: []
+        }
+      }
     };
 
     // getSqlFromMigrationObj enum types first
@@ -656,7 +653,7 @@ export namespace sqlObjFromMigrationObject {
 
   function setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, authNode?) {
     // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.auth = sqlMigrationObj.auth || {
+    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
       sql: {
         up: [],
         down: []
@@ -720,7 +717,7 @@ export namespace sqlObjFromMigrationObject {
 
   function setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, fileNode?) {
     // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.isFileColumn = sqlMigrationObj.isFileColumn || {
+    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
       sql: {
         up: [],
         down: []
