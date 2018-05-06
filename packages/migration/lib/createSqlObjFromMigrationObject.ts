@@ -739,7 +739,7 @@ export namespace sqlObjFromMigrationObject {
           `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
       } else {
         thisSqlObj.up.push(
-          `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` + 
+          `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` +
           `VALUES('${schemaName}', '${tableName}', '${columnName}', '${fileNodeDefinition.types}') ` +
           `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "types"='${fileNodeDefinition.types}';`);
       }
