@@ -53,10 +53,7 @@ export interface IMigrationSqlObj {
       sql: ISqlObj;
     };
   };
-  auth?: {
-    sql: ISqlObj;
-  };
-  isFileColumn?: {
+  crud?: {
     sql: ISqlObj;
   };
 }
