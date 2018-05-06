@@ -46,7 +46,8 @@ export interface IDbMeta {
                   isPassword?: boolean
                 };
                 isFileColumn?: {
-                  isActive: boolean
+                  isActive: boolean,
+                  types: string
                 };
               }
           };

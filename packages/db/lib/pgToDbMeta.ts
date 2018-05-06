@@ -610,7 +610,8 @@ export class PgToDbMeta {
       rows.forEach((row) => {
         const thisColumn = this.dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
         thisColumn.isFileColumn = {
-          isActive: true
+          isActive: true,
+          types: JSON.stringify(row.types)
         };
       });
     } catch (err) {

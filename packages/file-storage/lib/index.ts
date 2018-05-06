@@ -90,14 +90,34 @@ export class FileStorage {
     return await this.client.presignedGetObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
   }
 
+  private async verifyObject(fileName) {
+    return await this.client.presignedGetObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
+  }
+
   private getResolvers() {
     return {
       '@fullstack-one/file-storage/createFile': async (obj, args, context, info, params) => {
-        // console.log('**', args, context.accessToken);
         const extension = args.extension.toLowerCase();
 
         const result = await this.auth.userQuery(context.accessToken, `SELECT _meta.file_create($1) AS "fileId";`, [extension]);
-        // console.log('--', result);
+        const fileId = result.rows[0].fileId;
+        const fileName = fileId + '.' + extension;
+
+        const presignedPutUrl = await this.presignedPutObject(fileName);
+        const presignedGetUrl = await this.presignedGetObject(fileName);
+
+        return {
+          extension,
+          fileId,
+          fileName,
+          presignedPutUrl,
+          presignedGetUrl
+        };
+      },
+      '@fullstack-one/file-storage/verifyFile': async (obj, args, context, info, params) => {
+        const extension = args.extension.toLowerCase();
+
+        const result = await this.auth.userQuery(context.accessToken, `SELECT _meta.file_create($1) AS "fileId";`, [extension]);
         const fileId = result.rows[0].fileId;
         const fileName = fileId + '.' + extension;
 

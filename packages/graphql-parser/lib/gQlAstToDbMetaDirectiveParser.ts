@@ -1,6 +1,9 @@
 import * as _ from 'lodash';
 import { registerDirectiveParser } from './gQlAstToDbMeta';
 import { addConstraint, setDefaultValueForColumn, addMigration } from './gQlAstToDbMetaHelper';
+import * as utils from './parser/utils';
+
+const { getArgumentByName, parseDirectiveArguments } = utils;
 
 // ignore table, just make it available
 registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
@@ -124,7 +127,9 @@ registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
     refDbMetaCurrentTable.fileTrigger = {
         isActive: true
     };
+    const directiveArguments: any = parseDirectiveArguments(gQlDirectiveNode);
     refDbMetaCurrentTableColumn.isFileColumn = {
-        isActive: true
+        isActive: true,
+        types: JSON.stringify(directiveArguments.types || ['DEFAULT'])
     };
 });

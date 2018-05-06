@@ -15,8 +15,8 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
     var tableId = TG_TABLE_SCHEMA + '.' + TG_TABLE_NAME;
 
-    var plan = plv8.prepare( 'SELECT "fields" FROM _meta."FileFields" WHERE "id" = $1', ['text'] );
-    var rows = plan.execute( [tableId] );
+    var plan = plv8.prepare( 'SELECT json_agg("columnName") AS "fields" FROM _meta."FileColumns" WHERE "schemaName" = $1 AND "tableName" = $2;', ['text', 'text'] );
+    var rows = plan.execute( [TG_TABLE_SCHEMA, TG_TABLE_NAME] );
 
     if (rows == null || rows.length < 1) {
         plv8.elog(NOTICE, "This table has no file-fields.");

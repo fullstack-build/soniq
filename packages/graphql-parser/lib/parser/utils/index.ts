@@ -15,3 +15,4 @@ export { default as getViewnamesField } from './getViewnamesField';
 export { default as getViewsEnum } from './getViewsEnum';
 export { default as mergeDeleteViews } from './mergeDeleteViews';
 export { default as parseObjectArgument } from './parseObjectArgument';
+export { default as parseDirectiveArguments } from './parseDirectiveArguments';
