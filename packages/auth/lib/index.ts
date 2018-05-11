@@ -50,7 +50,7 @@ export class Auth {
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    graphQl.addPreQueryHook(this.preQueryHook.bind(this));
+    graphQl.addHook('preQuery', this.preQueryHook.bind(this));
 
     this.addMiddleware();
 

@@ -7,7 +7,7 @@ import {
 import getBasicSchema from './utils/getBasicSchema';
 import arrayToNamedArray from './utils/arrayToNamedArray';
 import getQueryArguments from './utils/getQueryArguments';
-import getViewsEnum from './utils/getViewsEnum';
+import getEnum from './utils/getEnum';
 import mergeDeleteViews from './utils/mergeDeleteViews';
 import getViewName from './utils/getViewName';
 import {
@@ -39,13 +39,14 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     }
   });
 
-  const gQlTypes: any = {};
-  const dbViews = [];
-  const expressionsByName = arrayToNamedArray(expressions);
-  const tableViewsByGqlTypeName = {};
+  let gQlTypes: any = {};
+  let dbViews = [];
+  let expressionsByName = arrayToNamedArray(expressions);
+  let tableViewsByGqlTypeName = {};
   let queries = [];
   let mutations = [];
   let customFields = {};
+  let parserCache = {};
 
   // Delete-Views can only include the id field. Thus there is no sense in having multiple delete views.
   // They can be merged to one by joining the expression arrays.
@@ -135,7 +136,8 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       schemaName,
       viewSchemaName,
       dbObject,
-      graphQlDocument
+      graphQlDocument,
+      parserCache
     };
 
     // Get fields and it's expressions
@@ -160,6 +162,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     queries = ctx.queries;
     graphQlDocument = ctx.graphQlDocument;
     customFields = ctx.customFields;
+    parserCache = ctx.parserCache;
 
     if (view.type === 'READ') {
       if (tableViewsByGqlTypeName[gqlTypeName] == null) {
@@ -169,6 +172,34 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       tableViewsByGqlTypeName[gqlTypeName].push(ctx.tableView);
     }
   });
+
+  const finishCtx = {
+    graphQlDocument,
+    dbViews,
+    queries,
+    mutations,
+    customFields,
+    gQlTypes,
+    expressionsByName,
+    tableViewsByGqlTypeName,
+    parserCache
+  };
+
+  parsers.forEach((parser: any) => {
+    if (parser.finish != null) {
+      parser.finish(finishCtx);
+    }
+  });
+
+  graphQlDocument = finishCtx.graphQlDocument;
+  dbViews = finishCtx.dbViews;
+  queries = finishCtx.queries;
+  mutations = finishCtx.mutations;
+  customFields = finishCtx.customFields;
+  gQlTypes = finishCtx.gQlTypes;
+  expressionsByName = finishCtx.expressionsByName;
+  tableViewsByGqlTypeName = finishCtx.tableViewsByGqlTypeName;
+  parserCache = finishCtx.parserCache;
 
   // build GraphQL gQlTypes based on DB dbViews
   Object.values(gQlTypes).forEach((gQlType: any) => {
@@ -203,7 +234,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     });
 
     // Add views-enum definition of table to graphQlDocument
-    graphQlDocument.definitions.push(getViewsEnum(viewsEnumName, gQlType.viewNames));
+    graphQlDocument.definitions.push(getEnum(viewsEnumName, gQlType.viewNames));
 
     // Add table type to graphQlDocument
     graphQlDocument.definitions.push(tableView);

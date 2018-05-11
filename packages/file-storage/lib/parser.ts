@@ -1,7 +1,9 @@
 
 import { utils } from '@fullstack-one/graphql-parser';
 
-const { findDirectiveIndex, getArgumentByName, parseObjectArgument, createIdArrayField } = utils;
+const { findDirectiveIndex, getArgumentByName, parseDirectiveArguments, createArrayField, getEnum } = utils;
+
+const typesEnumName = 'FILE_TYPES';
 
 import {
   _
@@ -26,13 +28,21 @@ export function parseField(field, ctx) {
   const tableName = ctx.view.tableName;
   const fileDirective = field.directives[filesDirectiveIndex];
 
-  const resolverName = '@fullstack-one/file-storage/readFiles';
-  const paramsNode = getArgumentByName(fileDirective, 'params');
-  let params = {};
-
-  if (paramsNode != null) {
-    params = parseObjectArgument(paramsNode);
+  if (ctx.parserCache.fileStorage == null) {
+    ctx.parserCache.fileStorage = {
+      typesObject: {}
+    };
   }
+
+  const resolverName = '@fullstack-one/file-storage/readFiles';
+  const directiveArguments: any = parseDirectiveArguments(fileDirective);
+  const params = directiveArguments.params || {};
+
+  const types = directiveArguments.types || ['DEFAULT'];
+
+  types.forEach((type) => {
+    ctx.parserCache.fileStorage.typesObject[type] = true;
+  });
 
   const fieldKey = `${gqlTypeName}_${fieldName}`;
 
@@ -57,11 +67,29 @@ export function parseField(field, ctx) {
   // Add native fields to gQlTypes
   ctx.gQlTypes[gqlTypeName].views[viewName].nativeFieldNames.push(fieldName);
 
+  const description = {
+    kind: 'StringValue',
+    value: `Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+    block: true
+  };
+
   // This field cannot be set with a generated mutation
   if (ctx.view.type !== 'READ') {
-    ctx.tableView.fields.push(createIdArrayField(fieldName));
+    const arrayField: any = createArrayField(fieldName, 'String');
+    description.value = `List of FileNames. ${description.value}`;
+    arrayField.description = description;
+    ctx.tableView.fields.push(arrayField);
   } else {
+    field.description = description;
+    description.value = `List of Files. ${description.value}`;
     ctx.tableView.fields.push(field);
   }
   return true;
+}
+
+export function finish(ctx) {
+  if (ctx.parserCache.fileStorage != null) {
+    const types = Object.keys(ctx.parserCache.fileStorage.typesObject);
+    ctx.graphQlDocument.definitions.push(getEnum(typesEnumName, types));
+  }
 }

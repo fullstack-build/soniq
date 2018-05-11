@@ -3,7 +3,7 @@ import { getQueryResolver } from './sqlGenerator/read';
 import { getMutationResolver } from './sqlGenerator/mutate';
 import * as gQlTypeJson from 'graphql-type-json';
 
-export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, hooks, dbGeneralPool) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -43,7 +43,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           }
 
           // PreQueryHook (for auth)
-          for (const fn of preQueryHooks) {
+          for (const fn of hooks.preQuery) {
             await fn(client, context, selectQuery.authRequired);
           }
 
@@ -101,7 +101,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           }*/
 
           // PreQueryHook (for auth)
-          for (const fn of preQueryHooks) {
+          for (const fn of hooks.preQuery) {
             await fn(client, context, context.accessToken != null);
           }
 
@@ -116,12 +116,14 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           }
 
           let returnData;
+          let entityId;
 
           // When mutationType is DELETE just return the id. Otherwise query for the new data.
           if (mutationQuery.mutation.type === 'DELETE') {
-            returnData = rows[0].id;
+            entityId = rows[0].id;
+            returnData = entityId;
           } else {
-            let entityId = mutationQuery.id;
+            entityId = mutationQuery.id;
 
             if (mutationQuery.mutation.type === 'CREATE') {
               entityId = rows[0].id;
@@ -145,6 +147,17 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
 
             // set data from row 0
             returnData = returnRows[0][returnQuery.query.name][0];
+          }
+
+          const hookInfo = {
+            returnData,
+            entityId,
+            type: mutationQuery.mutation.type
+          };
+
+          // PostMutationHook (for file-storage etc.)
+          for (const fn of hooks.postMutation) {
+            await fn(client, hookInfo, context);
           }
 
           // Commit transaction

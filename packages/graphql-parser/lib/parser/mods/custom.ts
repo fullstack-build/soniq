@@ -1,6 +1,7 @@
 import findDirectiveIndex from '../utils/findDirectiveIndex';
 import getArgumentByName from '../utils/getArgumentByName';
 import parseObjectArgument from '../utils/parseObjectArgument';
+import { parseDirectiveArguments } from '../utils';
 import {
   _
 } from 'lodash';
@@ -23,13 +24,10 @@ export function parseField(field, ctx) {
   const tableName = ctx.view.tableName;
   const customDirective = field.directives[customDirectiveIndex];
 
-  const resolverName = getArgumentByName(customDirective, 'resolver').value.value;
-  const paramsNode = getArgumentByName(customDirective, 'params');
-  let params = {};
+  const directiveArguments: any = parseDirectiveArguments(customDirective);
 
-  if (paramsNode != null) {
-    params = parseObjectArgument(paramsNode);
-  }
+  const resolverName = directiveArguments.resolver;
+  const params = directiveArguments.params || {};
 
   const fieldKey = `${gqlTypeName}_${fieldName}`;
 

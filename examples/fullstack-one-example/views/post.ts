@@ -15,7 +15,7 @@ export = [
     type: 'READ',
     gqlTypeName: 'Post',
     fields: [
-      'id', 'title', 'content', 'owner', 'ownerSecret',
+      'id', 'title', 'content', 'owner', 'ownerSecret'
     ],
     expressions: [{
       name: 'Owner',

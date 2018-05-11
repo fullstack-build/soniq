@@ -28,7 +28,7 @@
     "@fullstack-one/helper": "^0.3.8",
     "@fullstack-one/logger": "^0.3.8",
     "fast-glob": "^2.2.0",
-    "graphql": "^0.11.7",
+    "graphql": "^0.13.2",
     "lodash": "^4.17.4"
   },
   "devDependencies": {

@@ -32,7 +32,10 @@ export class GraphQl {
   private customMutations: any = [];
   private customFields: any = {};
 
-  private preQueryHooks = [];
+  private hooks = {
+    preQuery: [],
+    postMutation: []
+  };
 
   constructor (
     @Inject(type => LoggerFactory) loggerFactory?,
@@ -57,7 +60,14 @@ export class GraphQl {
   }
 
   public addPreQueryHook(fn) {
-    this.preQueryHooks.push(fn);
+    this.hooks.preQuery.push(fn);
+  }
+
+  public addHook(name, fn) {
+    if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
+      throw new Error(`The hook '${name}' does not exist.`);
+    }
+    this.hooks[name].push(fn);
   }
 
   public addResolvers(resolversObject) {
@@ -101,7 +111,7 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
       resolvers: getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries,
-      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
+      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool),
     });
 
     const setCacheHeaders = async (ctx, next) => {

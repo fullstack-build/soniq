@@ -1,29 +1,24 @@
 
-import getArgumentByName from './utils/getArgumentByName';
-import findDirectiveIndex from './utils/findDirectiveIndex';
-import parseObjectArgument from './utils/parseObjectArgument';
+import { getArgumentByName, findDirectiveIndex, parseObjectArgument, parseDirectiveArguments } from './utils';
 
 export default (classification) => {
   const customQueries = [];
   const customMutations = [];
 
   Object.values(classification.otherDefinitions).forEach((node: any) => {
-    if (node.kind === 'TypeExtensionDefinition') {
-      const type = node.definition.name.value;
-      Object.values(node.definition.fields).forEach((field: any) => {
+    if (node.kind === 'ObjectTypeExtension') {
+      const type = node.name.value;
+      Object.values(node.fields).forEach((field: any) => {
         const fieldName = field.name.value;
         const customDirectiveIndex = findDirectiveIndex(field, 'custom');
 
         if (customDirectiveIndex > -1) {
           const customDirective = field.directives[customDirectiveIndex];
 
-          const resolverName = getArgumentByName(customDirective, 'resolver').value.value;
-          const paramsNode = getArgumentByName(customDirective, 'params');
-          let params = {};
+          const directiveArguments: any = parseDirectiveArguments(customDirective);
 
-          if (paramsNode != null) {
-            params = parseObjectArgument(paramsNode);
-          }
+          const resolverName = directiveArguments.resolver;
+          const params = directiveArguments.params || {};
 
           if (type === 'Query') {
             customQueries.push({
