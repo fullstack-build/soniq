@@ -342,10 +342,13 @@ export namespace sqlObjFromMigrationObject {
     // (in case it got removed on dbMeta merge)
     const tableNameUp   = node.name || tableName;
     const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
-    const viewName = `V${tableName}`;
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;
-    const viewTableNameWithSchemaUp   = `"${schemaName}"."${viewName}"`;
-    const tableNameWithSchemaDown = `"${schemaName}"."${tableNameDown}"`;
+    const viewNameUp    = `V${tableNameUp}`;
+    const viewNameDown  = `V${tableNameDown}`;
+
+    const tableNameWithSchemaUp       = `"${schemaName}"."${tableNameUp}"`;
+    const viewTableNameWithSchemaUp   = `"${schemaName}"."${viewNameUp}"`;
+    const tableNameWithSchemaDown     = `"${schemaName}"."${tableNameDown}"`;
+    const viewTableNameWithSchemaDown = `"${schemaName}"."${viewNameDown}"`;
 
     // only if table needs to be created
     if (tableDefinition.name != null) {
@@ -388,7 +391,7 @@ export namespace sqlObjFromMigrationObject {
     thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
                           SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
     // drop direct access updatable view
-    thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaUp}`);
+    thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
 
     // iterate columns
     if (tableDefinition.columns != null) {
