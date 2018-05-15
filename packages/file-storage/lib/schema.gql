@@ -6,7 +6,7 @@ type UploadFile {
   presignedPutUrl: String!
 }
 
-type GetFile {
+type BucketFile {
   fileName: String!
   presignedGetUrl: String!
 }
@@ -20,7 +20,7 @@ extend type Mutation {
   """
   Verifies a new file after upload. Login required.
   """
-  verifyFile(fileName: String!): GetFile @custom(resolver: "@fullstack-one/file-storage/verifyFile")
+  verifyFile(fileName: String!): BucketFile @custom(resolver: "@fullstack-one/file-storage/verifyFile")
 
   """
   Deletes temporary files of the current user which have not been added to any entity. If you provide a fileName only this will be deleted. Login required.
