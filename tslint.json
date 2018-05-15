@@ -17,6 +17,7 @@
     "no-else-after-return": false,
     "trailing-comma": false,
     "strict-boolean-expressions": false,
+    "triple-equals": [true, "allow-null-check"],
     "function-name": [true, {
       "method-regex": "^_?_?[a-z$][\\w\\d]+$",
       "private-method-regex": "^_?_?[a-z$][\\w\\d]+$",
