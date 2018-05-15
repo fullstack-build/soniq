@@ -12,10 +12,11 @@
     "max-line-length": [true, 150],
     "ter-indent": false,
     "ordered-imports": false,
-    "no-boolean-literal-compare": true,
+    "no-boolean-literal-compare": false,
     "object-shorthand-properties-first": false,
     "no-else-after-return": false,
     "trailing-comma": false,
+    "strict-boolean-expressions": false,
     "function-name": [true, {
       "method-regex": "^_?_?[a-z$][\\w\\d]+$",
       "private-method-regex": "^_?_?[a-z$][\\w\\d]+$",
@@ -48,8 +49,7 @@
         "format": "PascalCase"
       }
 
-    ],
-    "strict-boolean-expressions": false
+    ]
   },
   "rulesDirectory": [],
   "linterOptions": {

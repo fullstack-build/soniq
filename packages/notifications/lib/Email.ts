@@ -42,7 +42,7 @@ export class Email {
 
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {
-        if (err) {
+        if (err != null) {
           this.logger.warn('testingAccount.creation.error', err);
           throw err;
         } else {

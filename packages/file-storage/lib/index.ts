@@ -131,7 +131,7 @@ export class FileStorage {
         if (result.rows.length < 1) {
           throw new Error(`Failed to delete file 'fileId' from db.`);
         }
-        if (fileInBucket) {
+        if (fileInBucket === true) {
           await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
         }
       });
@@ -155,7 +155,7 @@ export class FileStorage {
       await this.auth.userTransaction(context.accessToken, async (client) => {
         const fileId = fileName.split('.')[0];
         await client.query(`SELECT * FROM _meta.file_deleteone($1);`, [fileId]);
-        if (fileInBucket) {
+        if (fileInBucket === true) {
           await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
         }
       });
