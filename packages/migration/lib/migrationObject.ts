@@ -274,7 +274,7 @@ export namespace migrationObject {
         }
 
         // check if node is a table and has relations
-        if (pMigrationDbMeta.relations) {
+        if (pMigrationDbMeta.relations != null) {
           _renameRelations();
         }
 

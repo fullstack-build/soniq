@@ -96,7 +96,7 @@ export class FileStorage {
     app.use(authRouter.allowedMethods());
   }
 
-  private async postMutationHook(client, info, context) {
+  private async postMutationHook(info, context) {
     try {
       const entityId = info.entityId;
       const result = await this.auth.adminQuery(`SELECT * FROM _meta.file_todelete_by_entity($1);`, [entityId]);

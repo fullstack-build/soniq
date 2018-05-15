@@ -2,14 +2,40 @@
 CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
     function validateFile(fileName, entityId, types) {
-        var plan = plv8.prepare( 'SELECT _meta."file_validate"($1, $2, $3::TEXT[]);', ['uuid', 'uuid', 'TEXT[]'] );
+    	if (fileName == null || fileName.length < 38 || fileName[36] !== '.') {
+    		throw new Error('Invalid fileName.');
+    	}
         var fileId = fileName.split('.')[0];
-        var rows = plan.execute( [fileId, entityId, types] );
+        var uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        
+        if (uuidRegex.test(fileId) !== true) {
+        	throw new Error('Invalid fileName. No UUID.');
+        }
+        
+        if (uuidRegex.test(entityId) !== true) {
+        	throw new Error('Invalid entityId. No UUID.');
+        }
+
+        var plan = plv8.prepare( 'SELECT _meta."file_validate"($1, $2, $3::TEXT[]);', ['TEXT', 'uuid', 'TEXT[]'] );
+        var rows = plan.execute( [fileName, entityId, types] );
     }
 
     function invalidateFile(fileName, entityId) {
-        var plan = plv8.prepare( 'SELECT _meta."file_invalidate"($1, $2);', ['uuid', 'uuid'] );
+    	if (fileName == null || fileName.length < 38 || fileName[36] !== '.') {
+    		throw new Error('Invalid fileName.');
+    	}
         var fileId = fileName.split('.')[0];
+        var uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        
+        if (uuidRegex.test(fileId) !== true) {
+        	throw new Error('Invalid fileName. No UUID.');
+        }
+        
+        if (uuidRegex.test(entityId) !== true) {
+        	throw new Error('Invalid entityId. No UUID.');
+        }
+
+        var plan = plv8.prepare( 'SELECT _meta."file_invalidate"($1, $2);', ['uuid', 'uuid'] );
         var rows = plan.execute( [fileId, entityId] );
     }
 

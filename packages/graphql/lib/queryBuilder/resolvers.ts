@@ -155,13 +155,13 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             type: mutationQuery.mutation.type
           };
 
-          // PostMutationHook (for file-storage etc.)
-          for (const fn of hooks.postMutation) {
-            await fn(client, hookInfo, context);
-          }
-
           // Commit transaction
           await client.query('COMMIT');
+
+          // PostMutationHook (for file-storage etc.)
+          for (const fn of hooks.postMutation) {
+            await fn(hookInfo, context);
+          }
 
           // Respond data it to pgClient
           return returnData;
