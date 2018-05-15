@@ -13,7 +13,7 @@ import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
 @Service()
-export class Migration {
+export class SchemaBuilder {
 
   private fromDbMeta: IDbMeta;
   private toDbMeta: IDbMeta;
@@ -29,7 +29,7 @@ export class Migration {
               @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
     // create logger
-    this.logger = loggerFactory.create('Migration');
+    this.logger = loggerFactory.create('SchemaBuilder');
     this.dbAppClient = dbAppClient;
 
   }

@@ -19,7 +19,7 @@ import { helper } from '@fullstack-one/helper';
 
 export { IViews, IExpressions };
 
-import * as utils from './parser/utils';
+import * as utils from './gql-schema-builder/utils';
 export { utils };
 
 @Service()

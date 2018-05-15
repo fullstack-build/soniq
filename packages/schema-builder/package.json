@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/migration",
+  "name": "@fullstack-one/schema-builder",
   "version": "0.3.8",
-  "description": "fullstack.one migration package",
+  "description": "fullstack.one schema builder package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
@@ -20,6 +20,10 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/auth": "latest",
+    "@fullstack-one/boot-loader": "^0.3.8",
+    "@fullstack-one/helper": "^0.3.8",
+    "graphql": "^0.13.2",
     "@fullstack-one/config": "^0.3.8",
     "@fullstack-one/db": "^0.3.8",
     "@fullstack-one/di": "^0.3.8",

@@ -35,7 +35,7 @@ let Migration = class Migration {
     constructor(config, loggerFactory, dbAppClient) {
         this.initSqlPaths = [__dirname + '/..'];
         // create logger
-        this.logger = loggerFactory.create('Migration');
+        this.logger = loggerFactory.create('SchemaBuilder');
         this.dbAppClient = dbAppClient;
     }
     // add paths with migration sql scripts
