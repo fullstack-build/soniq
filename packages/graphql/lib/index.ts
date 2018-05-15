@@ -64,7 +64,7 @@ export class GraphQl {
   }
 
   public addHook(name, fn) {
-    if (this.hooks[name] == null || !Array.isArray(this.hooks[name])) {
+    if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
       throw new Error(`The hook '${name}' does not exist.`);
     }
     this.hooks[name].push(fn);
