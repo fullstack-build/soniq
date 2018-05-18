@@ -1,5 +1,5 @@
 
-import { utils } from '@fullstack-one/graphql-parser';
+import { utils } from '@fullstack-one/schema-builder';
 
 const { findDirectiveIndex, getArgumentByName, parseDirectiveArguments, createArrayField, getEnum } = utils;
 

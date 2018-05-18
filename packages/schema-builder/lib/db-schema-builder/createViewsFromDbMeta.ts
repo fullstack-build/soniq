@@ -17,7 +17,7 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
     });
   }
 
-  // todo @Dustin: Can be null if relation table was not found
+  // TODO: @Dustin: Can be null if relation table was not found
   Object.values(dbMeta.schemas).forEach((schema: any) => {
     Object.values(schema.views).forEach((dbView: any) => {
       let security = '';

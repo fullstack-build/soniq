@@ -2,7 +2,7 @@ import * as deepmerge from 'deepmerge';
 
 import { Service, Inject } from '@fullstack-one/di';
 import { IDbMeta, IDbRelation } from './IDbMeta';
-import { DbAppClient } from './DbAppClient';
+import { DbAppClient } from '@fullstack-one/db';
 
 // https://www.alberton.info/postgresql_meta_info.html
 @Service()

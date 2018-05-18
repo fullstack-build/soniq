@@ -11,7 +11,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { GraphQlParser } from '@fullstack-one/graphql-parser';
+import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
 import { DbGeneralPool } from '@fullstack-one/db';
@@ -24,7 +24,7 @@ export class GraphQl {
   // DI
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
-  private gqlParser: GraphQlParser;
+  private schemaBuilder: SchemaBuilder;
   private server: Server;
   private dbGeneralPool: DbGeneralPool;
   private resolvers: any = {};
@@ -41,7 +41,7 @@ export class GraphQl {
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => Config) config?,
     @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => GraphQlParser) gqlParser?,
+    @Inject(type => SchemaBuilder) schemaBuilder?,
     @Inject(type => Server) server?,
     @Inject(type => DbGeneralPool) dbGeneralPool?
     ) {
@@ -50,7 +50,7 @@ export class GraphQl {
 
     this.dbGeneralPool = dbGeneralPool;
     this.server = server;
-    this.gqlParser = gqlParser;
+    this.schemaBuilder = schemaBuilder;
     this.logger = loggerFactory.create('GraphQl');
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
@@ -94,7 +94,7 @@ export class GraphQl {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await helper.requireFilesByGlobPatternAsObject(resolversPattern));
 
-    const gQlRuntimeObject = this.gqlParser.getGQlRuntimeObject();
+    const gQlRuntimeObject = this.schemaBuilder.getGQlRuntimeObject();
 
     let customOperations: any = {};
     if (gQlRuntimeObject.customOperations == null) {

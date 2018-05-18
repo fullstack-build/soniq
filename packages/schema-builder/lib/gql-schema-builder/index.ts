@@ -1,4 +1,4 @@
-import { IViews, IExpressions } from '../interfaces';
+import { IViews, IExpressions } from './interfaces';
 
 import classifyUserDefinitions from './classifyUserDefinitions';
 import createPublicSchema from './createPublicSchema';
@@ -9,29 +9,9 @@ import {
   print,
 } from 'graphql';
 
-import * as jsonParser from './mods/json';
-import * as idParser from './mods/id';
-import * as computedParser from './mods/computed';
-import * as customParser from './mods/custom';
-import * as relationParser from './mods/relation';
-import * as defaultParser from './mods/default';
-import * as viewnamesParser from './mods/viewnames';
-import * as expressionsParser from './mods/expressions';
-import * as mutationsParser from './mods/mutations';
+import { parsers } from './parsers';
 
-const parsers = [
-  jsonParser,
-  idParser,
-  computedParser,
-  customParser,
-  relationParser,
-  defaultParser,
-  viewnamesParser,
-  expressionsParser,
-  mutationsParser
-];
-
-export function runtimeParser(userSchema: any, views: IViews, expressions: IExpressions, dbObject, viewSchemaName, customParsers): any {
+export function gqlSchemaBuilder(userSchema: any, views: IViews, expressions: IExpressions, dbObject, viewSchemaName, customParsers): any {
 
   const currentParsers = customParsers.slice().concat(parsers.slice());
 

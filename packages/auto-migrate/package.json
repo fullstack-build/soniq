@@ -25,9 +25,8 @@
     "@fullstack-one/db": "^0.3.8",
     "@fullstack-one/di": "^0.3.8",
     "@fullstack-one/events": "^0.3.8",
-    "@fullstack-one/graphql-parser": "^0.3.8",
-    "@fullstack-one/logger": "^0.3.8",
-    "@fullstack-one/migration": "^0.3.8"
+    "@fullstack-one/schema-builder": "^0.3.8",
+    "@fullstack-one/logger": "^0.3.8"
   },
   "devDependencies": {
     "typescript": "^2.8.3"

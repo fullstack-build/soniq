@@ -24,7 +24,7 @@
     "@fullstack-one/di": "^0.3.8",
     "@fullstack-one/events": "^0.3.8",
     "@fullstack-one/logger": "^0.3.8",
-    "@fullstack-one/migration": "^0.3.8",
+    "@fullstack-one/schema-builder": "^0.3.8",
     "@fullstack-one/queue": "^0.3.8",
     "nodemailer": "^4.6.4",
     "nodemailer-direct-transport": "^3.3.2",

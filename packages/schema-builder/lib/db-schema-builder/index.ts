@@ -6,20 +6,28 @@ import { diff } from 'deep-diff';
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { IDbMeta, DbAppClient } from '@fullstack-one/db';
+import { DbAppClient } from '@fullstack-one/db';
+import { IDbMeta } from './pg/IDbMeta';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
+import { setParsers } from './graphql/gQlAstToDbMetaDirectiveParser';
 
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
+// Directive Parse
+interface IDirectiveParser {
+  [name: string]: (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => void;
+}
+
 @Service()
-export class SchemaBuilder {
+export class DbSchemaBuilder {
 
   private fromDbMeta: IDbMeta;
   private toDbMeta: IDbMeta;
   private migrationObject: IDbMeta;
   private dbAppClient: DbAppClient;
   private initSqlPaths = [__dirname + '/..'];
+  private directiveParser: IDirectiveParser = {};
 
   // DI
   private logger: ILogger;
@@ -29,9 +37,22 @@ export class SchemaBuilder {
               @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
     // create logger
-    this.logger = loggerFactory.create('SchemaBuilder');
+    this.logger = loggerFactory.create('DbSchemaBuilder');
     this.dbAppClient = dbAppClient;
 
+    setParsers(this.registerDirectiveParser.bind(this));
+  }
+
+  public registerDirectiveParser(nameInLowerCase: string, fn: (gQlDirectiveNode,
+                                                               dbMetaNode,
+                                                               refDbMeta,
+                                                               refDbMetaCurrentTable,
+                                                               refDbMetaCurrentTableColumn) => void): void {
+    this.directiveParser[nameInLowerCase] = fn;
+  }
+
+  public getDirectiveParser(): any {
+    return this.directiveParser;
   }
 
   // add paths with migration sql scripts
