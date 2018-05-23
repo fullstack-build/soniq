@@ -11,7 +11,6 @@ export function parseView(ctx) {
     if (ctx.expressionsByName[expression.name] == null) {
       throw new Error('Expression `' + expression.name + '` does not exist. You used it in table `' + gqlTypeName + '`.');
     }
-    // TODO: check if returnType is a boolean
 
     const expressionContext = {
       gqlTypeName: view.gqlTypeName,

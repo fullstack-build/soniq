@@ -250,7 +250,7 @@ export class FileStorage {
             });
           } catch (err) {
             // Errors can be ignored => Failed Signs are not returned
-            // TODO: Log this.
+            this.logger.warn('readFiles.signFail', err);
           }
         }
 
@@ -266,7 +266,7 @@ export class FileStorage {
             });
           } catch (err) {
             // Errors can be ignored => Failed Signs are not returned
-            // TODO: Log this.
+            this.logger.warn('readFiles.signFail.promise', err);
           }
         }
 

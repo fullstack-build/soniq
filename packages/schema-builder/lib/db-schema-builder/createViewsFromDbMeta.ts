@@ -9,6 +9,10 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
   const statements = [];
   const viewSchemas = {};
 
+  if (dbMeta.schemas == null) {
+    return statements;
+  }
+
   if (includePrivileges === true) {
     Object.values(dbMeta.schemas).forEach((schema: any) => {
       Object.values(schema.tables).forEach((table: any) => {
@@ -17,7 +21,6 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
     });
   }
 
-  // TODO: @Dustin: Can be null if relation table was not found
   Object.values(dbMeta.schemas).forEach((schema: any) => {
     Object.values(schema.views).forEach((dbView: any) => {
       let security = '';
