@@ -17,6 +17,10 @@ import oAuthCallback from './oAuthCallback';
 import { setDirectiveParser } from './migrationHelper';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
+import * as fs from 'fs';
+
+const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
+
 // export
 export * from './signHelper';
 
@@ -25,6 +29,7 @@ export class Auth {
 
   private sodiumConfig;
   private authConfig;
+  private notificationFunction;
 
   // DI
   private dbGeneralPool: DbGeneralPool;
@@ -53,6 +58,10 @@ export class Auth {
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
+    this.notificationFunction = async (user, caller: string, meta: string) => {
+      throw new Error('No notification function has been defined.');
+    };
+
     graphQl.addHook('preQuery', this.preQueryHook.bind(this));
 
     this.addMiddleware();
@@ -60,14 +69,25 @@ export class Auth {
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
 
+    this.schemaBuilder.extendSchema(schema);
+
+    this.graphQl.addResolvers(this.getResolvers());
+
     // add migration path
-    schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
+    this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
     // register directive parser
     // require('./migrationHelper');
     setDirectiveParser(this.schemaBuilder.getRegisterDirectiveParser());
 
     // this.linkPassport();
+  }
+
+  public setNotificationFunction (notificationFunction) {
+    if (notificationFunction == null || typeof notificationFunction !== 'function') {
+      throw new Error('The notification function needs to be an async function.');
+    }
+    this.notificationFunction = notificationFunction;
   }
 
   public async setUser(client, accessToken) {
@@ -99,7 +119,7 @@ export class Auth {
     } catch (err) {}
 
     try {
-      lData = await this.register(username, tenant);
+      lData = await this.register(username, tenant, null);
 
       await this.setPassword(lData.accessToken, provider, password, userIdentifier);
 
@@ -111,7 +131,7 @@ export class Auth {
     }
   }
 
-  public async register(username, tenant) {
+  public async register(username, tenant, meta) {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -124,14 +144,18 @@ export class Auth {
       const result = await client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
       const payload = result.rows[0].payload;
 
-      const ret = {
+      const user = {
         userId: payload.userId,
         payload,
+        username,
+        tenant,
         accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
+      await this.notificationFunction(user, 'REGISTER', meta);
+
       await client.query('COMMIT');
-      return ret;
+      return true;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -212,7 +236,7 @@ export class Auth {
     }
   }
 
-  public async forgotPassword(username, tenant) {
+  public async forgotPassword(username, tenant, meta) {
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
@@ -225,14 +249,18 @@ export class Auth {
       const result = await client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
       const payload = result.rows[0].data;
 
-      const ret = {
+      const user = {
         userId: payload.userId,
         payload,
+        username,
+        tenant,
         accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
+      await this.notificationFunction(user, 'FORGOT_PASSWORD', meta);
+
       await client.query('COMMIT');
-      return ret;
+      return true;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -519,119 +547,6 @@ export class Auth {
     authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
 
     authRouter.use(passport.initialize());
-    // authRouter.use(passport.session());
-
-    authRouter.post('/auth/invalidateAccessToken', async (ctx) => {
-      let success;
-
-      try {
-        success = await this.invalidateUserToken(ctx.state.accessToken);
-      } catch (err) {
-        success = false;
-        ctx.response.status = 400;
-      }
-
-      ctx.body = { success };
-    });
-
-    authRouter.post('/auth/invalidateAllAccessTokens', async (ctx) => {
-      let success;
-
-      try {
-        success = await this.invalidateAllUserTokens(ctx.state.accessToken);
-      } catch (err) {
-        success = false;
-        ctx.response.status = 400;
-      }
-
-      ctx.body = { success };
-    });
-
-    authRouter.post('/auth/register', async (ctx) => {
-      if (ctx.request.body.username == null) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: '"username" is required.' };
-        return;
-      }
-
-      try {
-        const lData = await this.register(ctx.request.body.username, ctx.request.body.tenant || 'default');
-
-        ctx.body = Object.assign({}, lData, { success: true });
-      } catch (err) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: 'This user may already exist or another error occured.' };
-      }
-    });
-
-    authRouter.post('/auth/local/login', async (ctx) => {
-      if (ctx.request.body.username == null) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: '"username" is required.' };
-        return;
-      }
-
-      if (ctx.request.body.password == null) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: '"password" is required.' };
-        return;
-      }
-
-      try {
-        const lData = await this.login(ctx.request.body.username, ctx.request.body.tenant || 'default', 'local', ctx.request.body.password, null);
-
-        ctx.body = Object.assign({}, lData, { success: true });
-      } catch (err) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: 'Invalid username, tenant or password.' };
-      }
-    });
-
-    authRouter.get('/auth/isAccessTokenValid', async (ctx) => {
-      try {
-        const isValid = await this.isTokenValid(ctx.state.accessToken, false, false);
-        ctx.body = { isValid };
-      } catch (err) {
-        ctx.response.status = 400;
-        ctx.body = { isValid: false };
-      }
-    });
-
-    authRouter.post('/auth/local/setPassword', async (ctx) => {
-      if (ctx.request.body.password == null) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: '"password" is required.' };
-        return;
-      }
-
-      try {
-        const success = await this.setPassword(ctx.state.accessToken, 'local', ctx.request.body.password, null);
-        ctx.body = { success };
-      } catch (err) {
-        ctx.response.status = 400;
-        ctx.body = { success: false, error: 'Invalid token.' };
-      }
-    });
-
-    authRouter.post('/auth/forgotPassword', async (ctx) => {
-      try {
-        const lData = await this.forgotPassword(ctx.request.body.username, ctx.request.body.tenant || 'default');
-
-        ctx.body = Object.assign({}, lData, { success: true });
-      } catch (err) {
-        ctx.body = { success: false };
-        ctx.response.status = 400;
-      }
-    });
-
-    authRouter.post('/auth/setCookie', async (ctx) => {
-      try {
-        ctx.cookies.set(this.authConfig.cookie.name, ctx.state.accessToken, this.authConfig.cookie);
-        ctx.body = { success: true };
-      } catch (e) {
-        ctx.body = { success: false };
-      }
-    });
 
     authRouter.get('/auth/oAuthFailure', async (ctx) => {
       const message = {
@@ -706,60 +621,43 @@ export class Auth {
     }
   }
 
-  /* private getResolvers() {
+  private getResolvers() {
     return {
       '@fullstack-one/auth/register': async (obj, args, context, info, params) => {
-        return await this.register(args.username, args.tenant || 'default');
+        return await this.register(args.username, args.tenant || 'default', args.meta || null);
       },
       '@fullstack-one/auth/login': async (obj, args, context, info, params) => {
         return await this.login(args.username, args.tenant || 'default', 'local', args.password, null);
       },
       '@fullstack-one/auth/forgotPassword': async (obj, args, context, info, params) => {
-        return await this.forgotPassword(args.username, args.tenant || 'default');
+        return await this.forgotPassword(args.username, args.tenant || 'default', args.meta || null);
       },
       '@fullstack-one/auth/setPassword': async (obj, args, context, info, params) => {
         return await this.setPassword(args.accessToken, 'local', args.password, null);
       },
-
-      /*const isValid = await this.isTokenValid(ctx.state.accessToken, false, false);
-      success = await this.invalidateAllUserTokens(ctx.state.accessToken);
-      success = await this.invalidateUserToken(ctx.state.accessToken);
-      '@fullstack-one/file-storage/readFiles': async (obj, args, context, info, params) => {
-        const awaitingFileSignatures = [];
-
-        const data = obj[info.fieldName];
-
-        for (const fileName of data) {
-          try {
-            awaitingFileSignatures.push({
-              fileName,
-              presignedGetUrlPromise: this.presignedGetObject(fileName)
-            });
-          } catch (err) {
-            // Errors can be ignored => Failed Signs are not returned
-            // TODO: Log this.
-          }
+      '@fullstack-one/auth/isUserTokenValid': async (obj, args, context, info, params) => {
+        return await this.isTokenValid(args.accessToken, false, false);
+      },
+      '@fullstack-one/auth/invalidateUserToken': async (obj, args, context, info, params) => {
+        context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        return await this.invalidateUserToken(args.accessToken);
+      },
+      '@fullstack-one/auth/invalidateAllUserTokens': async (obj, args, context, info, params) => {
+        context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        return await this.invalidateAllUserTokens(args.accessToken);
+      },
+      '@fullstack-one/auth/setCookie': async (obj, args, context, info, params) => {
+        const tokenValid = await this.isTokenValid(args.accessToken, false, false);
+        if (tokenValid === true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, args.accessToken, this.authConfig.cookie);
+          return true;
         }
-
-        const results = [];
-
-        for (const fileObject of awaitingFileSignatures) {
-          try {
-            const presignedGetUrl = await fileObject.presignedGetUrlPromise;
-            const fileName = fileObject.fileName;
-            results.push({
-              fileName,
-              presignedGetUrl
-            });
-          } catch (err) {
-            // Errors can be ignored => Failed Signs are not returned
-            // TODO: Log this.
-          }
-        }
-
-        return results;
+        throw new Error(`Could not set token into the cookie. Maybe it's invalid or expired.`);
+      },
+      '@fullstack-one/auth/deleteCookie': async (obj, args, context, info, params) => {
+        context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        return true;
       }
     };
-  }*/
-
+  }
 }
