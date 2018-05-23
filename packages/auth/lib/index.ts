@@ -2,7 +2,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { Migration } from '@fullstack-one/migration';
+import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 
@@ -14,6 +14,7 @@ import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
 import * as koaSession from 'koa-session';
 import oAuthCallback from './oAuthCallback';
+import { setDirectiveParser } from './migrationHelper';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
 // export
@@ -29,12 +30,13 @@ export class Auth {
   private dbGeneralPool: DbGeneralPool;
   private server: Server;
   private graphQl: GraphQl;
+  private schemaBuilder: SchemaBuilder;
 
   constructor(
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => Migration) migration?,
+    @Inject(type => SchemaBuilder) schemaBuilder?,
     @Inject(type => Config) config?,
     @Inject(type => GraphQl) graphQl?
   ) {
@@ -46,6 +48,7 @@ export class Auth {
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
+    this.schemaBuilder = schemaBuilder;
 
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
@@ -58,10 +61,11 @@ export class Auth {
     bootLoader.addBootFunction(this.boot.bind(this));
 
     // add migration path
-    migration.addMigrationPath(__dirname + '/..');
+    schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
     // register directive parser
-    require('./migrationHelper');
+    // require('./migrationHelper');
+    setDirectiveParser(this.schemaBuilder.getRegisterDirectiveParser());
 
     // this.linkPassport();
   }

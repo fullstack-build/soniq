@@ -2,11 +2,10 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { Migration } from '@fullstack-one/migration';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 import { Auth } from '@fullstack-one/auth';
-import { GraphQlParser } from '@fullstack-one/graphql-parser';
+import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
 import * as Minio from 'minio';
@@ -28,7 +27,7 @@ export class FileStorage {
   private dbGeneralPool: DbGeneralPool;
   private server: Server;
   private graphQl: GraphQl;
-  private graphQlParser: GraphQlParser;
+  private schemaBuilder: SchemaBuilder;
   private config: Config;
   private auth: Auth;
   private verifiers: any = {};
@@ -37,10 +36,9 @@ export class FileStorage {
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => Migration) migration?,
     @Inject(type => Config) config?,
     @Inject(type => GraphQl) graphQl?,
-    @Inject(type => GraphQlParser) graphQlParser?,
+    @Inject(type => SchemaBuilder) schemaBuilder?,
     @Inject(type => Auth) auth?
   ) {
     // register package config
@@ -49,16 +47,16 @@ export class FileStorage {
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
-    this.graphQlParser = graphQlParser;
+    this.schemaBuilder = schemaBuilder;
     this.config = config;
     this.auth = auth;
 
     // add migration path
-    migration.addMigrationPath(__dirname + '/..');
+    this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
-    this.graphQlParser.extendSchema(schema);
+    this.schemaBuilder.extendSchema(schema);
 
-    this.graphQlParser.addParser(filesParser);
+    this.schemaBuilder.addParser(filesParser);
 
     this.graphQl.addResolvers(this.getResolvers());
 

@@ -6,7 +6,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { Config } from '@fullstack-one/config';
 import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
-import { Migration } from '@fullstack-one/migration';
+import { SchemaBuilder } from '@fullstack-one/schema-builder';
 
 @Service()
 export class Email {
@@ -26,7 +26,7 @@ export class Email {
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(type => QueueFactory) queueFactory?,
     @Inject(type => Config) config?,
-    @Inject(type => Migration) migration?) {
+    @Inject(type => SchemaBuilder) schemaBuilder?) {
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
@@ -38,7 +38,7 @@ export class Email {
     this.logger = loggerFactory.create('Email');
 
     // add migration path
-    migration.addMigrationPath(__dirname + '/..');
+    schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {

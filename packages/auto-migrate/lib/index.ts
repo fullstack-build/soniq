@@ -2,11 +2,10 @@
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { EventEmitter } from '@fullstack-one/events';
-import { Migration } from '@fullstack-one/migration';
+import { SchemaBuilder, IDbMeta } from '@fullstack-one/schema-builder';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { IDbMeta, PgToDbMeta, DbAppClient } from '@fullstack-one/db';
-import { GraphQlParser } from '@fullstack-one/graphql-parser';
+import { DbAppClient } from '@fullstack-one/db';
 import * as _ from 'lodash';
 
 @Service()
@@ -15,22 +14,19 @@ export class AutoMigrate {
   private ENVIRONMENT: IEnvironment;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
-  private gqlParser: GraphQlParser;
+  private schemaBuilder: SchemaBuilder;
   private config: Config;
-  private migration: Migration;
 
   constructor(
     @Inject(type => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject(type => BootLoader) bootLoader: BootLoader,
-    @Inject(type => Migration) migration: Migration,
     @Inject(type => Config) config: Config,
-    @Inject(type => GraphQlParser) gqlParser: GraphQlParser,
+    @Inject(type => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject(type => DbAppClient) dbAppClient: DbAppClient) {
 
     this.logger = loggerFactory.create('AutoMigrate');
-    this.gqlParser = gqlParser;
+    this.schemaBuilder = schemaBuilder;
     this.config = config;
-    this.migration = migration;
 
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
@@ -45,15 +41,15 @@ export class AutoMigrate {
 
   public getDbMeta(): IDbMeta {
     // return copy instead of ref
-    return _.cloneDeep(this.gqlParser.getDbMeta());
+    return _.cloneDeep(this.schemaBuilder.getDbMeta());
   }
 
   public async getMigrationSql() {
     const configDB = this.config.getConfig('db');
     try {
-      const fromDbMeta      = await (new PgToDbMeta()).getPgDbMeta();
+      const fromDbMeta      = await this.schemaBuilder.getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
-      return this.migration.getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
+      return this.schemaBuilder.getDbSchemaBuilder().getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
 
     } catch (err) {
       this.logger.warn('getMigrationSql.error', err);
@@ -64,10 +60,9 @@ export class AutoMigrate {
 
     const configDB = this.config.getConfig('db');
     try {
-      const pgToDbMeta      = Container.get(PgToDbMeta);
-      const fromDbMeta      = await pgToDbMeta.getPgDbMeta();
+      const fromDbMeta      = await this.schemaBuilder.getPgDbMeta();
       const toDbMeta        = this.getDbMeta();
-      return await this.migration.migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
+      return await this.schemaBuilder.getDbSchemaBuilder().migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
 
     } catch (err) {
       this.logger.warn('runMigration.error', err);
