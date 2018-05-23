@@ -18,9 +18,15 @@ const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
 // const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
-const $auth: Auth = Container.get(Auth);
+const auth: Auth = Container.get(Auth);
 // const $email: Email = Container.get(Email);
 const $fs: FileStorage = Container.get(FileStorage);
+
+
+auth.setNotificationFunction(async (user, caller, meta) => {
+  console.log('> NOTIFY!', user.userId, caller, meta);
+  console.log('>', user.accessToken);
+});
 
 (async () => {
   await $one.boot();
