@@ -3,7 +3,7 @@ import { getQueryResolver } from './sqlGenerator/read';
 import { getMutationResolver } from './sqlGenerator/mutate';
 import * as gQlTypeJson from 'graphql-type-json';
 
-export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, hooks, dbGeneralPool) {
+export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, hooks, dbGeneralPool, logger) {
   // Initialize stuff / get instances / etc.
   const queryResolver = getQueryResolver(gQlTypes, dbObject);
   const mutationResolver = getMutationResolver(gQlTypes, dbObject, mutations);
@@ -30,14 +30,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           // Begin transaction
           await client.query('BEGIN');
 
-          // Set current user for permissions
-          /*if (context.accessToken != null && selectQuery.authRequired) {
-            context.ctx.state.authRequired = true;
-            await auth.setUser(client, context.accessToken);
-          }*/
-
           // Set authRequired in koa state for cache headers
-          // console.log(context.accessToken);
           if (context.accessToken != null && selectQuery.authRequired) {
             context.ctx.state.authRequired = true;
           }
@@ -47,14 +40,10 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             await fn(client, context, selectQuery.authRequired);
           }
 
-          // tslint:disable-next-line:no-console
-          console.log('RUN QUERY', selectQuery.sql, selectQuery.values);
+          logger.trace('queryResolver.run', selectQuery.sql, selectQuery.values);
 
           // Run query against pg to get data
           const { rows } = await client.query(selectQuery.sql, selectQuery.values);
-
-          // tslint:disable-next-line:no-console
-          console.log('rows', rows);
 
           // Read JSON data from first row
           const data = rows[0][selectQuery.query.name];
@@ -105,8 +94,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             await fn(client, context, context.accessToken != null);
           }
 
-          // tslint:disable-next-line:no-console
-          console.log('RUN MUTATION', mutationQuery.sql, mutationQuery.values);
+          logger.trace('mutationResolver.run', mutationQuery.sql, mutationQuery.values);
 
           // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
           const { rows } = await client.query(mutationQuery.sql, mutationQuery.values);
@@ -139,8 +127,7 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             // Generate sql query for response-data of the mutation
             const returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
 
-            // tslint:disable-next-line:no-console
-            console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
+            logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
 
             // Run SQL query on pg to get response-data
             const { rows: returnRows } = await client.query(returnQuery.sql, returnQuery.values);

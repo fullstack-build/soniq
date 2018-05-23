@@ -6,6 +6,7 @@ import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 import { Auth } from '@fullstack-one/auth';
 import { SchemaBuilder } from '@fullstack-one/schema-builder';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
 import * as Minio from 'minio';
@@ -28,11 +29,13 @@ export class FileStorage {
   private server: Server;
   private graphQl: GraphQl;
   private schemaBuilder: SchemaBuilder;
+  private logger: ILogger;
   private config: Config;
   private auth: Auth;
   private verifiers: any = {};
 
   constructor(
+    @Inject(type => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject(type => DbGeneralPool) dbGeneralPool?,
     @Inject(type => Server) server?,
     @Inject(type => BootLoader) bootLoader?,
@@ -43,6 +46,8 @@ export class FileStorage {
   ) {
     // register package config
     config.addConfigFolder(__dirname + '/../config');
+
+    this.logger = loggerFactory.create('AutoMigrate');
 
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
@@ -134,8 +139,7 @@ export class FileStorage {
         }
       });
     } catch (e) {
-      // tslint:disable-next-line:no-console
-      console.log(`Failed to delete file '${fileName}'.`, e);
+      this.logger.warn('deleteFileAsAdmin.error', `Failed to delete file '${fileName}'.`, e);
       // I don't care => File will be deleted by a cleanup-script some time
       return;
     }
@@ -158,8 +162,7 @@ export class FileStorage {
         }
       });
     } catch (e) {
-      // tslint:disable-next-line:no-console
-      console.log(`Failed to delete file '${fileName}'.`, e);
+      this.logger.warn('deleteFile.error', `Failed to delete file '${fileName}'.`, e);
       // I don't care => File will be deleted by a cleanup-script some time
       return;
     }

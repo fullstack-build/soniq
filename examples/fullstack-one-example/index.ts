@@ -31,11 +31,11 @@ auth.setNotificationFunction(async (user, caller, meta) => {
 (async () => {
   await $one.boot();
 
-  const posts = (await $auth.adminQuery('SELECT * FROM "VPost"')).rows;
+  /*const posts = (await $auth.adminQuery('SELECT * FROM "VPost"')).rows;
   console.log('Posts query: ', posts);
 
-  await $auth.adminTransaction(async (dbClient) => {
+  await auth.adminTransaction(async (dbClient) => {
     console.log('Posts transaction: ', (await dbClient.query('SELECT * FROM "VPost"')).rows);
-  });
+  });*/
 
 })();

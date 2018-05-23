@@ -5,6 +5,7 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
+import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 
 import { createConfig, hashByMeta, newHash } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature } from './signHelper';
@@ -33,6 +34,7 @@ export class Auth {
 
   // DI
   private dbGeneralPool: DbGeneralPool;
+  private logger: ILogger;
   private server: Server;
   private graphQl: GraphQl;
   private schemaBuilder: SchemaBuilder;
@@ -43,11 +45,14 @@ export class Auth {
     @Inject(type => BootLoader) bootLoader?,
     @Inject(type => SchemaBuilder) schemaBuilder?,
     @Inject(type => Config) config?,
-    @Inject(type => GraphQl) graphQl?
+    @Inject(type => GraphQl) graphQl?,
+    @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory
   ) {
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
+
+    this.logger = loggerFactory.create('Auth');
 
     // DI
     this.server = server;
@@ -100,8 +105,7 @@ export class Auth {
 
       return true;
     } catch (err) {
-      // tslint:disable-next-line:no-console
-      console.log('Failed to SetUser', err);
+      this.logger.warn('setUser.error', err);
       throw err;
     }
   }
@@ -127,6 +131,7 @@ export class Auth {
 
       return lData;
     } catch (err) {
+      this.logger.warn('loginOrRegister.error', err);
       throw new Error('User does exist or password is invalid.');
     }
   }
@@ -158,6 +163,7 @@ export class Auth {
       return true;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('register.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -198,6 +204,7 @@ export class Auth {
       return ret;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('login.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -226,9 +233,8 @@ export class Auth {
       await client.query('COMMIT');
       return true;
     } catch (err) {
-      // tslint:disable-next-line:no-console
-      console.log(err);
       await client.query('ROLLBACK');
+      this.logger.warn('setPassword.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -263,6 +269,7 @@ export class Auth {
       return true;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('forgotPassword.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -289,6 +296,7 @@ export class Auth {
       return true;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('removeProvider.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -316,6 +324,7 @@ export class Auth {
       return isValid;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('isTokenValid.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -342,6 +351,7 @@ export class Auth {
       return true;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('invalidateUserToken.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -368,6 +378,7 @@ export class Auth {
       return true;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('invalidateAllUserTokens.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -430,6 +441,7 @@ export class Auth {
       return ret;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('adminTransaction.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -454,6 +466,7 @@ export class Auth {
       return result;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('adminQuery.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -477,6 +490,7 @@ export class Auth {
       return ret;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('userTransaction.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -500,6 +514,7 @@ export class Auth {
       return result;
     } catch (err) {
       await client.query('ROLLBACK');
+      this.logger.warn('userQuery.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
@@ -589,6 +604,7 @@ export class Auth {
           const lData = await this.loginOrRegister(email, provider.tenant || 'default', provider.name, provider.name, profile.id);
           cb(null, lData);
         } catch (err) {
+          this.logger.warn('passport.strategylogin.error', err);
           cb(err);
         }
       }));
@@ -599,8 +615,7 @@ export class Auth {
         try {
           await next();
         } catch (err) {
-          // tslint:disable-next-line:no-console
-          console.error(err);
+          this.logger.warn('passport.oAuthFailure.error', err);
           ctx.redirect('/auth/oAuthFailure');
         }
       };

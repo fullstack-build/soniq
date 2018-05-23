@@ -111,7 +111,7 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
       resolvers: getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries,
-      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool),
+      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
     });
 
     const setCacheHeaders = async (ctx, next) => {
