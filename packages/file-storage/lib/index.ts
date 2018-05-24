@@ -16,7 +16,7 @@ import { defaultVerifier } from './defaultVerifier';
 
 import * as fs from 'fs';
 
-const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
+const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 
 @Service()
 export class FileStorage {

@@ -41,7 +41,7 @@ const oAuthCallback_1 = require("./oAuthCallback");
 const migrationHelper_1 = require("./migrationHelper");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 const fs = require("fs");
-const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
+const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 // export
 __export(require("./signHelper"));
 let Auth = class Auth {

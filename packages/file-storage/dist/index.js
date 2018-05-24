@@ -36,7 +36,7 @@ const Minio = require("minio");
 const filesParser = require("./parser");
 const defaultVerifier_1 = require("./defaultVerifier");
 const fs = require("fs");
-const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
+const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 let FileStorage = class FileStorage {
     constructor(loggerFactory, dbGeneralPool, server, bootLoader, config, graphQl, schemaBuilder, auth) {
         this.verifiers = {};

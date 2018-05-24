@@ -20,7 +20,7 @@ import { setDirectiveParser } from './migrationHelper';
 
 import * as fs from 'fs';
 
-const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
+const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 
 // export
 export * from './signHelper';
