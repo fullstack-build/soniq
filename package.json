@@ -14,7 +14,8 @@
     "lerna": "lerna bootstrap && lerna link --force-local",
     "link": "sh scripts/dev.sh",
     "build": "sh scripts/buildall.sh",
-    "cleanNodeModules": "sh scripts/cleanNodeModules.sh"
+    "cleanNodeModules": "sh scripts/cleanNodeModules.sh",
+    "cleanDistFolders": "sh scripts/cleanDistFolders.sh"
   },
   "repository": {
     "type": "git",
