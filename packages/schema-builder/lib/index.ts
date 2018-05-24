@@ -61,7 +61,7 @@ export class SchemaBuilder {
     this.dbSchemaBuilder = dbSchemaBuilder;
     this.pgToDbMeta = pgToDbMeta;
     this.logger = loggerFactory.create('SchemaBuilder');
-    this.graphQlConfig = config.getConfig('schemaBuilder');
+    this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));

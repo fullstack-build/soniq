@@ -1,5 +1,5 @@
 module.exports = {
-  schemaBuilder: {
+  graphql: {
     schemaPattern:      '/schema/*.gql',
     viewsPattern:       '/views/*.ts',
     expressionsPattern: '/expressions/*.ts',
