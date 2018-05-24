@@ -40,7 +40,7 @@ let Server = class Server {
         // get settings from DI container
         this.serverConfig = config.getConfig('server');
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-        // this.boot();
+        this.bootKoa();
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     getApp() {
@@ -49,10 +49,20 @@ let Server = class Server {
     getServer() {
         return this.server;
     }
-    boot() {
+    bootKoa() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this.app = new Koa();
+            }
+            catch (e) {
+                // tslint:disable-next-line:no-console
+                console.error(e);
+            }
+        });
+    }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
                 // start KOA on PORT
                 this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
                 // emit event

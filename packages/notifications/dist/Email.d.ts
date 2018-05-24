@@ -5,7 +5,7 @@ export declare class Email {
     private logger;
     private eventEmitter;
     private readonly queueFactory;
-    constructor(loggerFactory?: any, queueFactory?: any, config?: any, migration?: any);
+    constructor(loggerFactory?: any, queueFactory?: any, config?: any, schemaBuilder?: any);
     sendMessage(to: string, subject: string, html: string, attachments?: undefined[], from?: string): Promise<any>;
     private _sendMail(job);
     private createTransport(credentials);

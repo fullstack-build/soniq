@@ -27,9 +27,9 @@ const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
 const events_1 = require("@fullstack-one/events");
 const logger_1 = require("@fullstack-one/logger");
-const migration_1 = require("@fullstack-one/migration");
+const schema_builder_1 = require("@fullstack-one/schema-builder");
 let Email = class Email {
-    constructor(loggerFactory, queueFactory, config, migration) {
+    constructor(loggerFactory, queueFactory, config, schemaBuilder) {
         this.isReady = false;
         // register package config
         config.addConfigFolder(__dirname + '/../config');
@@ -38,10 +38,10 @@ let Email = class Email {
         this.queueFactory = queueFactory;
         this.logger = loggerFactory.create('Email');
         // add migration path
-        migration.addMigrationPath(__dirname + '/..');
+        schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         if (this.CONFIG.testing) {
             nodemailer_1.createTestAccount((err, account) => {
-                if (err) {
+                if (err != null) {
                     this.logger.warn('testingAccount.creation.error', err);
                     throw err;
                 }
@@ -150,7 +150,7 @@ Email = __decorate([
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => queue_1.QueueFactory)),
     __param(2, di_1.Inject(type => config_1.Config)),
-    __param(3, di_1.Inject(type => migration_1.Migration)),
+    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
     __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], Email);
 exports.Email = Email;

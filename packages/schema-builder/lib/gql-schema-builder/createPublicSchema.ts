@@ -2,7 +2,7 @@
 import {
   IExpressions,
   IViews
-} from '../interfaces';
+} from './interfaces';
 
 import getBasicSchema from './utils/getBasicSchema';
 import arrayToNamedArray from './utils/arrayToNamedArray';

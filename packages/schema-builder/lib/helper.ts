@@ -3,7 +3,7 @@ import { promisify } from 'util';
 const writeFileAsync = promisify(writeFile);
 import { parse, print } from 'graphql';
 
-import { IDbMeta } from '@fullstack-one/db';
+import { IDbMeta } from './db-schema-builder/pg/IDbMeta';
 
 export namespace graphQl.helper {
 

@@ -2,7 +2,7 @@
 import * as helper from './helper';
 import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { IDbMeta, IDbRelation } from '@fullstack-one/db';
+import { IDbMeta, IDbRelation } from './pg/IDbMeta';
 
 export namespace sqlObjFromMigrationObject {
 

@@ -31,22 +31,25 @@ const di_1 = require("@fullstack-one/di");
 const logger_1 = require("@fullstack-one/logger");
 const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
-const graphql_parser_1 = require("@fullstack-one/graphql-parser");
+const schema_builder_1 = require("@fullstack-one/schema-builder");
 const helper_1 = require("@fullstack-one/helper");
 const server_1 = require("@fullstack-one/server");
 const db_1 = require("@fullstack-one/db");
 let GraphQl = class GraphQl {
-    constructor(loggerFactory, config, bootLoader, gqlParser, server, dbGeneralPool) {
+    constructor(loggerFactory, config, bootLoader, schemaBuilder, server, dbGeneralPool) {
         this.resolvers = {};
         this.customQueries = [];
         this.customMutations = [];
         this.customFields = {};
-        this.preQueryHooks = [];
+        this.hooks = {
+            preQuery: [],
+            postMutation: []
+        };
         // register package config
         config.addConfigFolder(__dirname + '/../config');
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
-        this.gqlParser = gqlParser;
+        this.schemaBuilder = schemaBuilder;
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
@@ -54,7 +57,13 @@ let GraphQl = class GraphQl {
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     addPreQueryHook(fn) {
-        this.preQueryHooks.push(fn);
+        this.hooks.preQuery.push(fn);
+    }
+    addHook(name, fn) {
+        if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
+            throw new Error(`The hook '${name}' does not exist.`);
+        }
+        this.hooks[name].push(fn);
     }
     addResolvers(resolversObject) {
         this.resolvers = Object.assign(this.resolvers, resolversObject);
@@ -74,7 +83,7 @@ let GraphQl = class GraphQl {
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
             this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
-            const gQlRuntimeObject = this.gqlParser.getGQlRuntimeObject();
+            const gQlRuntimeObject = this.schemaBuilder.getGQlRuntimeObject();
             let customOperations = {};
             if (gQlRuntimeObject.customOperations == null) {
                 this.logger.warn('boot.no.resolver.files.found');
@@ -89,7 +98,7 @@ let GraphQl = class GraphQl {
             }
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries, gQlRuntimeObject.mutations, customOperations, this.resolvers, this.preQueryHooks, this.dbGeneralPool),
+                resolvers: resolvers_1.getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries, gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();
@@ -138,7 +147,7 @@ GraphQl = __decorate([
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => config_1.Config)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
+    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
     __param(4, di_1.Inject(type => server_1.Server)),
     __param(5, di_1.Inject(type => db_1.DbGeneralPool)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])

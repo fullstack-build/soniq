@@ -22,18 +22,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
-const migration_1 = require("@fullstack-one/migration");
+const schema_builder_1 = require("@fullstack-one/schema-builder");
 const logger_1 = require("@fullstack-one/logger");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const db_1 = require("@fullstack-one/db");
-const graphql_parser_1 = require("@fullstack-one/graphql-parser");
 const _ = require("lodash");
 let AutoMigrate = class AutoMigrate {
-    constructor(loggerFactory, bootLoader, migration, config, gqlParser, dbAppClient) {
+    constructor(loggerFactory, bootLoader, config, schemaBuilder, dbAppClient) {
         this.logger = loggerFactory.create('AutoMigrate');
-        this.gqlParser = gqlParser;
+        this.schemaBuilder = schemaBuilder;
         this.config = config;
-        this.migration = migration;
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         bootLoader.addBootFunction(this.boot.bind(this));
@@ -46,15 +44,15 @@ let AutoMigrate = class AutoMigrate {
     }
     getDbMeta() {
         // return copy instead of ref
-        return _.cloneDeep(this.gqlParser.getDbMeta());
+        return _.cloneDeep(this.schemaBuilder.getDbMeta());
     }
     getMigrationSql() {
         return __awaiter(this, void 0, void 0, function* () {
             const configDB = this.config.getConfig('db');
             try {
-                const fromDbMeta = yield (new db_1.PgToDbMeta()).getPgDbMeta();
+                const fromDbMeta = yield this.schemaBuilder.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
-                return this.migration.getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
+                return this.schemaBuilder.getDbSchemaBuilder().getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
                 this.logger.warn('getMigrationSql.error', err);
@@ -65,10 +63,9 @@ let AutoMigrate = class AutoMigrate {
         return __awaiter(this, void 0, void 0, function* () {
             const configDB = this.config.getConfig('db');
             try {
-                const pgToDbMeta = di_1.Container.get(db_1.PgToDbMeta);
-                const fromDbMeta = yield pgToDbMeta.getPgDbMeta();
+                const fromDbMeta = yield this.schemaBuilder.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
-                return yield this.migration.migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
+                return yield this.schemaBuilder.getDbSchemaBuilder().migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
                 this.logger.warn('runMigration.error', err);
@@ -80,15 +77,13 @@ AutoMigrate = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(1, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(2, di_1.Inject(type => migration_1.Migration)),
-    __param(3, di_1.Inject(type => config_1.Config)),
-    __param(4, di_1.Inject(type => graphql_parser_1.GraphQlParser)),
-    __param(5, di_1.Inject(type => db_1.DbAppClient)),
+    __param(2, di_1.Inject(type => config_1.Config)),
+    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
+    __param(4, di_1.Inject(type => db_1.DbAppClient)),
     __metadata("design:paramtypes", [logger_1.LoggerFactory,
         boot_loader_1.BootLoader,
-        migration_1.Migration,
         config_1.Config,
-        graphql_parser_1.GraphQlParser,
+        schema_builder_1.SchemaBuilder,
         db_1.DbAppClient])
 ], AutoMigrate);
 exports.AutoMigrate = AutoMigrate;

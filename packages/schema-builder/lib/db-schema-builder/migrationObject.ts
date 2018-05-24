@@ -4,7 +4,7 @@ import * as deepEqual from 'deep-equal';
 
 import * as helper from './helper';
 import { IAction } from './IMigrationSqlObj';
-import { IDbMeta } from '@fullstack-one/db';
+import { IDbMeta } from './pg/IDbMeta';
 
 export namespace migrationObject {
   const ACTION_KEY: string = '$$action$$';

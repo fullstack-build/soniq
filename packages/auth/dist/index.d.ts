@@ -1,29 +1,26 @@
+import { LoggerFactory } from '@fullstack-one/logger';
 export * from './signHelper';
 export declare class Auth {
     private sodiumConfig;
     private authConfig;
+    private notificationFunction;
     private dbGeneralPool;
+    private logger;
     private server;
     private graphQl;
-    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, migration?: any, config?: any, graphQl?: any);
+    private schemaBuilder;
+    constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, schemaBuilder?: any, config?: any, graphQl?: any, loggerFactory?: LoggerFactory);
+    setNotificationFunction(notificationFunction: any): void;
     setUser(client: any, accessToken: any): Promise<boolean>;
     loginOrRegister(username: any, tenant: any, provider: any, password: any, userIdentifier: any): Promise<any>;
-    register(username: any, tenant: any): Promise<{
-        userId: any;
-        payload: any;
-        accessToken: any;
-    }>;
+    register(username: any, tenant: any, meta: any): Promise<boolean>;
     login(username: any, tenant: any, provider: any, password: any, userIdentifier: any): Promise<{
         userId: any;
         payload: any;
         accessToken: any;
     }>;
     setPassword(accessToken: any, provider: any, password: any, userIdentifier: any): Promise<boolean>;
-    forgotPassword(username: any, tenant: any): Promise<{
-        userId: any;
-        payload: any;
-        accessToken: any;
-    }>;
+    forgotPassword(username: any, tenant: any, meta: any): Promise<boolean>;
     removeProvider(accessToken: any, provider: any): Promise<boolean>;
     isTokenValid(accessToken: any, tempSecret?: boolean, tempTime?: boolean): Promise<boolean>;
     invalidateUserToken(accessToken: any): Promise<boolean>;
@@ -37,7 +34,8 @@ export declare class Auth {
     adminQuery(...queryArguments: any[]): Promise<any>;
     userTransaction(accessToken: any, callback: any): Promise<any>;
     userQuery(accessToken: any, ...queryArguments: any[]): Promise<any>;
-    private addMiddleware(app);
+    private addMiddleware();
     private boot();
     private preQueryHook(client, context, authRequired);
+    private getResolvers();
 }

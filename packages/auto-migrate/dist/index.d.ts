@@ -1,17 +1,15 @@
 import { Config } from '@fullstack-one/config';
-import { Migration } from '@fullstack-one/migration';
+import { SchemaBuilder, IDbMeta } from '@fullstack-one/schema-builder';
 import { LoggerFactory } from '@fullstack-one/logger';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { IDbMeta, DbAppClient } from '@fullstack-one/db';
-import { GraphQlParser } from '@fullstack-one/graphql-parser';
+import { DbAppClient } from '@fullstack-one/db';
 export declare class AutoMigrate {
     private ENVIRONMENT;
     private logger;
     private eventEmitter;
-    private gqlParser;
+    private schemaBuilder;
     private config;
-    private migration;
-    constructor(loggerFactory: LoggerFactory, bootLoader: BootLoader, migration: Migration, config: Config, gqlParser: GraphQlParser, dbAppClient: DbAppClient);
+    constructor(loggerFactory: LoggerFactory, bootLoader: BootLoader, config: Config, schemaBuilder: SchemaBuilder, dbAppClient: DbAppClient);
     boot(): Promise<void>;
     getDbMeta(): IDbMeta;
     getMigrationSql(): Promise<string[]>;

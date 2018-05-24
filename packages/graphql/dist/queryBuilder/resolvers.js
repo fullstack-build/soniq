@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const read_1 = require("./sqlGenerator/read");
 const mutate_1 = require("./sqlGenerator/mutate");
 const gQlTypeJson = require("graphql-type-json");
-function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, preQueryHooks, dbGeneralPool) {
+function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, hooks, dbGeneralPool, logger) {
     // Initialize stuff / get instances / etc.
     const queryResolver = read_1.getQueryResolver(gQlTypes, dbObject);
     const mutationResolver = mutate_1.getMutationResolver(gQlTypes, dbObject, mutations);
@@ -32,26 +32,17 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                // Set current user for permissions
-                /*if (context.accessToken != null && selectQuery.authRequired) {
-                  context.ctx.state.authRequired = true;
-                  await auth.setUser(client, context.accessToken);
-                }*/
                 // Set authRequired in koa state for cache headers
-                // console.log(context.accessToken);
                 if (context.accessToken != null && selectQuery.authRequired) {
                     context.ctx.state.authRequired = true;
                 }
                 // PreQueryHook (for auth)
-                for (const fn of preQueryHooks) {
+                for (const fn of hooks.preQuery) {
                     yield fn(client, context, selectQuery.authRequired);
                 }
-                // tslint:disable-next-line:no-console
-                console.log('RUN QUERY', selectQuery.sql, selectQuery.values);
+                logger.trace('queryResolver.run', selectQuery.sql, selectQuery.values);
                 // Run query against pg to get data
                 const { rows } = yield client.query(selectQuery.sql, selectQuery.values);
-                // tslint:disable-next-line:no-console
-                console.log('rows', rows);
                 // Read JSON data from first row
                 const data = rows[0][selectQuery.query.name];
                 // Commit transaction
@@ -91,23 +82,24 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                   await auth.setUser(client, context.accessToken);
                 }*/
                 // PreQueryHook (for auth)
-                for (const fn of preQueryHooks) {
+                for (const fn of hooks.preQuery) {
                     yield fn(client, context, context.accessToken != null);
                 }
-                // tslint:disable-next-line:no-console
-                console.log('RUN MUTATION', mutationQuery.sql, mutationQuery.values);
+                logger.trace('mutationResolver.run', mutationQuery.sql, mutationQuery.values);
                 // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
                 const { rows } = yield client.query(mutationQuery.sql, mutationQuery.values);
                 if (rows.length < 1) {
                     throw new Error('No rows affected by this mutation. Either the entity does not exist or you are not permitted.');
                 }
                 let returnData;
+                let entityId;
                 // When mutationType is DELETE just return the id. Otherwise query for the new data.
                 if (mutationQuery.mutation.type === 'DELETE') {
-                    returnData = rows[0].id;
+                    entityId = rows[0].id;
+                    returnData = entityId;
                 }
                 else {
-                    let entityId = mutationQuery.id;
+                    entityId = mutationQuery.id;
                     if (mutationQuery.mutation.type === 'CREATE') {
                         entityId = rows[0].id;
                     }
@@ -119,15 +111,23 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                     };
                     // Generate sql query for response-data of the mutation
                     const returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
-                    // tslint:disable-next-line:no-console
-                    console.log('RUN RETURN QUERY', returnQuery.sql, returnQuery.values);
+                    logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
                     // Run SQL query on pg to get response-data
                     const { rows: returnRows } = yield client.query(returnQuery.sql, returnQuery.values);
                     // set data from row 0
                     returnData = returnRows[0][returnQuery.query.name][0];
                 }
+                const hookInfo = {
+                    returnData,
+                    entityId,
+                    type: mutationQuery.mutation.type
+                };
                 // Commit transaction
                 yield client.query('COMMIT');
+                // PostMutationHook (for file-storage etc.)
+                for (const fn of hooks.postMutation) {
+                    yield fn(hookInfo, context);
+                }
                 // Respond data it to pgClient
                 return returnData;
             }

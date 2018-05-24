@@ -9,6 +9,7 @@ export declare class Server {
     constructor(loggerFactory?: any, config?: any, bootLoader?: any);
     getApp(): any;
     getServer(): http.Server;
+    private bootKoa();
     private boot();
     private emit(eventName, ...args);
     private on(eventName, listener);

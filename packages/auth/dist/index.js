@@ -27,9 +27,10 @@ const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
 const server_1 = require("@fullstack-one/server");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
-const migration_1 = require("@fullstack-one/migration");
+const schema_builder_1 = require("@fullstack-one/schema-builder");
 const config_1 = require("@fullstack-one/config");
 const graphql_1 = require("@fullstack-one/graphql");
+const logger_1 = require("@fullstack-one/logger");
 const crypto_1 = require("./crypto");
 const signHelper_1 = require("./signHelper");
 const passport = require("koa-passport");
@@ -37,27 +38,45 @@ const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
 const koaSession = require("koa-session");
 const oAuthCallback_1 = require("./oAuthCallback");
+const migrationHelper_1 = require("./migrationHelper");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
+const fs = require("fs");
+const schema = fs.readFileSync(require.resolve('./schema.gql'), 'utf-8');
 // export
 __export(require("./signHelper"));
 let Auth = class Auth {
-    constructor(dbGeneralPool, server, bootLoader, migration, config, graphQl) {
+    constructor(dbGeneralPool, server, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         // register package config
         config.addConfigFolder(__dirname + '/../config');
+        this.logger = loggerFactory.create('Auth');
         // DI
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
+        this.schemaBuilder = schemaBuilder;
         this.authConfig = config.getConfig('auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
-        graphQl.addPreQueryHook(this.preQueryHook.bind(this));
+        this.notificationFunction = (user, caller, meta) => __awaiter(this, void 0, void 0, function* () {
+            throw new Error('No notification function has been defined.');
+        });
+        graphQl.addHook('preQuery', this.preQueryHook.bind(this));
+        this.addMiddleware();
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
+        this.schemaBuilder.extendSchema(schema);
+        this.graphQl.addResolvers(this.getResolvers());
         // add migration path
-        migration.addMigrationPath(__dirname + '/..');
+        this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // register directive parser
-        require('./migrationHelper');
+        // require('./migrationHelper');
+        migrationHelper_1.setDirectiveParser(this.schemaBuilder.getRegisterDirectiveParser());
         // this.linkPassport();
+    }
+    setNotificationFunction(notificationFunction) {
+        if (notificationFunction == null || typeof notificationFunction !== 'function') {
+            throw new Error('The notification function needs to be an async function.');
+        }
+        this.notificationFunction = notificationFunction;
     }
     setUser(client, accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -68,8 +87,7 @@ let Auth = class Auth {
                 return true;
             }
             catch (err) {
-                // tslint:disable-next-line:no-console
-                console.log('Failed to SetUser', err);
+                this.logger.warn('setUser.error', err);
                 throw err;
             }
         });
@@ -87,17 +105,18 @@ let Auth = class Auth {
             }
             catch (err) { }
             try {
-                lData = yield this.register(username, tenant);
+                lData = yield this.register(username, tenant, null);
                 yield this.setPassword(lData.accessToken, provider, password, userIdentifier);
                 lData = yield this.login(username, tenant, provider, password, userIdentifier);
                 return lData;
             }
             catch (err) {
+                this.logger.warn('loginOrRegister.error', err);
                 throw new Error('User does exist or password is invalid.');
             }
         });
     }
-    register(username, tenant) {
+    register(username, tenant, meta) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
@@ -106,16 +125,20 @@ let Auth = class Auth {
                 yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const result = yield client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
                 const payload = result.rows[0].payload;
-                const ret = {
+                const user = {
                     userId: payload.userId,
                     payload,
+                    username,
+                    tenant,
                     accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
+                yield this.notificationFunction(user, 'REGISTER', meta);
                 yield client.query('COMMIT');
-                return ret;
+                return true;
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('register.error', err);
                 throw err;
             }
             finally {
@@ -149,6 +172,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('login.error', err);
                 throw err;
             }
             finally {
@@ -174,9 +198,8 @@ let Auth = class Auth {
                 return true;
             }
             catch (err) {
-                // tslint:disable-next-line:no-console
-                console.log(err);
                 yield client.query('ROLLBACK');
+                this.logger.warn('setPassword.error', err);
                 throw err;
             }
             finally {
@@ -185,7 +208,7 @@ let Auth = class Auth {
             }
         });
     }
-    forgotPassword(username, tenant) {
+    forgotPassword(username, tenant, meta) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
@@ -194,16 +217,20 @@ let Auth = class Auth {
                 yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
                 const result = yield client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
                 const payload = result.rows[0].data;
-                const ret = {
+                const user = {
                     userId: payload.userId,
                     payload,
+                    username,
+                    tenant,
                     accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
+                yield this.notificationFunction(user, 'FORGOT_PASSWORD', meta);
                 yield client.query('COMMIT');
-                return ret;
+                return true;
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('forgotPassword.error', err);
                 throw err;
             }
             finally {
@@ -227,6 +254,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('removeProvider.error', err);
                 throw err;
             }
             finally {
@@ -251,6 +279,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('isTokenValid.error', err);
                 throw err;
             }
             finally {
@@ -274,6 +303,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('invalidateUserToken.error', err);
                 throw err;
             }
             finally {
@@ -297,6 +327,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('invalidateAllUserTokens.error', err);
                 throw err;
             }
             finally {
@@ -361,6 +392,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('adminTransaction.error', err);
                 throw err;
             }
             finally {
@@ -383,6 +415,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('adminQuery.error', err);
                 throw err;
             }
             finally {
@@ -404,6 +437,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('userTransaction.error', err);
                 throw err;
             }
             finally {
@@ -425,6 +459,7 @@ let Auth = class Auth {
             }
             catch (err) {
                 yield client.query('ROLLBACK');
+                this.logger.warn('userQuery.error', err);
                 throw err;
             }
             finally {
@@ -434,7 +469,8 @@ let Auth = class Auth {
         });
     }
     /* DB HELPER END */
-    addMiddleware(app) {
+    addMiddleware() {
+        const app = this.server.getApp();
         app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
             if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
                 ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
@@ -455,7 +491,6 @@ let Auth = class Auth {
         return __awaiter(this, void 0, void 0, function* () {
             const authRouter = new KoaRouter();
             const app = this.server.getApp();
-            this.addMiddleware(app);
             authRouter.get('/test', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 ctx.body = 'Hallo';
             }));
@@ -463,118 +498,6 @@ let Auth = class Auth {
             app.keys = [this.authConfig.secrets.cookie];
             authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
             authRouter.use(passport.initialize());
-            // authRouter.use(passport.session());
-            authRouter.post('/auth/invalidateAccessToken', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                let success;
-                try {
-                    success = yield this.invalidateUserToken(ctx.state.accessToken);
-                }
-                catch (err) {
-                    success = false;
-                    ctx.response.status = 400;
-                }
-                ctx.body = { success };
-            }));
-            authRouter.post('/auth/invalidateAllAccessTokens', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                let success;
-                try {
-                    success = yield this.invalidateAllUserTokens(ctx.state.accessToken);
-                }
-                catch (err) {
-                    success = false;
-                    ctx.response.status = 400;
-                }
-                ctx.body = { success };
-            }));
-            authRouter.post('/auth/register', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                if (ctx.request.body.username == null) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: '"username" is required.' };
-                    return;
-                }
-                try {
-                    const lData = yield this.register(ctx.request.body.username, ctx.request.body.tenant || 'default');
-                    ctx.body = Object.assign({}, lData, { success: true });
-                }
-                catch (err) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: 'This user may already exist or another error occured.' };
-                }
-            }));
-            authRouter.post('/auth/local/login', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                if (ctx.request.body.username == null) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: '"username" is required.' };
-                    return;
-                }
-                if (ctx.request.body.password == null) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: '"password" is required.' };
-                    return;
-                }
-                try {
-                    const lData = yield this.login(ctx.request.body.username, ctx.request.body.tenant || 'default', 'local', ctx.request.body.password, null);
-                    ctx.body = Object.assign({}, lData, { success: true });
-                }
-                catch (err) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: 'Invalid username, tenant or password.' };
-                }
-            }));
-            authRouter.get('/auth/isAccessTokenValid', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const isValid = yield this.isTokenValid(ctx.state.accessToken, false, false);
-                    ctx.body = { isValid };
-                }
-                catch (err) {
-                    ctx.response.status = 400;
-                    ctx.body = { isValid: false };
-                }
-            }));
-            authRouter.post('/auth/local/setPassword', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                if (ctx.request.body.password == null) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: '"password" is required.' };
-                    return;
-                }
-                try {
-                    const success = yield this.setPassword(ctx.state.accessToken, 'local', ctx.request.body.password, null);
-                    ctx.body = { success };
-                }
-                catch (err) {
-                    ctx.response.status = 400;
-                    ctx.body = { success: false, error: 'Invalid token.' };
-                }
-            }));
-            authRouter.post('/auth/forgotPassword', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const lData = yield this.forgotPassword(ctx.request.body.username, ctx.request.body.tenant || 'default');
-                    ctx.body = Object.assign({}, lData, { success: true });
-                }
-                catch (err) {
-                    ctx.body = { success: false };
-                    ctx.response.status = 400;
-                }
-            }));
-            authRouter.post('/auth/forgotPassword', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const lData = yield this.forgotPassword(ctx.request.body.username, ctx.request.body.tenant || 'default');
-                    ctx.body = Object.assign({}, lData, { success: true });
-                }
-                catch (err) {
-                    ctx.body = { success: false };
-                    ctx.response.status = 400;
-                }
-            }));
-            authRouter.post('/auth/setCookie', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    ctx.cookies.set(this.authConfig.cookie.name, ctx.state.accessToken, this.authConfig.cookie);
-                    ctx.body = { success: true };
-                }
-                catch (e) {
-                    ctx.body = { success: false };
-                }
-            }));
             authRouter.get('/auth/oAuthFailure', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 const message = {
                     err: 'ERROR_AUTH',
@@ -609,6 +532,7 @@ let Auth = class Auth {
                         cb(null, lData);
                     }
                     catch (err) {
+                        this.logger.warn('passport.strategylogin.error', err);
                         cb(err);
                     }
                 })));
@@ -618,8 +542,7 @@ let Auth = class Auth {
                         yield next();
                     }
                     catch (err) {
-                        // tslint:disable-next-line:no-console
-                        console.error(err);
+                        this.logger.warn('passport.oAuthFailure.error', err);
                         ctx.redirect('/auth/oAuthFailure');
                     }
                 });
@@ -639,15 +562,55 @@ let Auth = class Auth {
             }
         });
     }
+    getResolvers() {
+        return {
+            '@fullstack-one/auth/register': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.register(args.username, args.tenant || 'default', args.meta || null);
+            }),
+            '@fullstack-one/auth/login': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.login(args.username, args.tenant || 'default', 'local', args.password, null);
+            }),
+            '@fullstack-one/auth/forgotPassword': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.forgotPassword(args.username, args.tenant || 'default', args.meta || null);
+            }),
+            '@fullstack-one/auth/setPassword': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.setPassword(args.accessToken, 'local', args.password, null);
+            }),
+            '@fullstack-one/auth/isUserTokenValid': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.isTokenValid(args.accessToken, false, false);
+            }),
+            '@fullstack-one/auth/invalidateUserToken': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                context.ctx.cookies.set(this.authConfig.cookie.name, null);
+                return yield this.invalidateUserToken(args.accessToken);
+            }),
+            '@fullstack-one/auth/invalidateAllUserTokens': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                context.ctx.cookies.set(this.authConfig.cookie.name, null);
+                return yield this.invalidateAllUserTokens(args.accessToken);
+            }),
+            '@fullstack-one/auth/setCookie': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                const tokenValid = yield this.isTokenValid(args.accessToken, false, false);
+                if (tokenValid === true) {
+                    context.ctx.cookies.set(this.authConfig.cookie.name, args.accessToken, this.authConfig.cookie);
+                    return true;
+                }
+                throw new Error(`Could not set token into the cookie. Maybe it's invalid or expired.`);
+            }),
+            '@fullstack-one/auth/deleteCookie': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                context.ctx.cookies.set(this.authConfig.cookie.name, null);
+                return true;
+            })
+        };
+    }
 };
 Auth = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject(type => db_1.DbGeneralPool)),
     __param(1, di_1.Inject(type => server_1.Server)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => migration_1.Migration)),
+    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
     __param(4, di_1.Inject(type => config_1.Config)),
     __param(5, di_1.Inject(type => graphql_1.GraphQl)),
-    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
+    __param(6, di_1.Inject(type => logger_1.LoggerFactory)),
+    __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object, logger_1.LoggerFactory])
 ], Auth);
 exports.Auth = Auth;

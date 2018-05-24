@@ -6,5 +6,3 @@ exports.PgClient = DbAppClient_1.PgClient;
 var DbGeneralPool_1 = require("./DbGeneralPool");
 exports.DbGeneralPool = DbGeneralPool_1.DbGeneralPool;
 exports.PgPool = DbGeneralPool_1.PgPool;
-var pgToDbMeta_1 = require("./pgToDbMeta");
-exports.PgToDbMeta = pgToDbMeta_1.PgToDbMeta;
