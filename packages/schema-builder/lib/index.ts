@@ -56,12 +56,12 @@ export class SchemaBuilder {
     @Inject(type => PgToDbMeta) pgToDbMeta?
     ) {
     // register package config
-    config.addConfigFolder(__dirname + '/gql-schema-builder/config');
+    config.addConfigFolder(__dirname + '/../config');
 
     this.dbSchemaBuilder = dbSchemaBuilder;
     this.pgToDbMeta = pgToDbMeta;
     this.logger = loggerFactory.create('SchemaBuilder');
-    this.graphQlConfig = config.getConfig('graphql');
+    this.graphQlConfig = config.getConfig('schemaBuilder');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));
