@@ -1,1 +1,0 @@
-module.exports = { demo: 7};
