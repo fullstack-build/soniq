@@ -46,7 +46,7 @@
     "tslint-config-airbnb": "^5.8.0"
   },
   "dependencies": {
-    "npm": "^5.8.0",
+    "npm": "^6.1.0",
     "ts-node": "^3.3.0",
     "tslint-config-airbnb-base": "^0.1.0",
     "tsutils": "^2.26.1",
