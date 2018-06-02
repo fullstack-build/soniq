@@ -35,6 +35,16 @@ export = [
         field: 'id',
       },
     }],
+  }, {
+    type: 'CREATE',
+    name: 'Me',
+    gqlTypeName: 'User',
+    fields: [
+      'id', 'username', 'email', 'acceptedPrivacyTermsVersion', 'acceptedPrivacyTermsAt'
+    ],
+    expressions: [{
+      name: 'Anyone',
+    }],
   }/*, {
     type: 'CREATE',
     name: 'Private',

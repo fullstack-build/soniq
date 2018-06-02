@@ -380,7 +380,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, m
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject,values, isAuthenticated, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject, values, isAuthenticated, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there

@@ -34,7 +34,8 @@ export class GraphQl {
 
   private hooks = {
     preQuery: [],
-    postMutation: []
+    postMutation: [],
+    preMutationCommit: []
   };
 
   constructor (
@@ -60,6 +61,7 @@ export class GraphQl {
   }
 
   public addPreQueryHook(fn) {
+    this.logger.warn(`Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.`);
     this.hooks.preQuery.push(fn);
   }
 
