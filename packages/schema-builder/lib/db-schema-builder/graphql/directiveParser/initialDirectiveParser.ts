@@ -12,23 +12,23 @@ registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 
 // createdAt
 registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-dbMetaNode.type = 'timestamp';
-dbMetaNode.defaultValue = {
-    isExpression: true,
-    value: 'now()'
-};
+  dbMetaNode.type = 'timestamp';
+  dbMetaNode.defaultValue = {
+      isExpression: true,
+      value: 'now()'
+  };
 });
 
 // updatedAt
 registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-dbMetaNode.type = 'timestamp';
-dbMetaNode.defaultValue = {
-    isExpression: true,
-    value: 'now()',
-};
-dbMetaNode.triggerUpdatedAt = {
-    isActive: true
-};
+  dbMetaNode.type = 'timestamp';
+  dbMetaNode.defaultValue = {
+      isExpression: true,
+      value: 'now()',
+  };
+  dbMetaNode.extensions.triggerUpdatedAt = {
+      isActive: true
+  };
 });
 
 // mark as computed
@@ -105,26 +105,26 @@ registerDirectiveParser('migrate', (gQlDirectiveNode, dbMetaNode, refDbMeta, ref
 });
 // versioning
 registerDirectiveParser('versioning', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.versioning = {
+    dbMetaNode.extensions.versioning = {
         isActive: true
     };
 });
 // nonUpdatable
 registerDirectiveParser('nonupdatable', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.immutable = {
+    dbMetaNode.extensions.immutable = {
         isUpdatable: false
     };
 });
 // immutable
 registerDirectiveParser('immutable', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.immutable = {
+    dbMetaNode.extensions.immutable = {
         isUpdatable: false,
         isDeletable: false
     };
 });
 // file trigger
 registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    refDbMetaCurrentTable.fileTrigger = {
+    refDbMetaCurrentTable.extensions.fileTrigger = {
         isActive: true
     };
     const directiveArguments: any = parseDirectiveArguments(gQlDirectiveNode);

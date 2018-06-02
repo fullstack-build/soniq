@@ -123,7 +123,8 @@ const GQL_JSON_PARSER = {
       schemaName,
       name: tableName,
       description: null,
-      constraints: {}
+      constraints: {},
+      extensions: {}
     };
 
     // add exposed name to list with reference to underlying table
@@ -226,7 +227,8 @@ const GQL_JSON_PARSER = {
       const newField = {
         name: null,
         type: null,
-        description: null
+        description: null,
+        extensions: {}
       };
 
       // parse FieldDefinition properties

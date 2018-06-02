@@ -61,10 +61,10 @@ export function setDirectiveParser(registerDirectiveParser) {
             const allTables: any =
                 Object.values(refDbMeta.schemas).reduce((result: any, schema: any) => [...result, ...Object.values(schema.tables)], []);
 
-            const markedAuthTables = allTables.filter(table => table.isAuth);
+            const markedAuthTables = allTables.filter(table => table.extensions.isAuth);
             if (markedAuthTables.length === 0) {
                 // set table to auth
-                refDbMetaCurrentTable.isAuth = true;
+                refDbMetaCurrentTable.extensions.isAuth = true;
             } else { // other table was marked already
                 process.stderr.write(
                     'GraphQL.parser.error.table.auth.multiple.tables: ' +
@@ -75,18 +75,19 @@ export function setDirectiveParser(registerDirectiveParser) {
         } else { // mark field
 
             // only possible on tables that were marked as auth
-            if (refDbMetaCurrentTable.isAuth) {
+            if (refDbMetaCurrentTable.extensions.isAuth) {
                 // only one attribute per field is possible
-                if (dbMetaNode.auth == null) {
+                if (dbMetaNode.extensions.auth == null) {
                     // add marked different types
                     switch (directiveKindLowerCase) {
                         case 'tenant':
                             // check if other columns were already marked same marker
                             const columnMarkedTenant =
-                                Object.values(refDbMetaCurrentTable.columns).filter((column: any) => (column.auth && column.auth.isTenant));
+                                Object.values(refDbMetaCurrentTable.columns).filter(
+                                  (column: any) => (column.extensions.auth && column.extensions.auth.isTenant));
 
                             if (columnMarkedTenant.length === 0) {
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isTenant: true
                                 };
                             } else { // multiple columns marked with same marker
@@ -100,9 +101,9 @@ export function setDirectiveParser(registerDirectiveParser) {
                         case 'username':
                             // check if other columns were already marked same marker
                             const columnMarkedUsername = Object.values(refDbMetaCurrentTable.columns).filter(
-                                (column: any) => (column.auth && column.auth.isUsername));
+                                (column: any) => (column.extensions.auth && column.extensions.auth.isUsername));
                             if (columnMarkedUsername.length === 0) {
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isUsername: true
                                 };
                             } else { // multiple columns marked with same marker
@@ -115,10 +116,10 @@ export function setDirectiveParser(registerDirectiveParser) {
                         case 'password':
                             // check if other columns were already marked same marker
                             const columnMarkedPassword = Object.values(refDbMetaCurrentTable.columns).filter(
-                                (column: any) => (column.auth && column.auth.isPassword));
+                                (column: any) => (column.extensions.auth && column.extensions.auth.isPassword));
                             if (columnMarkedPassword.length === 0) {
                                 // mark as password
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isPassword: true
                                 };
                                 // set type to json
