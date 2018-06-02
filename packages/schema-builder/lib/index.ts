@@ -1,3 +1,16 @@
+// fullstack-one core
+import { Service, Inject, Container } from '@fullstack-one/di';
+// DI imports
+import { LoggerFactory, ILogger } from '@fullstack-one/logger';
+import { Config, IEnvironment } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
+import { DbSchemaBuilder, registerDirectiveParser } from './db-schema-builder';
+import { helper } from '@fullstack-one/helper';
+
+export { IViews, IExpressions, IDbMeta, IDbRelation };
+
+import * as utils from './gql-schema-builder/utils';
+export { utils };
 
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
@@ -6,23 +19,9 @@ import { gqlSchemaBuilder } from './gql-schema-builder';
 
 // import interfaces
 import { IViews, IExpressions } from './gql-schema-builder/interfaces';
-import { IDbMeta, IDbRelation } from './db-schema-builder/pg/IDbMeta';
+import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
 import { parseGQlAstToDbMeta } from './db-schema-builder/graphql/gQlAstToDbMeta';
 import { PgToDbMeta } from './db-schema-builder/pg/pgToDbMeta';
-
-// fullstack-one core
-import { Service, Inject, Container } from '@fullstack-one/di';
-// DI imports
-import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { Config, IEnvironment } from '@fullstack-one/config';
-import { BootLoader } from '@fullstack-one/boot-loader';
-import { DbSchemaBuilder } from './db-schema-builder';
-import { helper } from '@fullstack-one/helper';
-
-export { IViews, IExpressions, IDbMeta, IDbRelation };
-
-import * as utils from './gql-schema-builder/utils';
-export { utils };
 
 @Service()
 export class SchemaBuilder {
@@ -71,8 +70,8 @@ export class SchemaBuilder {
     return this.dbSchemaBuilder;
   }
 
-  public getRegisterDirectiveParser() {
-    return this.dbSchemaBuilder.registerDirectiveParser.bind(this.dbSchemaBuilder);
+  public registerDirectiveParser(...args: any[]) {
+    return registerDirectiveParser(args[0], args[1]);
   }
 
   public async getPgDbMeta(): Promise<IDbMeta> {
@@ -106,12 +105,12 @@ export class SchemaBuilder {
   }
 
   public getGQlSdl() {
-    // return copy insted of ref
+    // return copy instead of ref
     return { ... this.gQlSdl };
   }
 
   public getGQlAst() {
-    // return copy insted of ref
+    // return copy instead of ref
     return { ... this.gQlAst };
   }
 
@@ -133,7 +132,7 @@ export class SchemaBuilder {
       const gQlSdlCombined = this.gQlSdl.concat(this.gQlSdlExtensions.slice()).join('\n');
       this.gQlAst = gQLHelper.helper.parseGraphQlSchema(gQlSdlCombined);
 
-      this.dbMeta = parseGQlAstToDbMeta(this.gQlAst, this.dbSchemaBuilder.getDirectiveParser());
+      this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
 
       // load permissions and expressions and generate views and put them into schemas
 
