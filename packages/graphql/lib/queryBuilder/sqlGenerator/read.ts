@@ -158,6 +158,10 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
     });
   }
 
+  if (viewNames.length < 1) {
+    throw new Error(`There are no views available to access type '${gQlType.name}'.`);
+  }
+
   const authView = includesAuthView(viewNames, gQlType.noAuthViewNames);
   let authRequired = authView != null;
 
