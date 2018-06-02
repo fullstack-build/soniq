@@ -92,6 +92,7 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
         viewNames: [],
         authViewNames: [],
         noAuthViewNames: [],
+        noRootLevelAggViewNames: [],
         views: {},
         relationByField: {}
       };

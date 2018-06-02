@@ -8,6 +8,7 @@ import * as defaultParser from './default';
 import * as viewnamesParser from './viewnames';
 import * as expressionsParser from './expressions';
 import * as mutationsParser from './mutations';
+import * as forbidRootLevelGenericAggregation from './forbidRootLevelGenericAggregation';
 
 export const parsers = [
   jsonParser,
@@ -18,5 +19,6 @@ export const parsers = [
   defaultParser,
   viewnamesParser,
   expressionsParser,
-  mutationsParser
+  mutationsParser,
+  forbidRootLevelGenericAggregation
 ];

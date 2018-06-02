@@ -3,6 +3,7 @@ export = [
     name: 'Author',
     type: 'READ',
     gqlTypeName: 'User',
+    forbidRootLevelGenericAggregation: true,
     fields: [
       'id', 'firstLetterOfUserName', 'stripeAccount', 'payload.data.title', 'payload.secret', 'postContributions'
     ],

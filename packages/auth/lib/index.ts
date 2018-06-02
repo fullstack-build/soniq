@@ -72,7 +72,7 @@ export class Auth {
     this.authConfig = config.getConfig('auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    this.notificationFunction = async (user, caller: string, meta: string) => {
+    this.notificationFunction = async (caller: string, user, meta: string) => {
       throw new Error('No notification function has been defined.');
     };
 
@@ -132,42 +132,7 @@ export class Auth {
     }
   }
 
-  public async register(username, tenant, meta) {
-
-    const client = await this.dbGeneralPool.pgPool.connect();
-
-    try {
-      // Begin transaction
-      await client.query('BEGIN');
-
-      await this.setAdmin(client);
-
-      const result = await client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
-      const payload = result.rows[0].payload;
-
-      const user = {
-        userId: payload.userId,
-        payload,
-        username,
-        tenant,
-        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
-      };
-
-      await this.notificationFunction(user, 'REGISTER', meta);
-
-      await client.query('COMMIT');
-      return true;
-    } catch (err) {
-      await client.query('ROLLBACK');
-      this.logger.warn('register.error', err);
-      throw err;
-    } finally {
-      // Release pgClient to pool
-      client.release();
-    }
-  }
-
-  public async initalizeUser(client, userId) {
+  public async initializeUser(client, userId) {
     try {
       await this.setAdmin(client);
 
@@ -741,19 +706,19 @@ export class Auth {
       const schemaObject = dbMeta.schemas[schemaName];
       Object.keys(schemaObject.tables).forEach((tableName) => {
         const tableObject = schemaObject.tables[tableName];
-        if (tableObject.isAuth === true) {
+        if (tableObject.extensions != null && tableObject.extensions.isAuth === true) {
           this.dbData.table = tableObject.name;
           this.dbData.schema = tableObject.schemaName;
           Object.keys(tableObject.columns).forEach((columnName) => {
             const columnObject = tableObject.columns[columnName];
-            if (columnObject.auth != null) {
-              if (columnObject.auth.isUsername === true) {
+            if (columnObject.extensions != null && columnObject.extensions.auth != null) {
+              if (columnObject.extensions.auth.isUsername === true) {
                 this.dbData.username = columnObject.name;
               }
-              if (columnObject.auth.isPassword === true) {
+              if (columnObject.extensions.auth.isPassword === true) {
                 this.dbData.password = columnObject.name;
               }
-              if (columnObject.auth.isTenant === true) {
+              if (columnObject.extensions.auth.isTenant === true) {
                 this.dbData.tenant = columnObject.name;
               }
             }
@@ -866,7 +831,7 @@ export class Auth {
   private async preMutationCommitHook(client, hookInfo) {
     const mutation = hookInfo.mutationQuery.mutation;
 
-    if (mutation.type === 'CREATE' && mutation.returnType === this.dbData.table) {
+    if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
       const args = hookInfo.args;
       const ctx = hookInfo.context.ctx;
       const { acceptedAtField, acceptedVersionField, headerName } = this.authConfig.privacy;
@@ -892,7 +857,7 @@ export class Auth {
 
       const authTokenHeaderName = this.authConfig.authToken.headerName.toLowerCase();
 
-      const user = await this.initalizeUser(client, hookInfo.entityId);
+      const user = await this.initializeUser(client, hookInfo.entityId);
 
       const notificationContext = {
         user,
@@ -948,9 +913,6 @@ export class Auth {
 
   private getResolvers() {
     return {
-      '@fullstack-one/auth/register': async (obj, args, context, info, params) => {
-        return await this.register(args.username, args.tenant || 'default', args.meta || null);
-      },
       '@fullstack-one/auth/login': async (obj, args, context, info, params) => {
         const clientIdentifier = context.ctx.securityContext.clientIdentifier;
         const lData = await this.login(args.username, args.tenant || 'default', args.password, args.authToken, clientIdentifier);

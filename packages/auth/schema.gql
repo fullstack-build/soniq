@@ -31,21 +31,6 @@ type PrivacyToken {
 }
 
 extend type Mutation {
-  """
-  Registers a new user by username and optional tenant. Dependent on implementation it sends an email to the user containing a temporary token to set a password.
-
-  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...)
-  """
-  register(username: String!, tenant: String, meta: String, privacyToken: String): Boolean @custom(resolver: "@fullstack-one/auth/register")
-  
-  
-  """
-  Registers a new user by username and optional tenant. Dependent on implementation it sends an email to the user containing a temporary token to set a password.
-
-  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...)
-  """
-  oAuthRegister(oAuthToken: String, tenant: String, meta: String, privacyToken: String): Boolean @custom(resolver: "@fullstack-one/auth/register")
-
 
   """
   Login a user. Get back an accessToken and metadata about it.
