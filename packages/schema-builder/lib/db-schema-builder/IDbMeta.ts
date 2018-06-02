@@ -12,16 +12,8 @@ export interface IDbMeta {
           oldName?: string;
           exposedNames?: [string];
           description?: string;
-          isAuth?: boolean;
-          versioning?: {
-            isActive: boolean;
-          };
-          immutable?: {
-            isUpdatable?: boolean;
-            isDeletable?: boolean;
-          };
-          fileTrigger?: {
-            isActive: boolean;
+          extensions?: {
+            [name: string]: any;
           };
           columns: {
             [name: string]:
@@ -35,19 +27,10 @@ export interface IDbMeta {
                   isExpression: boolean;
                   value: 'string';
                 };
-                triggerUpdatedAt?: {
-                  isActive: boolean;
-                };
-                constraintNames?: [string];
                 relationName?: string;
-                auth?: {
-                  isTenant?: boolean;
-                  isUsername?: boolean,
-                  isPassword?: boolean
-                };
-                isFileColumn?: {
-                  isActive: boolean,
-                  types: string
+                constraintNames?: [string];
+                extensions?: {
+                  [name: string]: any;
                 };
               }
           };

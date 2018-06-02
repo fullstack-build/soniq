@@ -69,7 +69,7 @@ let Auth = class Auth {
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // register directive parser
         // require('./migrationHelper');
-        migrationHelper_1.setDirectiveParser(this.schemaBuilder.getRegisterDirectiveParser());
+        migrationHelper_1.setDirectiveParser(this.schemaBuilder.registerDirectiveParser());
         // this.linkPassport();
     }
     setNotificationFunction(notificationFunction) {

@@ -7,17 +7,12 @@ import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { DbAppClient } from '@fullstack-one/db';
-import { IDbMeta } from './pg/IDbMeta';
+import { IDbMeta } from './IDbMeta';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
-import { setParsers } from './graphql/gQlAstToDbMetaDirectiveParser';
-
 import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
 
-// Directive Parse
-interface IDirectiveParser {
-  [name: string]: (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => void;
-}
+export { registerDirectiveParser } from './graphql/directiveParser';
 
 @Service()
 export class DbSchemaBuilder {
@@ -27,7 +22,6 @@ export class DbSchemaBuilder {
   private migrationObject: IDbMeta;
   private dbAppClient: DbAppClient;
   private initSqlPaths = [__dirname + '/..'];
-  private directiveParser: IDirectiveParser = {};
 
   // DI
   private logger: ILogger;
@@ -40,19 +34,6 @@ export class DbSchemaBuilder {
     this.logger = loggerFactory.create('DbSchemaBuilder');
     this.dbAppClient = dbAppClient;
 
-    setParsers(this.registerDirectiveParser.bind(this));
-  }
-
-  public registerDirectiveParser(nameInLowerCase: string, fn: (gQlDirectiveNode,
-                                                               dbMetaNode,
-                                                               refDbMeta,
-                                                               refDbMetaCurrentTable,
-                                                               refDbMetaCurrentTableColumn) => void): void {
-    this.directiveParser[nameInLowerCase] = fn;
-  }
-
-  public getDirectiveParser(): any {
-    return this.directiveParser;
   }
 
   // add paths with migration sql scripts
@@ -64,6 +45,7 @@ export class DbSchemaBuilder {
     return _.cloneDeep(this.migrationObject);
   }
 
+  // run packages migration scripts based on initiated version
   public async initDb(): Promise<void> {
     // get DB pgClient from DI container
     const dbClient = Container.get(DbAppClient).pgClient;
@@ -177,6 +159,7 @@ export class DbSchemaBuilder {
 
   }
 
+  // create migration SQL statements out of two dbMeta objects (pg and GQL)
   public getMigrationSqlStatements(fromDbMeta: IDbMeta,
                                    toDbMeta: IDbMeta,
                                    renameInsteadOfDrop: boolean = true): string[] {
@@ -243,7 +226,6 @@ export class DbSchemaBuilder {
     // get previous migration and compare to current
     const previousMigrationRow: any = (await dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
     const  previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
-    const  previousMigrationStateString = JSON.stringify(previousMigrationStateJSON);
 
     // anything to migrate and not the same as last time?
     if (migrationSqlStatements.length > 0 && diff(previousMigrationStateJSON, toDbMeta) != null) {

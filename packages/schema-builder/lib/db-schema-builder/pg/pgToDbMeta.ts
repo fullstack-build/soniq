@@ -1,7 +1,7 @@
 import * as deepmerge from 'deepmerge';
 
 import { Service, Inject } from '@fullstack-one/di';
-import { IDbMeta, IDbRelation } from './IDbMeta';
+import { IDbMeta, IDbRelation } from '../IDbMeta';
 import { DbAppClient } from '@fullstack-one/db';
 
 // https://www.alberton.info/postgresql_meta_info.html
@@ -222,7 +222,8 @@ export class PgToDbMeta {
         const newColumn: any = {
           name: columnName,
           description: null,
-          type
+          type,
+          extensions: {}
         };
 
         // add new column to dbMeta if its not marked as deleted
@@ -412,29 +413,29 @@ export class PgToDbMeta {
     Object.values(rows).forEach((trigger: any) => {
       if (trigger.trigger_name.indexOf('create_version') >= 0) {
         // versioning active for table
-        currentTable.versioning = {
+        currentTable.extensions.versioning = {
           isActive: true
         };
       } else if (trigger.trigger_name.includes('table_is_not_updatable')) {
         // immutability active for table: non updatable
-        currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
-        currentTable.immutable.isUpdatable = false;
+        currentTable.extensions.immutable = currentTable.extensions.immutable || {}; // keep potentially existing object
+        currentTable.extensions.immutable.isUpdatable = false;
       } else if (trigger.trigger_name.includes('table_is_not_deletable')) {
         // immutability active for table: non deletable
-        currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
-        currentTable.immutable.isDeletable = false;
+        currentTable.extensions.immutable = currentTable.extensions.immutable || {}; // keep potentially existing object
+        currentTable.extensions.immutable.isDeletable = false;
       } else if (trigger.trigger_name.includes('table_trigger_updatedat')) {
         // updatedAt trigger for column
         const triggerNameObj = trigger.trigger_name.split('_');
         const columnName = triggerNameObj[5];
         // only if column exists (trigger could be there without column)
         if (currentTable.columns[columnName] != null) {
-          currentTable.columns[columnName].triggerUpdatedAt = {
+          currentTable.columns[columnName].extensions.triggerUpdatedAt = {
             isActive: true
           };
         }
       } else if (trigger.trigger_name.includes('table_file_trigger')) {
-        currentTable.fileTrigger = {
+        currentTable.extensions.fileTrigger = {
           isActive: true
         };
       }
@@ -574,28 +575,28 @@ export class PgToDbMeta {
       // get relevant table
       const thisTable = this.dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
       // mark table as auth
-      thisTable.isAuth = true;
+      thisTable.extensions.isAuth = true;
       // set username
       if (authObj.auth_field_username != null) {
-        thisTable.columns[authObj.auth_field_username].auth = {
+        thisTable.columns[authObj.auth_field_username].extensions.auth = {
           isUsername: true
         };
       }
       // set password
       if (authObj.auth_field_password != null) {
-        thisTable.columns[authObj.auth_field_password].auth = {
+        thisTable.columns[authObj.auth_field_password].extensions.auth = {
           isPassword: true
         };
       }
       // set tenant
       if (authObj.auth_field_tenant != null) {
-        thisTable.columns[authObj.auth_field_tenant].auth = {
+        thisTable.columns[authObj.auth_field_tenant].extensions.auth = {
           isTenant: true
         };
       }
 
     } catch (err) {
-      // ignore error in case settings -> not setted up yet
+      // ignore error in case settings -> not set up yet
     }
 
   }
@@ -609,13 +610,13 @@ export class PgToDbMeta {
 
       rows.forEach((row) => {
         const thisColumn = this.dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
-        thisColumn.isFileColumn = {
+        thisColumn.extensions.isFileColumn = {
           isActive: true,
           types: JSON.stringify(row.types)
         };
       });
     } catch (err) {
-      // ignore error in case settings -> not setted up yet
+      // ignore error in case settings -> not set up yet
     }
 
   }

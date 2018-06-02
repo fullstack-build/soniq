@@ -22,7 +22,6 @@ const auth: Auth = Container.get(Auth);
 // const $email: Email = Container.get(Email);
 const $fs: FileStorage = Container.get(FileStorage);
 
-
 auth.setNotificationFunction(async (user, caller, meta) => {
   console.log('> NOTIFY!', user.userId, caller, meta);
   console.log('>', user.accessToken);

@@ -29,7 +29,7 @@ export * from './signHelper';
 @Service()
 export class Auth {
 
-  private sodiumConfig;
+  private readonly sodiumConfig;
   private authConfig;
   private notificationFunction;
 
@@ -93,7 +93,9 @@ export class Auth {
 
     // register directive parser
     // require('./migrationHelper');
-    setDirectiveParser(this.schemaBuilder.getRegisterDirectiveParser());
+
+    // register Auth migration directive parser
+    setDirectiveParser(this.schemaBuilder.registerDirectiveParser);
 
     // this.linkPassport();
   }

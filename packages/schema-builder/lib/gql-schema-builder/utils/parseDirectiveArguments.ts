@@ -1,4 +1,3 @@
-
 function getArgumentsValue(node) {
   const obj = {};
 

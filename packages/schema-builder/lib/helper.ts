@@ -1,7 +1,7 @@
+import { parse, print } from 'graphql';
 import { writeFile } from 'fs';
 import { promisify } from 'util';
 const writeFileAsync = promisify(writeFile);
-import { parse, print } from 'graphql';
 
 import { IDbMeta } from './db-schema-builder/pg/IDbMeta';
 
