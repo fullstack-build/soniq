@@ -5,18 +5,22 @@ var FullstackOne = function (apiServerAddress) {
 
 
   return {
-    oAuthLogin: function (provider, cb) {
+    oAuthLogin: function (provider, privacyToken, cb) {
       var message = {err: ERROR_CANCEL, data: null};
       var messageReceived = false;
       var closed = false;
-      var oAuthPopup = window.open(apiServerAddress + '/auth/oAuth/' + encodeURIComponent(provider));
+      var address = apiServerAddress + '/auth/oAuth/' + encodeURIComponent(provider)
+      if (privacyToken != null) {
+        address += '?privacyToken=' + encodeURIComponent(privacyToken);
+      }
+      var oAuthPopup = window.open(address);
       //var oAuthPopup = window.open(apiServerAddress + '/auth/' + encodeURIComponent(provider));
 
       function receiveMessage(event) {
         if (event.origin === apiServerAddress && event.data != null) {
           message = event.data;
           messageReceived = true;
-          window.removeEventListener('message', receiveMessage);
+          window.removeEventListener('message', receiveMessage, false);
 
           if(closed === true) {
             cb(message.err, message.data);
@@ -44,6 +48,7 @@ var FullstackOne = function (apiServerAddress) {
               } else {
                 setTimeout(function() {
                   if(messageReceived !== true) {
+                    window.removeEventListener('message', receiveMessage, false);
                     cb(message.err, message.data);
                   }
                 }, 1000);

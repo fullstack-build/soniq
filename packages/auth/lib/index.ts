@@ -113,7 +113,7 @@ export class Auth {
     try {
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
-      await client.query('SELECT _meta.set_user_token($1, $2, $3, $4)', values);
+      await client.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
 
       return true;
     } catch (err) {
@@ -124,10 +124,20 @@ export class Auth {
 
   public async setAdmin(client) {
     try {
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}'`);
+      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}';`);
       return client;
     } catch (err) {
       this.logger.warn('setAdmin.error', err);
+      throw err;
+    }
+  }
+
+  public async unsetAdmin(client) {
+    try {
+      await client.query(`RESET auth.admin_token;`);
+      return client;
+    } catch (err) {
+      this.logger.warn('unsetAdmin.error', err);
       throw err;
     }
   }
@@ -137,6 +147,9 @@ export class Auth {
       await this.setAdmin(client);
 
       const result = await client.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
+
+      await this.unsetAdmin(client);
+
       const payload = result.rows[0].payload;
 
       const user = {
@@ -159,7 +172,7 @@ export class Auth {
 
     if (authToken != null) {
       try {
-        authTokenPayload = verifyJwt(this.authConfig.authToken, authToken);
+        authTokenPayload = verifyJwt(this.authConfig.secrets.authToken, authToken);
         provider = authTokenPayload.providerName;
       } catch (err) {
         throw new Error('Failed to verify auth-token.');
@@ -262,19 +275,35 @@ export class Auth {
     }
   }
 
-  public async setPassword(accessToken, provider, password, userIdentifier) {
+  public async createSetPasswordValues(accessToken, provider, password, userIdentifier) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
     const uid = userIdentifier || payload.userId;
     const providerSignature = getProviderSignature(this.authConfig.secrets.admin, provider, uid);
     const pwData: any = await newHash(password + providerSignature, this.sodiumConfig);
+
+    const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
+
+    return values;
+  }
+
+  public async setPasswordWithClient(accessToken, provider, password, userIdentifier, client) {
+    const values = await this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
+
+    await this.setAdmin(client);
+
+    await client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+
+    await this.unsetAdmin(client);
+  }
+
+  public async setPassword(accessToken, provider, password, userIdentifier) {
+    const values = await this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
 
     const client = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
       await client.query('BEGIN');
-
-      const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
 
       await this.setAdmin(client);
 
@@ -754,6 +783,15 @@ export class Auth {
       ctx.body = oAuthCallback(message, this.authConfig.oAuth.frontendOrigins);
     });
 
+    authRouter.get('/auth/oAuthFailure/:err', async (ctx) => {
+      const message = {
+        err: ctx.params.err,
+        data: null
+      };
+
+      ctx.body = oAuthCallback(message, this.authConfig.oAuth.frontendOrigins);
+    });
+
     authRouter.get('/auth/oAuthSuccess/:data', async (ctx) => {
       const message = {
           err: null,
@@ -801,7 +839,23 @@ export class Auth {
         }
       }));
 
-      authRouter.get('/auth/oAuth/' + key, passport.authenticate(provider.name, providerOptions));
+      authRouter.get('/auth/oAuth/' + key, (ctx, next) => {
+        const { queryParameter } = this.authConfig.privacy;
+        if (this.authConfig.privacy.active === true) {
+          let tokenPayload;
+          if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
+            this.logger.warn('passport.oAuthFailure.error.missingPrivacyToken');
+            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent(`Missing privacy token query parameter. '${queryParameter}'`));
+          }
+          try {
+            tokenPayload = verifyJwt(this.authConfig.secrets.privacyToken, ctx.request.query[queryParameter]);
+          } catch (e) {
+            this.logger.warn('passport.oAuthFailure.error.invalidPrivacyToken');
+            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent('Invalid privacy token.'));
+          }
+        }
+        next();
+      }, passport.authenticate(provider.name, providerOptions));
 
       const errorCatcher = async (ctx, next) => {
         try {
@@ -848,7 +902,7 @@ export class Auth {
         try {
           tokenPayload = verifyJwt(this.authConfig.secrets.privacyToken, ctx.request.header[headerName.toLowerCase()]);
         } catch (e) {
-          throw new Error('Failed to verify privacy token.');
+          throw new Error('Invalid privacy token.');
         }
         if (tokenPayload.acceptedAt !== args.input[acceptedAtField] || tokenPayload.acceptedVersion !== args.input[acceptedVersionField]) {
           throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') must match the payload of the privacy-token.`);
@@ -880,7 +934,9 @@ export class Auth {
 
         notificationContext.tokenPayload = tokenPayload;
 
-        await this.setPassword(user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
+        // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
+
+        await this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, client);
 
         await this.notificationFunction('REGISTER_OAUTH', notificationContext);
       } else {
