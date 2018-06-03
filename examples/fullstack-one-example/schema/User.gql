@@ -5,7 +5,7 @@ type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 
   email: String @unique @username
   password: String @password
   gender: Gender
-  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "username"})
+  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
   postContributions: [Post!]! @relation(name: "PostContributors")
