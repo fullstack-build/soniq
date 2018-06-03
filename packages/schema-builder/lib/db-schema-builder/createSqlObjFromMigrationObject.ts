@@ -2,7 +2,7 @@
 import * as helper from './helper';
 import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { IDbMeta, IDbRelation } from './pg/IDbMeta';
+import { IDbMeta, IDbRelation } from './IDbMeta';
 
 export namespace sqlObjFromMigrationObject {
 
@@ -412,20 +412,22 @@ export namespace sqlObjFromMigrationObject {
         createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableNameUp, constraintName, constraintDefinition);
       }
     }
+    // extensions
+    if (tableDefinition.extensions != null) {
+      // versioning for table
+      if (tableDefinition.extensions.versioning != null) {
+        createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
+      }
 
-    // versioning for table
-    if (tableDefinition.versioning != null) {
-      createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
-    }
+      // immutability for table
+      if (tableDefinition.extensions.immutable != null) {
+        makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
+      }
 
-    // immutability for table
-    if (tableDefinition.immutable != null) {
-      makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
-    }
-
-    // file trigger for table
-    if (tableDefinition.fileTrigger != null) {
-      createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
+      // file trigger for table
+      if (tableDefinition.extensions.fileTrigger != null) {
+        createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
+      }
     }
 
   }
@@ -533,14 +535,17 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
-    // set auth settings
-    if (node.auth != null) {
-      setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
-    }
+    // extensions
+    if (node.extensions != null) {
+      // set auth settings
+      if (node.extensions.auth != null) {
+        setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
+      }
 
-    // set auth settings
-    if (node.isFileColumn != null) {
-      setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.isFileColumn);
+      // set auth settings
+      if (node.extensions.isFileColumn != null) {
+        setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.isFileColumn);
+      }
     }
 
   }

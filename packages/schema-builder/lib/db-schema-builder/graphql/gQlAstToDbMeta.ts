@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { readdirSync } from 'fs';
+import * as fastGlob from 'fast-glob';
 
 import { IDbMeta } from '../IDbMeta';
 import { setDefaultValueForColumn, addConstraint, addMigration, relationBuilderHelper } from './gQlAstToDbMetaHelper';

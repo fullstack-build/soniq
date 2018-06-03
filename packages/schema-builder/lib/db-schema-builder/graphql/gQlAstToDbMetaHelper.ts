@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { IDbMeta, IDbRelation } from '../pg/IDbMeta';
+import { IDbMeta, IDbRelation } from '../IDbMeta';
 
 export function setDefaultValueForColumn(gQlSchemaNode,
                                          dbMetaNode,

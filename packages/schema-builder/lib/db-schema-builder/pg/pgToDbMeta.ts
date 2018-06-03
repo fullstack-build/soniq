@@ -4,6 +4,10 @@ import { Service, Inject } from '@fullstack-one/di';
 import { IDbMeta, IDbRelation } from '../IDbMeta';
 import { DbAppClient } from '@fullstack-one/db';
 
+// extended parser
+import { getTriggerParser } from './triggerParser';
+export { registerTriggerParser } from './triggerParser';
+
 // https://www.alberton.info/postgresql_meta_info.html
 @Service()
 export class PgToDbMeta {
@@ -411,12 +415,14 @@ export class PgToDbMeta {
     );
 
     Object.values(rows).forEach((trigger: any) => {
-      if (trigger.trigger_name.indexOf('create_version') >= 0) {
-        // versioning active for table
-        currentTable.extensions.versioning = {
-          isActive: true
-        };
-      } else if (trigger.trigger_name.includes('table_is_not_updatable')) {
+
+      // execute all registered trigger parser for each trigger
+      Object.values(getTriggerParser()).forEach((triggerParser: (trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => void) => {
+        triggerParser(trigger, this.dbMeta, schemaName, tableName);
+      });
+
+      // todo: move parser into extensions
+      if (trigger.trigger_name.includes('table_is_not_updatable')) {
         // immutability active for table: non updatable
         currentTable.extensions.immutable = currentTable.extensions.immutable || {}; // keep potentially existing object
         currentTable.extensions.immutable.isUpdatable = false;
@@ -428,6 +434,7 @@ export class PgToDbMeta {
         // updatedAt trigger for column
         const triggerNameObj = trigger.trigger_name.split('_');
         const columnName = triggerNameObj[5];
+
         // only if column exists (trigger could be there without column)
         if (currentTable.columns[columnName] != null) {
           currentTable.columns[columnName].extensions.triggerUpdatedAt = {
