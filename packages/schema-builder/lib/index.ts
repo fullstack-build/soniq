@@ -64,6 +64,8 @@ export class SchemaBuilder {
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));
+
+    this.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
   }
 
   public getDbSchemaBuilder() {

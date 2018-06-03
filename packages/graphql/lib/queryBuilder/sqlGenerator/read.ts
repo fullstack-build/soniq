@@ -136,9 +136,30 @@ export function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticat
     viewNames = gQlType.noAuthViewNames.slice();
   }
 
+  const isRootLevelGenericAggregation = c < 2 && match == null;
+
+  if (isRootLevelGenericAggregation === true) {
+    viewNames = viewNames.filter((viewName) => {
+      return gQlType.noRootLevelAggViewNames.indexOf(viewName) < 0;
+    });
+  }
+
   // If the user has defined some viewNames in the query overwrite default viewNames
   if (query.args != null && query.args.viewnames != null) {
     viewNames = query.args.viewnames;
+  }
+
+  if (isRootLevelGenericAggregation === true) {
+    viewNames.forEach((viewName) => {
+      const checkIndex = gQlType.noRootLevelAggViewNames.indexOf(viewName);
+      if (checkIndex >= 0) {
+        throw new Error(`The view '${gQlType.noRootLevelAggViewNames[checkIndex]}' cannot be accessed by a root level aggregation.`);
+      }
+    });
+  }
+
+  if (viewNames.length < 1) {
+    throw new Error(`There are no views available to access type '${gQlType.name}'.`);
   }
 
   const authView = includesAuthView(viewNames, gQlType.noAuthViewNames);
@@ -380,7 +401,7 @@ export function jsonAgg(c, query, gQlTypes, dbObject, values, isAuthenticated, m
   counter += 1;
 
   // Get SELECT query for current Table (Join of Views)
-  const ret = resolveTable(counter, query, gQlTypes, dbObject,values, isAuthenticated, match);
+  const ret = resolveTable(counter, query, gQlTypes, dbObject, values, isAuthenticated, match);
 
   // The resolveTable() function can also increase the counter because it may loads relations
   // So we need to take the counter from there

@@ -103,8 +103,10 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             throw new Error('No rows affected by this mutation. Either the entity does not exist or you are not permitted.');
           }
 
+          let returnQuery;
           let returnData;
           let entityId;
+          let match;
 
           // When mutationType is DELETE just return the id. Otherwise query for the new data.
           if (mutationQuery.mutation.type === 'DELETE') {
@@ -118,14 +120,14 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             }
 
             // Create a match to search for the new created or updated entity
-            const match = {
+            match = {
               type: 'SIMPLE',
               foreignFieldName: 'id',
               fieldExpression: `'${entityId}'::uuid`
             };
 
             // Generate sql query for response-data of the mutation
-            const returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
+            returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
 
             logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
 
@@ -138,16 +140,31 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
 
           const hookInfo = {
             returnData,
+            returnQuery,
             entityId,
-            type: mutationQuery.mutation.type
+            type: mutationQuery.mutation.type,
+            obj,
+            args,
+            context,
+            info,
+            isAuthenticated,
+            match,
+            gQlTypes,
+            dbObject,
+            mutationQuery
           };
+
+          // PreMutationCommitHook (for auth register etc.)
+          for (const fn of hooks.preMutationCommit) {
+            await fn(client, hookInfo);
+          }
 
           // Commit transaction
           await client.query('COMMIT');
 
           // PostMutationHook (for file-storage etc.)
           for (const fn of hooks.postMutation) {
-            await fn(hookInfo, context);
+            await fn(hookInfo, context, info);
           }
 
           // Respond data it to pgClient

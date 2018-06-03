@@ -23,7 +23,9 @@ export function parseView(ctx) {
       returnType,
       viewsEnumName: (gqlTypeName + '_VIEWS').toUpperCase(),
       viewName,
-      viewSchemaName
+      viewSchemaName,
+      gqlTypeName,
+      tableName: view.tableName
     });
   }
 }

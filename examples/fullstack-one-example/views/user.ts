@@ -3,6 +3,7 @@ export = [
     name: 'Author',
     type: 'READ',
     gqlTypeName: 'User',
+    forbidRootLevelGenericAggregation: true,
     fields: [
       'id', 'firstLetterOfUserName', 'stripeAccount', 'payload.data.title', 'payload.secret', 'postContributions'
     ],
@@ -34,6 +35,16 @@ export = [
       params: {
         field: 'id',
       },
+    }],
+  }, {
+    type: 'CREATE',
+    name: 'Me',
+    gqlTypeName: 'User',
+    fields: [
+      'id', 'username', 'email', 'acceptedPrivacyTermsVersion', 'acceptedPrivacyTermsAt'
+    ],
+    expressions: [{
+      name: 'Anyone',
     }],
   }/*, {
     type: 'CREATE',

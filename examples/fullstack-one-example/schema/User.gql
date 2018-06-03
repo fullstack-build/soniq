@@ -1,7 +1,7 @@
 #type User @table @check(notGenericAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'"){
 type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
   id: ID! @unique
-  tenantId: String @tenant
+  tenantId: String @tenant @default(value: "default")
   email: String @unique @username @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
   password: String @password
   gender: Gender
@@ -11,7 +11,8 @@ type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
-
+  acceptedPrivacyTermsAt: String
+  acceptedPrivacyTermsVersion: Int
   updatedAt: String @updatedAt
   createdAt: String @createdAt
   #type: UserType

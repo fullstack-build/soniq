@@ -16,5 +16,6 @@ VALUES
 (E'user_token_max_age_in_seconds',E'1209600'),
 (E'user_token_secret',E'geheim'),
 (E'user_token_temp_max_age_in_seconds',E'3600'),
-(E'user_token_temp_secret',E'dada')
+(E'user_token_temp_secret',E'dada'),
+(E'refresh_token_secret',E'ThisIsSparta')
 ON CONFLICT ON CONSTRAINT "Auth_pkey" DO NOTHING;
