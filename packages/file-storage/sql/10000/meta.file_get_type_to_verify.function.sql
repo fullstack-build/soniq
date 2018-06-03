@@ -27,4 +27,4 @@ BEGIN
 
     RETURN v_type;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;

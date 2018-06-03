@@ -4,5 +4,8 @@ module.exports = {
     viewsPattern:       '/views/*.ts',
     expressionsPattern: '/expressions/*.ts',
     resolversPattern:   '/resolvers/*.ts'
+  },
+  schemaBuilder: {
+    setUserPrivileges: false
   }
 };

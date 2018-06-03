@@ -19,4 +19,4 @@ BEGIN
 
     RETURN v_file_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

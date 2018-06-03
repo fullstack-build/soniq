@@ -4,4 +4,4 @@ CREATE OR REPLACE FUNCTION _meta.file_clearup() RETURNS SETOF _meta."Files" AS $
 	UPDATE _meta."Files" SET "deletedAt"=now() 
     WHERE "ownerUserId" = _meta.current_user_id() AND "entityId" IS NULL AND "deletedAt" IS NULL 
     RETURNING *;
-$$ LANGUAGE sql;
+$$ LANGUAGE sql SECURITY DEFINER;

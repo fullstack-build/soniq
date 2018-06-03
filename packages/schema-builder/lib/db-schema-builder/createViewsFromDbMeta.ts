@@ -5,7 +5,7 @@ const operationMapper = {
   DELETE: 'DELETE'
 };
 
-export default (dbMeta: any, applicationUserName: any, includePrivileges: any) => {
+export default (dbMeta: any, databaseName: any, applicationUserName: any, includePrivileges: any) => {
   const statements = [];
   const viewSchemas = {};
 
@@ -14,14 +14,22 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
   }
 
   if (includePrivileges === true) {
+    statements.push(`REVOKE ALL PRIVILEGES ON DATABASE "${databaseName}" FROM ${applicationUserName};`);
+    statements.push(`GRANT USAGE ON SCHEMA _meta TO ${applicationUserName};`);
+
     Object.values(dbMeta.schemas).forEach((schema: any) => {
       Object.values(schema.tables).forEach((table: any) => {
-        statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
+        // statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
+        statements.push(`GRANT SELECT, UPDATE, INSERT ON "${table.schemaName}"."V${table.name}" TO ${applicationUserName};`);
       });
     });
   }
 
-  Object.values(dbMeta.schemas).forEach((schema: any) => {
+  Object.keys(dbMeta.schemas).forEach((schemaName: any) => {
+    const schema = dbMeta.schemas[schemaName];
+    if (includePrivileges === true) {
+      statements.push(`GRANT USAGE ON SCHEMA ${schemaName} TO ${applicationUserName};`);
+    }
     Object.values(schema.views).forEach((dbView: any) => {
       let security = '';
       const fieldSelects = dbView.fields.map((field: any) => {
@@ -39,8 +47,8 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
       statements.push(`CREATE VIEW "${dbView.viewSchemaName}"."${dbView.viewName}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${dbView.schemaName}"."${dbView.tableName}" WHERE ${dbView.expressions.join(' OR ')};`);
 
       if (includePrivileges === true) {
-        statements.push(`REVOKE ALL PRIVILEGES ON "${dbView.name}" FROM ${applicationUserName};`);
-        statements.push(`GRANT ${operationMapper[dbView.operation]} ON "${dbView.name}" TO ${applicationUserName};`);
+        // statements.push(`REVOKE ALL PRIVILEGES ON "${dbView.name}" FROM ${applicationUserName};`);
+        statements.push(`GRANT ${operationMapper[dbView.operation]} ON "${dbView.viewSchemaName}"."${dbView.viewName}" TO ${applicationUserName};`);
       }
     });
   });

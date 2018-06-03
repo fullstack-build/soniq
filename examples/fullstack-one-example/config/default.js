@@ -12,8 +12,8 @@ module.exports = {
     general: {
       database: process.env.DB_DATABASE,
       host:     process.env.DB_HOST,
-      user:     process.env.DB_USER,
-      password: process.env.DB_PASSWORD
+      user:     process.env.DB_GENERAL_USER,
+      password: process.env.DB_GENERAL_PASSWORD
     }
   },
   auth: {
@@ -67,5 +67,8 @@ module.exports = {
       secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
     },
     bucket: 'fullstackonetest'
+  },
+  schemaBuilder: {
+    setUserPrivileges: true
   }
 };
