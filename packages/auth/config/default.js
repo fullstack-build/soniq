@@ -23,7 +23,7 @@ module.exports = {
     },
     authToken: {
       headerName: 'X-Auth-Token',
-      maxAgeInSeconds: 60
+      maxAgeInSeconds: 86400 // Should be changed to one minute on production
     },
     cookie: {
       name:       'access_token',
@@ -51,7 +51,8 @@ module.exports = {
       active: true,
       acceptedAtField: 'acceptedPrivacyTermsAt',
       acceptedVersionField: 'acceptedPrivacyTermsVersion',
-      headerName: 'X-Privacy-Token'
+      headerName: 'X-Privacy-Token',
+      queryParameter: 'privacyToken'
     }
   }
 };
