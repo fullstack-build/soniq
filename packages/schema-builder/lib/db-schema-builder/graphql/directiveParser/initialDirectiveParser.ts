@@ -103,12 +103,7 @@ registerDirectiveParser('default', (gQlDirectiveNode, dbMetaNode, refDbMeta, ref
 registerDirectiveParser('migrate', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     addMigration(gQlDirectiveNode, dbMetaNode, refDbMeta);
 });
-// versioning
-registerDirectiveParser('versioning', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.extensions.versioning = {
-        isActive: true
-    };
-});
+
 // nonUpdatable
 registerDirectiveParser('nonupdatable', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     dbMetaNode.extensions.immutable = {

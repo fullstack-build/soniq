@@ -3,6 +3,7 @@ import * as fastGlob from 'fast-glob';
 import * as fs from 'fs';
 import { diff } from 'deep-diff';
 
+import { BootLoader } from '@fullstack-one/boot-loader';
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
@@ -21,12 +22,14 @@ export class DbSchemaBuilder {
   private toDbMeta: IDbMeta;
   private migrationObject: IDbMeta;
   private dbAppClient: DbAppClient;
-  private initSqlPaths = [__dirname + '/..'];
+  private initSqlPaths = [__dirname + '/../..'];
+  private extensionsPaths: string[] = [];
 
   // DI
   private logger: ILogger;
 
-  constructor(@Inject(type => Config) config?: Config,
+  constructor(@Inject(type => BootLoader) bootLoader?,
+              @Inject(type => Config) config?: Config,
               @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory,
               @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
@@ -34,6 +37,20 @@ export class DbSchemaBuilder {
     this.logger = loggerFactory.create('DbSchemaBuilder');
     this.dbAppClient = dbAppClient;
 
+    // set all initial extensions
+    this.extensionsPaths = fastGlob.sync(`${__dirname}/extensions/*.ts`, {
+        deep: true,
+        onlyFiles: true,
+      });
+
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
+  }
+  // add extensions path
+  public addExtensionPath(extensionPath) {
+    if (!this.extensionsPaths.includes(extensionPath)) {
+      this.extensionsPaths.push(extensionPath);
+    }
   }
 
   // add paths with migration sql scripts
@@ -47,6 +64,7 @@ export class DbSchemaBuilder {
 
   // run packages migration scripts based on initiated version
   public async initDb(): Promise<void> {
+
     // get DB pgClient from DI container
     const dbClient = Container.get(DbAppClient).pgClient;
 
@@ -276,6 +294,14 @@ export class DbSchemaBuilder {
       await  dbClient.query(sql);
     }
 
+  }
+
+  // boot and load all extensions
+  private async boot(): Promise<void> {
+    // load all extensions
+    Object.values(this.extensionsPaths).forEach((path) => {
+      require(path);
+    });
   }
 
 }
