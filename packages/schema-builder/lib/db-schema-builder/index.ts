@@ -24,6 +24,9 @@ export class DbSchemaBuilder {
   private dbAppClient: DbAppClient;
   private initSqlPaths = [__dirname + '/../..'];
   private extensionsPaths: string[] = [];
+  private dbConfig;
+  private schemaBuilderConfig;
+  private config;
 
   // DI
   private logger: ILogger;
@@ -36,6 +39,9 @@ export class DbSchemaBuilder {
     // create logger
     this.logger = loggerFactory.create('DbSchemaBuilder');
     this.dbAppClient = dbAppClient;
+
+    this.config = config;
+    this.dbConfig = config.getConfig('db');
 
     // set all initial extensions
     this.extensionsPaths = fastGlob.sync(`${__dirname}/extensions/*.ts`, {
@@ -207,7 +213,9 @@ export class DbSchemaBuilder {
   }
 
   public getViewsSql() {
-    return createViewsFromDbMeta(this.toDbMeta, 'appuserhugo', false);
+    this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
+    return createViewsFromDbMeta(this.toDbMeta, this.dbConfig.general.database,
+    this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
   }
 
   public getBootSql() {

@@ -49,4 +49,4 @@ BEGIN
     -- Set transaction_token into a local variable, which is available it the current transaction.
     EXECUTE format('set local auth.transaction_token to %L', v_transaction_token);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

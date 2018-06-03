@@ -28,4 +28,4 @@ BEGIN
     v_query := $tok$UPDATE _meta."Files" SET "verifiedAt"=now() WHERE id = %L$tok$;
     EXECUTE format(v_query, i_file_id);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

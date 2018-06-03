@@ -127,4 +127,4 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
             }
         }
     }
-$$ LANGUAGE "plv8";
+$$ LANGUAGE "plv8" SECURITY DEFINER;

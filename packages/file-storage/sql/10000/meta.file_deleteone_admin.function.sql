@@ -4,4 +4,4 @@ CREATE OR REPLACE FUNCTION _meta.file_deleteone_admin(i_file_id uuid) RETURNS SE
 	DELETE FROM _meta."Files" 
     WHERE "id" = i_file_id AND "entityId" IS NOT NULL AND "deletedAt" IS NOT NULL AND _meta.is_admin() = true
     RETURNING *;
-$$ LANGUAGE sql;
+$$ LANGUAGE sql SECURITY DEFINER;

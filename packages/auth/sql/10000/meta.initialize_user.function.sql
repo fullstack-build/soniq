@@ -85,4 +85,4 @@ BEGIN
     -- Return token-data as jsonb including userToken
     RETURN jsonb_build_object('userToken', v_user_token, 'userId', i_user_id, 'timestamp', v_timestamp, 'userTokenMaxAgeInSeconds', v_user_token_temp_max_age_in_seconds, 'provider', 'local', 'username', v_username);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
