@@ -423,26 +423,7 @@ export class PgToDbMeta {
       });
 
       // todo: move parser into extensions
-      if (trigger.trigger_name.includes('table_is_not_updatable')) {
-        // immutability active for table: non updatable
-        currentTable.extensions.immutable = currentTable.extensions.immutable || {}; // keep potentially existing object
-        currentTable.extensions.immutable.isUpdatable = false;
-      } else if (trigger.trigger_name.includes('table_is_not_deletable')) {
-        // immutability active for table: non deletable
-        currentTable.extensions.immutable = currentTable.extensions.immutable || {}; // keep potentially existing object
-        currentTable.extensions.immutable.isDeletable = false;
-      } else if (trigger.trigger_name.includes('table_trigger_updatedat')) {
-        // updatedAt trigger for column
-        const triggerNameObj = trigger.trigger_name.split('_');
-        const columnName = triggerNameObj[5];
-
-        // only if column exists (trigger could be there without column)
-        if (currentTable.columns[columnName] != null) {
-          currentTable.columns[columnName].extensions.triggerUpdatedAt = {
-            isActive: true
-          };
-        }
-      } else if (trigger.trigger_name.includes('table_file_trigger')) {
+      if (trigger.trigger_name.includes('table_file_trigger')) {
         currentTable.extensions.fileTrigger = {
           isActive: true
         };

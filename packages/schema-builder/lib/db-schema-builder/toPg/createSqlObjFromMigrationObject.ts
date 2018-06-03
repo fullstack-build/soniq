@@ -4,9 +4,13 @@ import { IMigrationSqlObj, IAction } from '../IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { IDbMeta, IDbRelation } from '../IDbMeta';
 
-// extensions
+// EXTENSIONS
+// table
 import { getTableMigrationExtension } from './tableMigrationExtension';
 export { registerTableMigrationExtension } from './tableMigrationExtension';
+// column
+import { getColumnMigrationExtension } from './columnMigrationExtension';
+export { registerColumnMigrationExtension } from './columnMigrationExtension';
 
 export namespace sqlObjFromMigrationObject {
 
@@ -387,15 +391,19 @@ export namespace sqlObjFromMigrationObject {
           thisSql.up.push(`ALTER TABLE "${schemaName}"."${node.oldName}" RENAME TO "${node.name}";`);
         }
       }
-    }
 
-    // create updatbale views for all tables, no matter the action
-    // -> even a column change could result in a view change
-    // create direct access updatable view / on the down run, after the table was created
-    thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
+      // update views on any change
+      if (action.add || action.remove || action.rename  || action.change) {
+        // create updatbale views for all tables, no matter the action
+        // -> even a column change could result in a view change
+        // create direct access updatable view / on the down run, after the table was created
+        thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
                           SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
-    // drop direct access updatable view
-    thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
+        // drop direct access updatable view
+        thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
+      }
+
+    }
 
     // iterate columns
     if (tableDefinition.columns != null) {
@@ -424,7 +432,7 @@ export namespace sqlObjFromMigrationObject {
         const extensionName                 = extension[0];
         const extensionDefinitionWithAction = extension[1];
 
-        // execute extension migration callback if avaialble
+        // execute extension migration callback if available
         if (getTableMigrationExtension(extensionName) != null) {
           getTableMigrationExtension(extensionName)(extensionDefinitionWithAction,
                                                     thisSql,
@@ -434,18 +442,7 @@ export namespace sqlObjFromMigrationObject {
         }
       });
 
-
       // todo move into extensions
-      // versioning for table
-      /*if (tableDefinition.extensions.versioning != null) {
-        createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
-      }*/
-
-      // immutability for table
-      if (tableDefinition.extensions.immutable != null) {
-        makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
-      }
-
       // file trigger for table
       if (tableDefinition.extensions.fileTrigger != null) {
         createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
@@ -454,7 +451,7 @@ export namespace sqlObjFromMigrationObject {
 
   }
 
-  function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnObject: any) {
+  function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnDefinition: any) {
 
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.schemas[schemaName].tables[tableName].columns[columnName] =
@@ -462,7 +459,7 @@ export namespace sqlObjFromMigrationObject {
     const thisSql = thisSqlObj.sql;
 
     // node
-    const { action, node } = _splitActionFromNode(columnObject);
+    const { action, node } = _splitActionFromNode(columnDefinition);
 
     const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
 
@@ -536,29 +533,29 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
-    // add updatedAt trigger
-    if (node.triggerUpdatedAt != null) {
-      const triggerUpdatedAtActionObject  = _splitActionFromNode(node.triggerUpdatedAt);
-      const triggerUpdatedAtAction        = triggerUpdatedAtActionObject.action;
-      const triggerUpdatedAtDef           = triggerUpdatedAtActionObject.node;
-      const triggerName = `table_trigger_updatedat_${schemaName}_${tableName}_${columnName}`;
+    // extensions
+    if (columnDefinition.extensions != null) {
+      const extensions = _splitActionFromNode(columnDefinition.extensions).node;
+      // run through extension definitions
+      Object.entries(extensions).forEach((extension) => {
+        const extensionName = extension[0];
+        const extensionDefinitionWithAction = extension[1];
 
-      // drop trigger for remove and before add (in case it's already there)
-      if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
-        thisSql.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
-      }
-      // create trigger when active
-      if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.isActive === true) {
-        thisSql.up.push(`CREATE TRIGGER "${triggerName}"
-          BEFORE UPDATE
-          ON ${tableNameWithSchema}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.triggerUpdateOrCreate("${columnName}");`);
-      }
+        // execute extension migration callback if available
+        if (getColumnMigrationExtension(extensionName) != null) {
+          getColumnMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                     thisSql,
+                                                     schemaName,
+                                                     tableName,
+                                                     columnName);
+        }
+      });
     }
 
+    // todo move into extensions
     // extensions
     if (node.extensions != null) {
+
       // set auth settings
       if (node.extensions.auth != null) {
         setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
@@ -772,45 +769,6 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
-  }
-
-  function makeTableImmutable(tableSql, schemaName, tableName, immutableObjectWithAction) {
-
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
-
-    // create
-    const immutabilityActionObject  = _splitActionFromNode(immutableObjectWithAction);
-    const immutabilityAction        = immutabilityActionObject.action;
-    const immutabilityDef           = immutabilityActionObject.node;
-
-    // drop trigger for remove and before add (in case it's already there)
-    if (immutabilityAction.remove || immutabilityAction.add || immutabilityAction.change) {
-      // drop trigger, keep table and data
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_updatable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_deletable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-    }
-
-    // create versioning table and trigger
-    if (immutabilityAction.add || immutabilityAction.change) {
-
-      // create trigger for table: not updatable
-      if (immutabilityDef.isUpdatable === false) { // has to be set EXACTLY to false
-        tableSql.up.push(`CREATE TRIGGER "table_is_not_updatable_${schemaName}_${tableName}"
-          BEFORE UPDATE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.make_table_immutable();`);
-      }
-
-      // create trigger for table: not updatable
-      if (immutabilityDef.isDeletable === false) { // has to be set EXACTLY to false
-        tableSql.up.push(`CREATE TRIGGER "table_is_not_deletable_${schemaName}_${tableName}"
-          BEFORE DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.make_table_immutable();`);
-      }
-    }
   }
 
   function createFileTriggerForTable(tableSql, schemaName, tableName, fileTriggerObjectWithAction) {
