@@ -11,9 +11,9 @@ import { DbAppClient } from '@fullstack-one/db';
 import { IDbMeta } from './IDbMeta';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
-import { sqlObjFromMigrationObject } from './createSqlObjFromMigrationObject';
+import { sqlObjFromMigrationObject } from './toPg/createSqlObjFromMigrationObject';
 
-export { registerDirectiveParser } from './graphql/directiveParser';
+export { registerDirectiveParser } from './fromGQl/directiveParser';
 
 @Service()
 export class DbSchemaBuilder {

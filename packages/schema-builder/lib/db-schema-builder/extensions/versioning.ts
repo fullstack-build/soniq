@@ -1,6 +1,9 @@
 import { IDbMeta } from '../IDbMeta';
-import { registerDirectiveParser } from '../graphql/gQlAstToDbMeta';
-import { registerTriggerParser } from '../pg/pgToDbMeta';
+import { registerDirectiveParser } from '../fromGQl/gQlAstToDbMeta';
+import { registerTriggerParser } from '../fromPg/pgToDbMeta';
+import { registerTableMigrationExtension } from '../toPg/createSqlObjFromMigrationObject';
+import { IAction } from '../IMigrationSqlObj';
+import * as helper from '../helper';
 
 // GQl AST
 // add directive parser
@@ -22,4 +25,58 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
     };
   }
 
+});
+
+// Migration SQL
+registerTableMigrationExtension('versioning', (extensionDefinitionWithAction,
+                                               nodeSqlObj,
+                                               schemaName,
+                                               tableNameDown,
+                                               tableNameUp) => {
+
+  const ACTION_KEY: string = '$$action$$';
+  function _splitActionFromNode(node: {} = {}): {action: IAction, node: any} {
+    return helper.splitActionFromNode(ACTION_KEY, node);
+  }
+
+  const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;
+  const versionTableNameWithSchemaUp   = `_versions."${schemaName}_${tableNameUp}"`;
+
+  // create
+  const versioningActionObject = _splitActionFromNode(extensionDefinitionWithAction);
+  const versioningAction = versioningActionObject.action;
+  const versioningDef = versioningActionObject.node;
+
+  // drop trigger for remove and before add (in case it's already there)
+  if (versioningAction.remove || versioningAction.add) {
+    // drop trigger, keep table and data
+    nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableNameUp}" ON ${tableNameWithSchemaUp} CASCADE;`);
+  }
+
+  // create versioning table and trigger
+  if (versioningAction.add) {
+
+    // (re-)create versioning table if not exists
+    nodeSqlObj.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
+    nodeSqlObj.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
+          (
+            id uuid NOT NULL DEFAULT uuid_generate_v4(),
+            created_at timestamp without time zone DEFAULT now(),
+            user_id uuid,
+            created_by character varying(255),
+            action _meta.versioning_action,
+            table_name character varying(255),
+            table_id uuid,
+            state jsonb,
+            diff jsonb,
+            CONSTRAINT _version_${schemaName}_${tableNameUp}_pkey PRIMARY KEY (id)
+        );`);
+
+    // create trigger for table
+    nodeSqlObj.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableNameUp}"
+          AFTER INSERT OR UPDATE OR DELETE
+          ON ${tableNameWithSchemaUp}
+          FOR EACH ROW
+          EXECUTE PROCEDURE _meta.create_version();`);
+  }
 });

@@ -1,14 +1,18 @@
 
-import * as helper from './helper';
-import { IMigrationSqlObj, IAction } from './IMigrationSqlObj';
+import * as helper from '../helper';
+import { IMigrationSqlObj, IAction } from '../IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { IDbMeta, IDbRelation } from './IDbMeta';
+import { IDbMeta, IDbRelation } from '../IDbMeta';
+
+// extensions
+import { getTableMigrationExtension } from './tableMigrationExtension';
+export { registerTableMigrationExtension } from './tableMigrationExtension';
 
 export namespace sqlObjFromMigrationObject {
 
   const ACTION_KEY: string = '$$action$$';
   const DELETED_PREFIX: string = '_deleted:';
-  const schemasToIgnore: any = ['_versions', 'graphql'];
+  const schemasToIgnore: any = ['_versions', '_graphql'];
   let renameInsteadOfDrop: boolean = true;
   let migrationObj: IDbMeta = null;
   let toDbMeta: IDbMeta = null;
@@ -414,10 +418,28 @@ export namespace sqlObjFromMigrationObject {
     }
     // extensions
     if (tableDefinition.extensions != null) {
+      const extensions = _splitActionFromNode(tableDefinition.extensions).node;
+      // run through extension definitions
+      Object.entries(extensions).forEach((extension) => {
+        const extensionName                 = extension[0];
+        const extensionDefinitionWithAction = extension[1];
+
+        // execute extension migration callback if avaialble
+        if (getTableMigrationExtension(extensionName) != null) {
+          getTableMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                    thisSql,
+                                                    schemaName,
+                                                    tableNameDown,
+                                                    tableNameUp);
+        }
+      });
+
+
+      // todo move into extensions
       // versioning for table
-      if (tableDefinition.extensions.versioning != null) {
+      /*if (tableDefinition.extensions.versioning != null) {
         createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
-      }
+      }*/
 
       // immutability for table
       if (tableDefinition.extensions.immutable != null) {
@@ -750,50 +772,6 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
-  }
-
-  function createVersioningForTable(tableSql, schemaName, tableName, versioningObjectWithAction) {
-
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
-    const versionTableNameWithSchemaUp   = `_versions."${schemaName}_${tableName}"`;
-
-    // create
-    const versioningActionObject = _splitActionFromNode(versioningObjectWithAction);
-    const versioningAction = versioningActionObject.action;
-    const versioningDef = versioningActionObject.node;
-
-    // drop trigger for remove and before add (in case it's already there)
-    if (versioningAction.remove || versioningAction.add) {
-      // drop trigger, keep table and data
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-    }
-
-    // create versioning table and trigger
-    if (versioningAction.add) {
-
-      // (re-)create versioning table if not exists
-      tableSql.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
-      tableSql.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
-          (
-            id uuid NOT NULL DEFAULT uuid_generate_v4(),
-            created_at timestamp without time zone DEFAULT now(),
-            user_id uuid,
-            created_by character varying(255),
-            action _meta.versioning_action,
-            table_name character varying(255),
-            table_id uuid,
-            state jsonb,
-            diff jsonb,
-            CONSTRAINT _version_${schemaName}_${tableName}_pkey PRIMARY KEY (id)
-        );`);
-
-      // create trigger for table
-      tableSql.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableName}"
-          AFTER INSERT OR UPDATE OR DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.create_version();`);
-    }
   }
 
   function makeTableImmutable(tableSql, schemaName, tableName, immutableObjectWithAction) {

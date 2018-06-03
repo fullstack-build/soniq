@@ -29,7 +29,6 @@ export = [
     returnType: 'String',
     generate: (context, params): string => {
       return `(substring("${context.tableName}"."${params.field}" from 1 for ${params.n || 1}) || '.')`;
-      // return `'TEST'`;
     },
   },
 ];

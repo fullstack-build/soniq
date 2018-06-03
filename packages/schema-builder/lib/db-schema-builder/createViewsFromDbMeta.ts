@@ -34,9 +34,11 @@ export default (dbMeta: any, applicationUserName: any, includePrivileges: any) =
 
       viewSchemas[dbView.viewSchemaName] = dbView.viewSchemaName;
 
+      // remove and recreate view
       statements.push(`DROP VIEW IF EXISTS "${dbView.viewSchemaName}"."${dbView.viewName}";`);
-      // tslint:disable-next-line:max-line-length
-      statements.push(`CREATE VIEW "${dbView.viewSchemaName}"."${dbView.viewName}"${security} AS SELECT ${fieldSelects.join(', ')} FROM "${dbView.schemaName}"."${dbView.tableName}" WHERE ${dbView.expressions.join(' OR ')};`);
+      statements.push(`CREATE VIEW "${dbView.viewSchemaName}"."${dbView.viewName}"${security}
+      AS SELECT ${fieldSelects.join(', ')} FROM "${dbView.schemaName}"."${dbView.tableName}"
+      WHERE ${dbView.expressions.join(' OR ')};`);
 
       if (includePrivileges === true) {
         statements.push(`REVOKE ALL PRIVILEGES ON "${dbView.name}" FROM ${applicationUserName};`);

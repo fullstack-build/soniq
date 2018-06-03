@@ -20,8 +20,8 @@ import { gqlSchemaBuilder } from './gql-schema-builder';
 // import interfaces
 import { IViews, IExpressions } from './gql-schema-builder/interfaces';
 import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
-import { parseGQlAstToDbMeta } from './db-schema-builder/graphql/gQlAstToDbMeta';
-import { PgToDbMeta } from './db-schema-builder/pg/pgToDbMeta';
+import { parseGQlAstToDbMeta } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
+import { PgToDbMeta } from './db-schema-builder/fromPg/pgToDbMeta';
 
 @Service()
 export class SchemaBuilder {

@@ -157,7 +157,8 @@ export class PgToDbMeta {
           schemaName,
           description: null,
           constraints: {},
-          columns: {}
+          columns: {},
+          extensions: {}
         };
 
       }
