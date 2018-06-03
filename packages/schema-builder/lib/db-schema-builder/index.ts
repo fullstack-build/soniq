@@ -246,7 +246,7 @@ export class DbSchemaBuilder {
     const  previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
 
     // anything to migrate and not the same as last time?
-    if (migrationSqlStatements.length > 0 && diff(previousMigrationStateJSON, toDbMeta) != null) {
+    if (diff(previousMigrationStateJSON, toDbMeta) != null) {
 
       // get view statements
       const viewsSqlStatements = this.getViewsSql();

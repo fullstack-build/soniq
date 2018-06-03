@@ -164,6 +164,7 @@ export class SchemaBuilder {
         mutations: combinedSchemaInformation.customMutations
       };
 
+      // copy view objects into dbMeta
       Object.values(combinedSchemaInformation.dbViews).forEach((dbView: any) => {
         if (this.dbMeta.schemas[dbView.viewSchemaName] == null) {
           this.dbMeta.schemas[dbView.viewSchemaName] = {
