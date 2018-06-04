@@ -441,14 +441,7 @@ export namespace sqlObjFromMigrationObject {
                                                     tableNameUp);
         }
       });
-
-      // todo move into extensions
-      // file trigger for table
-      if (tableDefinition.extensions.fileTrigger != null) {
-        createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
-      }
     }
-
   }
 
   function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnDefinition: any) {
@@ -559,11 +552,6 @@ export namespace sqlObjFromMigrationObject {
       // set auth settings
       if (node.extensions.auth != null) {
         setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
-      }
-
-      // set auth settings
-      if (node.extensions.isFileColumn != null) {
-        setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.isFileColumn);
       }
     }
 
@@ -742,64 +730,6 @@ export namespace sqlObjFromMigrationObject {
 
   }
 
-  function setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, fileNode?) {
-    // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
-      sql: {
-        up: [],
-        down: []
-      }
-    }).sql;
-
-    const fileNodeObj = _splitActionFromNode(fileNode);
-    const fileNodeAction = fileNodeObj.action;
-    const fileNodeDefinition = fileNodeObj.node;
-
-    // create entry
-    if (fileNodeDefinition.isActive === true) {
-      if (fileNodeAction.remove) {
-        thisSqlObj.down.push(
-          `DELETE FROM "_meta"."FileColumns" WHERE "schemaName" = '${schemaName}' ` +
-          `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` +
-          `VALUES('${schemaName}', '${tableName}', '${columnName}', '${fileNodeDefinition.types}') ` +
-          `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "types"='${fileNodeDefinition.types}';`);
-      }
-    }
-
-  }
-
-  function createFileTriggerForTable(tableSql, schemaName, tableName, fileTriggerObjectWithAction) {
-
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
-
-    // create
-    const fileTriggerActionObject  = _splitActionFromNode(fileTriggerObjectWithAction);
-    const fileTriggerAction        = fileTriggerActionObject.action;
-    const fileTriggerDef           = fileTriggerActionObject.node;
-
-    // drop trigger for remove and before add (in case it's already there)
-    if (fileTriggerAction.remove || fileTriggerAction.add || fileTriggerAction.change) {
-      // drop trigger, keep table and data
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_file_trigger_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-    }
-
-    // create file-trigger
-    if (fileTriggerAction.add || fileTriggerAction.change) {
-
-      // create file-trigger for table
-      if (fileTriggerDef.isActive === true) { // has to be set EXACTLY to true
-        tableSql.up.push(`CREATE TRIGGER "table_file_trigger_${schemaName}_${tableName}"
-          BEFORE UPDATE OR INSERT OR DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.file_trigger();`);
-      }
-    }
-  }
-
   function createRelation(sqlMigrationObj, relationName, relationObject: IDbRelation[]) {
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.relations[relationName] =
@@ -844,8 +774,8 @@ export namespace sqlObjFromMigrationObject {
         // getSqlFromMigrationObj column for FK // convention: uuid
         if (!ignoreColumnsCreation) {
           if (action.add) {
-            // does not have to be extra created -> will be created IF NOT EXISTS with the realtion itself
-          } else if (action.remove) { // in case of FK recration, no need to remove column (removeConstraintOnly = true)
+            // does not have to be extra created -> will be created IF NOT EXISTS with the relation itself
+          } else if (action.remove) { // in case of FK recreation, no need to remove column (removeConstraintOnly = true)
             // drop or rename column
             if (!renameInsteadOfDrop) {
               thisSql.down.push(

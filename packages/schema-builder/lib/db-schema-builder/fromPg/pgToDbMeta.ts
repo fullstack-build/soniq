@@ -415,20 +415,12 @@ export class PgToDbMeta {
                      event_object_table = $2;`, [schemaName, tableName]
     );
 
+    // TRIGGER EXTENSIONS
     Object.values(rows).forEach((trigger: any) => {
-
       // execute all registered trigger parser for each trigger
       Object.values(getTriggerParser()).forEach((triggerParser: (trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => void) => {
         triggerParser(trigger, this.dbMeta, schemaName, tableName);
       });
-
-      // todo: move parser into extensions
-      if (trigger.trigger_name.includes('table_file_trigger')) {
-        currentTable.extensions.fileTrigger = {
-          isActive: true
-        };
-      }
-
     });
 
   }

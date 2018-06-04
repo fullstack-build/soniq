@@ -2,7 +2,7 @@ import { IColumnMigrationExtensions } from './IColumnMigrationExtensions';
 
 const columnMigrationExtensions: IColumnMigrationExtensions = {};
 export function registerColumnMigrationExtension(extensionNameInLowerCase: string, fn: (extensionDefinitionWithAction,
-                                                                                        thisSql,
+                                                                                        nodeSqlObj,
                                                                                         schemaName,
                                                                                         tableName,
                                                                                         columnName) => void): void {

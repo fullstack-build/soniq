@@ -23,6 +23,17 @@ import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
 import { parseGQlAstToDbMeta } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
 import { PgToDbMeta } from './db-schema-builder/fromPg/pgToDbMeta';
 
+// export for extensions
+// helper: splitActionFromNode
+export { splitActionFromNode } from './db-schema-builder/helper';
+// create constraint
+export { createConstraint } from './db-schema-builder/index';
+// GQL parser
+export { registerDirectiveParser } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
+// PG parser
+export { registerTriggerParser } from './db-schema-builder/fromPg/pgToDbMeta';
+// migrations
+export { registerColumnMigrationExtension, registerTableMigrationExtension } from './db-schema-builder/toPg/createSqlObjFromMigrationObject';
 @Service()
 export class SchemaBuilder {
 

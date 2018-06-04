@@ -1,12 +1,10 @@
-import { IDbMeta } from '../IDbMeta';
-import { registerDirectiveParser } from '../fromGQl/gQlAstToDbMeta';
-import { registerTriggerParser } from '../fromPg/pgToDbMeta';
-import {
+import { IDbMeta,
+  registerDirectiveParser,
+  registerTriggerParser,
   registerColumnMigrationExtension,
-  registerTableMigrationExtension
-} from '../toPg/createSqlObjFromMigrationObject';
-import { IAction } from '../IMigrationSqlObj';
-import * as helper from '../helper';
+  registerTableMigrationExtension,
+  splitActionFromNode,
+  utils } from '../../index';
 
 // GQl AST
 // add directive parser
@@ -52,14 +50,14 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
 
 // Migration SQL
 registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitionWithAction,
-                                                      thisSql,
+                                                      nodeSqlObj,
                                                       schemaName,
                                                       tableName,
                                                       columnName) => {
 
   const ACTION_KEY: string = '$$action$$';
-  function _splitActionFromNode(node: {} = {}): {action: IAction, node: any} {
-    return helper.splitActionFromNode(ACTION_KEY, node);
+  function _splitActionFromNode(node: {} = {}): { action: any, node: any } {
+    return splitActionFromNode(ACTION_KEY, node);
   }
 
   const tableNameWithSchema           = `"${schemaName}"."${tableName}"`;
@@ -70,11 +68,11 @@ registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitionWithAct
 
   // drop trigger for remove and before add (in case it's already there)
   if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
-    thisSql.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
+    nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
   }
   // create trigger when active
   if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.isActive === true) {
-    thisSql.up.push(`CREATE TRIGGER "${triggerName}"
+    nodeSqlObj.up.push(`CREATE TRIGGER "${triggerName}"
           BEFORE UPDATE
           ON ${tableNameWithSchema}
           FOR EACH ROW

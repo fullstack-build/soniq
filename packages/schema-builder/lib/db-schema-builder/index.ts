@@ -13,6 +13,7 @@ import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { sqlObjFromMigrationObject } from './toPg/createSqlObjFromMigrationObject';
 
+export { createConstraint } from './fromGQl/gQlAstToDbMetaHelper';
 export { registerDirectiveParser } from './fromGQl/directiveParser';
 
 @Service()

@@ -16,6 +16,9 @@ import { defaultVerifier } from './defaultVerifier';
 
 import * as fs from 'fs';
 
+// extend migrations
+import './migrationExtension';
+
 const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 
 @Service()

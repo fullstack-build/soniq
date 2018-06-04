@@ -2,7 +2,12 @@ import * as _ from 'lodash';
 import * as fastGlob from 'fast-glob';
 
 import { IDbMeta } from '../IDbMeta';
-import { setDefaultValueForColumn, addConstraint, addMigration, relationBuilderHelper } from './gQlAstToDbMetaHelper';
+import {
+  setDefaultValueForColumn,
+  addMigration,
+  relationBuilderHelper,
+  createConstraint
+} from './gQlAstToDbMetaHelper';
 
 import { getDirectiveParser } from './directiveParser';
 export { registerDirectiveParser } from './directiveParser';
@@ -309,12 +314,12 @@ const GQL_JSON_PARSER = {
           value: 'uuid_generate_v4()'
         };
         // add new PK constraint
-        addConstraint('PRIMARY KEY',
-                      gQlSchemaNode,
-                      dbMetaNode,
-                      refDbMeta,
-                      refDbMetaCurrentTable,
-                      refDbMetaCurrentTableColumn);
+        const constraintNamePk = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_pkey`;
+        createConstraint(constraintNamePk, 'PRIMARY KEY', {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
+        // add NOT NULL constraint to every PK
+        const constraintNameNotNull = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
+        createConstraint(constraintNameNotNull, 'notnull',{}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
+
         break;
       case 'string':
         dbMetaNode.type = 'varchar';
@@ -369,12 +374,7 @@ const GQL_JSON_PARSER = {
     refDbMetaCurrentTableColumn,
   ) => {
     // add new constraint
-    addConstraint('not_null',
-                  gQlSchemaNode,
-                  dbMetaNode,
-                  refDbMeta,
-                  refDbMetaCurrentTable,
-                  refDbMetaCurrentTableColumn);
+    createConstraint(null, 'notnull', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {
