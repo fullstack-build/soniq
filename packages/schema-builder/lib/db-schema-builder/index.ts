@@ -21,7 +21,6 @@ export class DbSchemaBuilder {
   private migrationObject: IDbMeta;
   private dbAppClient: DbAppClient;
   private initSqlPaths = [__dirname + '/../..'];
-  private extensionsPaths: string[] = [];
   private dbConfig;
   private schemaBuilderConfig;
   private config;
@@ -41,20 +40,8 @@ export class DbSchemaBuilder {
     this.config = config;
     this.dbConfig = config.getConfig('db');
 
-    // set all initial extensions
-    this.extensionsPaths = fastGlob.sync(`${__dirname}/extensions/*.ts`, {
-        deep: true,
-        onlyFiles: true,
-      });
-
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
-  }
-  // add extensions path
-  public addExtensionPath(extensionPath) {
-    if (!this.extensionsPaths.includes(extensionPath)) {
-      this.extensionsPaths.push(extensionPath);
-    }
   }
 
   // add paths with migration sql scripts
@@ -304,9 +291,7 @@ export class DbSchemaBuilder {
   // boot and load all extensions
   private async boot(): Promise<void> {
     // load all extensions
-    Object.values(this.extensionsPaths).forEach((path) => {
-      require(path);
-    });
+    require('./extensions');
   }
 
 }
