@@ -24,28 +24,36 @@ const _ = require("lodash");
 const fastGlob = require("fast-glob");
 const fs = require("fs");
 const deep_diff_1 = require("deep-diff");
+const boot_loader_1 = require("@fullstack-one/boot-loader");
 const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
 const logger_1 = require("@fullstack-one/logger");
 const db_1 = require("@fullstack-one/db");
 const migrationObject_1 = require("./migrationObject");
 const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
-const gQlAstToDbMetaDirectiveParser_1 = require("./graphql/gQlAstToDbMetaDirectiveParser");
-const createSqlObjFromMigrationObject_1 = require("./createSqlObjFromMigrationObject");
+const createSqlObjFromMigrationObject_1 = require("./toPg/createSqlObjFromMigrationObject");
 let DbSchemaBuilder = class DbSchemaBuilder {
-    constructor(config, loggerFactory, dbAppClient) {
-        this.initSqlPaths = [__dirname + '/..'];
-        this.directiveParser = {};
+    constructor(bootLoader, config, loggerFactory, dbAppClient) {
+        this.initSqlPaths = [__dirname + '/../..'];
+        this.extensionsPaths = [];
         // create logger
         this.logger = loggerFactory.create('DbSchemaBuilder');
         this.dbAppClient = dbAppClient;
-        gQlAstToDbMetaDirectiveParser_1.setParsers(this.registerDirectiveParser.bind(this));
+        this.config = config;
+        this.dbConfig = config.getConfig('db');
+        // set all initial extensions
+        this.extensionsPaths = fastGlob.sync(`${__dirname}/extensions/*.ts`, {
+            deep: true,
+            onlyFiles: true,
+        });
+        // add to boot loader
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
-    registerDirectiveParser(nameInLowerCase, fn) {
-        this.directiveParser[nameInLowerCase] = fn;
-    }
-    getDirectiveParser() {
-        return this.directiveParser;
+    // add extensions path
+    addExtensionPath(extensionPath) {
+        if (!this.extensionsPaths.includes(extensionPath)) {
+            this.extensionsPaths.push(extensionPath);
+        }
     }
     // add paths with migration sql scripts
     addMigrationPath(path) {
@@ -54,10 +62,12 @@ let DbSchemaBuilder = class DbSchemaBuilder {
     getMigrationDbMeta() {
         return _.cloneDeep(this.migrationObject);
     }
+    // run packages migration scripts based on initiated version
     initDb() {
         return __awaiter(this, void 0, void 0, function* () {
             // get DB pgClient from DI container
-            const dbClient = di_1.Container.get(db_1.DbAppClient).pgClient;
+            const dbAppClient = di_1.Container.get(db_1.DbAppClient);
+            const dbClient = dbAppClient.pgClient;
             // check latest version migrated
             let latestVersion = 0;
             try {
@@ -161,6 +171,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
             }
         });
     }
+    // create migration SQL statements out of two dbMeta objects (pg and GQL)
     getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop = true) {
         // check if toDbMeta is empty -> Parsing error
         if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
@@ -175,14 +186,13 @@ let DbSchemaBuilder = class DbSchemaBuilder {
         this.toDbMeta = _.cloneDeep(toDbMeta);
         // remove views and exposed names
         delete toDbMeta.exposedNames;
-        // remove graphql // todo graphql from config
-        delete toDbMeta.schemas.graphql;
-        // getSqlFromMigrationObj diff with actions
+        // create migration object with actions based on two DbMeta objects
         this.migrationObject = migrationObject_1.migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
         return createSqlObjFromMigrationObject_1.sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
     }
     getViewsSql() {
-        return createViewsFromDbMeta_1.default(this.toDbMeta, 'appuserhugo', false);
+        this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
+        return createViewsFromDbMeta_1.default(this.toDbMeta, this.dbConfig.general.database, this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
     }
     getBootSql() {
         const bootSql = [];
@@ -208,9 +218,8 @@ let DbSchemaBuilder = class DbSchemaBuilder {
             // get previous migration and compare to current
             const previousMigrationRow = (yield dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
             const previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
-            const previousMigrationStateString = JSON.stringify(previousMigrationStateJSON);
-            // anything to migrate and not the same as last time?
-            if (migrationSqlStatements.length > 0 && deep_diff_1.diff(previousMigrationStateJSON, toDbMeta) != null) {
+            // Migrate if any statements where generated (e.g. DB was changed but not DBMeta) OR any changes occurred to DBMeta
+            if (migrationSqlStatements.length > 0 || deep_diff_1.diff(previousMigrationStateJSON, toDbMeta) != null) {
                 // get view statements
                 const viewsSqlStatements = this.getViewsSql();
                 // run DB migrations
@@ -252,13 +261,23 @@ let DbSchemaBuilder = class DbSchemaBuilder {
             }
         });
     }
+    // boot and load all extensions
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // load all extensions
+            Object.values(this.extensionsPaths).forEach((path) => {
+                require(path);
+            });
+        });
+    }
 };
 DbSchemaBuilder = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => config_1.Config)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => db_1.DbAppClient)),
-    __metadata("design:paramtypes", [config_1.Config,
+    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject(type => config_1.Config)),
+    __param(2, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(3, di_1.Inject(type => db_1.DbAppClient)),
+    __metadata("design:paramtypes", [Object, config_1.Config,
         logger_1.LoggerFactory,
         db_1.DbAppClient])
 ], DbSchemaBuilder);

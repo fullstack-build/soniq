@@ -3,14 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const getQueryArguments_1 = require("./getQueryArguments");
 const getMutationArguments_1 = require("./getMutationArguments");
 const createSqlQueryInput_1 = require("./createSqlQueryInput");
-function getMutation(name, inputType, viewsEnumName, returnType) {
+function getMutation(name, inputType, viewsEnumName, returnType, extendArguments) {
     return {
         kind: 'FieldDefinition',
         name: {
             kind: 'Name',
             value: name,
         },
-        arguments: getMutationArguments_1.default(viewsEnumName, inputType),
+        arguments: getMutationArguments_1.default(viewsEnumName, inputType, extendArguments),
         type: {
             kind: 'NamedType',
             name: {
@@ -55,7 +55,7 @@ exports.default = (queries, mutations) => {
     });
     const mutationFields = [];
     Object.values(mutations).forEach((mutation) => {
-        mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.viewsEnumName, mutation.returnType));
+        mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.viewsEnumName, mutation.returnType, mutation.extendArguments));
     });
     const definitions = [];
     definitions.push({

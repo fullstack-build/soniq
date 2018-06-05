@@ -22,6 +22,9 @@ function parseView(ctx) {
             viewName,
             viewSchemaName,
             currentUserId: () => {
+                ctx.view.authRequired = true;
+                ctx.view.authRequiredByExpression = true;
+                expression.authRequired = true;
                 ctx.gQlTypes[gqlTypeName].authViewNames.push(viewName);
                 const viewIndex = ctx.gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName);
                 if (viewIndex >= 0) {

@@ -1,4 +1,5 @@
 import { LoggerFactory } from '@fullstack-one/logger';
+import './migrationExtension';
 export declare class FileStorage {
     private client;
     private fileStorageConfig;

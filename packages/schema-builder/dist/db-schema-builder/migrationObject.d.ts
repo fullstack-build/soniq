@@ -1,4 +1,4 @@
-import { IDbMeta } from './pg/IDbMeta';
+import { IDbMeta } from './IDbMeta';
 export declare namespace migrationObject {
     function createFromTwoDbMetaObjects(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta;
 }

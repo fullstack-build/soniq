@@ -66,6 +66,7 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
                 viewNames: [],
                 authViewNames: [],
                 noAuthViewNames: [],
+                noRootLevelAggViewNames: [],
                 views: {},
                 relationByField: {}
             };

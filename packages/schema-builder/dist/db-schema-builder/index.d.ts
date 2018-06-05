@@ -1,18 +1,20 @@
 import { Config } from '@fullstack-one/config';
 import { LoggerFactory } from '@fullstack-one/logger';
 import { DbAppClient } from '@fullstack-one/db';
-import { IDbMeta } from './pg/IDbMeta';
+import { IDbMeta } from './IDbMeta';
 export declare class DbSchemaBuilder {
     private fromDbMeta;
     private toDbMeta;
     private migrationObject;
     private dbAppClient;
     private initSqlPaths;
-    private directiveParser;
+    private extensionsPaths;
+    private dbConfig;
+    private schemaBuilderConfig;
+    private config;
     private logger;
-    constructor(config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
-    registerDirectiveParser(nameInLowerCase: string, fn: (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => void): void;
-    getDirectiveParser(): any;
+    constructor(bootLoader?: any, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
+    addExtensionPath(extensionPath: any): void;
     addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
     initDb(): Promise<void>;
@@ -20,4 +22,5 @@ export declare class DbSchemaBuilder {
     getViewsSql(): any[];
     getBootSql(): any[];
     migrate(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, renameInsteadOfDrop?: boolean): Promise<void>;
+    private boot();
 }

@@ -1,4 +1,6 @@
-import { IDbMeta } from './IDbMeta';
+import { IDbMeta } from '../IDbMeta';
+export { registerQueryParser } from './queryParser';
+export { registerTriggerParser } from './triggerParser';
 export declare class PgToDbMeta {
     private readonly DELETED_PREFIX;
     private dbAppClient;
@@ -15,6 +17,4 @@ export declare class PgToDbMeta {
     private iterateAndAddTriggers(schemaName, tableName);
     private relationBuilderHelper(constraint);
     private manyToManyRelationBuilderHelper(columnDescribingRelation, schemaName, tableName, mtmPayload);
-    private getAuthSettings();
-    private getFileFieldSettings();
 }

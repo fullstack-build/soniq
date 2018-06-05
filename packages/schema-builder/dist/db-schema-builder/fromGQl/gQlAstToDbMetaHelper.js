@@ -11,57 +11,16 @@ function setDefaultValueForColumn(gQlSchemaNode, dbMetaNode, refDbMeta, refDbMet
     };
 }
 exports.setDefaultValueForColumn = setDefaultValueForColumn;
-function addConstraint(pConstraintType, gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
-    let constraintType = pConstraintType;
-    let constraintName = null;
-    let options = {};
-    let linkToColumn = null;
-    switch (constraintType) {
-        case 'not_null':
-            constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
-            // link this constraint to a column
-            linkToColumn = refDbMetaCurrentTableColumn.name;
-            break;
-        case 'UNIQUE':
-            constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_key`;
-            // named unique constraint - override
-            if (gQlSchemaNode.arguments[0] != null && gQlSchemaNode.arguments[0].name.value === 'name') {
-                const namedConstraintName = gQlSchemaNode.arguments[0].value.value;
-                constraintName = `${refDbMetaCurrentTable.name}_${namedConstraintName}_key`;
-            }
-            // link this constraint to a column
-            linkToColumn = refDbMetaCurrentTableColumn.name;
-            break;
-        case 'PRIMARY KEY':
-            constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_pkey`;
-            // link this constraint to a column
-            linkToColumn = refDbMetaCurrentTableColumn.name;
-            break;
-        case 'CHECK':
-            const checkName = gQlSchemaNode.name.value;
-            options = {
-                param1: gQlSchemaNode.value.value
-            };
-            constraintName = `${refDbMetaCurrentTable.name}_${checkName}_check`;
-            break;
-        case 'validate':
-            constraintType = 'CHECK'; // validate turns into check
-            const validateType = gQlSchemaNode.name.value;
-            options = {
-                param1: `_meta.validate('${validateType}'::text, (${refDbMetaCurrentTableColumn.name})::text, '${gQlSchemaNode.value.value}'::text)`
-            };
-            constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_${validateType}_check`;
-            break;
-    }
-    // getSqlFromMigrationObj new constraint if name was set
+function createConstraint(constraintName, constraintType, options, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
+    // add new constraint if name was set
     if (constraintName != null) {
         const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
             type: constraintType,
             options,
         };
         // link constraint to field
-        if (linkToColumn != null) {
-            // getSqlFromMigrationObj columns field if not available
+        if (refDbMetaCurrentTableColumn != null) {
+            // add columns field if not available
             constraint.columns = constraint.columns || [];
             // add column name to constraint
             constraint.columns.push(refDbMetaCurrentTableColumn.name);
@@ -73,7 +32,7 @@ function addConstraint(pConstraintType, gQlSchemaNode, dbMetaNode, refDbMeta, re
         }
     }
 }
-exports.addConstraint = addConstraint;
+exports.createConstraint = createConstraint;
 function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable) {
     const emptyRelation = {
         name: null,
