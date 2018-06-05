@@ -1,4 +1,4 @@
-export interface ITableMigrationExtensions {
+export interface IColumnMigrationExtensions {
   [name: string]: (extensionDefinition,
                    sqlMigrationObj,
                    nodeSqlObj,

@@ -4,7 +4,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { DbSchemaBuilder, registerDirectiveParser } from './db-schema-builder';
+import { DbSchemaBuilder } from './db-schema-builder';
 import { helper } from '@fullstack-one/helper';
 
 export { IViews, IExpressions, IDbMeta, IDbRelation };
@@ -23,6 +23,19 @@ import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
 import { parseGQlAstToDbMeta } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
 import { PgToDbMeta } from './db-schema-builder/fromPg/pgToDbMeta';
 
+// export for extensions
+// helper: splitActionFromNode
+export { splitActionFromNode } from './db-schema-builder/helper';
+// create constraint
+export { createConstraint } from './db-schema-builder/fromGQl/gQlAstToDbMetaHelper';
+// GQL parser
+export { registerDirectiveParser } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
+// PG Query parser
+export { registerQueryParser } from './db-schema-builder/fromPg/pgToDbMeta';
+// PG parser
+export { registerTriggerParser } from './db-schema-builder/fromPg/pgToDbMeta';
+// migrations
+export { registerColumnMigrationExtension, registerTableMigrationExtension } from './db-schema-builder/toPg/createSqlObjFromMigrationObject';
 @Service()
 export class SchemaBuilder {
 
@@ -70,10 +83,6 @@ export class SchemaBuilder {
 
   public getDbSchemaBuilder() {
     return this.dbSchemaBuilder;
-  }
-
-  public registerDirectiveParser(...args: any[]) {
-    return registerDirectiveParser(args[0], args[1]);
   }
 
   public async getPgDbMeta(): Promise<IDbMeta> {

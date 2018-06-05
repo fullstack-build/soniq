@@ -1,9 +1,10 @@
-import { IDbMeta } from '../IDbMeta';
-import { registerDirectiveParser } from '../fromGQl/gQlAstToDbMeta';
-import { registerTriggerParser } from '../fromPg/pgToDbMeta';
-import { registerTableMigrationExtension } from '../toPg/createSqlObjFromMigrationObject';
-import { IAction } from '../IMigrationSqlObj';
-import * as helper from '../helper';
+import { IDbMeta,
+  registerDirectiveParser,
+  registerTriggerParser,
+  registerColumnMigrationExtension,
+  registerTableMigrationExtension,
+  splitActionFromNode,
+  utils } from '../../index';
 
 // GQl AST
 // add directive parser
@@ -24,19 +25,19 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
       isActive: true
     };
   }
-
 });
 
 // Migration SQL
 registerTableMigrationExtension('versioning', (extensionDefinitionWithAction,
+                                               sqlMigrationObj,
                                                nodeSqlObj,
                                                schemaName,
                                                tableNameDown,
                                                tableNameUp) => {
 
   const ACTION_KEY: string = '$$action$$';
-  function _splitActionFromNode(node: {} = {}): {action: IAction, node: any} {
-    return helper.splitActionFromNode(ACTION_KEY, node);
+  function _splitActionFromNode(node: {} = {}): { action: any, node: any } {
+    return splitActionFromNode(ACTION_KEY, node);
   }
 
   const tableNameWithSchemaUp   = `"${schemaName}"."${tableNameUp}"`;

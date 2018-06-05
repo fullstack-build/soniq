@@ -36,13 +36,10 @@ export interface IDbMeta {
           };
           constraints?: {
             [name: string]: {
-              type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK' | 'validate';
               name: string;
+              type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK';
               columns?: [string];
-              options: {
-                param1: string;
-                param2: string;
-              }
+              options?: [any];
             }
           };
         };

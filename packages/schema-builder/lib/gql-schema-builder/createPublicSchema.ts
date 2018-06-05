@@ -6,7 +6,6 @@ import {
 
 import getBasicSchema from './utils/getBasicSchema';
 import arrayToNamedArray from './utils/arrayToNamedArray';
-import getQueryArguments from './utils/getQueryArguments';
 import getEnum from './utils/getEnum';
 import mergeDeleteViews from './utils/mergeDeleteViews';
 import getViewName from './utils/getViewName';

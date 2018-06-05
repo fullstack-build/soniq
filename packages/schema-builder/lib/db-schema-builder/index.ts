@@ -13,8 +13,6 @@ import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { sqlObjFromMigrationObject } from './toPg/createSqlObjFromMigrationObject';
 
-export { registerDirectiveParser } from './fromGQl/directiveParser';
-
 @Service()
 export class DbSchemaBuilder {
 
@@ -203,10 +201,8 @@ export class DbSchemaBuilder {
     this.toDbMeta = _.cloneDeep(toDbMeta);
     // remove views and exposed names
     delete toDbMeta.exposedNames;
-    // remove graphql // todo graphql from config
-    delete toDbMeta.schemas.graphql;
 
-    // getSqlFromMigrationObj diff with actions
+    // create migration object with actions based on two DbMeta objects
     this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
 
     return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
@@ -253,8 +249,8 @@ export class DbSchemaBuilder {
     const previousMigrationRow: any = (await dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
     const  previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
 
-    // anything to migrate and not the same as last time?
-    if (diff(previousMigrationStateJSON, toDbMeta) != null) {
+    // Migrate if any statements where generated (e.g. DB was changed but not DBMeta) OR any changes occurred to DBMeta
+    if (migrationSqlStatements.length > 0 || diff(previousMigrationStateJSON, toDbMeta) != null) {
 
       // get view statements
       const viewsSqlStatements = this.getViewsSql();

@@ -1,12 +1,15 @@
-
 import * as helper from '../helper';
 import { IMigrationSqlObj, IAction } from '../IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { IDbMeta, IDbRelation } from '../IDbMeta';
 
-// extensions
+// EXTENSIONS
+// table
 import { getTableMigrationExtension } from './tableMigrationExtension';
 export { registerTableMigrationExtension } from './tableMigrationExtension';
+// column
+import { getColumnMigrationExtension } from './columnMigrationExtension';
+export { registerColumnMigrationExtension } from './columnMigrationExtension';
 
 export namespace sqlObjFromMigrationObject {
 
@@ -246,7 +249,7 @@ export namespace sqlObjFromMigrationObject {
       });
     }
 
-    // return down statemens reversed and before up statements
+    // return down statements reversed and before up statements
     return sqlMigrationObj;
   }
 
@@ -387,15 +390,19 @@ export namespace sqlObjFromMigrationObject {
           thisSql.up.push(`ALTER TABLE "${schemaName}"."${node.oldName}" RENAME TO "${node.name}";`);
         }
       }
-    }
 
-    // create updatbale views for all tables, no matter the action
-    // -> even a column change could result in a view change
-    // create direct access updatable view / on the down run, after the table was created
-    thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
+      // update views on any change
+      if (action.add || action.remove || action.rename  || action.change) {
+        // create updatbale views for all tables, no matter the action
+        // -> even a column change could result in a view change
+        // create direct access updatable view / on the down run, after the table was created
+        thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
                           SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
-    // drop direct access updatable view
-    thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
+        // drop direct access updatable view
+        thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
+      }
+
+    }
 
     // iterate columns
     if (tableDefinition.columns != null) {
@@ -424,36 +431,20 @@ export namespace sqlObjFromMigrationObject {
         const extensionName                 = extension[0];
         const extensionDefinitionWithAction = extension[1];
 
-        // execute extension migration callback if avaialble
+        // execute extension migration callback if available
         if (getTableMigrationExtension(extensionName) != null) {
           getTableMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                    sqlMigrationObj,
                                                     thisSql,
                                                     schemaName,
                                                     tableNameDown,
                                                     tableNameUp);
         }
       });
-
-      // todo move into extensions
-      // versioning for table
-      /*if (tableDefinition.extensions.versioning != null) {
-        createVersioningForTable(thisSql, schemaName, tableNameUp, tableDefinition.versioning);
-      }*/
-
-      // immutability for table
-      if (tableDefinition.extensions.immutable != null) {
-        makeTableImmutable(thisSql, schemaName, tableNameUp, tableDefinition.immutable);
-      }
-
-      // file trigger for table
-      if (tableDefinition.extensions.fileTrigger != null) {
-        createFileTriggerForTable(thisSql, schemaName, tableNameUp, tableDefinition.fileTrigger);
-      }
     }
-
   }
 
-  function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnObject: any) {
+  function createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnDefinition: any) {
 
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.schemas[schemaName].tables[tableName].columns[columnName] =
@@ -461,7 +452,7 @@ export namespace sqlObjFromMigrationObject {
     const thisSql = thisSqlObj.sql;
 
     // node
-    const { action, node } = _splitActionFromNode(columnObject);
+    const { action, node } = _splitActionFromNode(columnDefinition);
 
     const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
 
@@ -535,40 +526,25 @@ export namespace sqlObjFromMigrationObject {
       }
     }
 
-    // add updatedAt trigger
-    if (node.triggerUpdatedAt != null) {
-      const triggerUpdatedAtActionObject  = _splitActionFromNode(node.triggerUpdatedAt);
-      const triggerUpdatedAtAction        = triggerUpdatedAtActionObject.action;
-      const triggerUpdatedAtDef           = triggerUpdatedAtActionObject.node;
-      const triggerName = `table_trigger_updatedat_${schemaName}_${tableName}_${columnName}`;
-
-      // drop trigger for remove and before add (in case it's already there)
-      if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
-        thisSql.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
-      }
-      // create trigger when active
-      if ((triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) && triggerUpdatedAtDef.isActive === true) {
-        thisSql.up.push(`CREATE TRIGGER "${triggerName}"
-          BEFORE UPDATE
-          ON ${tableNameWithSchema}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.triggerUpdateOrCreate("${columnName}");`);
-      }
-    }
-
     // extensions
-    if (node.extensions != null) {
-      // set auth settings
-      if (node.extensions.auth != null) {
-        setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
-      }
+    if (columnDefinition.extensions != null) {
+      const extensions = _splitActionFromNode(columnDefinition.extensions).node;
+      // run through extension definitions
+      Object.entries(extensions).forEach((extension) => {
+        const extensionName = extension[0];
+        const extensionDefinitionWithAction = extension[1];
 
-      // set auth settings
-      if (node.extensions.isFileColumn != null) {
-        setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.isFileColumn);
-      }
+        // execute extension migration callback if available
+        if (getColumnMigrationExtension(extensionName) != null) {
+          getColumnMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                     sqlMigrationObj,
+                                                     thisSql,
+                                                     schemaName,
+                                                     tableName,
+                                                     columnName);
+        }
+      });
     }
-
   }
 
   function createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableName, constraintName, constraintObject) {
@@ -680,167 +656,6 @@ export namespace sqlObjFromMigrationObject {
 
   }
 
-  function setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, authNode?) {
-    // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
-      sql: {
-        up: [],
-        down: []
-      }
-    }).sql;
-
-    const authNodeObj = _splitActionFromNode(authNode);
-    const authNodeAction = authNodeObj.action;
-    const authNodeDefinition = authNodeObj.node;
-
-    // in case of a change, multiple can happen at the same time -> no else if/switch
-    // set username and table information
-    if (authNodeDefinition.isUsername) {
-      if (authNodeAction.remove) {
-        // down
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        // up
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', '${schemaName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${schemaName}';`);
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', '${tableName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${tableName}';`);
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
-    }
-
-    // password
-    if (authNodeDefinition.isPassword) {
-      if (authNodeAction.remove) {
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
-    }
-
-    // tenant
-    if (authNodeDefinition.isTenant) {
-      if (authNodeAction.remove) {
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
-    }
-
-  }
-
-  function setFileColumnSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, fileNode?) {
-    // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
-      sql: {
-        up: [],
-        down: []
-      }
-    }).sql;
-
-    const fileNodeObj = _splitActionFromNode(fileNode);
-    const fileNodeAction = fileNodeObj.action;
-    const fileNodeDefinition = fileNodeObj.node;
-
-    // create entry
-    if (fileNodeDefinition.isActive === true) {
-      if (fileNodeAction.remove) {
-        thisSqlObj.down.push(
-          `DELETE FROM "_meta"."FileColumns" WHERE "schemaName" = '${schemaName}' ` +
-          `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` +
-          `VALUES('${schemaName}', '${tableName}', '${columnName}', '${fileNodeDefinition.types}') ` +
-          `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "types"='${fileNodeDefinition.types}';`);
-      }
-    }
-
-  }
-
-  function makeTableImmutable(tableSql, schemaName, tableName, immutableObjectWithAction) {
-
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
-
-    // create
-    const immutabilityActionObject  = _splitActionFromNode(immutableObjectWithAction);
-    const immutabilityAction        = immutabilityActionObject.action;
-    const immutabilityDef           = immutabilityActionObject.node;
-
-    // drop trigger for remove and before add (in case it's already there)
-    if (immutabilityAction.remove || immutabilityAction.add || immutabilityAction.change) {
-      // drop trigger, keep table and data
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_updatable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_is_not_deletable_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-    }
-
-    // create versioning table and trigger
-    if (immutabilityAction.add || immutabilityAction.change) {
-
-      // create trigger for table: not updatable
-      if (immutabilityDef.isUpdatable === false) { // has to be set EXACTLY to false
-        tableSql.up.push(`CREATE TRIGGER "table_is_not_updatable_${schemaName}_${tableName}"
-          BEFORE UPDATE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.make_table_immutable();`);
-      }
-
-      // create trigger for table: not updatable
-      if (immutabilityDef.isDeletable === false) { // has to be set EXACTLY to false
-        tableSql.up.push(`CREATE TRIGGER "table_is_not_deletable_${schemaName}_${tableName}"
-          BEFORE DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.make_table_immutable();`);
-      }
-    }
-  }
-
-  function createFileTriggerForTable(tableSql, schemaName, tableName, fileTriggerObjectWithAction) {
-
-    const tableNameWithSchemaUp   = `"${schemaName}"."${tableName}"`;
-
-    // create
-    const fileTriggerActionObject  = _splitActionFromNode(fileTriggerObjectWithAction);
-    const fileTriggerAction        = fileTriggerActionObject.action;
-    const fileTriggerDef           = fileTriggerActionObject.node;
-
-    // drop trigger for remove and before add (in case it's already there)
-    if (fileTriggerAction.remove || fileTriggerAction.add || fileTriggerAction.change) {
-      // drop trigger, keep table and data
-      tableSql.up.push(`DROP TRIGGER IF EXISTS "table_file_trigger_${schemaName}_${tableName}" ON ${tableNameWithSchemaUp} CASCADE;`);
-    }
-
-    // create file-trigger
-    if (fileTriggerAction.add || fileTriggerAction.change) {
-
-      // create file-trigger for table
-      if (fileTriggerDef.isActive === true) { // has to be set EXACTLY to true
-        tableSql.up.push(`CREATE TRIGGER "table_file_trigger_${schemaName}_${tableName}"
-          BEFORE UPDATE OR INSERT OR DELETE
-          ON ${tableNameWithSchemaUp}
-          FOR EACH ROW
-          EXECUTE PROCEDURE _meta.file_trigger();`);
-      }
-    }
-  }
-
   function createRelation(sqlMigrationObj, relationName, relationObject: IDbRelation[]) {
     // getSqlFromMigrationObj sql object if it doesn't exist
     const thisSqlObj = sqlMigrationObj.relations[relationName] =
@@ -885,8 +700,8 @@ export namespace sqlObjFromMigrationObject {
         // getSqlFromMigrationObj column for FK // convention: uuid
         if (!ignoreColumnsCreation) {
           if (action.add) {
-            // does not have to be extra created -> will be created IF NOT EXISTS with the realtion itself
-          } else if (action.remove) { // in case of FK recration, no need to remove column (removeConstraintOnly = true)
+            // does not have to be extra created -> will be created IF NOT EXISTS with the relation itself
+          } else if (action.remove) { // in case of FK recreation, no need to remove column (removeConstraintOnly = true)
             // drop or rename column
             if (!renameInsteadOfDrop) {
               thisSql.down.push(

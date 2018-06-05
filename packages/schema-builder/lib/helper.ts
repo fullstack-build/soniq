@@ -3,7 +3,7 @@ import { writeFile } from 'fs';
 import { promisify } from 'util';
 const writeFileAsync = promisify(writeFile);
 
-import { IDbMeta } from './db-schema-builder/pg/IDbMeta';
+import { IDbMeta } from './db-schema-builder/IDbMeta';
 
 export namespace graphQl.helper {
 

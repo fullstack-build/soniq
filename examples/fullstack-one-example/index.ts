@@ -8,15 +8,16 @@ process.on('unhandledRejection', (reason, p) => {
 
 import { Container } from '@fullstack-one/di';
 import { FullstackOneCore } from 'fullstack-one';
+import { GracefulShutdown } from '@fullstack-one/graceful-shutdown';
 import { GraphQl } from '@fullstack-one/graphql';
 import { AutoMigrate } from '@fullstack-one/auto-migrate';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Auth } from '@fullstack-one/auth';
-import { FileStorage } from '@fullstack-one/file-storage'
+import { FileStorage } from '@fullstack-one/file-storage';
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
-// const $gs: GracefulShutdown = Container.get(GracefulShutdown);
+const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 const auth: Auth = Container.get(Auth);
 // const $email: Email = Container.get(Email);
