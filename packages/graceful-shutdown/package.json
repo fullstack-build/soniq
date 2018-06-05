@@ -28,7 +28,7 @@
     "@fullstack-one/logger": "^0.3.12",
     "@fullstack-one/server": "^0.3.12",
     "@godaddy/terminus": "^2.2.0",
-    "signal-exit": "^3.0.2"
+    "async-exit-hook": "^2.0.1"
   },
   "devDependencies": {
     "typescript": "^2.8.3"

@@ -7,7 +7,7 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { Config, IEnvironment } from '@fullstack-one/config';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
-import { DbAppClient } from '@fullstack-one/db';
+import { DbAppClient, PgClient } from '@fullstack-one/db';
 import { IDbMeta } from './IDbMeta';
 import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
@@ -70,7 +70,8 @@ export class DbSchemaBuilder {
   public async initDb(): Promise<void> {
 
     // get DB pgClient from DI container
-    const dbClient = Container.get(DbAppClient).pgClient;
+    const dbAppClient: DbAppClient = Container.get(DbAppClient);
+    const dbClient: PgClient = dbAppClient.pgClient;
 
     // check latest version migrated
     let latestVersion = 0;

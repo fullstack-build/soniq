@@ -8,7 +8,7 @@ import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
 
 // graceful exit
-import * as onExit from 'signal-exit';
+import * as exitHook from 'async-exit-hook';
 import * as terminus from '@godaddy/terminus';
 
 @Service()
@@ -70,31 +70,29 @@ export class GracefulShutdown {
     });
 
     // release resources here before node exits
-    onExit(async (exitCode, signal) => {
+    exitHook(async (callback) => {
 
-      if (signal) {
-        this.logger.info('exiting');
+      this.logger.info('exiting');
 
-        this.logger.info('starting cleanup');
-        this.emit('exiting', this.ENVIRONMENT.nodeId);
-        try {
+      this.logger.info('starting cleanup');
+      this.emit('exiting', this.ENVIRONMENT.nodeId);
+      try {
 
-          // close DB connections - has to by synchronous - no await
-          // try to exit as many as possible
-          this.disconnectDB();
+        // close DB connections - has to by synchronous - no await
+        // try to exit as many as possible
+        await this.disconnectDB();
 
-          this.logger.info('shutting down');
+        this.logger.info('shutting down');
 
-          this.emit('down', this.ENVIRONMENT.nodeId);
-          return true;
-        } catch (err) {
+        this.emit('down', this.ENVIRONMENT.nodeId);
+        // end exitHook
+        return callback();
+      } catch (err) {
 
-          this.logger.warn('Error occurred during clean up attempt', err);
-          this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
-          throw err;
-        }
+        this.logger.warn('Error occurred during clean up attempt', err);
+        this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
+        throw err;
       }
-      return false;
     });
 
   }
