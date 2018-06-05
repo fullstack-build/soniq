@@ -53,16 +53,5 @@ export = [
     expressions: [{
       name: 'Owner',
     }],
-  },
-  {
-    name: 'Admin',
-    type: 'DELETE',
-    gqlTypeName: 'Post',
-    fields: [
-      'id',
-    ],
-    expressions: [{
-      name: 'Owner',
-    }],
-  },
+  }
 ];

@@ -44,12 +44,19 @@ function getInputArgument(inputType) {
     };
 }
 
-export default (viewsEnumName, inputType) => {
+export default (viewsEnumName, inputType, extendArguments) => {
 
-  const args = [
-    getInputArgument(inputType),
-    getViewnamesArgument(viewsEnumName)
+  let args: any = [
+    getInputArgument(inputType)
   ];
+
+  if (viewsEnumName != null) {
+    args.push(getViewnamesArgument(viewsEnumName));
+  }
+
+  if (extendArguments != null) {
+    args = args.concat(extendArguments);
+  }
 
   return args;
 };

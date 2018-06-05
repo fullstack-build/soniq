@@ -2,14 +2,14 @@ import getQueryArguments from './getQueryArguments';
 import getMutationArguments from './getMutationArguments';
 import createSqlQueryInput from './createSqlQueryInput';
 
-function getMutation(name, inputType, viewsEnumName, returnType) {
+function getMutation(name, inputType, viewsEnumName, returnType, extendArguments) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
       value: name,
     },
-    arguments: getMutationArguments(viewsEnumName, inputType),
+    arguments: getMutationArguments(viewsEnumName, inputType, extendArguments),
     type: {
       kind: 'NamedType',
       name: {
@@ -58,7 +58,7 @@ export default (queries, mutations) => {
 
   const mutationFields = [];
   Object.values(mutations).forEach((mutation: any) => {
-    mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.viewsEnumName, mutation.returnType));
+    mutationFields.push(getMutation(mutation.name, mutation.inputType, mutation.viewsEnumName, mutation.returnType, mutation.extendArguments));
   });
 
   const definitions = [];

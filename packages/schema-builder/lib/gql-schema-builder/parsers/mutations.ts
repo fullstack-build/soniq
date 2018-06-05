@@ -4,7 +4,7 @@ export function parseView(ctx) {
   const viewSchemaName = ctx.viewSchemaName;
   const view = ctx.view;
   // Add view to GraphQl graphQlDocument
-  if (view.type === 'CREATE' || view.type === 'UPDATE' || view.type === 'DELETE') {
+  if (ctx.view.mutationIndex == null && (view.type === 'CREATE' || view.type === 'UPDATE' || view.type === 'DELETE')) {
 
     ctx.tableView.kind = 'InputObjectTypeDefinition';
 
@@ -16,7 +16,7 @@ export function parseView(ctx) {
       returnType = 'ID';
     }
 
-    ctx.mutations.push({
+    ctx.view.mutationIndex = ctx.mutations.push({
       name: viewName.toString(),
       type: view.type,
       inputType: viewName,

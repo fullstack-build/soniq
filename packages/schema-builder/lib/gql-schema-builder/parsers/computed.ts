@@ -46,6 +46,8 @@ export function parseField(field, ctx) {
     viewName,
     viewSchemaName: ctx.viewSchemaName,
     currentUserId: () => {
+      ctx.view.authRequired = true;
+      ctx.view.authRequiredByComputedField = true;
       ctx.gQlTypes[gqlTypeName].authViewNames.push(viewName);
       const viewIndex = ctx.gQlTypes[gqlTypeName].noAuthViewNames.indexOf(viewName);
       if (viewIndex >= 0) {

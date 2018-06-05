@@ -9,6 +9,7 @@ import * as viewnamesParser from './viewnames';
 import * as expressionsParser from './expressions';
 import * as mutationsParser from './mutations';
 import * as forbidRootLevelGenericAggregation from './forbidRootLevelGenericAggregation';
+import * as authRequiredForUpdateAndDelete from './authRequiredForUpdateAndDelete';
 
 export const parsers = [
   jsonParser,
@@ -20,5 +21,6 @@ export const parsers = [
   viewnamesParser,
   expressionsParser,
   mutationsParser,
-  forbidRootLevelGenericAggregation
+  forbidRootLevelGenericAggregation,
+  authRequiredForUpdateAndDelete
 ];

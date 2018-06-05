@@ -306,7 +306,7 @@ const GQL_JSON_PARSER = {
         dbMetaNode.type = 'uuid';
         dbMetaNode.defaultValue = {
           isExpression: true,
-          value: 'uuid_generate_v4()'
+          value: '"_meta"."uuid_generate_v4"()' // former uuid_generate_v4()
         };
         // add new PK constraint
         addConstraint('PRIMARY KEY',
