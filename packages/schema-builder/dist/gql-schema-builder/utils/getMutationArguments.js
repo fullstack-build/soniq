@@ -45,10 +45,15 @@ function getInputArgument(inputType) {
         directives: []
     };
 }
-exports.default = (viewsEnumName, inputType) => {
-    const args = [
-        getInputArgument(inputType),
-        getViewnamesArgument(viewsEnumName)
+exports.default = (viewsEnumName, inputType, extendArguments) => {
+    let args = [
+        getInputArgument(inputType)
     ];
+    if (viewsEnumName != null) {
+        args.push(getViewnamesArgument(viewsEnumName));
+    }
+    if (extendArguments != null) {
+        args = args.concat(extendArguments);
+    }
     return args;
 };

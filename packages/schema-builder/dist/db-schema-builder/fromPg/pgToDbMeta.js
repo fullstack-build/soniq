@@ -23,6 +23,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const deepmerge = require("deepmerge");
 const di_1 = require("@fullstack-one/di");
 const db_1 = require("@fullstack-one/db");
+// extended parser
+const queryParser_1 = require("./queryParser");
+var queryParser_2 = require("./queryParser");
+exports.registerQueryParser = queryParser_2.registerQueryParser;
+const triggerParser_1 = require("./triggerParser");
+var triggerParser_2 = require("./triggerParser");
+exports.registerTriggerParser = triggerParser_2.registerTriggerParser;
 // https://www.alberton.info/postgresql_meta_info.html
 let PgToDbMeta = class PgToDbMeta {
     constructor(dbAppClient) {
@@ -40,10 +47,15 @@ let PgToDbMeta = class PgToDbMeta {
             try {
                 // start with schemas
                 yield this.iterateAndAddSchemas();
-                // add auth settings when schemas were found
-                yield this.getAuthSettings();
-                // add FileField settings when schemas were found
-                yield this.getFileFieldSettings();
+                // run extensions parser
+                if (queryParser_1.getQueryParser() != null) {
+                    const parserPromises = [];
+                    Object.values(queryParser_1.getQueryParser()).forEach((parser) => __awaiter(this, void 0, void 0, function* () {
+                        parserPromises.push(parser(this.dbAppClient, this.dbMeta));
+                    }));
+                    // await all parsers to finish their jobs
+                    yield Promise.all(parserPromises);
+                }
                 // return copy instead of ref
                 return deepmerge({}, this.dbMeta);
             }
@@ -154,7 +166,8 @@ let PgToDbMeta = class PgToDbMeta {
                         schemaName,
                         description: null,
                         constraints: {},
-                        columns: {}
+                        columns: {},
+                        extensions: {}
                     };
                 }
                 // iterate tables and add columns - relates on tables existing
@@ -212,7 +225,8 @@ let PgToDbMeta = class PgToDbMeta {
                     const newColumn = {
                         name: columnName,
                         description: null,
-                        type
+                        type,
+                        extensions: {}
                     };
                     // add new column to dbMeta if its not marked as deleted
                     if (columnName.indexOf(this.DELETED_PREFIX) !== 0) {
@@ -221,7 +235,7 @@ let PgToDbMeta = class PgToDbMeta {
                     else {
                         continue;
                     }
-                    // defaut value
+                    // default value
                     if (column.column_default !== null) {
                         const isExpression = (column.column_default.indexOf('::') === -1);
                         const value = (isExpression) ? column.column_default : column.column_default.split('::')[0].replace(/'/g, '');
@@ -372,39 +386,12 @@ let PgToDbMeta = class PgToDbMeta {
                      event_object_schema = $1
                      AND
                      event_object_table = $2;`, [schemaName, tableName]);
+            // TRIGGER EXTENSIONS
             Object.values(rows).forEach((trigger) => {
-                if (trigger.trigger_name.indexOf('create_version') >= 0) {
-                    // versioning active for table
-                    currentTable.versioning = {
-                        isActive: true
-                    };
-                }
-                else if (trigger.trigger_name.includes('table_is_not_updatable')) {
-                    // immutability active for table: non updatable
-                    currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
-                    currentTable.immutable.isUpdatable = false;
-                }
-                else if (trigger.trigger_name.includes('table_is_not_deletable')) {
-                    // immutability active for table: non deletable
-                    currentTable.immutable = currentTable.immutable || {}; // keep potentially existing object
-                    currentTable.immutable.isDeletable = false;
-                }
-                else if (trigger.trigger_name.includes('table_trigger_updatedat')) {
-                    // updatedAt trigger for column
-                    const triggerNameObj = trigger.trigger_name.split('_');
-                    const columnName = triggerNameObj[5];
-                    // only if column exists (trigger could be there without column)
-                    if (currentTable.columns[columnName] != null) {
-                        currentTable.columns[columnName].triggerUpdatedAt = {
-                            isActive: true
-                        };
-                    }
-                }
-                else if (trigger.trigger_name.includes('table_file_trigger')) {
-                    currentTable.fileTrigger = {
-                        isActive: true
-                    };
-                }
+                // execute all registered trigger parser for each trigger
+                Object.values(triggerParser_1.getTriggerParser()).forEach((triggerParser) => {
+                    triggerParser(trigger, this.dbMeta, schemaName, tableName);
+                });
             });
         });
     }
@@ -506,59 +493,6 @@ let PgToDbMeta = class PgToDbMeta {
         this.dbMeta.relations[mtmPayload.name][relationSideName] = newRelation;
         // remove FK column
         delete this.dbMeta.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
-    }
-    // AUTH
-    getAuthSettings() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { rows } = yield this.dbAppClient.pgClient.query(`SELECT * FROM _meta."Auth" WHERE key IN
-        ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`);
-                const authObj = rows.reduce((result, row) => { result[row.key] = row.value; return result; }, {});
-                // get relevant table
-                const thisTable = this.dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
-                // mark table as auth
-                thisTable.isAuth = true;
-                // set username
-                if (authObj.auth_field_username != null) {
-                    thisTable.columns[authObj.auth_field_username].auth = {
-                        isUsername: true
-                    };
-                }
-                // set password
-                if (authObj.auth_field_password != null) {
-                    thisTable.columns[authObj.auth_field_password].auth = {
-                        isPassword: true
-                    };
-                }
-                // set tenant
-                if (authObj.auth_field_tenant != null) {
-                    thisTable.columns[authObj.auth_field_tenant].auth = {
-                        isTenant: true
-                    };
-                }
-            }
-            catch (err) {
-                // ignore error in case settings -> not setted up yet
-            }
-        });
-    }
-    // FileFieldSettings
-    getFileFieldSettings() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { rows } = yield this.dbAppClient.pgClient.query(`SELECT * FROM _meta."FileFields";`);
-                rows.forEach((row) => {
-                    const thisColumn = this.dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
-                    thisColumn.isFileColumn = {
-                        isActive: true,
-                        types: JSON.stringify(row.types)
-                    };
-                });
-            }
-            catch (err) {
-                // ignore error in case settings -> not setted up yet
-            }
-        });
     }
 };
 PgToDbMeta = __decorate([

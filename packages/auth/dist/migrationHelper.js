@@ -1,5 +1,21 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const schema_builder_1 = require("@fullstack-one/schema-builder");
+// helper
+const ACTION_KEY = '$$action$$';
+function _splitActionFromNode(node = {}) {
+    return schema_builder_1.splitActionFromNode(ACTION_KEY, node);
+}
+// GQl AST
+// add directive parser
 function setDirectiveParser(registerDirectiveParser) {
     // Auth directives
     registerDirectiveParser('auth', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
@@ -31,10 +47,10 @@ function setDirectiveParser(registerDirectiveParser) {
             // check if other tables were marked already
             // collect all tables from all schemas
             const allTables = Object.values(refDbMeta.schemas).reduce((result, schema) => [...result, ...Object.values(schema.tables)], []);
-            const markedAuthTables = allTables.filter(table => table.isAuth);
+            const markedAuthTables = allTables.filter(table => table.extensions.isAuth);
             if (markedAuthTables.length === 0) {
                 // set table to auth
-                refDbMetaCurrentTable.isAuth = true;
+                refDbMetaCurrentTable.extensions.isAuth = true;
             }
             else { // other table was marked already
                 process.stderr.write('GraphQL.parser.error.table.auth.multiple.tables: ' +
@@ -43,16 +59,16 @@ function setDirectiveParser(registerDirectiveParser) {
         }
         else { // mark field
             // only possible on tables that were marked as auth
-            if (refDbMetaCurrentTable.isAuth) {
+            if (refDbMetaCurrentTable.extensions.isAuth) {
                 // only one attribute per field is possible
-                if (dbMetaNode.auth == null) {
+                if (dbMetaNode.extensions.auth == null) {
                     // add marked different types
                     switch (directiveKindLowerCase) {
                         case 'tenant':
                             // check if other columns were already marked same marker
-                            const columnMarkedTenant = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.auth && column.auth.isTenant));
+                            const columnMarkedTenant = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isTenant));
                             if (columnMarkedTenant.length === 0) {
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isTenant: true
                                 };
                             }
@@ -63,9 +79,9 @@ function setDirectiveParser(registerDirectiveParser) {
                             break;
                         case 'username':
                             // check if other columns were already marked same marker
-                            const columnMarkedUsername = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.auth && column.auth.isUsername));
+                            const columnMarkedUsername = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isUsername));
                             if (columnMarkedUsername.length === 0) {
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isUsername: true
                                 };
                             }
@@ -76,10 +92,10 @@ function setDirectiveParser(registerDirectiveParser) {
                             break;
                         case 'password':
                             // check if other columns were already marked same marker
-                            const columnMarkedPassword = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.auth && column.auth.isPassword));
+                            const columnMarkedPassword = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isPassword));
                             if (columnMarkedPassword.length === 0) {
                                 // mark as password
-                                dbMetaNode.auth = {
+                                dbMetaNode.extensions.auth = {
                                     isPassword: true
                                 };
                                 // set type to json
@@ -105,3 +121,89 @@ function setDirectiveParser(registerDirectiveParser) {
     }
 }
 exports.setDirectiveParser = setDirectiveParser;
+// query parser
+schema_builder_1.registerQueryParser((dbClient, dbMeta) => __awaiter(this, void 0, void 0, function* () {
+    try {
+        const { rows } = yield dbClient.pgClient.query(`SELECT * FROM _meta."Auth" WHERE key IN
+        ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`);
+        const authObj = rows.reduce((result, row) => { result[row.key] = row.value; return result; }, {});
+        // get relevant table
+        const thisTable = dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
+        // mark table as auth
+        thisTable.extensions.isAuth = true;
+        // set username
+        if (authObj.auth_field_username != null) {
+            thisTable.columns[authObj.auth_field_username].extensions.auth = {
+                isUsername: true
+            };
+        }
+        // set password
+        if (authObj.auth_field_password != null) {
+            thisTable.columns[authObj.auth_field_password].extensions.auth = {
+                isPassword: true
+            };
+        }
+        // set tenant
+        if (authObj.auth_field_tenant != null) {
+            thisTable.columns[authObj.auth_field_tenant].extensions.auth = {
+                isTenant: true
+            };
+        }
+    }
+    catch (err) {
+        // ignore error in case settings -> not set up yet
+    }
+}));
+// Migration SQL
+// column
+schema_builder_1.registerColumnMigrationExtension('auth', (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableName, columnName) => {
+    // create CRUD section, set ref and keep ref for later
+    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
+        sql: {
+            up: [],
+            down: []
+        }
+    }).sql;
+    const authNodeObj = _splitActionFromNode(extensionDefinitionWithAction);
+    const authNodeAction = authNodeObj.action;
+    const authNodeDefinition = authNodeObj.node;
+    // in case of a change, multiple can happen at the same time -> no else if/switch
+    // set username and table information
+    if (authNodeDefinition.isUsername) {
+        if (authNodeAction.remove) {
+            // down
+            thisSqlObj.down.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+            thisSqlObj.down.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+            thisSqlObj.down.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+        }
+        else {
+            // up
+            thisSqlObj.up.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', '${schemaName}') ` +
+                `ON CONFLICT ("key") DO UPDATE SET "value"='${schemaName}';`);
+            thisSqlObj.up.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', '${tableName}') ` +
+                `ON CONFLICT ("key") DO UPDATE SET "value"='${tableName}';`);
+            thisSqlObj.up.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', '${columnName}') ` +
+                `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+        }
+    }
+    // password
+    if (authNodeDefinition.isPassword) {
+        if (authNodeAction.remove) {
+            thisSqlObj.down.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+        }
+        else {
+            thisSqlObj.up.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', '${columnName}') ` +
+                `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+        }
+    }
+    // tenant
+    if (authNodeDefinition.isTenant) {
+        if (authNodeAction.remove) {
+            thisSqlObj.down.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
+        }
+        else {
+            thisSqlObj.up.push(`INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', '${columnName}') ` +
+                `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
+        }
+    }
+});

@@ -9,6 +9,8 @@ const defaultParser = require("./default");
 const viewnamesParser = require("./viewnames");
 const expressionsParser = require("./expressions");
 const mutationsParser = require("./mutations");
+const forbidRootLevelGenericAggregation = require("./forbidRootLevelGenericAggregation");
+const authRequiredForUpdateAndDelete = require("./authRequiredForUpdateAndDelete");
 exports.parsers = [
     jsonParser,
     idParser,
@@ -18,5 +20,7 @@ exports.parsers = [
     defaultParser,
     viewnamesParser,
     expressionsParser,
-    mutationsParser
+    mutationsParser,
+    forbidRootLevelGenericAggregation,
+    authRequiredForUpdateAndDelete
 ];

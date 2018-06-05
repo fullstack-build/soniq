@@ -28,7 +28,7 @@ const db_1 = require("@fullstack-one/db");
 const server_1 = require("@fullstack-one/server");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 // graceful exit
-const onExit = require("signal-exit");
+const exitHook = require("async-exit-hook");
 const terminus = require("@godaddy/terminus");
 let GracefulShutdown = class GracefulShutdown {
     constructor(eventEmitter, loggerFactory, bootLoader, dbAppClient, dbPoolObj, config) {
@@ -69,26 +69,24 @@ let GracefulShutdown = class GracefulShutdown {
             logger: this.logger.info
         });
         // release resources here before node exits
-        onExit((exitCode, signal) => __awaiter(this, void 0, void 0, function* () {
-            if (signal) {
-                this.logger.info('exiting');
-                this.logger.info('starting cleanup');
-                this.emit('exiting', this.ENVIRONMENT.nodeId);
-                try {
-                    // close DB connections - has to by synchronous - no await
-                    // try to exit as many as possible
-                    this.disconnectDB();
-                    this.logger.info('shutting down');
-                    this.emit('down', this.ENVIRONMENT.nodeId);
-                    return true;
-                }
-                catch (err) {
-                    this.logger.warn('Error occurred during clean up attempt', err);
-                    this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
-                    throw err;
-                }
+        exitHook((callback) => __awaiter(this, void 0, void 0, function* () {
+            this.logger.info('exiting');
+            this.logger.info('starting cleanup');
+            this.emit('exiting', this.ENVIRONMENT.nodeId);
+            try {
+                // close DB connections - has to by synchronous - no await
+                // try to exit as many as possible
+                yield this.disconnectDB();
+                this.logger.info('shutting down');
+                this.emit('down', this.ENVIRONMENT.nodeId);
+                // end exitHook
+                return callback();
             }
-            return false;
+            catch (err) {
+                this.logger.warn('Error occurred during clean up attempt', err);
+                this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
+                throw err;
+            }
         }));
     }
     emit(eventName, ...args) {

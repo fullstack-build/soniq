@@ -43,7 +43,8 @@ let GraphQl = class GraphQl {
         this.customFields = {};
         this.hooks = {
             preQuery: [],
-            postMutation: []
+            postMutation: [],
+            preMutationCommit: []
         };
         // register package config
         config.addConfigFolder(__dirname + '/../config');
@@ -57,6 +58,7 @@ let GraphQl = class GraphQl {
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     addPreQueryHook(fn) {
+        this.logger.warn(`Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.`);
         this.hooks.preQuery.push(fn);
     }
     addHook(name, fn) {

@@ -37,8 +37,10 @@ const passport = require("koa-passport");
 const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
 const koaSession = require("koa-session");
+const koaCors = require("@koa/cors");
 const oAuthCallback_1 = require("./oAuthCallback");
 const migrationHelper_1 = require("./migrationHelper");
+const authParser = require("./parser");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 const fs = require("fs");
 const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
@@ -46,6 +48,13 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 __export(require("./signHelper"));
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
+        this.dbData = {
+            schema: null,
+            table: null,
+            username: null,
+            password: null,
+            tenant: null
+        };
         // register package config
         config.addConfigFolder(__dirname + '/../config');
         this.logger = loggerFactory.create('Auth');
@@ -56,20 +65,23 @@ let Auth = class Auth {
         this.schemaBuilder = schemaBuilder;
         this.authConfig = config.getConfig('auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
-        this.notificationFunction = (user, caller, meta) => __awaiter(this, void 0, void 0, function* () {
+        this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('No notification function has been defined.');
         });
         graphQl.addHook('preQuery', this.preQueryHook.bind(this));
+        graphQl.addHook('preMutationCommit', this.preMutationCommitHook.bind(this));
         this.addMiddleware();
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
         this.schemaBuilder.extendSchema(schema);
+        this.schemaBuilder.addParser(authParser);
         this.graphQl.addResolvers(this.getResolvers());
         // add migration path
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // register directive parser
         // require('./migrationHelper');
-        migrationHelper_1.setDirectiveParser(this.schemaBuilder.registerDirectiveParser());
+        // register Auth migration directive parser
+        migrationHelper_1.setDirectiveParser(schema_builder_1.registerDirectiveParser);
         // this.linkPassport();
     }
     setNotificationFunction(notificationFunction) {
@@ -83,7 +95,7 @@ let Auth = class Auth {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             try {
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
-                yield client.query('SELECT _meta.set_user_token($1, $2, $3, $4)', values);
+                yield client.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
                 return true;
             }
             catch (err) {
@@ -92,81 +104,93 @@ let Auth = class Auth {
             }
         });
     }
-    loginOrRegister(username, tenant, provider, password, userIdentifier) {
+    setAdmin(client) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (provider === 'local') {
-                throw new Error('This method is not allowed for local provider.');
-            }
-            let lData;
             try {
-                lData = yield this.login(username, tenant, provider, password, userIdentifier);
-                return lData;
-                // tslint:disable-next-line:no-empty
-            }
-            catch (err) { }
-            try {
-                lData = yield this.register(username, tenant, null);
-                yield this.setPassword(lData.accessToken, provider, password, userIdentifier);
-                lData = yield this.login(username, tenant, provider, password, userIdentifier);
-                return lData;
+                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}';`);
+                return client;
             }
             catch (err) {
-                this.logger.warn('loginOrRegister.error', err);
-                throw new Error('User does exist or password is invalid.');
+                this.logger.warn('setAdmin.error', err);
+                throw err;
             }
         });
     }
-    register(username, tenant, meta) {
+    unsetAdmin(client) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
             try {
-                // Begin transaction
-                yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
-                const result = yield client.query('SELECT _meta.register_user($1, $2) AS payload', [username, tenant]);
+                yield client.query(`RESET auth.admin_token;`);
+                return client;
+            }
+            catch (err) {
+                this.logger.warn('unsetAdmin.error', err);
+                throw err;
+            }
+        });
+    }
+    initializeUser(client, userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield this.setAdmin(client);
+                const result = yield client.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
+                yield this.unsetAdmin(client);
                 const payload = result.rows[0].payload;
                 const user = {
                     userId: payload.userId,
                     payload,
-                    username,
-                    tenant,
                     accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
-                yield this.notificationFunction(user, 'REGISTER', meta);
-                yield client.query('COMMIT');
-                return true;
+                return user;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
-                this.logger.warn('register.error', err);
+                this.logger.warn('initializeUser.error', err);
                 throw err;
-            }
-            finally {
-                // Release pgClient to pool
-                client.release();
             }
         });
     }
-    login(username, tenant, provider, password, userIdentifier) {
+    login(username, tenant, password, authToken, clientIdentifier) {
         return __awaiter(this, void 0, void 0, function* () {
+            let authTokenPayload = {};
+            let provider = 'local';
+            if (authToken != null) {
+                try {
+                    authTokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.authToken, authToken);
+                    provider = authTokenPayload.providerName;
+                }
+                catch (err) {
+                    throw new Error('Failed to verify auth-token.');
+                }
+            }
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const metaResult = yield client.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
                 const data = metaResult.rows[0].data;
-                const uid = userIdentifier || data.userId;
+                let uid = data.userId;
+                let pw = password;
+                if (authToken != null) {
+                    uid = authTokenPayload.profileId;
+                    pw = authTokenPayload.providerName;
+                }
                 const providerSignature = signHelper_1.getProviderSignature(this.authConfig.secrets.admin, provider, uid);
-                const pwData = yield crypto_1.hashByMeta(password + providerSignature, data.pwMeta);
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
-                const loginResult = yield client.query('SELECT _meta.login($1, $2, $3) AS payload', [data.userId, provider, pwData.hash]);
+                const pwData = yield crypto_1.hashByMeta(pw + providerSignature, data.pwMeta);
+                yield this.setAdmin(client);
+                const loginResult = yield client.query('SELECT _meta.login($1, $2, $3, $4) AS payload', [data.userId, provider, pwData.hash, clientIdentifier]);
                 const payload = loginResult.rows[0].payload;
                 const ret = {
                     userId: data.userId,
                     payload,
-                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
+                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds),
+                    refreshToken: null
                 };
+                if (payload.refreshToken != null) {
+                    const refreshTokenPayload = {
+                        token: payload.refreshToken
+                    };
+                    ret.refreshToken = signHelper_1.signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, payload.userTokenMaxAgeInSeconds);
+                }
                 yield client.query('COMMIT');
                 return ret;
             }
@@ -181,18 +205,70 @@ let Auth = class Auth {
             }
         });
     }
-    setPassword(accessToken, provider, password, userIdentifier) {
+    refreshUserToken(accessToken, refreshTokenJwt, clientIdentifier) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
+            const refreshToken = signHelper_1.verifyJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenJwt).token;
+            const client = yield this.dbGeneralPool.pgPool.connect();
+            try {
+                // Begin transaction
+                yield client.query('BEGIN');
+                yield this.setAdmin(client);
+                const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, clientIdentifier, refreshToken];
+                const result = yield client.query('SELECT _meta.refresh_user_token($1, $2, $3, $4, $5, $6) AS payload', values);
+                const newPayload = result.rows[0].payload;
+                const ret = {
+                    userId: newPayload.userId,
+                    payload: newPayload,
+                    accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, newPayload, newPayload.userTokenMaxAgeInSeconds),
+                    refreshToken: null
+                };
+                if (newPayload.refreshToken != null) {
+                    const refreshTokenPayload = {
+                        token: newPayload.refreshToken
+                    };
+                    ret.refreshToken = signHelper_1.signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, newPayload.userTokenMaxAgeInSeconds);
+                }
+                yield client.query('COMMIT');
+                return ret;
+            }
+            catch (err) {
+                yield client.query('ROLLBACK');
+                this.logger.warn('refreshUserToken.error', err);
+                throw err;
+            }
+            finally {
+                // Release pgClient to pool
+                client.release();
+            }
+        });
+    }
+    createSetPasswordValues(accessToken, provider, password, userIdentifier) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const uid = userIdentifier || payload.userId;
             const providerSignature = signHelper_1.getProviderSignature(this.authConfig.secrets.admin, provider, uid);
             const pwData = yield crypto_1.newHash(password + providerSignature, this.sodiumConfig);
+            const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
+            return values;
+        });
+    }
+    setPasswordWithClient(accessToken, provider, password, userIdentifier, client) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const values = yield this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
+            yield this.setAdmin(client);
+            yield client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+            yield this.unsetAdmin(client);
+        });
+    }
+    setPassword(accessToken, provider, password, userIdentifier) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const values = yield this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider, pwData.hash, JSON.stringify(pwData.meta)];
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 yield client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
                 yield client.query('COMMIT');
                 return true;
@@ -214,7 +290,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const result = yield client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
                 const payload = result.rows[0].data;
                 const user = {
@@ -246,7 +322,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider];
                 yield client.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
                 yield client.query('COMMIT');
@@ -263,23 +339,31 @@ let Auth = class Auth {
             }
         });
     }
-    isTokenValid(accessToken, tempSecret = false, tempTime = false) {
+    getTokenMeta(accessToken, tempSecret = false, tempTime = false) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const client = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, tempSecret, tempTime];
                 const result = yield client.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
                 const isValid = result.rows[0].data === true;
+                const ret = {
+                    isValid,
+                    userId: payload.userId,
+                    provider: payload.provider,
+                    timestamp: payload.timestamp,
+                    issuedAt: payload.iat,
+                    expiresAt: payload.exp
+                };
                 yield client.query('COMMIT');
-                return isValid;
+                return ret;
             }
             catch (err) {
                 yield client.query('ROLLBACK');
-                this.logger.warn('isTokenValid.error', err);
+                this.logger.warn('getTokenMeta.error', err);
                 throw err;
             }
             finally {
@@ -295,7 +379,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
                 yield client.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
                 yield client.query('COMMIT');
@@ -319,7 +403,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
                 yield client.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
                 yield client.query('COMMIT');
@@ -385,7 +469,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 const ret = yield callback(client);
                 yield client.query('COMMIT');
                 return ret;
@@ -407,7 +491,7 @@ let Auth = class Auth {
             try {
                 // Begin transaction
                 yield client.query('BEGIN');
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}'`);
+                yield this.setAdmin(client);
                 // run query
                 const result = yield client.query.apply(client, queryArguments);
                 yield client.query('COMMIT');
@@ -471,14 +555,95 @@ let Auth = class Auth {
     /* DB HELPER END */
     addMiddleware() {
         const app = this.server.getApp();
+        // If app.proxy === true koa will respect x-forwarded headers
+        app.proxy = this.authConfig.isServerBehindProxy === true ? true : false;
+        // Prevent CSRF
         app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
-            if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
-                ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
+            ctx.securityContext = {
+                isBrowser: true,
+                isApiClient: false,
+                clientIdentifier: null,
+                sameOriginApproved: {
+                    byReferrer: false,
+                    byOrigin: false,
+                    byHost: false
+                }
+            };
+            // Generate clientIdentifier for refresh-token
+            if (ctx.request.ip != null && ctx.request.headers['user-agent'] != null) {
+                ctx.securityContext.clientIdentifier = crypto_1.sha256(`${ctx.request.ip}_#_${ctx.request.headers['user-agent']}`);
+            }
+            // Check if https is used on production
+            if (process.env.NODE_ENV === 'production') {
+                if (this.authConfig.enforceHttpsOnProduction !== false && ctx.request.protocol !== 'https') {
+                    return ctx.throw(400, 'Unsecure requests are not allowed here. Please use HTTPS.');
+                }
+            }
+            const origin = ctx.request.get('origin');
+            const referrer = ctx.request.get('referrer');
+            const host = ctx.request.get('host');
+            // Validate same origin policy
+            if (ctx.request.origin != null && this.authConfig.validOrigins.includes(ctx.request.origin)) {
+                if (referrer.startsWith(ctx.request.origin + '/') || referrer === ctx.request.origin) {
+                    ctx.securityContext.sameOriginApproved.byReferrer = true;
+                }
+                if (origin === ctx.request.origin) {
+                    ctx.securityContext.sameOriginApproved.byOrigin = true;
+                }
+                if (host === ctx.request.host) {
+                    ctx.securityContext.sameOriginApproved.byHost = true;
+                }
+            }
+            // If the client is no Browser we don't need to worry about cors.
+            if (origin === this.authConfig.apiClientOrigin) {
+                ctx.securityContext.isApiClient = true;
+                ctx.securityContext.isBrowser = false;
+            }
+            if (ctx.securityContext.isBrowser === true) {
+                if (ctx.securityContext.sameOriginApproved.byOrigin === true &&
+                    ctx.securityContext.sameOriginApproved.byReferrer === true &&
+                    ctx.securityContext.sameOriginApproved.byHost === true) {
+                    return next();
+                }
+                if (ctx.request.method === 'GET') {
+                    if (ctx.securityContext.sameOriginApproved.byHost === true) {
+                        return next();
+                    }
+                    if (ctx.securityContext.sameOriginApproved.byOrigin === true &&
+                        ctx.securityContext.sameOriginApproved.byReferrer === true) {
+                        return next();
+                    }
+                }
+            }
+            else {
                 return next();
             }
-            if (ctx.request.header.authorization != null && ctx.request.header.authorization.startsWith('Bearer ')) {
-                ctx.state.accessToken = ctx.request.header.authorization.slice(7);
-                return next();
+            return ctx.throw(400, 'Origin of the request is not allowed.');
+        }));
+        const corsOptions = Object.assign({}, this.authConfig.corsOptions, {
+            origin: (ctx) => {
+                if (process.env.NODE_ENV === 'production') {
+                    return ctx.request.origin;
+                }
+                if (this.authConfig.allowAllCorsOriginsOnDev === true) {
+                    return '*';
+                }
+                return ctx.request.origin;
+            }
+        });
+        app.use(koaCors(corsOptions));
+        // Parse AccessToken
+        app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
+            // Token transfer over auhorization header and query parameter is not allowed for browsers.
+            if (ctx.securityContext.isApiClient === true) {
+                if (this.authConfig.tokenQueryParameter != null && ctx.request.query[this.authConfig.tokenQueryParameter] != null) {
+                    ctx.state.accessToken = ctx.request.query[this.authConfig.tokenQueryParameter];
+                    return next();
+                }
+                if (ctx.request.header.authorization != null && ctx.request.header.authorization.startsWith('Bearer ')) {
+                    ctx.state.accessToken = ctx.request.header.authorization.slice(7);
+                    return next();
+                }
             }
             const accessToken = ctx.cookies.get(this.authConfig.cookie.name, this.authConfig.cookie);
             if (accessToken != null) {
@@ -487,13 +652,39 @@ let Auth = class Auth {
             return next();
         }));
     }
+    findAuthTableAndFields(dbMeta) {
+        Object.keys(dbMeta.schemas).forEach((schemaName) => {
+            const schemaObject = dbMeta.schemas[schemaName];
+            Object.keys(schemaObject.tables).forEach((tableName) => {
+                const tableObject = schemaObject.tables[tableName];
+                if (tableObject.extensions != null && tableObject.extensions.isAuth === true) {
+                    this.dbData.table = tableObject.name;
+                    this.dbData.schema = tableObject.schemaName;
+                    Object.keys(tableObject.columns).forEach((columnName) => {
+                        const columnObject = tableObject.columns[columnName];
+                        if (columnObject.extensions != null && columnObject.extensions.auth != null) {
+                            if (columnObject.extensions.auth.isUsername === true) {
+                                this.dbData.username = columnObject.name;
+                            }
+                            if (columnObject.extensions.auth.isPassword === true) {
+                                this.dbData.password = columnObject.name;
+                            }
+                            if (columnObject.extensions.auth.isTenant === true) {
+                                this.dbData.tenant = columnObject.name;
+                            }
+                        }
+                    });
+                    return;
+                }
+            });
+        });
+    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            const dbMeta = this.schemaBuilder.getDbMeta();
+            this.findAuthTableAndFields(dbMeta);
             const authRouter = new KoaRouter();
             const app = this.server.getApp();
-            authRouter.get('/test', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                ctx.body = 'Hallo';
-            }));
             authRouter.use(koaBody());
             app.keys = [this.authConfig.secrets.cookie];
             authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
@@ -501,6 +692,13 @@ let Auth = class Auth {
             authRouter.get('/auth/oAuthFailure', (ctx) => __awaiter(this, void 0, void 0, function* () {
                 const message = {
                     err: 'ERROR_AUTH',
+                    data: null
+                };
+                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
+            }));
+            authRouter.get('/auth/oAuthFailure/:err', (ctx) => __awaiter(this, void 0, void 0, function* () {
+                const message = {
+                    err: ctx.params.err,
                     data: null
                 };
                 ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
@@ -528,15 +726,42 @@ let Auth = class Auth {
                         if (profile == null || email == null || profile.id == null) {
                             throw new Error('Email or id is missing!');
                         }
-                        const lData = yield this.loginOrRegister(email, provider.tenant || 'default', provider.name, provider.name, profile.id);
-                        cb(null, lData);
+                        const authTokenPayload = {
+                            providerName: provider.name,
+                            profileId: profile.id,
+                            email,
+                            tenant: provider.tenant || 'default',
+                            profile
+                        };
+                        const response = {
+                            authTokenPayload,
+                            authToken: signHelper_1.signJwt(this.authConfig.secrets.authToken, authTokenPayload, this.authConfig.authToken.maxAgeInSeconds)
+                        };
+                        cb(null, response);
                     }
                     catch (err) {
                         this.logger.warn('passport.strategylogin.error', err);
                         cb(err);
                     }
                 })));
-                authRouter.get('/auth/oAuth/' + key, passport.authenticate(provider.name, providerOptions));
+                authRouter.get('/auth/oAuth/' + key, (ctx, next) => {
+                    const { queryParameter } = this.authConfig.privacy;
+                    if (this.authConfig.privacy.active === true) {
+                        let tokenPayload;
+                        if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
+                            this.logger.warn('passport.oAuthFailure.error.missingPrivacyToken');
+                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent(`Missing privacy token query parameter. '${queryParameter}'`));
+                        }
+                        try {
+                            tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.privacyToken, ctx.request.query[queryParameter]);
+                        }
+                        catch (e) {
+                            this.logger.warn('passport.oAuthFailure.error.invalidPrivacyToken');
+                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent('Invalid privacy token.'));
+                        }
+                    }
+                    next();
+                }, passport.authenticate(provider.name, providerOptions));
                 const errorCatcher = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                     try {
                         yield next();
@@ -562,42 +787,139 @@ let Auth = class Auth {
             }
         });
     }
+    preMutationCommitHook(client, hookInfo) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const mutation = hookInfo.mutationQuery.mutation;
+            if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
+                const args = hookInfo.args;
+                const ctx = hookInfo.context.ctx;
+                const { acceptedAtField, acceptedVersionField } = this.authConfig.privacy;
+                const meta = args.meta || null;
+                if (this.authConfig.privacy.active === true) {
+                    let tokenPayload;
+                    if (args.input[acceptedAtField] == null || args.input[acceptedVersionField] == null) {
+                        throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') are required for creating a user.`);
+                    }
+                    if (args.privacyToken == null) {
+                        throw new Error(`Missing privacyToken argument.`);
+                    }
+                    try {
+                        tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.privacyToken, args.privacyToken);
+                    }
+                    catch (e) {
+                        throw new Error('Invalid privacy token.');
+                    }
+                    if (tokenPayload.acceptedAt !== args.input[acceptedAtField] || tokenPayload.acceptedVersion !== args.input[acceptedVersionField]) {
+                        throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') must match the payload of the privacy-token.`);
+                    }
+                }
+                const user = yield this.initializeUser(client, hookInfo.entityId);
+                const notificationContext = {
+                    user,
+                    input: args.input,
+                    tokenPayload: null
+                };
+                if (args.authToken != null) {
+                    let tokenPayload;
+                    try {
+                        tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.authToken, args.authToken);
+                    }
+                    catch (e) {
+                        throw new Error('Failed to verify auth-token.');
+                    }
+                    if (tokenPayload.email !== user.payload.username) {
+                        throw new Error(`The authToken email does not match username.`);
+                    }
+                    notificationContext.tokenPayload = tokenPayload;
+                    // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
+                    yield this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, client);
+                    yield this.notificationFunction('REGISTER_OAUTH', notificationContext);
+                }
+                else {
+                    yield this.notificationFunction('REGISTER', notificationContext);
+                }
+            }
+        });
+    }
+    createPrivacyToken(acceptedVersion) {
+        if (acceptedVersion !== this.authConfig.privacy.versionToApprove) {
+            throw new Error(`The approved version is not version '${this.authConfig.privacy.versionToApprove}'.`);
+        }
+        const currentDate = new Date();
+        const acceptedAt = currentDate.toString();
+        const payload = {
+            acceptedVersion,
+            acceptedAt
+        };
+        const privacyToken = signHelper_1.signJwt(this.authConfig.secrets.privacyToken, payload, this.authConfig.privacy.tokenMaxAgeInSeconds);
+        return {
+            privacyToken,
+            acceptedVersion,
+            acceptedAt
+        };
+    }
     getResolvers() {
         return {
-            '@fullstack-one/auth/register': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                return yield this.register(args.username, args.tenant || 'default', args.meta || null);
-            }),
             '@fullstack-one/auth/login': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                return yield this.login(args.username, args.tenant || 'default', 'local', args.password, null);
+                const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+                const lData = yield this.login(args.username, args.tenant || 'default', args.password, args.authToken, clientIdentifier);
+                if (context.ctx.securityContext.isBrowser === true) {
+                    context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
+                    return {
+                        userId: lData.userId,
+                        refreshToken: lData.refreshToken || null,
+                        sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
+                    };
+                }
+                else {
+                    return Object.assign({}, lData, {
+                        sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
+                    });
+                }
             }),
             '@fullstack-one/auth/forgotPassword': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 return yield this.forgotPassword(args.username, args.tenant || 'default', args.meta || null);
             }),
             '@fullstack-one/auth/setPassword': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                return yield this.setPassword(args.accessToken, 'local', args.password, null);
+                const accessToken = args.accessToken || context.accessToken;
+                return yield this.setPassword(accessToken, 'local', args.password, null);
             }),
-            '@fullstack-one/auth/isUserTokenValid': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                return yield this.isTokenValid(args.accessToken, false, false);
+            '@fullstack-one/auth/getTokenMeta': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                const accessToken = args.accessToken || context.accessToken;
+                const tempToken = args.tempToken || false;
+                const tempTokenExpiration = args.tempTokenExpiration || false;
+                return yield this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
             }),
             '@fullstack-one/auth/invalidateUserToken': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                const accessToken = context.accessToken;
                 context.ctx.cookies.set(this.authConfig.cookie.name, null);
-                return yield this.invalidateUserToken(args.accessToken);
+                return yield this.invalidateUserToken(accessToken);
             }),
             '@fullstack-one/auth/invalidateAllUserTokens': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                const accessToken = context.accessToken;
                 context.ctx.cookies.set(this.authConfig.cookie.name, null);
-                return yield this.invalidateAllUserTokens(args.accessToken);
+                return yield this.invalidateAllUserTokens(accessToken);
             }),
-            '@fullstack-one/auth/setCookie': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                const tokenValid = yield this.isTokenValid(args.accessToken, false, false);
-                if (tokenValid === true) {
-                    context.ctx.cookies.set(this.authConfig.cookie.name, args.accessToken, this.authConfig.cookie);
-                    return true;
+            '@fullstack-one/auth/refreshUserToken': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+                const accessToken = context.accessToken;
+                const lData = yield this.refreshUserToken(accessToken, args.refreshToken, clientIdentifier);
+                if (context.ctx.securityContext.isBrowser === true) {
+                    context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
+                    return {
+                        userId: lData.userId,
+                        refreshToken: lData.refreshToken || null,
+                        sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
+                    };
                 }
-                throw new Error(`Could not set token into the cookie. Maybe it's invalid or expired.`);
+                else {
+                    return Object.assign({}, lData, {
+                        sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
+                    });
+                }
             }),
-            '@fullstack-one/auth/deleteCookie': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                context.ctx.cookies.set(this.authConfig.cookie.name, null);
-                return true;
+            '@fullstack-one/auth/createPrivacyToken': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+                return this.createPrivacyToken(args.acceptedVersion);
             })
         };
     }

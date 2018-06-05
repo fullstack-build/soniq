@@ -1,9 +1,15 @@
-import { IViews, IExpressions } from './gql-schema-builder/interfaces';
-import { IDbMeta, IDbRelation } from './db-schema-builder/pg/IDbMeta';
 import { DbSchemaBuilder } from './db-schema-builder';
 export { IViews, IExpressions, IDbMeta, IDbRelation };
 import * as utils from './gql-schema-builder/utils';
 export { utils };
+import { IViews, IExpressions } from './gql-schema-builder/interfaces';
+import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
+export { splitActionFromNode } from './db-schema-builder/helper';
+export { createConstraint } from './db-schema-builder/fromGQl/gQlAstToDbMetaHelper';
+export { registerDirectiveParser } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
+export { registerQueryParser } from './db-schema-builder/fromPg/pgToDbMeta';
+export { registerTriggerParser } from './db-schema-builder/fromPg/pgToDbMeta';
+export { registerColumnMigrationExtension, registerTableMigrationExtension } from './db-schema-builder/toPg/createSqlObjFromMigrationObject';
 export declare class SchemaBuilder {
     private graphQlConfig;
     private gQlSdl;
@@ -25,7 +31,6 @@ export declare class SchemaBuilder {
     private ENVIRONMENT;
     constructor(loggerFactory?: any, config?: any, bootLoader?: any, dbSchemaBuilder?: any, pgToDbMeta?: any);
     getDbSchemaBuilder(): DbSchemaBuilder;
-    getRegisterDirectiveParser(): any;
     getPgDbMeta(): Promise<IDbMeta>;
     addParser(parser: any): void;
     getDbMeta(): any;
