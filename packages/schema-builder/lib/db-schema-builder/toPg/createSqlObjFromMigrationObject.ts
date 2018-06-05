@@ -434,7 +434,6 @@ export namespace sqlObjFromMigrationObject {
         }
       });
 
-
       // todo move into extensions
       // versioning for table
       /*if (tableDefinition.extensions.versioning != null) {
