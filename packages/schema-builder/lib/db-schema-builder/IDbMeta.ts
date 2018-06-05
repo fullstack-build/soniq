@@ -38,7 +38,6 @@ export interface IDbMeta {
             [name: string]: {
               name: string;
               type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK';
-              customType?: string
               columns?: [string];
               options?: [any];
             }

@@ -1,5 +1,6 @@
 import { IDbMeta,
   registerDirectiveParser,
+  registerQueryParser,
   registerTriggerParser,
   registerColumnMigrationExtension,
   registerTableMigrationExtension,
@@ -25,6 +26,25 @@ registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 });
 
 // PG
+// query parser
+registerQueryParser(async (dbClient, dbMeta) => {
+  try {
+    const { rows } = await dbClient.pgClient.query(
+      `SELECT * FROM _meta."FileFields";`
+    );
+
+    rows.forEach((row) => {
+      const thisColumn = dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
+      thisColumn.extensions.isFileColumn = {
+        isActive: true,
+        types: JSON.stringify(row.types)
+      };
+    });
+  } catch (err) {
+    // ignore error in case settings -> not set up yet
+  }
+});
+// trigger parser
 registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => {
   // keep reference to current table
   const currentTable = dbMeta.schemas[schemaName].tables[tableName];
@@ -39,6 +59,7 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
 // Migration SQL
 // table
 registerTableMigrationExtension('fileTrigger', (extensionDefinitionWithAction,
+                                                sqlMigrationObj,
                                                 nodeSqlObj,
                                                 schemaName,
                                                 tableNameDown,

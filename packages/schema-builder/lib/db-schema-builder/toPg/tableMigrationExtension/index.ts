@@ -2,6 +2,7 @@ import { ITableMigrationExtensions } from './ITableMigrationExtensions';
 
 const tableMigrationExtensions: ITableMigrationExtensions = {};
 export function registerTableMigrationExtension(extensionNameInLowerCase: string, fn: (extensionDefinitionWithAction,
+                                                                                       sqlMigrationObj,
                                                                                        nodeSqlObj,
                                                                                        schemaName,
                                                                                        tableNameDown,

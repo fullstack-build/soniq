@@ -5,6 +5,9 @@ import { IDbMeta, IDbRelation } from '../IDbMeta';
 import { DbAppClient } from '@fullstack-one/db';
 
 // extended parser
+import { getQueryParser } from './queryParser';
+export { registerQueryParser } from './queryParser';
+
 import { getTriggerParser } from './triggerParser';
 export { registerTriggerParser } from './triggerParser';
 
@@ -32,11 +35,15 @@ export class PgToDbMeta {
       // start with schemas
       await this.iterateAndAddSchemas();
 
-      // add auth settings when schemas were found
-      await this.getAuthSettings();
-
-      // add FileField settings when schemas were found
-      await this.getFileFieldSettings();
+      // run extensions parser
+      if (getQueryParser() != null) {
+        const parserPromises = [];
+        Object.values(getQueryParser()).forEach(async (parser: (dbClient: DbAppClient, dbMeta: IDbMeta) => void) => {
+          parserPromises.push(parser(this.dbAppClient, this.dbMeta));
+        });
+        // await all parsers to finish their jobs
+        await Promise.all(parserPromises);
+      }
 
       // return copy instead of ref
       return deepmerge({}, this.dbMeta);
@@ -238,7 +245,7 @@ export class PgToDbMeta {
           continue;
         }
 
-        // defaut value
+        // default value
         if (column.column_default !== null) {
           const isExpression = (column.column_default.indexOf('::') === -1);
           const value = (isExpression) ? column.column_default : column.column_default.split('::')[0].replace(/'/g,'');
@@ -540,65 +547,6 @@ export class PgToDbMeta {
 
     // remove FK column
     delete this.dbMeta.schemas[newRelation.schemaName].tables[tableName].columns[columnDescribingRelation.column_name];
-
-  }
-
-  // AUTH
-  private async getAuthSettings(): Promise<void> {
-
-    try {
-      const { rows } = await this.dbAppClient.pgClient.query(
-        `SELECT * FROM _meta."Auth" WHERE key IN
-        ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`
-      );
-      const authObj = rows.reduce((result, row) => {result[row.key] = row.value; return result;}, {});
-
-      // get relevant table
-      const thisTable = this.dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
-      // mark table as auth
-      thisTable.extensions.isAuth = true;
-      // set username
-      if (authObj.auth_field_username != null) {
-        thisTable.columns[authObj.auth_field_username].extensions.auth = {
-          isUsername: true
-        };
-      }
-      // set password
-      if (authObj.auth_field_password != null) {
-        thisTable.columns[authObj.auth_field_password].extensions.auth = {
-          isPassword: true
-        };
-      }
-      // set tenant
-      if (authObj.auth_field_tenant != null) {
-        thisTable.columns[authObj.auth_field_tenant].extensions.auth = {
-          isTenant: true
-        };
-      }
-
-    } catch (err) {
-      // ignore error in case settings -> not set up yet
-    }
-
-  }
-
-  // FileFieldSettings
-  private async getFileFieldSettings(): Promise<void> {
-    try {
-      const { rows } = await this.dbAppClient.pgClient.query(
-        `SELECT * FROM _meta."FileFields";`
-      );
-
-      rows.forEach((row) => {
-        const thisColumn = this.dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
-        thisColumn.extensions.isFileColumn = {
-          isActive: true,
-          types: JSON.stringify(row.types)
-        };
-      });
-    } catch (err) {
-      // ignore error in case settings -> not set up yet
-    }
 
   }
 

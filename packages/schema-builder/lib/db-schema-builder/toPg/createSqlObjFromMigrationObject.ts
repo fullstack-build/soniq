@@ -1,4 +1,3 @@
-
 import * as helper from '../helper';
 import { IMigrationSqlObj, IAction } from '../IMigrationSqlObj';
 import { LoggerFactory, ILogger } from '@fullstack-one/logger';
@@ -250,7 +249,7 @@ export namespace sqlObjFromMigrationObject {
       });
     }
 
-    // return down statemens reversed and before up statements
+    // return down statements reversed and before up statements
     return sqlMigrationObj;
   }
 
@@ -435,6 +434,7 @@ export namespace sqlObjFromMigrationObject {
         // execute extension migration callback if available
         if (getTableMigrationExtension(extensionName) != null) {
           getTableMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                    sqlMigrationObj,
                                                     thisSql,
                                                     schemaName,
                                                     tableNameDown,
@@ -537,6 +537,7 @@ export namespace sqlObjFromMigrationObject {
         // execute extension migration callback if available
         if (getColumnMigrationExtension(extensionName) != null) {
           getColumnMigrationExtension(extensionName)(extensionDefinitionWithAction,
+                                                     sqlMigrationObj,
                                                      thisSql,
                                                      schemaName,
                                                      tableName,
@@ -544,17 +545,6 @@ export namespace sqlObjFromMigrationObject {
         }
       });
     }
-
-    // todo move into extensions
-    // extensions
-    if (node.extensions != null) {
-
-      // set auth settings
-      if (node.extensions.auth != null) {
-        setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName, node.auth);
-      }
-    }
-
   }
 
   function createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableName, constraintName, constraintObject) {
@@ -662,70 +652,6 @@ export namespace sqlObjFromMigrationObject {
           // check does not have to be renamed
         }
         break;
-    }
-
-  }
-
-  function setAuthSettingsSql(sqlMigrationObj, schemaName, tableName, columnName?, authNode?) {
-    // create, set ref and keek ref for later
-    const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
-      sql: {
-        up: [],
-        down: []
-      }
-    }).sql;
-
-    const authNodeObj = _splitActionFromNode(authNode);
-    const authNodeAction = authNodeObj.action;
-    const authNodeDefinition = authNodeObj.node;
-
-    // in case of a change, multiple can happen at the same time -> no else if/switch
-    // set username and table information
-    if (authNodeDefinition.isUsername) {
-      if (authNodeAction.remove) {
-        // down
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        // up
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table_schema', '${schemaName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${schemaName}';`);
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_table', '${tableName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${tableName}';`);
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_username', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
-    }
-
-    // password
-    if (authNodeDefinition.isPassword) {
-      if (authNodeAction.remove) {
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_password', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
-    }
-
-    // tenant
-    if (authNodeDefinition.isTenant) {
-      if (authNodeAction.remove) {
-        thisSqlObj.down.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', NULL) ON CONFLICT ("key") DO UPDATE SET "value"=NULL;`);
-      } else {
-        thisSqlObj.up.push(
-          `INSERT INTO _meta."Auth" ("key", "value") VALUES('auth_field_tenant', '${columnName}') ` +
-          `ON CONFLICT ("key") DO UPDATE SET "value"='${columnName}';`);
-      }
     }
 
   }

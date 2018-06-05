@@ -50,6 +50,7 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
 
 // Migration SQL
 registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitionWithAction,
+                                                      sqlMigrationObj,
                                                       nodeSqlObj,
                                                       schemaName,
                                                       tableName,

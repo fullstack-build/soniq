@@ -13,9 +13,6 @@ import { migrationObject } from './migrationObject';
 import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { sqlObjFromMigrationObject } from './toPg/createSqlObjFromMigrationObject';
 
-export { createConstraint } from './fromGQl/gQlAstToDbMetaHelper';
-export { registerDirectiveParser } from './fromGQl/directiveParser';
-
 @Service()
 export class DbSchemaBuilder {
 
@@ -204,10 +201,8 @@ export class DbSchemaBuilder {
     this.toDbMeta = _.cloneDeep(toDbMeta);
     // remove views and exposed names
     delete toDbMeta.exposedNames;
-    // remove graphql // todo graphql from config
-    delete toDbMeta.schemas.graphql;
 
-    // getSqlFromMigrationObj diff with actions
+    // create migration object with actions based on two DbMeta objects
     this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
 
     return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);

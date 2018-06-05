@@ -29,6 +29,7 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
 
 // Migration SQL
 registerTableMigrationExtension('versioning', (extensionDefinitionWithAction,
+                                               sqlMigrationObj,
                                                nodeSqlObj,
                                                schemaName,
                                                tableNameDown,

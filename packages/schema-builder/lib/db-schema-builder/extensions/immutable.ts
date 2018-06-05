@@ -40,6 +40,7 @@ registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableN
 
 // Migration SQL
 registerTableMigrationExtension('immutable', (extensionDefinitionWithAction,
+                                              sqlMigrationObj,
                                               nodeSqlObj,
                                               schemaName,
                                               tableNameDown,

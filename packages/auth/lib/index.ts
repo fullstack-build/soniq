@@ -2,7 +2,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
-import { SchemaBuilder } from '@fullstack-one/schema-builder';
+import { registerDirectiveParser, SchemaBuilder } from '@fullstack-one/schema-builder';
 import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
@@ -95,7 +95,7 @@ export class Auth {
     // require('./migrationHelper');
 
     // register Auth migration directive parser
-    setDirectiveParser(this.schemaBuilder.registerDirectiveParser);
+    setDirectiveParser(registerDirectiveParser);
 
     // this.linkPassport();
   }
