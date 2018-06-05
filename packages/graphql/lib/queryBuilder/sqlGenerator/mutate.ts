@@ -24,10 +24,10 @@ function resolveCreateMutation(query, mutation) {
   }).join(', ');
 
   // Build insert query
-  return { sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${f}) VALUES (${v}) RETURNING id`,
+  return { sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${f}) VALUES (${v});`,
     values,
     mutation,
-    id: query.args.input.id
+    id: query.args.input.id || null
   };
 }
 
@@ -60,7 +60,7 @@ function resolveUpdateMutation(query, mutation) {
   values.push(entityId);
 
   // Build update by id query
-  return { sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length} RETURNING id`,
+  return { sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${setFields.join(', ')} WHERE id = $${values.length};`,
     values,
     mutation,
     id: query.args.input.id
@@ -69,7 +69,7 @@ function resolveUpdateMutation(query, mutation) {
 
 function resolveDeleteMutation(query, mutation) {
   // Build delete by id query
-  return { sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1 RETURNING id`,
+  return { sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
     values: [query.args.input.id],
     mutation,
     id: query.args.input.id

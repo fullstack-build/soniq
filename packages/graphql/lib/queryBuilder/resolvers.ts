@@ -97,28 +97,29 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           logger.trace('mutationResolver.run', mutationQuery.sql, mutationQuery.values);
 
           // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
-          const { rows } = await client.query(mutationQuery.sql, mutationQuery.values);
+          const result = await client.query(mutationQuery.sql, mutationQuery.values);
+          const { rows } = result;
 
-          if (rows.length < 1) {
+          if (result.rowCount < 1) {
             throw new Error('No rows affected by this mutation. Either the entity does not exist or you are not permitted.');
           }
 
           let returnQuery;
           let returnData;
-          let entityId;
+          let entityId = mutationQuery.id || null;
           let match;
 
-          // When mutationType is DELETE just return the id. Otherwise query for the new data.
-          if (mutationQuery.mutation.type === 'DELETE') {
-            entityId = rows[0].id;
+          if (entityId == null && mutationQuery.mutation.type === 'CREATE') {
+            const idResult = await client.query(`SELECT "_meta"."get_last_generated_uuid"() AS "id";`);
+            entityId = idResult.rows[0].id;
+          }
+
+          // Check if this mutations returnType is ID
+          // e.g. When mutationType is DELETE just return the id. Otherwise query for the new data.
+          // e.g. When this is a user-creation the creator has no access to his own user before login.
+          if (mutationQuery.mutation.returnType === 'ID') {
             returnData = entityId;
           } else {
-            entityId = mutationQuery.id;
-
-            if (mutationQuery.mutation.type === 'CREATE') {
-              entityId = rows[0].id;
-            }
-
             // Create a match to search for the new created or updated entity
             match = {
               type: 'SIMPLE',

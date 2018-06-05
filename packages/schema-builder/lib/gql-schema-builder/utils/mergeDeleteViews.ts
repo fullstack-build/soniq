@@ -1,4 +1,8 @@
 
+function getViewName(view) {
+  return view.type.toLocaleLowerCase() + '_' + view.gqlTypeName + '_' + view.name;
+}
+
 export default (views) => {
   const newPermissions = [];
   const deleteExpressionsByTableName: any = {};
@@ -8,9 +12,11 @@ export default (views) => {
       if (deleteExpressionsByTableName[view.table] == null) {
         deleteExpressionsByTableName[view.table] = {
           gqlTypeName: view.gqlTypeName,
-          expressions: {}
+          expressions: {},
+          originalNames: []
         };
       }
+      deleteExpressionsByTableName[view.table].originalNames.push(getViewName(view));
       Object.values(view.expressions).forEach((expression) => {
         const key = JSON.stringify(expression);
         deleteExpressionsByTableName[view.table].expressions[key] = expression;
@@ -26,7 +32,8 @@ export default (views) => {
       type: 'DELETE',
       gqlTypeName: value.gqlTypeName,
       fields: ['id'],
-      expressions: []
+      expressions: [],
+      originalNames: value.originalNames
     };
 
     Object.values(value.expressions).forEach((expression) => {

@@ -17,6 +17,7 @@ import * as koaSession from 'koa-session';
 import * as koaCors from '@koa/cors';
 import oAuthCallback from './oAuthCallback';
 import { setDirectiveParser } from './migrationHelper';
+import * as authParser from './parser';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
 import * as fs from 'fs';
@@ -85,6 +86,8 @@ export class Auth {
     bootLoader.addBootFunction(this.boot.bind(this));
 
     this.schemaBuilder.extendSchema(schema);
+
+    this.schemaBuilder.addParser(authParser);
 
     this.graphQl.addResolvers(this.getResolvers());
 
@@ -641,10 +644,6 @@ export class Auth {
         if (this.authConfig.enforceHttpsOnProduction !== false && ctx.request.protocol !== 'https') {
           return ctx.throw(400, 'Unsecure requests are not allowed here. Please use HTTPS.');
         }
-      } else {
-        if (this.authConfig.allowAllCorsOriginsOnDev === true) {
-          return next();
-        }
       }
 
       const origin = ctx.request.get('origin');
@@ -888,19 +887,19 @@ export class Auth {
     if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
       const args = hookInfo.args;
       const ctx = hookInfo.context.ctx;
-      const { acceptedAtField, acceptedVersionField, headerName } = this.authConfig.privacy;
-      const meta = ctx.request.header[this.authConfig.metaHeaderName.toLowerCase()] || null;
+      const { acceptedAtField, acceptedVersionField } = this.authConfig.privacy;
+      const meta = args.meta || null;
 
       if (this.authConfig.privacy.active === true) {
         let tokenPayload;
         if (args.input[acceptedAtField] == null || args.input[acceptedVersionField] == null) {
           throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') are required for creating a user.`);
         }
-        if (ctx.request.header[headerName.toLowerCase()] == null) {
-          throw new Error(`Missing privacy token header. '${headerName}'`);
+        if (args.privacyToken == null) {
+          throw new Error(`Missing privacyToken argument.`);
         }
         try {
-          tokenPayload = verifyJwt(this.authConfig.secrets.privacyToken, ctx.request.header[headerName.toLowerCase()]);
+          tokenPayload = verifyJwt(this.authConfig.secrets.privacyToken, args.privacyToken);
         } catch (e) {
           throw new Error('Invalid privacy token.');
         }
@@ -908,8 +907,6 @@ export class Auth {
           throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') must match the payload of the privacy-token.`);
         }
       }
-
-      const authTokenHeaderName = this.authConfig.authToken.headerName.toLowerCase();
 
       const user = await this.initializeUser(client, hookInfo.entityId);
 
@@ -919,11 +916,11 @@ export class Auth {
         tokenPayload: null
       };
 
-      if (ctx.request.header[authTokenHeaderName] != null) {
+      if (args.authToken != null) {
         let tokenPayload;
 
         try {
-          tokenPayload = verifyJwt(this.authConfig.secrets.authToken, ctx.request.header[authTokenHeaderName]);
+          tokenPayload = verifyJwt(this.authConfig.secrets.authToken, args.authToken);
         } catch (e) {
           throw new Error('Failed to verify auth-token.');
         }

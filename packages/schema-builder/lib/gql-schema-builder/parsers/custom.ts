@@ -1,6 +1,4 @@
 import findDirectiveIndex from '../utils/findDirectiveIndex';
-import getArgumentByName from '../utils/getArgumentByName';
-import parseObjectArgument from '../utils/parseObjectArgument';
 import { parseDirectiveArguments } from '../utils';
 import {
   _

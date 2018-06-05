@@ -22,7 +22,6 @@ module.exports = {
       serverApiAddress: 'http://localhost:3000'
     },
     authToken: {
-      headerName: 'X-Auth-Token',
       maxAgeInSeconds: 86400 // Should be changed to one minute on production
     },
     cookie: {
@@ -44,14 +43,12 @@ module.exports = {
     corsOptions: {
       allowMethods: ['GET', 'POST']
     },
-    metaHeaderName: 'X-Registration-Meta',
     privacy: {
       tokenMaxAgeInSeconds: 86400, // One Day
       versionToApprove: 0,
       active: true,
       acceptedAtField: 'acceptedPrivacyTermsAt',
       acceptedVersionField: 'acceptedPrivacyTermsVersion',
-      headerName: 'X-Privacy-Token',
       queryParameter: 'privacyToken'
     }
   }
