@@ -421,7 +421,11 @@ export class PgToDbMeta {
 
     // load triggers for table
     const { rows } = await this.dbAppClient.pgClient.query(
-      `SELECT DISTINCT trigger_name
+      `SELECT DISTINCT
+                    trigger_name,
+                    event_object_schema,
+                    event_object_table,
+                    action_statement
                  FROM  information_schema.triggers
                  WHERE
                      event_object_schema = $1

@@ -5,7 +5,8 @@ const index_1 = require("../../index");
 // add directive parser
 // createdAt
 index_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'timestamp';
+    dbMetaNode.type = 'customType';
+    dbMetaNode.customType = 'timestamp';
     dbMetaNode.defaultValue = {
         isExpression: true,
         value: 'now()'
@@ -13,7 +14,8 @@ index_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refD
 });
 // updatedAt
 index_1.registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'timestamp';
+    dbMetaNode.type = 'customType';
+    dbMetaNode.customType = 'timestamp';
     dbMetaNode.defaultValue = {
         isExpression: true,
         value: 'now()',
