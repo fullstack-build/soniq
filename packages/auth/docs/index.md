@@ -92,5 +92,29 @@ To get started you only need to set the following secrets:
 - privacyToken
 - authToken
 
-## Usage
+## Setup
+To setup this package first include it into your project at `index.ts`:
 
+```
+import { Auth } from '@fullstack-one/auth';
+
+const auth: Auth = Container.get(Auth);
+```
+
+In your config file these fields should be set:
+
+- `auth.secrets.jwt`
+- `auth.secrets.admin` (needs to be the same as `admin_token_secret` from `_meta.Auth`)
+- `auth.secrets.provider`
+- `auth.secrets.cookie`
+- `auth.secrets.jwtRefreshToken`
+- `auth.secrets.privacyToken`
+- `auth.secrets.authToken`
+
+Furthermore you should change the values of these `_meta.Auth` table keys to some cryptographically secure random values:
+
+- `admin_token_secret`
+- `auth_pw_secret`
+- `user_token_secret`
+- `user_token_temp_secret`
+- `refresh_token_secret`

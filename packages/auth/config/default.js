@@ -45,10 +45,7 @@ module.exports = {
     },
     privacy: {
       tokenMaxAgeInSeconds: 86400, // One Day
-      versionToApprove: 0,
-      active: true,
-      acceptedAtField: 'acceptedPrivacyTermsAt',
-      acceptedVersionField: 'acceptedPrivacyTermsVersion',
+      versionToAccept: 0,
       queryParameter: 'privacyToken'
     }
   }
