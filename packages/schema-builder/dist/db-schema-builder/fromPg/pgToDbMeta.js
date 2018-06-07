@@ -387,7 +387,11 @@ let PgToDbMeta = class PgToDbMeta {
             // keep reference to current table
             const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
             // load triggers for table
-            const { rows } = yield this.dbAppClient.pgClient.query(`SELECT DISTINCT trigger_name
+            const { rows } = yield this.dbAppClient.pgClient.query(`SELECT DISTINCT
+                    trigger_name,
+                    event_object_schema,
+                    event_object_table,
+                    action_statement
                  FROM  information_schema.triggers
                  WHERE
                      event_object_schema = $1

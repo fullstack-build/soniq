@@ -323,20 +323,30 @@ var sqlObjFromMigrationObject;
                     thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${node.schemaName}";`);
                     thisSql.up.push(`ALTER TABLE "${node.oldSchemaName}"."${node.oldName}" SET SCHEMA "${node.schemaName}";`);
                 }
-                // don't rename if old and new names are equal (could happen when movig from one schema to another)
+                // don't rename if old and new names are equal (could happen when moving from one schema to another)
                 if (node.oldName !== node.name) {
                     thisSql.up.push(`ALTER TABLE "${schemaName}"."${node.oldName}" RENAME TO "${node.name}";`);
                 }
             }
-            // update views on any change
-            if (action.add || action.remove || action.rename || action.change) {
+            // update views on any table or nested column change
+            let tableAndColumnActions = action;
+            // iterate columns and merge all actions into one
+            Object.values(node.columns).forEach((column) => {
+                // ignore computed and cusomResolver columns
+                if (column.type !== 'computed' && column.type !== 'customResolver') {
+                    const columnAction = _splitActionFromNode(column).action;
+                    tableAndColumnActions = Object.assign({}, tableAndColumnActions, columnAction);
+                }
+            });
+            // recreate views for every table and/or column change
+            if (tableAndColumnActions.add || tableAndColumnActions.remove || tableAndColumnActions.rename || tableAndColumnActions.change) {
                 // create updatbale views for all tables, no matter the action
                 // -> even a column change could result in a view change
                 // create direct access updatable view / on the down run, after the table was created
                 thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
                           SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
                 // drop direct access updatable view
-                thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown}`);
+                thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown};`);
             }
         }
         // iterate columns
