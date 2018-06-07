@@ -10,6 +10,7 @@ export declare class Auth {
     private server;
     private graphQl;
     private schemaBuilder;
+    private parserMeta;
     constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, schemaBuilder?: any, config?: any, graphQl?: any, loggerFactory?: LoggerFactory);
     setNotificationFunction(notificationFunction: any): void;
     setUser(client: any, accessToken: any): Promise<boolean>;
@@ -62,5 +63,6 @@ export declare class Auth {
     private preQueryHook(client, context, authRequired);
     private preMutationCommitHook(client, hookInfo);
     private createPrivacyToken(acceptedVersion);
+    private isPrivacyPolicyCheckActive();
     private getResolvers();
 }

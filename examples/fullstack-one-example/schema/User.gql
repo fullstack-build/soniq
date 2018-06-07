@@ -1,8 +1,11 @@
 #type User @table @check(notGenericAddress:"email != 'mail@fullstack.build' AND email != 'info@fullstack.build'"){
-type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))"){
+# @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
+# @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))")
+# I removed these checks becauese with them I cannot use oAuth login with different mails
+type User @table @auth @versioning{
   id: ID! @unique
   tenantId: String @tenant @default(value: "default")
-  email: String @unique @username @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
+  email: String @unique @username
   password: String @password
   gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
@@ -11,8 +14,8 @@ type User @table @auth @versioning @check(notGenericAddress:"(((email)::text <> 
   postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "Date") @default(expression: "now()")
-  acceptedPrivacyTermsAt: String
-  acceptedPrivacyTermsVersion: Int
+  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyPolicyAcceptedAtInUTC
+  acceptedPrivacyTermsVersion: Int @privacyPolicyAcceptedVersion
   updatedAt: String @updatedAt
   createdAt: String @createdAt
   #startTimeInUTC: String! @type(name:"timestamp")

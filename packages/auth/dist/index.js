@@ -40,7 +40,7 @@ const koaSession = require("koa-session");
 const koaCors = require("@koa/cors");
 const oAuthCallback_1 = require("./oAuthCallback");
 const migrationHelper_1 = require("./migrationHelper");
-const authParser = require("./parser");
+const getParser_1 = require("./getParser");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 const fs = require("fs");
 const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
@@ -55,6 +55,7 @@ let Auth = class Auth {
             password: null,
             tenant: null
         };
+        this.parserMeta = {};
         // register package config
         config.addConfigFolder(__dirname + '/../config');
         this.logger = loggerFactory.create('Auth');
@@ -74,7 +75,9 @@ let Auth = class Auth {
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
         this.schemaBuilder.extendSchema(schema);
-        this.schemaBuilder.addParser(authParser);
+        this.schemaBuilder.addParser(getParser_1.getParser((key, value) => {
+            this.parserMeta[key] = value;
+        }));
         this.graphQl.addResolvers(this.getResolvers());
         // add migration path
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
@@ -746,7 +749,7 @@ let Auth = class Auth {
                 })));
                 authRouter.get('/auth/oAuth/' + key, (ctx, next) => {
                     const { queryParameter } = this.authConfig.privacy;
-                    if (this.authConfig.privacy.active === true) {
+                    if (this.isPrivacyPolicyCheckActive() === true) {
                         let tokenPayload;
                         if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
                             this.logger.warn('passport.oAuthFailure.error.missingPrivacyToken');
@@ -758,6 +761,9 @@ let Auth = class Auth {
                         catch (e) {
                             this.logger.warn('passport.oAuthFailure.error.invalidPrivacyToken');
                             return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent('Invalid privacy token.'));
+                        }
+                        if (tokenPayload.acceptedVersion !== this.authConfig.privacy.versionToAccept) {
+                            throw new Error(`The accepted version is not version '${this.authConfig.privacy.versionToAccept}'.`);
                         }
                     }
                     next();
@@ -793,12 +799,13 @@ let Auth = class Auth {
             if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
                 const args = hookInfo.args;
                 const ctx = hookInfo.context.ctx;
-                const { acceptedAtField, acceptedVersionField } = this.authConfig.privacy;
                 const meta = args.meta || null;
-                if (this.authConfig.privacy.active === true) {
+                if (this.isPrivacyPolicyCheckActive() === true) {
+                    const { privacyPolicyAcceptedAtInUTC, privacyPolicyAcceptedVersion } = this.parserMeta;
                     let tokenPayload;
-                    if (args.input[acceptedAtField] == null || args.input[acceptedVersionField] == null) {
-                        throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') are required for creating a user.`);
+                    if (args.input[privacyPolicyAcceptedAtInUTC] == null || args.input[privacyPolicyAcceptedVersion] == null) {
+                        throw new Error(`The privacy-fields ('${privacyPolicyAcceptedAtInUTC}',` +
+                            ` '${privacyPolicyAcceptedVersion}') are required for creating a user.`);
                     }
                     if (args.privacyToken == null) {
                         throw new Error(`Missing privacyToken argument.`);
@@ -809,8 +816,13 @@ let Auth = class Auth {
                     catch (e) {
                         throw new Error('Invalid privacy token.');
                     }
-                    if (tokenPayload.acceptedAt !== args.input[acceptedAtField] || tokenPayload.acceptedVersion !== args.input[acceptedVersionField]) {
-                        throw new Error(`The privacy-fields ('${acceptedAtField}', '${acceptedVersionField}') must match the payload of the privacy-token.`);
+                    if (tokenPayload.acceptedAtInUTC !== args.input[privacyPolicyAcceptedAtInUTC]
+                        || tokenPayload.acceptedVersion !== args.input[privacyPolicyAcceptedVersion]) {
+                        throw new Error(`The privacy-fields ('${privacyPolicyAcceptedAtInUTC}',` +
+                            ` '${privacyPolicyAcceptedVersion}') must match the payload of the privacy-token.`);
+                    }
+                    if (tokenPayload.acceptedVersion !== this.authConfig.privacy.versionToAccept) {
+                        throw new Error(`The accepted version of your privacy-token is not version '${this.authConfig.privacy.versionToAccept}'.`);
                     }
                 }
                 const user = yield this.initializeUser(client, hookInfo.entityId);
@@ -842,21 +854,23 @@ let Auth = class Auth {
         });
     }
     createPrivacyToken(acceptedVersion) {
-        if (acceptedVersion !== this.authConfig.privacy.versionToApprove) {
-            throw new Error(`The approved version is not version '${this.authConfig.privacy.versionToApprove}'.`);
+        if (acceptedVersion !== this.authConfig.privacy.versionToAccept) {
+            throw new Error(`The accepted version is not version '${this.authConfig.privacy.versionToAccept}'.`);
         }
-        const currentDate = new Date();
-        const acceptedAt = currentDate.toString();
+        const acceptedAtInUTC = new Date().toISOString();
         const payload = {
             acceptedVersion,
-            acceptedAt
+            acceptedAtInUTC
         };
         const privacyToken = signHelper_1.signJwt(this.authConfig.secrets.privacyToken, payload, this.authConfig.privacy.tokenMaxAgeInSeconds);
         return {
             privacyToken,
             acceptedVersion,
-            acceptedAt
+            acceptedAtInUTC
         };
+    }
+    isPrivacyPolicyCheckActive() {
+        return this.parserMeta.privacyPolicyAcceptedAtInUTC != null && this.parserMeta.privacyPolicyAcceptedVersion != null;
     }
     getResolvers() {
         return {
