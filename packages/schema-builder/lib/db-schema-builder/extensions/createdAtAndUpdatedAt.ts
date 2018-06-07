@@ -10,7 +10,8 @@ import { IDbMeta,
 // add directive parser
 // createdAt
 registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-  dbMetaNode.type = 'timestamp';
+  dbMetaNode.type       = 'customType';
+  dbMetaNode.customType = 'timestamp';
   dbMetaNode.defaultValue = {
     isExpression: true,
     value: 'now()'
@@ -19,7 +20,8 @@ registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, r
 
 // updatedAt
 registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-  dbMetaNode.type = 'timestamp';
+  dbMetaNode.type       = 'customType';
+  dbMetaNode.customType = 'timestamp';
   dbMetaNode.defaultValue = {
     isExpression: true,
     value: 'now()',
