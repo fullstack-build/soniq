@@ -35,25 +35,13 @@ const createSqlObjFromMigrationObject_1 = require("./toPg/createSqlObjFromMigrat
 let DbSchemaBuilder = class DbSchemaBuilder {
     constructor(bootLoader, config, loggerFactory, dbAppClient) {
         this.initSqlPaths = [__dirname + '/../..'];
-        this.extensionsPaths = [];
         // create logger
         this.logger = loggerFactory.create('DbSchemaBuilder');
         this.dbAppClient = dbAppClient;
         this.config = config;
         this.dbConfig = config.getConfig('db');
-        // set all initial extensions
-        this.extensionsPaths = fastGlob.sync(`${__dirname}/extensions/*.ts`, {
-            deep: true,
-            onlyFiles: true,
-        });
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
-    }
-    // add extensions path
-    addExtensionPath(extensionPath) {
-        if (!this.extensionsPaths.includes(extensionPath)) {
-            this.extensionsPaths.push(extensionPath);
-        }
     }
     // add paths with migration sql scripts
     addMigrationPath(path) {
@@ -265,9 +253,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             // load all extensions
-            Object.values(this.extensionsPaths).forEach((path) => {
-                require(path);
-            });
+            require('./extensions');
         });
     }
 };

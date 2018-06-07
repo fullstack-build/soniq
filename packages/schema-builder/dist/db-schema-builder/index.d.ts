@@ -8,13 +8,11 @@ export declare class DbSchemaBuilder {
     private migrationObject;
     private dbAppClient;
     private initSqlPaths;
-    private extensionsPaths;
     private dbConfig;
     private schemaBuilderConfig;
     private config;
     private logger;
     constructor(bootLoader?: any, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
-    addExtensionPath(extensionPath: any): void;
     addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
     initDb(): Promise<void>;
