@@ -2,6 +2,34 @@
 
 This package creates all pg-auth-functions and auth-mutations required for using FullstackOne with autheticated users. Also it simplifies oAuth with providers like Facebook and Google.
 
+
+## Setup
+To setup this package first include it into your project at `index.ts`:
+
+```ts
+import { Auth } from '@fullstack-one/auth';
+
+const auth: Auth = Container.get(Auth);
+```
+
+In your config file these fields should be set:
+
+- `auth.secrets.jwt` (min: 32, max: 64, [more is better!])
+- `auth.secrets.admin` (needs to be the same as `admin_token_secret` from `_meta.Auth` table)
+- `auth.secrets.provider` 
+- `auth.secrets.cookie` 
+- `auth.secrets.jwtRefreshToken` (should be different to `refresh_token_secret` from `_meta.Auth` table)
+- `auth.secrets.privacyToken` (min: 32, max: 64, [more is better!])
+- `auth.secrets.authToken` (min: 32, max: 64, [more is better!])
+
+Furthermore you should change the values of these `_meta.Auth` table keys to some cryptographically secure random values:
+
+- `admin_token_secret` (needs to be the same as `auth.secrets.admin` from config)
+- `auth_pw_secret` (min: 21, [more is NOT really better])
+- `user_token_secret` (min: 21, [more is NOT really better])
+- `user_token_temp_secret` (min: 21, [more is NOT really better])
+- `refresh_token_secret` (should be different to `auth.secrets.admin` from config) (min: 21, [more is NOT really better])
+
 ## Basics
 
 ### The `_meta.Auth` table
@@ -91,30 +119,3 @@ To get started you only need to set the following secrets:
 - jwtRefreshToken
 - privacyToken
 - authToken
-
-## Setup
-To setup this package first include it into your project at `index.ts`:
-
-```
-import { Auth } from '@fullstack-one/auth';
-
-const auth: Auth = Container.get(Auth);
-```
-
-In your config file these fields should be set:
-
-- `auth.secrets.jwt`
-- `auth.secrets.admin` (needs to be the same as `admin_token_secret` from `_meta.Auth`)
-- `auth.secrets.provider`
-- `auth.secrets.cookie`
-- `auth.secrets.jwtRefreshToken`
-- `auth.secrets.privacyToken`
-- `auth.secrets.authToken`
-
-Furthermore you should change the values of these `_meta.Auth` table keys to some cryptographically secure random values:
-
-- `admin_token_secret`
-- `auth_pw_secret`
-- `user_token_secret`
-- `user_token_temp_secret`
-- `refresh_token_secret`
