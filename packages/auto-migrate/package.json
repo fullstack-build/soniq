@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auto-migrate",
-  "version": "0.3.19",
+  "version": "0.3.20",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -26,7 +26,7 @@
     "@fullstack-one/di": "^0.3.14",
     "@fullstack-one/events": "^0.3.14",
     "@fullstack-one/logger": "^0.3.14",
-    "@fullstack-one/schema-builder": "^0.3.19"
+    "@fullstack-one/schema-builder": "^0.3.20"
   },
   "devDependencies": {
     "typescript": "^2.8.3"
