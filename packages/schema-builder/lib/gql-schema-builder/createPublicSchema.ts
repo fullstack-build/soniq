@@ -16,6 +16,7 @@ import {
 import {
   introspectionQuery
 } from 'graphql';
+import { createGetQueryArguments } from './utils';
 
 const JSON_SPLIT = '.';
 
@@ -46,6 +47,15 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
   let mutations = [];
   let customFields = {};
   let parserCache = {};
+  const extendQueryArguments = [];
+
+  parsers.forEach((parser: any) => {
+    if (parser.extendQueryArguments != null) {
+      extendQueryArguments.push(parser.extendQueryArguments());
+    }
+  });
+
+  const getQueryArguments = createGetQueryArguments(extendQueryArguments);
 
   // Delete-Views can only include the id field. Thus there is no sense in having multiple delete views.
   // They can be merged to one by joining the expression arrays.
@@ -137,7 +147,8 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
       viewSchemaName,
       dbObject,
       graphQlDocument,
-      parserCache
+      parserCache,
+      getQueryArguments
     };
 
     // Get fields and it's expressions
@@ -246,11 +257,11 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     });
   });
 
-  const basicSchema = getBasicSchema(queries, mutations);
+  const basicSchema = getBasicSchema(queries, mutations, getQueryArguments);
 
   graphQlDocument.definitions = graphQlDocument.definitions.concat(basicSchema);
 
-  return {
+  const returnCtx = {
     document: graphQlDocument,
     dbViews,
     gQlTypes,
@@ -258,4 +269,12 @@ export default (classification: any, views: IViews, expressions: IExpressions, d
     mutations,
     customFields
   };
+
+  parsers.forEach((parser: any) => {
+    if (parser.return != null) {
+      parser.return(returnCtx);
+    }
+  });
+
+  return returnCtx;
 };

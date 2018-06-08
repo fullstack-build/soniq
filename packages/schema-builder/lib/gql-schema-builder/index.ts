@@ -30,6 +30,7 @@ export function gqlSchemaBuilder(userSchema: any, views: IViews, expressions: IE
 
   /* console.log('> NEW GQL:');
   console.log(print(document));
+  console.log(JSON.stringify(document, null, 2));
   console.log('>');
   console.log('> ===================================================');
   console.log('>'); // */

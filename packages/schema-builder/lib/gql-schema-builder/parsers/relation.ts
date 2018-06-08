@@ -3,7 +3,6 @@ import getArgumentByName from '../utils/getArgumentByName';
 import getRelationForeignGqlTypeName from '../utils/getRelationForeignGqlTypeName';
 import createIdArrayField from '../utils/createIdArrayField';
 import createIdField from '../utils/createIdField';
-import getQueryArguments from '../utils/getQueryArguments';
 import {
   _
 } from 'lodash';
@@ -83,7 +82,7 @@ export function parseField(field, ctx) {
   // This field cannot be set with a mutation
   if (ctx.view.type === 'READ') {
     const foreignTypesEnumName = (foreignNativeTable.tableName + '_VIEWS').toUpperCase();
-    field.arguments = getQueryArguments(foreignTypesEnumName);
+    field.arguments = ctx.getQueryArguments(foreignTypesEnumName, foreignGqlTypeName);
     ctx.tableView.fields.push(field);
   }
   return true;

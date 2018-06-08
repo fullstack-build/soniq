@@ -5,6 +5,8 @@ import * as KoaRouter from 'koa-router';
 
 import { getResolvers } from './queryBuilder/resolvers';
 
+import { operatorsObject } from './compareOperators';
+
 // fullstack-one core
 import { Service, Inject, Container } from '@fullstack-one/di';
 // DI imports
@@ -15,6 +17,7 @@ import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
 import { DbGeneralPool } from '@fullstack-one/db';
+import { getParser } from './getParser';
 
 @Service()
 export class GraphQl {
@@ -55,6 +58,20 @@ export class GraphQl {
     this.logger = loggerFactory.create('GraphQl');
     this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
+
+    let extendSchema = '';
+
+    Object.values(operatorsObject).forEach((operator: any) => {
+      if (operator.extendSchema != null) {
+        extendSchema += operator.extendSchema + '\n';
+      }
+    });
+
+    if (extendSchema !== '') {
+      this.schemaBuilder.extendSchema(extendSchema);
+    }
+
+    this.schemaBuilder.addParser(getParser(operatorsObject));
 
     // add boot function to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
