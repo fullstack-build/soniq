@@ -1,0 +1,5 @@
+type AlleMeineEntchenSchwimmenAufDemSeeLaLaLaaaaaBlubBlub @table @versioning{
+  id: ID! @unique
+  createdAt: String @createdAt
+  updatedAt: String @updatedAt
+}

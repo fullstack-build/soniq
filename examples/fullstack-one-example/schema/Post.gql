@@ -1,5 +1,7 @@
 type Post @table @versioning @migrate(from:"PostOld"){
   id: ID! @unique
+  updatedAt: String @updatedAt
+  createdAt: String @createdAt
   title: String
   content: String
   images: [BucketFile] @files

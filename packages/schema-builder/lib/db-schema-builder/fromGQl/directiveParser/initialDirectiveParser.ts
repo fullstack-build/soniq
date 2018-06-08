@@ -56,16 +56,26 @@ registerDirectiveParser('json', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbM
 // override type with PG native type
 registerDirectiveParser('type', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const customType = _.get(gQlDirectiveNode, 'arguments[0].value.value');
+
+    // assume everything unknown by GraphQL is a custom type
+    dbMetaNode.type = 'customType';
+    dbMetaNode.customType = customType;
+
+    /*
     // detect known PG types
     switch (customType) {
         case 'Date':
             dbMetaNode.type = 'date';
             break;
+      case 'timestamp':
+        dbMetaNode.type = 'timestamp';
+        break;
         default:
             dbMetaNode.type = 'customType';
             dbMetaNode.customType = customType;
             break;
     }
+    */
 });
 // set default value
 registerDirectiveParser('default', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {

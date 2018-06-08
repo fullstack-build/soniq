@@ -16,6 +16,7 @@ export { registerTriggerParser } from './triggerParser';
 export class PgToDbMeta {
 
   private readonly DELETED_PREFIX = '_deleted:';
+  private readonly KNOWN_TYPES    = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'jsonb', 'relation'];
 
   private dbAppClient: DbAppClient;
 
@@ -227,7 +228,13 @@ export class PgToDbMeta {
       // iterate all columns
       for (const columnTemp of Object.values(rows)) {
         const column: any = columnTemp;
-        const type = column.udt_name;
+        // check if it is a known type and assume customType otherwise
+        let type = column.udt_name;
+        let customType;
+        if (!this.KNOWN_TYPES.includes(type)) {
+          customType = type;
+          type = 'customType';
+        }
 
         // getSqlFromMigrationObj new column and keep reference for later
         const columnName = column.column_name;
@@ -235,6 +242,7 @@ export class PgToDbMeta {
           name: columnName,
           description: null,
           type,
+          customType,
           extensions: {}
         };
 
@@ -262,7 +270,6 @@ export class PgToDbMeta {
 
         // custom type
         if (column.data_type === 'USER-DEFINED') {
-          newColumn.customType = type;
           // check if it is a known enum
           newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
         } else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') { // Array of _uuid is most certainly an n:m relation
@@ -414,7 +421,11 @@ export class PgToDbMeta {
 
     // load triggers for table
     const { rows } = await this.dbAppClient.pgClient.query(
-      `SELECT DISTINCT trigger_name
+      `SELECT DISTINCT
+                    trigger_name,
+                    event_object_schema,
+                    event_object_table,
+                    action_statement
                  FROM  information_schema.triggers
                  WHERE
                      event_object_schema = $1

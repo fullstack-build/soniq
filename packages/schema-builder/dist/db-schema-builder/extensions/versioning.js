@@ -12,7 +12,7 @@ index_1.registerDirectiveParser('versioning', (gQlDirectiveNode, dbMetaNode, ref
 index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     // keep reference to current table
     const currentTable = dbMeta.schemas[schemaName].tables[tableName];
-    if (trigger.trigger_name.includes('create_version')) {
+    if (trigger.trigger_name.includes('table_trigger_create_versions')) {
         // versioning active for table
         currentTable.extensions.versioning = {
             isActive: true
@@ -34,7 +34,7 @@ index_1.registerTableMigrationExtension('versioning', (extensionDefinitionWithAc
     // drop trigger for remove and before add (in case it's already there)
     if (versioningAction.remove || versioningAction.add) {
         // drop trigger, keep table and data
-        nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "create_version_${schemaName}_${tableNameUp}" ON ${tableNameWithSchemaUp} CASCADE;`);
+        nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "table_trigger_create_versions" ON ${tableNameWithSchemaUp} CASCADE;`);
     }
     // create versioning table and trigger
     if (versioningAction.add) {
@@ -54,7 +54,7 @@ index_1.registerTableMigrationExtension('versioning', (extensionDefinitionWithAc
             CONSTRAINT _version_${schemaName}_${tableNameUp}_pkey PRIMARY KEY (id)
         );`);
         // create trigger for table
-        nodeSqlObj.up.push(`CREATE TRIGGER "create_version_${schemaName}_${tableNameUp}"
+        nodeSqlObj.up.push(`CREATE TRIGGER "table_trigger_create_versions"
           AFTER INSERT OR UPDATE OR DELETE
           ON ${tableNameWithSchemaUp}
           FOR EACH ROW

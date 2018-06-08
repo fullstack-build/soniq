@@ -176,6 +176,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
         delete toDbMeta.exposedNames;
         // create migration object with actions based on two DbMeta objects
         this.migrationObject = migrationObject_1.migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
+        // return SQL statements
         return createSqlObjFromMigrationObject_1.sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
     }
     getViewsSql() {

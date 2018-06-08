@@ -34,6 +34,7 @@ exports.registerTriggerParser = triggerParser_2.registerTriggerParser;
 let PgToDbMeta = class PgToDbMeta {
     constructor(dbAppClient) {
         this.DELETED_PREFIX = '_deleted:';
+        this.KNOWN_TYPES = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'jsonb', 'relation'];
         this.dbMeta = {
             version: 1.0,
             schemas: {},
@@ -219,13 +220,20 @@ let PgToDbMeta = class PgToDbMeta {
                 // iterate all columns
                 for (const columnTemp of Object.values(rows)) {
                     const column = columnTemp;
-                    const type = column.udt_name;
+                    // check if it is a known type and assume customType otherwise
+                    let type = column.udt_name;
+                    let customType;
+                    if (!this.KNOWN_TYPES.includes(type)) {
+                        customType = type;
+                        type = 'customType';
+                    }
                     // getSqlFromMigrationObj new column and keep reference for later
                     const columnName = column.column_name;
                     const newColumn = {
                         name: columnName,
                         description: null,
                         type,
+                        customType,
                         extensions: {}
                     };
                     // add new column to dbMeta if its not marked as deleted
@@ -250,7 +258,6 @@ let PgToDbMeta = class PgToDbMeta {
                     }
                     // custom type
                     if (column.data_type === 'USER-DEFINED') {
-                        newColumn.customType = type;
                         // check if it is a known enum
                         newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
                     }
@@ -380,7 +387,11 @@ let PgToDbMeta = class PgToDbMeta {
             // keep reference to current table
             const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
             // load triggers for table
-            const { rows } = yield this.dbAppClient.pgClient.query(`SELECT DISTINCT trigger_name
+            const { rows } = yield this.dbAppClient.pgClient.query(`SELECT DISTINCT
+                    trigger_name,
+                    event_object_schema,
+                    event_object_table,
+                    action_statement
                  FROM  information_schema.triggers
                  WHERE
                      event_object_schema = $1

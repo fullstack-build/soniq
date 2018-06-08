@@ -193,6 +193,7 @@ export class DbSchemaBuilder {
     // create migration object with actions based on two DbMeta objects
     this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
 
+    // return SQL statements
     return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
   }
 

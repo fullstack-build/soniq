@@ -3,6 +3,7 @@ export { registerQueryParser } from './queryParser';
 export { registerTriggerParser } from './triggerParser';
 export declare class PgToDbMeta {
     private readonly DELETED_PREFIX;
+    private readonly KNOWN_TYPES;
     private dbAppClient;
     private readonly dbMeta;
     constructor(dbAppClient?: any);

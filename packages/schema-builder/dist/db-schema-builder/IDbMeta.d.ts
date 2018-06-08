@@ -20,7 +20,7 @@ export interface IDbMeta {
                             name: string;
                             oldName?: string;
                             description?: string;
-                            type: 'computed' | 'customResolver' | 'varchar' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
+                            type: 'computed' | 'customResolver' | 'varchar' | 'int4' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
                             customType?: string;
                             defaultValue?: {
                                 isExpression: boolean;

@@ -5,7 +5,8 @@ const index_1 = require("../../index");
 // add directive parser
 // createdAt
 index_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'timestamp';
+    dbMetaNode.type = 'customType';
+    dbMetaNode.customType = 'timestamp';
     dbMetaNode.defaultValue = {
         isExpression: true,
         value: 'now()'
@@ -13,7 +14,8 @@ index_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refD
 });
 // updatedAt
 index_1.registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'timestamp';
+    dbMetaNode.type = 'customType';
+    dbMetaNode.customType = 'timestamp';
     dbMetaNode.defaultValue = {
         isExpression: true,
         value: 'now()',
@@ -28,8 +30,9 @@ index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     const currentTable = dbMeta.schemas[schemaName].tables[tableName];
     if (trigger.trigger_name.includes('table_trigger_updatedat')) {
         // updatedAt trigger for column
-        const triggerNameObj = trigger.trigger_name.split('_');
-        const columnName = triggerNameObj[5];
+        const regex = /triggerupdateorcreate\('(\w*)'\)/gmi;
+        const match = regex.exec(trigger.action_statement);
+        const columnName = match[1]; // first group from regex
         // only if column exists (trigger could be there without column)
         if (currentTable.columns[columnName] != null) {
             currentTable.columns[columnName].extensions.triggerUpdatedAt = {
@@ -48,7 +51,7 @@ index_1.registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitio
     const triggerUpdatedAtActionObject = _splitActionFromNode(extensionDefinitionWithAction);
     const triggerUpdatedAtAction = triggerUpdatedAtActionObject.action;
     const triggerUpdatedAtDef = triggerUpdatedAtActionObject.node;
-    const triggerName = `table_trigger_updatedat_${schemaName}_${tableName}_${columnName}`;
+    const triggerName = `table_trigger_updatedat`;
     // drop trigger for remove and before add (in case it's already there)
     if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
         nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);
@@ -59,6 +62,6 @@ index_1.registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitio
           BEFORE UPDATE
           ON ${tableNameWithSchema}
           FOR EACH ROW
-          EXECUTE PROCEDURE _meta.triggerUpdateOrCreate("${columnName}");`);
+          EXECUTE PROCEDURE _meta.triggerUpdateOrCreate(\'${columnName}\');`);
     }
 });
