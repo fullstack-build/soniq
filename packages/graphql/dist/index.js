@@ -25,6 +25,7 @@ const graphql_tools_1 = require("graphql-tools");
 const koaBody = require("koa-bodyparser");
 const KoaRouter = require("koa-router");
 const resolvers_1 = require("./queryBuilder/resolvers");
+const compareOperators_1 = require("./compareOperators");
 // fullstack-one core
 const di_1 = require("@fullstack-one/di");
 // DI imports
@@ -35,6 +36,7 @@ const schema_builder_1 = require("@fullstack-one/schema-builder");
 const helper_1 = require("@fullstack-one/helper");
 const server_1 = require("@fullstack-one/server");
 const db_1 = require("@fullstack-one/db");
+const getParser_1 = require("./getParser");
 let GraphQl = class GraphQl {
     constructor(loggerFactory, config, bootLoader, schemaBuilder, server, dbGeneralPool) {
         this.resolvers = {};
@@ -54,6 +56,16 @@ let GraphQl = class GraphQl {
         this.logger = loggerFactory.create('GraphQl');
         this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
+        let extendSchema = '';
+        Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
+            if (operator.extendSchema != null) {
+                extendSchema += operator.extendSchema + '\n';
+            }
+        });
+        if (extendSchema !== '') {
+            this.schemaBuilder.extendSchema(extendSchema);
+        }
+        this.schemaBuilder.addParser(getParser_1.getParser(compareOperators_1.operatorsObject));
         // add boot function to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }

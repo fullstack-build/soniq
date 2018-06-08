@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const getQueryArguments_1 = require("./getQueryArguments");
 const getMutationArguments_1 = require("./getMutationArguments");
 const createSqlQueryInput_1 = require("./createSqlQueryInput");
 function getMutation(name, inputType, viewsEnumName, returnType, extendArguments) {
@@ -21,14 +20,14 @@ function getMutation(name, inputType, viewsEnumName, returnType, extendArguments
         directives: [],
     };
 }
-function getQuery(name, type, viewsEnumName) {
+function getQuery(name, type, viewsEnumName, getQueryArguments) {
     return {
         kind: 'FieldDefinition',
         name: {
             kind: 'Name',
             value: name,
         },
-        arguments: getQueryArguments_1.default(viewsEnumName),
+        arguments: getQueryArguments(viewsEnumName, type),
         type: {
             kind: 'NonNullType',
             type: {
@@ -48,10 +47,10 @@ function getQuery(name, type, viewsEnumName) {
         directives: [],
     };
 }
-exports.default = (queries, mutations) => {
+exports.default = (queries, mutations, getQueryArguments) => {
     const queryFields = [];
     Object.values(queries).forEach((query) => {
-        queryFields.push(getQuery(query.name, query.type, query.viewsEnumName));
+        queryFields.push(getQuery(query.name, query.type, query.viewsEnumName, getQueryArguments));
     });
     const mutationFields = [];
     Object.values(mutations).forEach((mutation) => {
