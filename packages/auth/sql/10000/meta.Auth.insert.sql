@@ -8,7 +8,7 @@ VALUES
 (E'auth_field_password',NULL),
 (E'auth_providers',E'local:facebook:twitter'),
 (E'auth_pw_secret',E'gehtdichnixan'),
-(E'bf_iter_count',E'6'),
+(E'bf_iter_count',E'4'),
 (E'pw_bf_iter_count',E'6'),
 (E'transaction_token_max_age_in_seconds',E'86400'),
 (E'transaction_token_secret',E'$2a$04$LY8UXcO9wVJr98HlnhAuledggz5rd4eTc9W1vsK.yEjeXA4acp5du'),
