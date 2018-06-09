@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
-import { setDefaultValueForColumn, addMigration, createConstraint } from '../gQlAstToDbMetaHelper';
-import * as utils from '../../../gql-schema-builder/utils';
-import { registerDirectiveParser } from './index';
+import { setDefaultValueForColumn, addMigration, createConstraint } from './gQlAstToDbMetaHelper';
+import * as utils from '../../gql-schema-builder/utils';
+import { registerDirectiveParser } from './directiveParser';
 
 const { parseDirectiveArguments } = utils;
 

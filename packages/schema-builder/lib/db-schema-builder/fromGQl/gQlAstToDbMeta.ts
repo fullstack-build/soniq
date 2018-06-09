@@ -23,7 +23,7 @@ export const parseGQlAstToDbMeta = (gQlAST): IDbMeta => {
   };
 
   // load existing directive parser
-  require('./directiveParser/initialDirectiveParser');
+  require('./initialDirectiveParser');
 
   // start parsing
   parseASTNode(gQlAST, dbMeta);
