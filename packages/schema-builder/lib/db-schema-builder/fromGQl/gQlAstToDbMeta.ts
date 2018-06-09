@@ -333,6 +333,9 @@ const GQL_JSON_PARSER = {
         dbMetaNode.type = 'bool';
         break;
       case 'json':
+        dbMetaNode.type = 'json';
+        break;
+      case 'jsonb':
         dbMetaNode.type = 'jsonb';
         break;
       default:

@@ -32,7 +32,7 @@ export namespace migrationObject {
     delete toDbMeta.exposedNames;
     // remove graphql // todo
     delete toDbMeta.schemas._graphql;
-
+    
     return migrationObj = _diffAndAddActions(fromDbMeta, toDbMeta);
 
   }

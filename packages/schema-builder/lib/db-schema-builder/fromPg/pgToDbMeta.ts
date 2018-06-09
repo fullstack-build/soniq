@@ -16,7 +16,7 @@ export { registerTriggerParser } from './triggerParser';
 export class PgToDbMeta {
 
   private readonly DELETED_PREFIX = '_deleted:';
-  private readonly KNOWN_TYPES    = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'jsonb', 'relation'];
+  private readonly KNOWN_TYPES    = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'json', 'jsonb', 'relation'];
 
   private dbAppClient: DbAppClient;
 

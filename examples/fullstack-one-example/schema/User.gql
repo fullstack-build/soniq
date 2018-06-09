@@ -22,6 +22,15 @@ type User @table @auth @versioning{
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
+  properties: IngredientProperties @type(name: "jsonb")
+}
+
+
+type IngredientProperties {
+  isVegan: Boolean @default(value:false)
+  isVegetarian: Boolean @default(value:false)
+  isLactoseFree: Boolean @default(value:false)
+  isGlutenFree: Boolean @default(value:false)
 }
 
 
