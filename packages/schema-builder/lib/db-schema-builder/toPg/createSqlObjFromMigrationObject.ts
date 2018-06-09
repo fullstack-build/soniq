@@ -349,8 +349,8 @@ export namespace sqlObjFromMigrationObject {
     // (in case it got removed on dbMeta merge)
     const tableNameUp   = node.name || tableName;
     const tableNameDown = (action.rename) ? node.oldName : tableNameUp;
-    const viewNameUp    = `V${tableNameUp}`;
-    const viewNameDown  = `V${tableNameDown}`;
+    const viewNameUp    = `A${tableNameUp}`;
+    const viewNameDown  = `A${tableNameDown}`;
 
     const tableNameWithSchemaUp       = `"${schemaName}"."${tableNameUp}"`;
     const viewTableNameWithSchemaUp   = `"${schemaName}"."${viewNameUp}"`;
@@ -395,9 +395,11 @@ export namespace sqlObjFromMigrationObject {
       let tableAndColumnActions = action;
       // iterate columns and merge all actions into one
       Object.values(node.columns).forEach((column: any) => {
-        // ignore computed and cusomResolver columns
-        if (column.type !== 'computed' && column.type !== 'customResolver') {
-          const columnAction = _splitActionFromNode(column).action;
+        // copy first level of column and safe original for later (=> preserve action part)
+        const columnCopy = { ...column };
+        // ignore computed and customResolver columns
+        if (columnCopy.type !== 'computed' && columnCopy.type !== 'customResolver') {
+          const columnAction = _splitActionFromNode(columnCopy).action;
           tableAndColumnActions = { ...tableAndColumnActions, ... columnAction };
         }
       });
