@@ -25,7 +25,7 @@ var migrationObject;
         // remove views and exposed names
         delete toDbMeta.exposedNames;
         // remove graphql // todo
-        delete toDbMeta.schemas.graphql;
+        delete toDbMeta.schemas._graphql;
         return migrationObj = _diffAndAddActions(fromDbMeta, toDbMeta);
     }
     migrationObject.createFromTwoDbMetaObjects = createFromTwoDbMetaObjects;
