@@ -183,12 +183,12 @@ export class DbSchemaBuilder {
     // new
     this.fromDbMeta = _.cloneDeep(fromDbMeta);
     // remove views and exposed names
-    delete fromDbMeta.exposedNames;
+    delete this.fromDbMeta.exposedNames;
 
     // old
     this.toDbMeta = _.cloneDeep(toDbMeta);
     // remove views and exposed names
-    delete toDbMeta.exposedNames;
+    delete this.toDbMeta.exposedNames;
 
     // create migration object with actions based on two DbMeta objects
     this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);

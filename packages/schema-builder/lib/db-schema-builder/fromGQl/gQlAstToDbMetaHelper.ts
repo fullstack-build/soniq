@@ -18,12 +18,11 @@ export function setDefaultValueForColumn(gQlSchemaNode,
 }
 
 export function createConstraint(constraintName: string,
-                                 constraintType: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK',
+                                 constraintType: 'PRIMARY KEY' | 'NOT NULL' | 'UNIQUE' | 'CHECK',
                                  options: any,
                                  refDbMeta,
                                  refDbMetaCurrentTable,
                                  refDbMetaCurrentTableColumn?): void {
-
   // add new constraint if name was set
   if (constraintName != null) {
     const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {

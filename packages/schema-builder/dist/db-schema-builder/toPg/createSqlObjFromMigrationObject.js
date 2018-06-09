@@ -474,7 +474,7 @@ var sqlObjFromMigrationObject;
         const columnNamesAsStr = (node.columns != null) ?
             Object.values(columnsObj).map(columnName => `"${columnName}"`).join(',') : null;
         switch (node.type) {
-            case 'not_null':
+            case 'NOT NULL':
                 if (columnNamesAsStr != null) {
                     if (action.add) {
                         thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN ${columnNamesAsStr} SET NOT NULL;`);

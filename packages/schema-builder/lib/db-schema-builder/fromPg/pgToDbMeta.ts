@@ -265,7 +265,7 @@ export class PgToDbMeta {
 
         // add NOT NULLABLE constraint
         if (column.is_nullable === 'NO') {
-          this.addConstraint('not_null', { column_name: column.column_name }, currentTable);
+          this.addConstraint('NOT NULL', { column_name: column.column_name }, currentTable);
         }
 
         // custom type
@@ -363,7 +363,7 @@ export class PgToDbMeta {
     }
 
     // add constraint name for not_nullable
-    if (constraintType === 'not_null') {
+    if (constraintType === 'NOT NULL') {
       constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
     }
 

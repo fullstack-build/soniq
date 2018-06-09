@@ -575,7 +575,7 @@ export namespace sqlObjFromMigrationObject {
       Object.values(columnsObj).map(columnName => `"${columnName}"`).join(',') : null;
 
     switch (node.type) {
-      case 'not_null':
+      case 'NOT NULL':
         if (columnNamesAsStr != null) {
           if (action.add) {
             thisSql.up.push(

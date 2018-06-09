@@ -144,7 +144,7 @@ const GQL_JSON_PARSER = {
 
     // parse ObjectType properties
     Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
-      // iterate over sub nodes (e.g. intefaces, fields, directives
+      // iterate over sub nodes (e.g. interfaces, fields, directives
       if (Array.isArray(gQlSchemaDocumentNodeProperty)) {
         Object.values(gQlSchemaDocumentNodeProperty).map((gQlSchemaDocumentSubnode) => {
             // parse sub node
@@ -317,7 +317,7 @@ const GQL_JSON_PARSER = {
         createConstraint(constraintNamePk, 'PRIMARY KEY', {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
         // add NOT NULL constraint to every PK
         const constraintNameNotNull = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
-        createConstraint(constraintNameNotNull, 'notnull',{}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
+        createConstraint(constraintNameNotNull, 'NOT NULL',{}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 
         break;
       case 'string':
@@ -376,7 +376,8 @@ const GQL_JSON_PARSER = {
     refDbMetaCurrentTableColumn,
   ) => {
     // add new constraint
-    createConstraint(null, 'notnull', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
+    const constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
+    createConstraint(constraintName, 'NOT NULL', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {

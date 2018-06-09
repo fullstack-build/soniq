@@ -37,7 +37,7 @@ export interface IDbMeta {
           constraints?: {
             [name: string]: {
               name: string;
-              type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK';
+              type: 'PRIMARY KEY' | 'NOT NULL' | 'UNIQUE' | 'CHECK';
               columns?: [string];
               options?: [any];
             }
