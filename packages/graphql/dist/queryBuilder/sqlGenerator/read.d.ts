@@ -2,7 +2,8 @@ export declare function getLocalName(counter: any): string;
 export declare function includesAuthView(viewNames: any, noAuthViewNames: any): any;
 export declare function getJsonMerge(jsonFields: any): any;
 export declare function getFieldExpression(name: any, viewNames: any, gQlType: any, localNameByType: any): any;
-export declare function getTypeNamesSelect(viewNames: any, gQlType: any, localNameByType: any): string;
+export declare function getViewnamesExpression(viewNames: any, gQlType: any, localNameByType: any): string;
+export declare function getViewnamesSelect(viewNames: any, gQlType: any, localNameByType: any): string;
 export declare function getFromExpression(viewNames: any, gQlType: any, localNameByType: any): string;
 export declare function resolveTable(c: any, query: any, gQlTypes: any, dbObject: any, values: any, isAuthenticated: any, match: any): {
     sql: string;

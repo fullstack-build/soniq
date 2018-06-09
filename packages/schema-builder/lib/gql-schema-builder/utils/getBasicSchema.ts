@@ -1,4 +1,3 @@
-import getQueryArguments from './getQueryArguments';
 import getMutationArguments from './getMutationArguments';
 import createSqlQueryInput from './createSqlQueryInput';
 
@@ -21,14 +20,14 @@ function getMutation(name, inputType, viewsEnumName, returnType, extendArguments
   };
 }
 
-function getQuery(name, type, viewsEnumName) {
+function getQuery(name, type, viewsEnumName, getQueryArguments) {
   return {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
       value: name,
     },
-    arguments: getQueryArguments(viewsEnumName),
+    arguments: getQueryArguments(viewsEnumName, type),
     type: {
       kind: 'NonNullType',
       type: {
@@ -49,11 +48,11 @@ function getQuery(name, type, viewsEnumName) {
   };
 }
 
-export default (queries, mutations) => {
+export default (queries, mutations, getQueryArguments) => {
 
   const queryFields = [];
   Object.values(queries).forEach((query: any) => {
-    queryFields.push(getQuery(query.name, query.type, query.viewsEnumName));
+    queryFields.push(getQuery(query.name, query.type, query.viewsEnumName, getQueryArguments));
   });
 
   const mutationFields = [];

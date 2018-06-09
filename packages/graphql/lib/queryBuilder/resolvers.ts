@@ -1,6 +1,7 @@
 import { parseResolveInfo } from 'graphql-parse-resolve-info';
 import { getQueryResolver } from './sqlGenerator/read';
 import { getMutationResolver } from './sqlGenerator/mutate';
+import { checkQueryResult } from './injectionProtector';
 import * as gQlTypeJson from 'graphql-type-json';
 
 export function getResolvers(gQlTypes, dbObject, queries: any, mutations, customOperations, resolversObject, hooks, dbGeneralPool, logger) {
@@ -43,8 +44,11 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
           logger.trace('queryResolver.run', selectQuery.sql, selectQuery.values);
 
           // Run query against pg to get data
-          const { rows } = await client.query(selectQuery.sql, selectQuery.values);
+          const result = await client.query(selectQuery.sql, selectQuery.values);
+          checkQueryResult(selectQuery.query.name, result, logger);
+          await client.query('ROLLBACK');
 
+          const { rows } = result;
           // Read JSON data from first row
           const data = rows[0][selectQuery.query.name];
 
@@ -133,7 +137,10 @@ export function getResolvers(gQlTypes, dbObject, queries: any, mutations, custom
             logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
 
             // Run SQL query on pg to get response-data
-            const { rows: returnRows } = await client.query(returnQuery.sql, returnQuery.values);
+            const returnResult = await client.query(returnQuery.sql, returnQuery.values);
+            checkQueryResult(returnQuery.query.name, returnResult, logger);
+
+            const { rows: returnRows } = returnResult;
 
             // set data from row 0
             returnData = returnRows[0][returnQuery.query.name][0];

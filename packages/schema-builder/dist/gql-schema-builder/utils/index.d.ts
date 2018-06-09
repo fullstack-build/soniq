@@ -8,7 +8,7 @@ export { default as getArgumentByName } from './getArgumentByName';
 export { default as getBasicSchema } from './getBasicSchema';
 export { default as getJsonObjectBuilderExpression } from './getJsonObjectBuilderExpression';
 export { default as getMutationArguments } from './getMutationArguments';
-export { default as getQueryArguments } from './getQueryArguments';
+export { default as createGetQueryArguments } from './getQueryArguments';
 export { default as getRelationForeignGqlTypename } from './getRelationForeignGqlTypename';
 export { default as getViewName } from './getViewName';
 export { default as getViewnamesField } from './getViewnamesField';

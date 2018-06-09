@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const graphql_parse_resolve_info_1 = require("graphql-parse-resolve-info");
-const lodash_1 = require("lodash");
+const custom_1 = require("./custom");
 // Generate local alias name for views/tables
 function getLocalName(counter) {
     return `_local_${counter}_`;
@@ -61,17 +61,22 @@ function getFieldExpression(name, viewNames, gQlType, localNameByType) {
     return `COALESCE(${fields.join(', ')})`;
 }
 exports.getFieldExpression = getFieldExpression;
-// Combines _viewnames of the views to return something like _viewnames: [POST_OWNER, POST_AUTHOR]
-function getTypeNamesSelect(viewNames, gQlType, localNameByType) {
+// A Table can consist of multiple views. So the _viewnames array needs to get concat'ed to out of all views.
+function getViewnamesExpression(viewNames, gQlType, localNameByType) {
     const fields = [];
     Object.values(viewNames).forEach((viewName) => {
         if (gQlType.views[viewName] != null && localNameByType[viewName] != null) {
             fields.push(`"${localNameByType[viewName]}"."_viewnames"`);
         }
     });
-    return fields.join(' || ') + ' _viewnames';
+    return `(${fields.join(' || ')})`;
 }
-exports.getTypeNamesSelect = getTypeNamesSelect;
+exports.getViewnamesExpression = getViewnamesExpression;
+// Combines _viewnames of the views to return something like _viewnames: [POST_OWNER, POST_AUTHOR]
+function getViewnamesSelect(viewNames, gQlType, localNameByType) {
+    return `${getViewnamesExpression(viewNames, gQlType, localNameByType)} _viewnames`;
+}
+exports.getViewnamesSelect = getViewnamesSelect;
 // Create FROM expression for query (or subquery)
 function getFromExpression(viewNames, gQlType, localNameByType) {
     const joinTypes = [];
@@ -151,11 +156,6 @@ function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticated, mat
             throw new Error(`You need to be authenticated to access view [${authView}]`);
         }
     }
-    let customSqlQuery = null;
-    // Get the custom SQL Statement/Expression from query if available
-    if (query.args != null && query.args.sql != null) {
-        customSqlQuery = query.args.sql;
-    }
     // Get requested fields
     const fields = query.fieldsByTypeName[tableName];
     const localNameByType = {};
@@ -209,7 +209,7 @@ function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticated, mat
         }
         else {
             // For fieldName is _viewnames a special expression is required to combine all views of the views per row
-            fieldSelect.push(getTypeNamesSelect(viewNames, gQlType, localNameByType));
+            fieldSelect.push(getViewnamesSelect(viewNames, gQlType, localNameByType));
         }
     });
     // Get the view combination (Join of Views)
@@ -227,41 +227,22 @@ function resolveTable(c, query, gQlTypes, dbObject, values, isAuthenticated, mat
             sql += ` WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`;
         }
     }
-    // Check if a custom sql statement exists
-    if (customSqlQuery != null) {
-        // Add AND/WHERE dependent on the previos concatination
-        if (match != null) {
-            sql += ` AND`;
+    // Translate a unsecure user-input value to a parameter like $1, $2, ... and adds the value to query-values
+    const getParam = (value) => {
+        values.push(value);
+        return '$' + values.length;
+    };
+    // A field can be a COALESCE of view-columns. Thus we need to get the correct expression.
+    const getField = (name) => {
+        if (name === '_viewnames') {
+            return getViewnamesExpression(viewNames, gQlType, localNameByType);
         }
-        else {
-            sql += ` WHERE`;
-        }
-        // Compile the lodash template to replace fields and params
-        const compiled = lodash_1._.template(customSqlQuery.text);
-        // Generate correct sql query to add it to the main query
-        const sqlQuery = compiled({
-            // The param function returns e.g. $1, $2 and adds the value to the correct position
-            param: (index) => {
-                // Throw error when the requested value is not in the values array
-                if (customSqlQuery.values[index] == null) {
-                    throw new Error(`Requested value "param(${index})" in custom SQL query is not defined: "${customSqlQuery.text}"`);
-                }
-                // Push current value to output value array
-                const value = customSqlQuery.values[index];
-                values.push(value);
-                // Return $n for pg pgClient
-                return '$' + values.length;
-            },
-            // Gets a correct expression for a field e.g.: "COALESCE("_local_4_"."title", "_local_5_"."title", null)"
-            field: (name) => {
-                return getFieldExpression(name, viewNames, gQlType, localNameByType);
-            }
-        });
-        // Add custom query to main query
-        sql += ` ${sqlQuery}`;
-    }
+        return getFieldExpression(name, viewNames, gQlType, localNameByType);
+    };
+    // Add possible custom queries to the main query. (where/limit/offset/orderBy)
+    sql += custom_1.generateCustomSql(match != null, query.args, getParam, getField);
     return {
-        sql: `${sql}`,
+        sql,
         counter,
         values,
         authRequired

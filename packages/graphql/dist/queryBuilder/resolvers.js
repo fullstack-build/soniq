@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const read_1 = require("./sqlGenerator/read");
 const mutate_1 = require("./sqlGenerator/mutate");
+const injectionProtector_1 = require("./injectionProtector");
 const gQlTypeJson = require("graphql-type-json");
 function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, resolversObject, hooks, dbGeneralPool, logger) {
     // Initialize stuff / get instances / etc.
@@ -42,7 +43,10 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                 }
                 logger.trace('queryResolver.run', selectQuery.sql, selectQuery.values);
                 // Run query against pg to get data
-                const { rows } = yield client.query(selectQuery.sql, selectQuery.values);
+                const result = yield client.query(selectQuery.sql, selectQuery.values);
+                injectionProtector_1.checkQueryResult(selectQuery.query.name, result, logger);
+                yield client.query('ROLLBACK');
+                const { rows } = result;
                 // Read JSON data from first row
                 const data = rows[0][selectQuery.query.name];
                 // Commit transaction
@@ -117,7 +121,9 @@ function getResolvers(gQlTypes, dbObject, queries, mutations, customOperations, 
                     returnQuery = queryResolver(obj, args, context, info, isAuthenticated, match);
                     logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
                     // Run SQL query on pg to get response-data
-                    const { rows: returnRows } = yield client.query(returnQuery.sql, returnQuery.values);
+                    const returnResult = yield client.query(returnQuery.sql, returnQuery.values);
+                    injectionProtector_1.checkQueryResult(returnQuery.query.name, returnResult, logger);
+                    const { rows: returnRows } = returnResult;
                     // set data from row 0
                     returnData = returnRows[0][returnQuery.query.name][0];
                 }

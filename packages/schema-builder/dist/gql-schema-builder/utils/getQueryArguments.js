@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function getTypenamesArgument(typesEnumName) {
+function getViewnamesArgument(typesEnumName) {
     return {
         kind: 'InputValueDefinition',
         name: {
@@ -24,28 +24,18 @@ function getTypenamesArgument(typesEnumName) {
         directives: []
     };
 }
-function getSqlArgument() {
-    return {
-        kind: 'InputValueDefinition',
-        name: {
-            kind: 'Name',
-            value: 'sql',
-        },
-        type: {
-            kind: 'NamedType',
-            name: {
-                kind: 'Name',
-                value: 'SqlQuery',
-            },
-        },
-        defaultValue: null,
-        directives: [],
+exports.default = (extendArguments) => {
+    return (typesEnumName, name) => {
+        let args = [
+            getViewnamesArgument(typesEnumName)
+        ];
+        if (extendArguments != null) {
+            let newArguments = [];
+            extendArguments.forEach((extendArgument) => {
+                newArguments = newArguments.concat(extendArgument(typesEnumName, name));
+            });
+            args = args.concat(newArguments);
+        }
+        return args;
     };
-}
-exports.default = (typesEnumName) => {
-    const args = [
-        getTypenamesArgument(typesEnumName),
-        getSqlArgument()
-    ];
-    return args;
 };

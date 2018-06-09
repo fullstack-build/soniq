@@ -11,6 +11,7 @@ function gqlSchemaBuilder(userSchema, views, expressions, dbObject, viewSchemaNa
     const { customQueries, customMutations } = getCustomOperations_1.default(classification);
     /* console.log('> NEW GQL:');
     console.log(print(document));
+    console.log(JSON.stringify(document, null, 2));
     console.log('>');
     console.log('> ===================================================');
     console.log('>'); // */

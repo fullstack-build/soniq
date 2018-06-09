@@ -5,6 +5,7 @@ const arrayToNamedArray_1 = require("./utils/arrayToNamedArray");
 const getEnum_1 = require("./utils/getEnum");
 const mergeDeleteViews_1 = require("./utils/mergeDeleteViews");
 const getViewName_1 = require("./utils/getViewName");
+const utils_1 = require("./utils");
 const JSON_SPLIT = '.';
 exports.default = (classification, views, expressions, dbObject, viewSchemaName, parsers) => {
     const { tables, otherDefinitions } = classification;
@@ -26,6 +27,13 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
     let mutations = [];
     let customFields = {};
     let parserCache = {};
+    const extendQueryArguments = [];
+    parsers.forEach((parser) => {
+        if (parser.extendQueryArguments != null) {
+            extendQueryArguments.push(parser.extendQueryArguments());
+        }
+    });
+    const getQueryArguments = utils_1.createGetQueryArguments(extendQueryArguments);
     // Delete-Views can only include the id field. Thus there is no sense in having multiple delete views.
     // They can be merged to one by joining the expression arrays.
     const filteredViews = mergeDeleteViews_1.default(views);
@@ -108,7 +116,8 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
             viewSchemaName,
             dbObject,
             graphQlDocument,
-            parserCache
+            parserCache,
+            getQueryArguments
         };
         // Get fields and it's expressions
         Object.values(tableViewFields).forEach((field) => {
@@ -198,9 +207,9 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
             viewsEnumName: (gqlTypeName + '_VIEWS').toUpperCase()
         });
     });
-    const basicSchema = getBasicSchema_1.default(queries, mutations);
+    const basicSchema = getBasicSchema_1.default(queries, mutations, getQueryArguments);
     graphQlDocument.definitions = graphQlDocument.definitions.concat(basicSchema);
-    return {
+    const returnCtx = {
         document: graphQlDocument,
         dbViews,
         gQlTypes,
@@ -208,4 +217,10 @@ exports.default = (classification, views, expressions, dbObject, viewSchemaName,
         mutations,
         customFields
     };
+    parsers.forEach((parser) => {
+        if (parser.return != null) {
+            parser.return(returnCtx);
+        }
+    });
+    return returnCtx;
 };

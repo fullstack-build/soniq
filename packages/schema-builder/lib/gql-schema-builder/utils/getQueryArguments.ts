@@ -1,4 +1,4 @@
-function getTypenamesArgument(typesEnumName) {
+function getViewnamesArgument(typesEnumName) {
   return {
       kind: 'InputValueDefinition',
       name: {
@@ -23,31 +23,20 @@ function getTypenamesArgument(typesEnumName) {
     };
 }
 
-function getSqlArgument() {
-  return {
-        kind: 'InputValueDefinition',
-        name: {
-          kind: 'Name',
-          value: 'sql',
-        },
-        type: {
-          kind: 'NamedType',
-          name: {
-            kind: 'Name',
-            value: 'SqlQuery',
-          },
-        },
-        defaultValue: null,
-        directives: [],
-      };
-}
+export default (extendArguments) => {
+  return (typesEnumName, name) => {
+    let args: any = [
+      getViewnamesArgument(typesEnumName)
+    ];
 
-export default (typesEnumName) => {
+    if (extendArguments != null) {
+      let newArguments = [];
+      extendArguments.forEach((extendArgument) => {
+        newArguments = newArguments.concat(extendArgument(typesEnumName, name));
+      });
+      args = args.concat(newArguments);
+    }
 
-  const args = [
-    getTypenamesArgument(typesEnumName),
-    getSqlArgument()
-  ];
-
-  return args;
+    return args;
+  };
 };

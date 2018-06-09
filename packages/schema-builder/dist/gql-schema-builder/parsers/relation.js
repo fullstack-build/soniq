@@ -5,7 +5,6 @@ const getArgumentByName_1 = require("../utils/getArgumentByName");
 const getRelationForeignGqlTypeName_1 = require("../utils/getRelationForeignGqlTypeName");
 const createIdArrayField_1 = require("../utils/createIdArrayField");
 const createIdField_1 = require("../utils/createIdField");
-const getQueryArguments_1 = require("../utils/getQueryArguments");
 function parseField(field, ctx) {
     const fieldName = field.name.value;
     const isIncluded = ctx.view.fields.indexOf(fieldName) >= 0;
@@ -66,7 +65,7 @@ function parseField(field, ctx) {
     // This field cannot be set with a mutation
     if (ctx.view.type === 'READ') {
         const foreignTypesEnumName = (foreignNativeTable.tableName + '_VIEWS').toUpperCase();
-        field.arguments = getQueryArguments_1.default(foreignTypesEnumName);
+        field.arguments = ctx.getQueryArguments(foreignTypesEnumName, foreignGqlTypeName);
         ctx.tableView.fields.push(field);
     }
     return true;
