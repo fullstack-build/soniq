@@ -332,11 +332,9 @@ var sqlObjFromMigrationObject;
             let tableAndColumnActions = action;
             // iterate columns and merge all actions into one
             Object.values(node.columns).forEach((column) => {
-                // copy first level of column and safe original for later (=> preserve action part)
-                const columnCopy = Object.assign({}, column);
                 // ignore computed and customResolver columns
-                if (columnCopy.type !== 'computed' && columnCopy.type !== 'customResolver') {
-                    const columnAction = _splitActionFromNode(columnCopy).action;
+                if (column.type !== 'computed' && column.type !== 'customResolver') {
+                    const columnAction = _splitActionFromNode(column).action;
                     tableAndColumnActions = Object.assign({}, tableAndColumnActions, columnAction);
                 }
             });

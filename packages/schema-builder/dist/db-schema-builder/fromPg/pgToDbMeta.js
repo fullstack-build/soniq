@@ -34,7 +34,7 @@ exports.registerTriggerParser = triggerParser_2.registerTriggerParser;
 let PgToDbMeta = class PgToDbMeta {
     constructor(dbAppClient) {
         this.DELETED_PREFIX = '_deleted:';
-        this.KNOWN_TYPES = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'jsonb', 'relation'];
+        this.KNOWN_TYPES = ['varchar', 'int4', 'float8', 'bool', 'uuid', 'json', 'jsonb', 'relation'];
         this.dbMeta = {
             version: 1.0,
             schemas: {},

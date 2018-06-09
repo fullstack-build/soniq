@@ -6,12 +6,14 @@ const _ = require("lodash");
  * Helper
  */
 function splitActionFromNode(actionKey, node = {}) {
-    const action = node[actionKey] || {};
+    // clone first level of object (to avoid manipulating the actual action on the object)
+    const nodeClone = Object.assign({}, node);
+    const action = nodeClone[actionKey] || {};
     // remove action from obj
-    delete node[actionKey];
+    delete nodeClone[actionKey];
     return {
         action,
-        node
+        node: nodeClone
     };
 }
 exports.splitActionFromNode = splitActionFromNode;
