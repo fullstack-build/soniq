@@ -5,8 +5,8 @@ type Post @table @versioning @migrate(from:"PostOld"){
   title: String
   content: String
   images: [BucketFile] @files
-  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict")
-  ownerSecret: String
+  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict") @unique(name:"uniqueAcrossFKs")
+  ownerSecret: String @unique(name:"uniqueAcrossFKs")
 #  titleImage: PrivateFile @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")
   contributorSecret: String

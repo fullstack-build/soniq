@@ -7,9 +7,9 @@ type User @table @auth @versioning{
   updatedAt: String @updatedAt
   createdAt: String @createdAt
   tenantId: String @tenant @default(value: "default")
-  email: String! @unique @username
+  email: String @unique @username
   password: String @password
-  gender: Gender!
+  gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
