@@ -406,7 +406,7 @@ var sqlObjFromMigrationObject;
             }
             if (action.add && node.name != null) {
                 // getSqlFromMigrationObj column statement
-                thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN "${node.name}" varchar;`);
+                thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN IF NOT EXISTS "${node.name}" varchar;`);
             }
             else if (action.remove) {
                 // drop or rename
@@ -422,8 +422,12 @@ var sqlObjFromMigrationObject;
             }
             // for every column that should not be removed
             if (action != null && !action.remove && type != null && columnName != null) {
+                // cast array or any other type
+                const castType = (type.includes('[]')) ?
+                    `uuid[] USING string_to_array("${columnName}"::text, ''::text)::${type}` :
+                    `"${type}" USING "${columnName}"::"${type}";`;
                 // set or change column type
-                thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE "${type}" USING "${columnName}"::"${type}";`);
+                thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE ${castType};`);
             }
         }
         // add default values
@@ -711,7 +715,7 @@ var sqlObjFromMigrationObject;
         const tableName1 = `"${nodeRelation1.schemaName}"."${nodeRelation1.tableName}"`;
         if (actionRelation1.add) {
             // getSqlFromMigrationObj fk column 1
-            thisSql.up.push(`ALTER TABLE ${tableName1} ADD COLUMN "${nodeRelation1.columnName}" uuid[];`);
+            thisSql.up.push(`ALTER TABLE ${tableName1} ADD COLUMN IF NOT EXISTS "${nodeRelation1.columnName}" uuid[];`);
         }
         else if (actionRelation1.remove) {
             // drop or rename column
@@ -734,7 +738,7 @@ var sqlObjFromMigrationObject;
         const tableName2 = `"${nodeRelation2.schemaName}"."${nodeRelation2.tableName}"`;
         if (actionRelation2.add) {
             // getSqlFromMigrationObj fk column 2
-            thisSql.up.push(`ALTER TABLE ${tableName2} ADD COLUMN "${nodeRelation2.columnName}" uuid[];`);
+            thisSql.up.push(`ALTER TABLE ${tableName2} ADD COLUMN IF NOT EXISTS "${nodeRelation2.columnName}" uuid[];`);
         }
         else if (actionRelation2.remove) {
             // drop or rename column

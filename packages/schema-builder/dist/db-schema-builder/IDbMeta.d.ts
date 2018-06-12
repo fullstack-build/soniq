@@ -27,7 +27,7 @@ export interface IDbMeta {
                                 value: 'string';
                             };
                             relationName?: string;
-                            constraintNames?: [string];
+                            constraintNames?: string[];
                             extensions?: {
                                 [name: string]: any;
                             };

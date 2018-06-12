@@ -9,6 +9,10 @@ const { parseDirectiveArguments } = utils;
 directiveParser_1.registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     // nothing to do here -> has been done in ObjectTypeDefinition
 });
+// ignore relations, just make it available
+directiveParser_1.registerDirectiveParser('relation', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    // nothing to do here -> has been done during column creation
+});
 // mark as computed
 directiveParser_1.registerDirectiveParser('computed', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     dbMetaNode.type = 'computed';

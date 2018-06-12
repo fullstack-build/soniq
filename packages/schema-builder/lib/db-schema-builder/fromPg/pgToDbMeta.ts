@@ -117,7 +117,7 @@ export class PgToDbMeta {
                         FULL JOIN
                          information_schema.columns c ON c.udt_name = t.typname
                         FULL JOIN
-                          information_schema.views v ON 
+                          information_schema.views v ON
                           (v.table_catalog = c.table_catalog AND v.table_schema = c.table_schema AND v.table_name = c.table_name)
                         WHERE
                           n.nspname = $1
