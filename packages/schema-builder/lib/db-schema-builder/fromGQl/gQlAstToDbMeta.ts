@@ -455,24 +455,27 @@ function renameColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, ol
       thisTable.columns[newColumnName] = column;
       delete thisTable.columns[oldColumnName];
 
-      // iterate constraints and rename based on new name
-      const newConstraintNames = [];
-      Object.entries(column.constraintNames).forEach((constraintName) => {
-        const oldConstraintName = constraintName[1];
-        const newConstraintName = oldConstraintName.replace(oldColumnName, newColumnName);
-        // add new name to new list
-        newConstraintNames.push(newConstraintName);
-        const constraint = thisTable.constraints[oldConstraintName];
-        // delete old constraint first and create new one afterwards (in case the name didn't change)
-        delete thisTable.constraints[oldConstraintName];
-        thisTable.constraints[newConstraintName] = constraint;
+      // constraints available?
+      if (column.constraintNames != null) {
+        // iterate constraints and rename based on new name
+        const newConstraintNames = [];
+        Object.entries(column.constraintNames).forEach((constraintName) => {
+          const oldConstraintName = constraintName[1];
+          const newConstraintName = oldConstraintName.replace(oldColumnName, newColumnName);
+          // add new name to new list
+          newConstraintNames.push(newConstraintName);
+          const constraint = thisTable.constraints[oldConstraintName];
+          // delete old constraint first and create new one afterwards (in case the name didn't change)
+          delete thisTable.constraints[oldConstraintName];
+          thisTable.constraints[newConstraintName] = constraint;
 
-        // replace column name in constraint
-        const columnNameInConstraintIndex = constraint.columns.indexOf(oldColumnName);
-        constraint.columns[columnNameInConstraintIndex] = newColumnName;
-      });
-      // replace old constraints list with new one
-      column.constraintNames = newConstraintNames;
+          // replace column name in constraint
+          const columnNameInConstraintIndex = constraint.columns.indexOf(oldColumnName);
+          constraint.columns[columnNameInConstraintIndex] = newColumnName;
+        });
+        // replace old constraints list with new one
+        column.constraintNames = newConstraintNames;
+      }
     }
   }
 }
@@ -485,10 +488,17 @@ function changeColumnType(dbMeta: IDbMeta, schemaName: string, tableName: string
 
 function deleteColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, columnNameToDrop: string) {
   const thisTable = dbMeta.schemas[schemaName].tables[tableName];
-  // delete constraints
-  Object.values(thisTable.columns[columnNameToDrop].constraintNames).forEach((constraintName) => {
-    delete thisTable.constraints[constraintName];
-  });
-  // delete column
-  delete thisTable.columns[columnNameToDrop];
+  // column available?
+  if (thisTable.columns[columnNameToDrop]){
+    // constraints available?
+    if (thisTable.columns[columnNameToDrop].constraintNames != null) {
+      // delete constraints
+      Object.values(thisTable.columns[columnNameToDrop].constraintNames).forEach((constraintName) => {
+        delete thisTable.constraints[constraintName];
+      });
+    }
+
+    // delete column
+    delete thisTable.columns[columnNameToDrop];
+  }
 }
