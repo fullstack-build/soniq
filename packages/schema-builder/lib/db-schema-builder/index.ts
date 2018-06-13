@@ -10,7 +10,6 @@ import { LoggerFactory, ILogger } from '@fullstack-one/logger';
 import { DbAppClient, PgClient } from '@fullstack-one/db';
 import { IDbMeta } from './IDbMeta';
 import { migrationObject } from './migrationObject';
-import createViewsFromDbMeta from './createViewsFromDbMeta';
 import { sqlObjFromMigrationObject } from './toPg/createSqlObjFromMigrationObject';
 
 @Service()
@@ -24,6 +23,7 @@ export class DbSchemaBuilder {
   private dbConfig;
   private schemaBuilderConfig;
   private config;
+  private permissionSqlStatements: any = [];
 
   // DI
   private logger: ILogger;
@@ -51,6 +51,10 @@ export class DbSchemaBuilder {
 
   public getMigrationDbMeta(): IDbMeta {
     return _.cloneDeep(this.migrationObject);
+  }
+
+  public setPermissionSqlStatements(permissionSqlStatements) {
+    this.permissionSqlStatements = permissionSqlStatements;
   }
 
   // run packages migration scripts based on initiated version
@@ -198,9 +202,10 @@ export class DbSchemaBuilder {
   }
 
   public getViewsSql() {
-    this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
-    return createViewsFromDbMeta(this.toDbMeta, this.dbConfig.general.database,
-    this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
+    return this.permissionSqlStatements;
+    // this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
+    // return createViewsFromDbMeta(this.toDbMeta, this.dbConfig.general.database,
+    // this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
   }
 
   public getBootSql() {

@@ -11,7 +11,7 @@ import * as KoaRouter from 'koa-router';
 import * as koaBody from 'koa-bodyparser';
 import * as Minio from 'minio';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
-import * as filesParser from './parser';
+import { getParser } from './parser';
 import { defaultVerifier } from './defaultVerifier';
 
 import * as fs from 'fs';
@@ -64,7 +64,7 @@ export class FileStorage {
 
     this.schemaBuilder.extendSchema(schema);
 
-    this.schemaBuilder.addParser(filesParser);
+    this.schemaBuilder.addExtension(getParser());
 
     this.graphQl.addResolvers(this.getResolvers());
 

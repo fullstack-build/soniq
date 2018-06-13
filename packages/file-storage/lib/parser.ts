@@ -1,7 +1,7 @@
 
 import { utils } from '@fullstack-one/schema-builder';
 
-const { findDirectiveIndex, getArgumentByName, parseDirectiveArguments, createArrayField, getEnum } = utils;
+const { createArrayField, getEnum } = utils;
 
 const typesEnumName = 'FILE_TYPES';
 
@@ -9,87 +9,92 @@ import {
   _
 } from 'lodash';
 
-export function parseField(field, ctx) {
-  const fieldName = field.name.value;
-  const isIncluded = ctx.view.fields.indexOf(fieldName) >= 0;
+const resolverName = '@fullstack-one/file-storage/readFiles';
 
-  if (!isIncluded) {
-    return false;
-  }
-  const filesDirectiveIndex = findDirectiveIndex(field, 'files');
-
-  // field is not custom
-  if (filesDirectiveIndex < 0) {
-    return false;
-  }
-
-  const gqlTypeName = ctx.view.gqlTypeName;
-  const viewName = ctx.view.viewName;
-  const tableName = ctx.view.tableName;
-  const fileDirective = field.directives[filesDirectiveIndex];
-
-  if (ctx.parserCache.fileStorage == null) {
-    ctx.parserCache.fileStorage = {
-      typesObject: {}
-    };
-  }
-
-  const resolverName = '@fullstack-one/file-storage/readFiles';
-  const directiveArguments: any = parseDirectiveArguments(fileDirective);
-  const params = directiveArguments.params || {};
-
-  const types = directiveArguments.types || ['DEFAULT'];
-
-  types.forEach((type) => {
-    ctx.parserCache.fileStorage.typesObject[type] = true;
-  });
-
-  const fieldKey = `${gqlTypeName}_${fieldName}`;
-
-  // Add field to custom fields for resolving it seperate
-  ctx.customFields[fieldKey] = {
-    type: 'Field',
-    gqlTypeName,
-    fieldName,
-    resolver: resolverName,
-    params
+export function getParser() {
+  const parser: any = {};
+  const typesObject: any = {
+    DEFAULT: true
   };
 
-  if (ctx.gQlTypes[gqlTypeName].fieldNames.indexOf(fieldName) < 0) {
-    ctx.gQlTypes[gqlTypeName].fieldNames.push(fieldName);
-  }
+  parser.parseCreateField = (ctx) => {
+    const { gqlFieldDefinition, view, fieldName, directives } = ctx;
 
-  ctx.dbView.fields.push({
-    name: fieldName,
-    expression: `"${fieldName}"`
-  });
+    if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
+      const gqlArrayFieldDefinition: any = createArrayField(fieldName, 'String');
+      const types = directives.files.types || ['DEFAULT'];
 
-  // Add native fields to gQlTypes
-  ctx.gQlTypes[gqlTypeName].views[viewName].nativeFieldNames.push(fieldName);
-
-  const description = {
-    kind: 'StringValue',
-    value: `Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
-    block: true
+      gqlArrayFieldDefinition.description = {
+        kind: 'StringValue',
+        value: `List of FileNames. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+        block: true
+      };
+      return [gqlArrayFieldDefinition];
+    }
+    return null;
   };
 
-  // This field cannot be set with a generated mutation
-  if (ctx.view.type !== 'READ') {
-    const arrayField: any = createArrayField(fieldName, 'String');
-    description.value = `List of FileNames. ${description.value}`;
-    arrayField.description = description;
-    ctx.tableView.fields.push(arrayField);
-  } else {
-    field.description = description;
-    description.value = `List of Files. ${description.value}`;
-    ctx.tableView.fields.push(field);
-  }
-  return true;
-}
+  parser.parseUpdateField = (ctx) => {
+    const { gqlFieldDefinition, view, fieldName, directives } = ctx;
 
-export function finish(ctx) {
-  if (ctx.parserCache.fileStorage != null) {
-    const types = Object.keys(ctx.parserCache.fileStorage.typesObject);
-    ctx.graphQlDocument.definitions.push(getEnum(typesEnumName, types));
-  }
+    if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
+      const gqlArrayFieldDefinition: any = createArrayField(fieldName, 'String');
+      const types = directives.files.types || ['DEFAULT'];
+
+      gqlArrayFieldDefinition.description = {
+        kind: 'StringValue',
+        value: `List of FileNames. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+        block: true
+      };
+      return [gqlArrayFieldDefinition];
+    }
+    return null;
+  };
+
+  parser.parseReadField = (ctx) => {
+    const { fieldName, readExpressions, directives } = ctx;
+
+    // Has field any permission-expression
+    if (readExpressions[fieldName] != null && directives.files != null) {
+      const { defaultFieldCreator, localTable } = ctx;
+
+      const params = directives.files.params || {};
+      const types = directives.files.types || ['DEFAULT'];
+
+      types.forEach((type) => {
+        typesObject[type] = true;
+      });
+
+      const columnExpression = `"${localTable}"."${fieldName}"`;
+
+      const {
+        publicFieldSql,
+        authFieldSql,
+        gqlFieldDefinition
+      } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
+
+      gqlFieldDefinition.description = {
+        kind: 'StringValue',
+        value: `List of Files. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+        block: true
+      };
+
+      return [{
+        gqlFieldName: fieldName,
+        nativeFieldName: fieldName,
+        publicFieldSql,
+        authFieldSql,
+        gqlFieldDefinition,
+        isVirtual: true
+      }];
+    }
+    return null;
+  };
+
+  parser.extendDefinitions = (ctx) => {
+    const types = Object.keys(typesObject);
+    return [getEnum(typesEnumName, types)];
+  };
+
+  return parser;
 }

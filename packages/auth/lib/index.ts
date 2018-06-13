@@ -34,14 +34,6 @@ export class Auth {
   private authConfig;
   private notificationFunction;
 
-  private dbData = {
-    schema: null,
-    table: null,
-    username: null,
-    password: null,
-    tenant: null
-  };
-
   // DI
   private dbGeneralPool: DbGeneralPool;
   private logger: ILogger;
@@ -88,8 +80,10 @@ export class Auth {
 
     this.schemaBuilder.extendSchema(schema);
 
-    this.schemaBuilder.addParser(getParser((key, value) => {
+    this.schemaBuilder.addExtension(getParser((key, value) => {
       this.parserMeta[key] = value;
+    }, (key) => {
+      return this.parserMeta[key];
     }));
 
     this.graphQl.addResolvers(this.getResolvers());
@@ -732,38 +726,8 @@ export class Auth {
     });
   }
 
-  private findAuthTableAndFields(dbMeta) {
-     Object.keys(dbMeta.schemas).forEach((schemaName) => {
-      const schemaObject = dbMeta.schemas[schemaName];
-      Object.keys(schemaObject.tables).forEach((tableName) => {
-        const tableObject = schemaObject.tables[tableName];
-        if (tableObject.extensions != null && tableObject.extensions.isAuth === true) {
-          this.dbData.table = tableObject.name;
-          this.dbData.schema = tableObject.schemaName;
-          Object.keys(tableObject.columns).forEach((columnName) => {
-            const columnObject = tableObject.columns[columnName];
-            if (columnObject.extensions != null && columnObject.extensions.auth != null) {
-              if (columnObject.extensions.auth.isUsername === true) {
-                this.dbData.username = columnObject.name;
-              }
-              if (columnObject.extensions.auth.isPassword === true) {
-                this.dbData.password = columnObject.name;
-              }
-              if (columnObject.extensions.auth.isTenant === true) {
-                this.dbData.tenant = columnObject.name;
-              }
-            }
-          });
-          return;
-        }
-      });
-    });
-  }
-
   private async boot() {
     const dbMeta = this.schemaBuilder.getDbMeta();
-
-    this.findAuthTableAndFields(dbMeta);
 
     const authRouter = new KoaRouter();
 
@@ -890,7 +854,7 @@ export class Auth {
   private async preMutationCommitHook(client, hookInfo) {
     const mutation = hookInfo.mutationQuery.mutation;
 
-    if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
+    if (mutation.extensions.auth === 'REGISTER_USER_MUTATION') {
       const args = hookInfo.args;
       const ctx = hookInfo.context.ctx;
       const meta = args.meta || null;

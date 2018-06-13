@@ -4,8 +4,8 @@ type Post @table @versioning @migrate(from:"PostOld"){
   createdAt: String @createdAt
   title: String
   content: String
-  images: [BucketFile] @files
-  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict")
+  #images: [BucketFile] @files
+  owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict") @default(expression: "_meta.current_user_id()")
   ownerSecret: String
 #  titleImage: PrivateFile @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")

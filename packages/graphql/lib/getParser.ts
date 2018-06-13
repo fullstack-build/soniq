@@ -264,8 +264,8 @@ export function getParser(operatorsObject) {
   parser.return = (ctx) => {
     ctx.document.definitions.push(getOperationType(operatorsObject));
     Object.values(schemaExtensions).forEach(({ name, whereArgumentValue, orderByArgumentValue }) => {
-      ctx.document.definitions.push(getWhereType(whereArgumentValue, ctx.gQlTypes[name].fieldNames));
-      ctx.document.definitions.push(getOrderByEnum(orderByArgumentValue, ctx.gQlTypes[name].fieldNames));
+      ctx.document.definitions.push(getWhereType(whereArgumentValue, ctx.gQlTypes[name].nativeFieldNames));
+      ctx.document.definitions.push(getOrderByEnum(orderByArgumentValue, ctx.gQlTypes[name].nativeFieldNames));
     });
   };
 

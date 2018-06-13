@@ -15,5 +15,7 @@ export { default as getViewnamesField } from './getViewnamesField';
 export { default as getEnum } from './getEnum';
 export { default as mergeDeleteViews } from './mergeDeleteViews';
 export { default as parseObjectArgument } from './parseObjectArgument';
-export { default as parseDirectiveArguments } from './parseDirectiveArguments';
+export { parseDirectiveArguments } from './parseDirectiveArguments';
+export { parseDirectives } from './parseDirectives';
 export { default as createArrayField } from './createArrayField';
+export { getRelationMetasFromDefinition } from './getRelationMetasFromDefinition';

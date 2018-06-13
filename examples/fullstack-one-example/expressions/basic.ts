@@ -1,34 +1,53 @@
 export = [
   {
     name: 'Owner',
-    returnType: 'Boolean',
-    generate: (context, params): string => {
+    type: 'expression',
+    gqlReturnType: 'Boolean',
+    getNameWithParams: (params: any = {}): string => {
+      if (params.field != null) {
+        return `Owner_${params.field}`;
+      }
+      return 'Owner';
+    },
+    generate: (context, params: any = {}): string => {
       const field = params.field || 'ownerId';
-      return `${context.table}."${field}" = ${context.currentUserId()}`;
+      return `${context.getField(field)} = ${context.getExpression('currentUserId')}`;
+    },
+  },
+  {
+    name: 'currentUserId',
+    type: 'function',
+    gqlReturnType: 'ID',
+    requiresAuth: true,
+    generate: (context, params): string => {
+      return `_meta.current_user_id()`;
     },
   }, {
     name: 'Authenticated',
-    returnType: 'Boolean',
+    type: 'expression',
+    gqlReturnType: 'Boolean',
     generate: (context, params): string => {
-      return `${context.currentUserId()} IS NOT NULL`;
-    },
-  }, {
-    name: 'Admin',
-    returnType: 'Boolean',
-    generate: (context, params): string => {
-      return `current_user().roles @> ARRAY["ADMIN"]::varchar[]`;
+      return `${context.getExpression('currentUserId')} IS NOT NULL`;
     },
   }, {
     name: 'Anyone',
-    returnType: 'Boolean',
+    type: 'expression',
+    gqlReturnType: 'Boolean',
     generate: (context, params): string => {
       return `TRUE`;
     },
   }, {
     name: 'FirstNOfField',
-    returnType: 'String',
+    type: 'expression',
+    gqlReturnType: 'String',
+    getNameWithParams: (params: any = {}): string => {
+      if (params.n != null) {
+        return `FirstNOfField_${params.field}_${params.n}`;
+      }
+      return `FirstNOfField_${params.field}`;
+    },
     generate: (context, params): string => {
-      return `(substring("${context.tableName}"."${params.field}" from 1 for ${params.n || 1}) || '.')`;
+      return `(substring(${context.getField(params.field)} from 1 for ${params.n || 1}) || '.')`;
     },
   },
 ];

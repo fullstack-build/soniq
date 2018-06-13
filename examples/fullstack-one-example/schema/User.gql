@@ -9,7 +9,7 @@ type User @table @auth @versioning{
   tenantId: String @tenant @default(value: "default")
   email: String @unique @username
   password: String @password
-  gender: Gender
+  #gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
@@ -31,7 +31,7 @@ type PayloadData {
 }
 
 type Payload {
-  data: PayloadData
+  data: String
   secret: Int!
 }
 
@@ -41,7 +41,7 @@ input PayloadDataInput {
 }
 
 input PayloadInput {
-  data: PayloadDataInput!
+  data: String!
   secret: Int!
 }
 
@@ -84,12 +84,12 @@ extend type Query {
   add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
 }
 
-enum UserType {
-  private
-  business
-}
+#enum UserType {
+#  private
+#  business
+#}
 
-enum Gender {
-  male
-  female
-}
+#enum Gender {
+#  male
+#  female
+#}
