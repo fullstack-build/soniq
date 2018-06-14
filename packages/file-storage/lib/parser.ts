@@ -17,7 +17,7 @@ export function getParser() {
     DEFAULT: true
   };
 
-  parser.parseCreateField = (ctx) => {
+  parser.parseUpdateField = (ctx) => {
     const { gqlFieldDefinition, view, fieldName, directives } = ctx;
 
     if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
@@ -34,21 +34,8 @@ export function getParser() {
     return null;
   };
 
-  parser.parseUpdateField = (ctx) => {
-    const { gqlFieldDefinition, view, fieldName, directives } = ctx;
-
-    if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
-      const gqlArrayFieldDefinition: any = createArrayField(fieldName, 'String');
-      const types = directives.files.types || ['DEFAULT'];
-
-      gqlArrayFieldDefinition.description = {
-        kind: 'StringValue',
-        value: `List of FileNames. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
-        block: true
-      };
-      return [gqlArrayFieldDefinition];
-    }
-    return null;
+  parser.parseCreateField = (ctx) => {
+    return parser.parseUpdateField(ctx);
   };
 
   parser.parseReadField = (ctx) => {
@@ -78,6 +65,28 @@ export function getParser() {
         value: `List of Files. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
         block: true
       };
+
+      gqlFieldDefinition.directives.push({
+        kind: 'Directive',
+        name: {
+          kind: 'Name',
+          value: 'custom'
+        },
+        arguments: [
+          {
+            kind: 'Argument',
+            name: {
+              kind: 'Name',
+              value: 'resolver'
+            },
+            value: {
+              kind: 'StringValue',
+              value: resolverName,
+              block: false
+            }
+          }
+        ]
+      });
 
       return [{
         gqlFieldName: fieldName,
