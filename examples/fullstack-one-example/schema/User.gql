@@ -13,7 +13,7 @@ type User @table @auth @versioning{
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
-  postContributions: [Post!]! @relation(name: "PostContributors")
+  #postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "date") @default(expression: "now()")
   acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyPolicyAcceptedAtInUTC

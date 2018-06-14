@@ -13,7 +13,7 @@ export function createGrants(config, dbMeta) {
   Object.values(dbMeta.schemas).forEach((schema: any) => {
     Object.values(schema.tables).forEach((table: any) => {
       // sql.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
-      sql.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."V${table.name}" TO "${config.userName}";`);
+      sql.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."A${table.name}" TO "${config.userName}";`);
 
       // TODO: @Eugene: Move this to versioning.ts
       sql.push(`GRANT INSERT ON "_versions"."${table.schemaName}_${table.name}" TO "${config.userName}";`);

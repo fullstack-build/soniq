@@ -151,6 +151,12 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
             logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
 
+            if (returnQuery.potentialHighCost === true) {
+              const currentCost = await checkCosts(client, returnQuery, costLimit);
+              logger.warn(`The current query has been identified as potential to expensive. It could be denied in future` +
+              ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${returnQuery.cost})`);
+            }
+
             // Run SQL query on pg to get response-data
             const returnResult = await client.query(returnQuery.sql, returnQuery.values);
             checkQueryResult(returnQuery.query.name, returnResult, logger);
