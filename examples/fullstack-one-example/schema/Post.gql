@@ -6,7 +6,7 @@ type Post @table @versioning @migrate(from:"PostOld"){
   content: String
   images: [BucketFile] @files
   owner: User! @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict") @default(expression: "_meta.current_user_id()")
-  ownerSecret: String
+  ownerSecret: String @unique(name:"uniqueAcrossFKs")
 #  titleImage: PrivateFile @relation(name: "TitleImage")
   contributors: [User!]! @relation(name: "PostContributors")
   contributorSecret: String

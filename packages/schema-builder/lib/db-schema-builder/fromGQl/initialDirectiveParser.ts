@@ -1,13 +1,18 @@
 import * as _ from 'lodash';
-import { setDefaultValueForColumn, addMigration, createConstraint } from '../gQlAstToDbMetaHelper';
-import * as utils from '../../../gql-schema-builder/utils';
-import { registerDirectiveParser } from './index';
+import { setDefaultValueForColumn, addMigration, createConstraint } from './gQlAstToDbMetaHelper';
+import * as utils from '../../gql-schema-builder/utils';
+import { registerDirectiveParser } from './directiveParser';
 
 const { parseDirectiveArguments } = utils;
 
 // ignore table, just make it available
 registerDirectiveParser('table', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     // nothing to do here -> has been done in ObjectTypeDefinition
+});
+
+// ignore relations, just make it available
+registerDirectiveParser('relation', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  // nothing to do here -> has been done during column creation
 });
 
 // mark as computed
@@ -57,25 +62,15 @@ registerDirectiveParser('json', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbM
 registerDirectiveParser('type', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const customType = _.get(gQlDirectiveNode, 'arguments[0].value.value');
 
-    // assume everything unknown by GraphQL is a custom type
-    dbMetaNode.type = 'customType';
-    dbMetaNode.customType = customType;
-
-    /*
-    // detect known PG types
-    switch (customType) {
-        case 'Date':
-            dbMetaNode.type = 'date';
-            break;
-      case 'timestamp':
-        dbMetaNode.type = 'timestamp';
-        break;
-        default:
-            dbMetaNode.type = 'customType';
-            dbMetaNode.customType = customType;
-            break;
+    if (customType.toLowerCase() === 'json') {
+      dbMetaNode.type = 'json';
+    } else if (customType.toLowerCase() === 'jsonb') {
+      dbMetaNode.type = 'jsonb';
+    } else {
+      // assume everything unknown by GraphQL is a custom type
+      dbMetaNode.type = 'customType';
+      dbMetaNode.customType = customType;
     }
-    */
 });
 // set default value
 registerDirectiveParser('default', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {

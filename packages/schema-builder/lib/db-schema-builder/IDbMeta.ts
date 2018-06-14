@@ -28,7 +28,7 @@ export interface IDbMeta {
                   value: 'string';
                 };
                 relationName?: string;
-                constraintNames?: [string];
+                constraintNames?: string[];
                 extensions?: {
                   [name: string]: any;
                 };
@@ -37,7 +37,7 @@ export interface IDbMeta {
           constraints?: {
             [name: string]: {
               name: string;
-              type: 'PRIMARY KEY' | 'notnull' | 'UNIQUE' | 'CHECK';
+              type: 'PRIMARY KEY' | 'NOT NULL' | 'UNIQUE' | 'CHECK';
               columns?: [string];
               options?: [any];
             }

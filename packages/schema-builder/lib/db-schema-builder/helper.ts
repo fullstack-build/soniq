@@ -6,13 +6,15 @@ import * as _ from 'lodash';
  */
 
 export function splitActionFromNode(actionKey, node: {} = {}): {action: any, node: any} {
-  const action = node[actionKey] || {};
+  // clone first level of object (to avoid manipulating the actual action on the object)
+  const nodeClone = { ...node };
+  const action = nodeClone[actionKey] || {};
   // remove action from obj
-  delete node[actionKey];
+  delete nodeClone[actionKey];
 
   return {
     action,
-    node
+    node: nodeClone
   };
 }
 

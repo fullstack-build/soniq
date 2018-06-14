@@ -24,7 +24,6 @@ type User @table @auth @versioning{
   #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
 }
 
-
 type PayloadData {
   title: String
   content: String

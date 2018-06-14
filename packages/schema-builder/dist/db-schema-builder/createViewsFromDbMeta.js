@@ -21,7 +21,7 @@ exports.default = (dbMeta, databaseName, applicationUserName, includePrivileges)
         Object.values(dbMeta.schemas).forEach((schema) => {
             Object.values(schema.tables).forEach((table) => {
                 // statements.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
-                statements.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."V${table.name}" TO ${applicationUserName};`);
+                statements.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."A${table.name}" TO ${applicationUserName};`);
                 // TODO: @Eugene: Move this to versioning.ts
                 statements.push(`GRANT INSERT ON "_versions"."${table.schemaName}_${table.name}" TO ${applicationUserName};`);
             });

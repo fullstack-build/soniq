@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { IDbMeta } from '../IDbMeta';
+import { IDbMeta, IDbRelation } from '../IDbMeta';
 import {
   setDefaultValueForColumn,
   addMigration,
@@ -23,10 +23,14 @@ export const parseGQlAstToDbMeta = (gQlAST): IDbMeta => {
   };
 
   // load existing directive parser
-  require('./directiveParser/initialDirectiveParser');
+  require('./initialDirectiveParser');
 
   // start parsing
   parseASTNode(gQlAST, dbMeta);
+
+  // update relational column names
+  changeVirtualColumnNamesToActualColumnNamesForRelations(dbMeta);
+
   // return copy instead of ref
   return _.cloneDeep(dbMeta);
 };
@@ -70,7 +74,7 @@ const GQL_JSON_PARSER = {
   Document: (gQlSchemaNode, dbMetaNode, refDbMeta) => {
 
     // FIRST round:
-    // getSqlFromMigrationObj blank objects for all tables and enums (needed for validation of relationships)
+    // add blank objects for all tables and enums (needed for validation of relationships)
     // but don't continue recursively
     Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode: any) => {
       // type
@@ -114,14 +118,14 @@ const GQL_JSON_PARSER = {
     const schemaName  = schemaAndTableName.schemaName || 'public';
     const tableName   = schemaAndTableName.tableName || typeName;
 
-    // find or getSqlFromMigrationObj schema
+    // find or add schema
     refDbMeta.schemas[schemaName] = refDbMeta.schemas[schemaName] || {
       name: schemaName,
       tables:{},
       views: []
     };
 
-    // find or getSqlFromMigrationObj table in schema
+    // find or add table in schema
     // and save ref to tableObject for recursion
     const refDbMetaCurrentTable = refDbMeta.schemas[schemaName].tables[tableName] = refDbMeta.schemas[schemaName].tables[tableName] || {
       schemaName,
@@ -144,7 +148,7 @@ const GQL_JSON_PARSER = {
 
     // parse ObjectType properties
     Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
-      // iterate over sub nodes (e.g. intefaces, fields, directives
+      // iterate over sub nodes (e.g. interfaces, fields, directives
       if (Array.isArray(gQlSchemaDocumentNodeProperty)) {
         Object.values(gQlSchemaDocumentNodeProperty).map((gQlSchemaDocumentSubnode) => {
             // parse sub node
@@ -213,67 +217,66 @@ const GQL_JSON_PARSER = {
     refDbMeta,
     refDbMetaCurrentTable,
   ) => {
-    // getSqlFromMigrationObj columns object if not set already
+    // add columns object if not set already
     dbMetaNode.columns = dbMetaNode.columns || {};
+
+    // handle normal column
+    const newColumn = {
+      name: null,
+      type: null,
+      description: null,
+      extensions: {}
+    };
 
     // check if column is relation
     if (_.get(gQlFieldDefinitionNode, 'directives[0].name.value') === 'relation') {
       // handle relation
-    relationBuilderHelper(
+      const relation = relationBuilderHelper(
         gQlFieldDefinitionNode,
         dbMetaNode,
         refDbMeta,
         refDbMetaCurrentTable
       );
-    } else {
-      // handle normal column
-
-      const newField = {
-        name: null,
-        type: null,
-        description: null,
-        extensions: {}
-      };
-
-      // parse FieldDefinition properties
-      Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
-        if (
-          typeof gQlSchemaFieldNodeProperty === 'object' &&
-          !Array.isArray(gQlSchemaFieldNodeProperty)
-        ) { // object
-
-          // parse sub node
-          parseASTNode(
-            gQlSchemaFieldNodeProperty,
-            newField,
-            refDbMeta,
-            refDbMetaCurrentTable,
-            newField,
-          );
-        } else if (
-          typeof gQlSchemaFieldNodeProperty === 'object' &&
-          !!Array.isArray(gQlSchemaFieldNodeProperty)
-        ) { // array
-
-          // iterate over sub nodes (e.g. arguments, directives
-          Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
-              // parse sub node
-              parseASTNode(
-                gQlSchemaFieldSubnode,
-                newField,
-                refDbMeta,
-                refDbMetaCurrentTable,
-                newField,
-              );
-            },
-          );
-        }
-      });
-
-      // add new column ref to dbMeta
-      // newField will now update data in the dbMeta through this ref
-      dbMetaNode.columns[newField.name] = newField;
     }
+
+    // parse FieldDefinition properties
+    Object.values(gQlFieldDefinitionNode).map((gQlSchemaFieldNodeProperty) => {
+      if (
+        typeof gQlSchemaFieldNodeProperty === 'object' &&
+        !Array.isArray(gQlSchemaFieldNodeProperty)
+      ) { // object
+
+        // parse sub node
+        parseASTNode(
+          gQlSchemaFieldNodeProperty,
+          newColumn,
+          refDbMeta,
+          refDbMetaCurrentTable,
+          newColumn,
+        );
+      } else if (
+        typeof gQlSchemaFieldNodeProperty === 'object' &&
+        !!Array.isArray(gQlSchemaFieldNodeProperty)
+      ) { // array
+
+        // iterate over sub nodes (e.g. arguments, directives
+        Object.values(gQlSchemaFieldNodeProperty).map((gQlSchemaFieldSubnode) => {
+            // parse sub node
+            parseASTNode(
+              gQlSchemaFieldSubnode,
+              newColumn,
+              refDbMeta,
+              refDbMetaCurrentTable,
+              newColumn,
+            );
+          },
+        );
+      }
+    });
+
+    // add new column ref to dbMeta
+    // newField will now update data in the dbMeta through this ref
+    dbMetaNode.columns[newColumn.name] = newColumn;
 
   },
 
@@ -286,6 +289,7 @@ const GQL_JSON_PARSER = {
     refDbMetaCurrentTableColumn,
   ) => {
     if (gQlSchemaNode != null && dbMetaNode != null) {
+
       // set column name
       dbMetaNode.name = gQlSchemaNode.value;
     }
@@ -299,6 +303,8 @@ const GQL_JSON_PARSER = {
     refDbMetaCurrentTable,
     refDbMetaCurrentTableColumn,
   ) => {
+
+    // set column type
     const columnTypeLowerCase = gQlSchemaNode.name.value.toLocaleLowerCase();
     dbMetaNode.type = 'varchar';
     // types
@@ -310,15 +316,16 @@ const GQL_JSON_PARSER = {
         dbMetaNode.type = 'uuid';
         dbMetaNode.defaultValue = {
           isExpression: true,
-          value: '"_meta"."uuid_generate_v4"()' // former uuid_generate_v4()
+          // former uuid_generate_v4(), now a wrapper for INSERTS without SELECT permissions
+          value: '_meta.uuid_generate_v4()'
         };
         // add new PK constraint
         const constraintNamePk = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_pkey`;
         createConstraint(constraintNamePk, 'PRIMARY KEY', {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
-        // add NOT NULL constraint to every PK
-        const constraintNameNotNull = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
-        createConstraint(constraintNameNotNull, 'notnull',{}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 
+        break;
+      case 'uuid':
+        dbMetaNode.type = 'uuid';
         break;
       case 'string':
         dbMetaNode.type = 'varchar';
@@ -333,6 +340,9 @@ const GQL_JSON_PARSER = {
         dbMetaNode.type = 'bool';
         break;
       case 'json':
+        dbMetaNode.type = 'json';
+        break;
+      case 'jsonb':
         dbMetaNode.type = 'jsonb';
         break;
       default:
@@ -347,7 +357,7 @@ const GQL_JSON_PARSER = {
           dbMetaNode.customType = foundEnum.name;
 
           // add column name to enum columns list
-          if (refDbMetaCurrentTable.schemaName != null && refDbMetaCurrentTable.tableName != null && refDbMetaCurrentTable.columnName != null) {
+          if (refDbMetaCurrentTable.schemaName != null && refDbMetaCurrentTable.name != null && refDbMetaCurrentTableColumn.name != null) {
             const enumColumnName = `${refDbMetaCurrentTable.schemaName}.${refDbMetaCurrentTable.name}.${refDbMetaCurrentTableColumn.name}`;
 
             foundEnum.columns[enumColumnName] = {
@@ -373,7 +383,8 @@ const GQL_JSON_PARSER = {
     refDbMetaCurrentTableColumn,
   ) => {
     // add new constraint
-    createConstraint(null, 'notnull', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
+    const constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
+    createConstraint(constraintName, 'NOT NULL', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {
@@ -414,3 +425,80 @@ const GQL_JSON_PARSER = {
     }
   }
 };
+
+// iterate dbMeta and change virtual relational column names to actual column names
+function changeVirtualColumnNamesToActualColumnNamesForRelations(dbMeta: IDbMeta) {
+  Object.values(dbMeta.relations).forEach((relation) => {
+    Object.values(relation).forEach((relationSide: IDbRelation) => {
+      renameColumn(dbMeta, relationSide.schemaName, relationSide.tableName, relationSide.virtualColumnName, relationSide.columnName);
+      // drop many:one side virtual column
+      if (relationSide.columnName == null) {
+        deleteColumn(dbMeta, relationSide.schemaName, relationSide.tableName, relationSide.virtualColumnName);
+      } else {
+        // change column type to uuid
+        const columnType = (relationSide.type === 'ONE') ? 'uuid' : 'uuid[]';
+        changeColumnType(dbMeta, relationSide.schemaName, relationSide.tableName, relationSide.columnName, columnType);
+      }
+    });
+  });
+}
+
+function renameColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, oldColumnName: string, newColumnName?: string) {
+  if (newColumnName != null) {
+    // find column
+    const thisTable = dbMeta.schemas[schemaName].tables[tableName];
+    const column = thisTable.columns[oldColumnName];
+    if (column != null) {
+      // change name
+      column.name = newColumnName;
+      // change column key
+      thisTable.columns[newColumnName] = column;
+      delete thisTable.columns[oldColumnName];
+
+      // constraints available?
+      if (column.constraintNames != null) {
+        // iterate constraints and rename based on new name
+        const newConstraintNames = [];
+        Object.entries(column.constraintNames).forEach((constraintName) => {
+          const oldConstraintName = constraintName[1];
+          const newConstraintName = oldConstraintName.replace(oldColumnName, newColumnName);
+          // add new name to new list
+          newConstraintNames.push(newConstraintName);
+          const constraint = thisTable.constraints[oldConstraintName];
+          // delete old constraint first and create new one afterwards (in case the name didn't change)
+          delete thisTable.constraints[oldConstraintName];
+          thisTable.constraints[newConstraintName] = constraint;
+
+          // replace column name in constraint
+          const columnNameInConstraintIndex = constraint.columns.indexOf(oldColumnName);
+          constraint.columns[columnNameInConstraintIndex] = newColumnName;
+        });
+        // replace old constraints list with new one
+        column.constraintNames = newConstraintNames;
+      }
+    }
+  }
+}
+
+function changeColumnType(dbMeta: IDbMeta, schemaName: string, tableName: string, columnName: string, columnType) {
+  if (columnName != null) {
+    dbMeta.schemas[schemaName].tables[tableName].columns[columnName].type = columnType;
+  }
+}
+
+function deleteColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, columnNameToDrop: string) {
+  const thisTable = dbMeta.schemas[schemaName].tables[tableName];
+  // column available?
+  if (thisTable.columns[columnNameToDrop]){
+    // constraints available?
+    if (thisTable.columns[columnNameToDrop].constraintNames != null) {
+      // delete constraints
+      Object.values(thisTable.columns[columnNameToDrop].constraintNames).forEach((constraintName) => {
+        delete thisTable.constraints[constraintName];
+      });
+    }
+
+    // delete column
+    delete thisTable.columns[columnNameToDrop];
+  }
+}
