@@ -1,4 +1,4 @@
-export default (fieldName) => {
+export function createIdField(fieldName) {
   return {
     kind: 'FieldDefinition',
     name: {
@@ -15,4 +15,4 @@ export default (fieldName) => {
     },
     directives: []
   };
-};
+}

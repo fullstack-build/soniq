@@ -30,8 +30,7 @@ async function checkCosts(client, query, costLimit) {
   return currentCost;
 }
 
-export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger) {
-  const costLimit = 2000000;
+export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit) {
   const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, costLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 

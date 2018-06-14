@@ -25,7 +25,7 @@ export function createView(table, config, name, fields, expressions) {
 
   statements.push(sql);
 
-  statements.push(`GRANT SELECT, UPDATE ON "${config.schemaName}"."${name}" TO ${config.userName};`);
+  statements.push(`GRANT SELECT, UPDATE ON "${config.schemaName}"."${name}" TO "${config.userName}";`);
 
   return statements;
 }

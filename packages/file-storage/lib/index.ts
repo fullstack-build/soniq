@@ -243,6 +243,10 @@ export class FileStorage {
       '@fullstack-one/file-storage/readFiles': async (obj, args, context, info, params) => {
         const awaitingFileSignatures = [];
 
+        if (obj[info.fieldName] == null) {
+          return [];
+        }
+
         const data = obj[info.fieldName];
 
         for (const fileName of data) {

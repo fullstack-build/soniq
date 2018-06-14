@@ -1,12 +1,8 @@
-import createScalar from '../utils/createScalar';
-import getJsonObjectBuilderExpression from '../utils/getJsonObjectBuilderExpression';
+
+import { getJsonObjectBuilderExpression } from '../utils';
 import { _ } from 'lodash';
 
 const JSON_SPLIT = '.';
-
-export function init(graphQlDocument) {
-  graphQlDocument.definitions.push(createScalar('JSON'));
-}
 
 function createJsonSubset(expressions, columnExpression) {
   let publicSql = null;

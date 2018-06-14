@@ -21,7 +21,6 @@ import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
 import { DbGeneralPool } from '@fullstack-one/db';
-import { getParser } from './getParser';
 
 @Service()
 export class GraphQl {
@@ -73,8 +72,6 @@ export class GraphQl {
       this.schemaBuilder.extendSchema(extendSchema);
     }
 
-    this.schemaBuilder.addParser(getParser(operatorsObject));
-
     // add boot function to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
   }
@@ -98,7 +95,7 @@ export class GraphQl {
   public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
     gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
 
-    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger));
+    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit));
     this.operations = getOperations(gqlRuntimeDocument);
 
     return this.schemaBuilder.print(gqlRuntimeDocument);

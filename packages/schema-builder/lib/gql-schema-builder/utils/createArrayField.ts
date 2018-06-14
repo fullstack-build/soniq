@@ -1,4 +1,4 @@
-export default (fieldName, type) => {
+export function createArrayField(fieldName, type) {
   return {
     kind: 'FieldDefinition',
     name: {
@@ -21,4 +21,4 @@ export default (fieldName, type) => {
     },
     directives: []
   };
-};
+}

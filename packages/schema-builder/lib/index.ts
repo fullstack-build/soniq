@@ -7,7 +7,7 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { DbSchemaBuilder } from './db-schema-builder';
 import { helper } from '@fullstack-one/helper';
 
-export { IViews, IExpressions, IDbMeta, IDbRelation };
+export { IDbMeta, IDbRelation };
 
 import * as utils from './gql-schema-builder/utils';
 export { utils };
@@ -17,12 +17,9 @@ import { createGrants } from './createGrants';
 // import sub modules
 import { graphQl as gQLHelper } from './helper';
 
-import { gqlSchemaBuilder } from './gql-schema-builder';
-
 import { parsePermissions } from './gql-schema-builder/parsePermissions';
 
 // import interfaces
-import { IViews, IExpressions } from './gql-schema-builder/interfaces';
 import { IDbMeta, IDbRelation } from './db-schema-builder/IDbMeta';
 import { parseGQlAstToDbMeta } from './db-schema-builder/fromGQl/gQlAstToDbMeta';
 import { PgToDbMeta } from './db-schema-builder/fromPg/pgToDbMeta';
@@ -52,7 +49,7 @@ export class SchemaBuilder {
   private gqlSdlExtensions: any = [];
   private gQlAst: any;
   private permissions: any;
-  private expressions: IExpressions;
+  private expressions: any;
   private gqlRuntimeDocument: any;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
@@ -95,10 +92,6 @@ export class SchemaBuilder {
 
   public addExtension(extension) {
     this.extensions.push(extension);
-  }
-
-  public addParser(extension) {
-    // this.addExtension(extension);
   }
 
   public getDbMeta() {
@@ -186,49 +179,15 @@ export class SchemaBuilder {
       data.sql.forEach(statement => sql.push(statement));
 
       data.gqlDocument.definitions.reverse();
-
-      // console.log('>>>', JSON.stringify(data.meta, null, 2));
-      // console.log('>>> SQL');
-      // console.log(JSON.stringify(data.gqlDocument, null, 2))
       // tslint:disable-next-line:forin
       for (const i in sql) {
         // tslint:disable-next-line:no-console
         console.log(sql[i]);
       }
-      // console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-      // console.log(print(data.gqlDocument));
-      // console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-      // console.log(JSON.stringify(data.gqlDocument))
-      // console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
       this.dbSchemaBuilder.setPermissionSqlStatements(sql);
-
-      /*const combinedSchemaInformation = gqlSchemaBuilder(this.gQlAst, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parser);
-
-      this.gqlRuntimeDocument = combinedSchemaInformation.document;
-      this.gQlRuntimeSchema = gQLHelper.helper.printGraphQlDocument(this.gqlRuntimeDocument);
-      this.gQlTypes = combinedSchemaInformation.gQlTypes;
-      this.queries = combinedSchemaInformation.queries;
-      this.mutations = combinedSchemaInformation.mutations;
-
-      this.customOperations = {
-        fields: combinedSchemaInformation.customFields,
-        queries: combinedSchemaInformation.customQueries,
-        mutations: combinedSchemaInformation.customMutations
-      };
-
-      // copy view objects into dbMeta
-      Object.values(combinedSchemaInformation.dbViews).forEach((dbView: any) => {
-        if (this.dbMeta.schemas[dbView.viewSchemaName] == null) {
-          this.dbMeta.schemas[dbView.viewSchemaName] = {
-            tables: {},
-            views: {}
-          };
-        }
-        this.dbMeta.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
-      });*/
 
       return this.dbMeta;
 
