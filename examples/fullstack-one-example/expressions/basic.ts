@@ -36,6 +36,14 @@ export = [
     generate: (context, params): string => {
       return `TRUE`;
     },
+  },
+  {
+    name: 'Admin',
+    type: 'expression',
+    gqlReturnType: 'Boolean',
+    generate: (context, params: any = {}): string => {
+      return `(SELECT "isAdmin" FROM "User" WHERE id = ${context.getExpression('currentUserId')})`;
+    },
   }, {
     name: 'FirstNOfField',
     type: 'expression',

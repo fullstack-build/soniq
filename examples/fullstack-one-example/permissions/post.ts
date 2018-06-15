@@ -2,19 +2,20 @@ export = [
   {
     gqlTypeName: 'Post',
     readExpressions: {
-      id: 'Anyone',
-      title: 'Anyone',
-      content: 'Anyone',
-      owner: 'Anyone',
-      images: 'Anyone',
-      ownerSecret: 'Owner'
+      id: ['Admin'],
+      title: 'Admin',
+      content: 'Admin',
+      owner: 'Admin',
+      images: 'Admin',
+      ownerSecret: [{name: 'Admin'}]
     },
     createViews: {
       me: {
         fields: ['title', 'content', 'ownerSecret', 'owner', 'images'],
         expressions: [{
-          name: 'Anyone'
+          name: 'Owner'
         }],
+        returnOnlyId: true
       }
     },
     updateViews: {

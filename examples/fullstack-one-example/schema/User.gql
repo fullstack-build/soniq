@@ -9,6 +9,7 @@ type User @table @auth @versioning{
   tenantId: String @tenant @default(value: "default")
   email: String @unique @username
   password: String @password
+  isAdmin: Boolean @default(value: false)
   #gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
