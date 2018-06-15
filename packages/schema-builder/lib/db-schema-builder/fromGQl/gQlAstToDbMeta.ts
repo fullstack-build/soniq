@@ -489,7 +489,7 @@ function changeColumnType(dbMeta: IDbMeta, schemaName: string, tableName: string
 function deleteColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, columnNameToDrop: string) {
   const thisTable = dbMeta.schemas[schemaName].tables[tableName];
   // column available?
-  if (thisTable.columns[columnNameToDrop]){
+  if (thisTable.columns[columnNameToDrop]) {
     // constraints available?
     if (thisTable.columns[columnNameToDrop].constraintNames != null) {
       // delete constraints

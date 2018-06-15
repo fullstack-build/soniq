@@ -10,6 +10,7 @@ export function buildCreateView(table, view, context, extensions, config) {
   const sql = [];
   const mutationName = `${table.gqlTypeName}_CREATE_${view.name}`.toUpperCase();
   const gqlInputTypeName = mutationName;
+  const returnOnlyId = view.returnOnlyId === true ? true : false;
 
   // Initialize meta object. Required for querybuilder
   const meta: any = {
@@ -19,7 +20,7 @@ export function buildCreateView(table, view, context, extensions, config) {
     type: 'CREATE',
     requiresAuth: false,
     gqlTypeName,
-    gqlReturnTypeName: gqlTypeName,
+    gqlReturnTypeName: returnOnlyId === true ? 'ID' : gqlTypeName,
     extensions: {},
     gqlInputTypeName
   };
@@ -29,6 +30,19 @@ export function buildCreateView(table, view, context, extensions, config) {
   newGqlTypeDefinition.fields = [];
   newGqlTypeDefinition.name.value = gqlInputTypeName;
   newGqlTypeDefinition.kind = 'InputObjectTypeDefinition';
+
+  if (returnOnlyId === true) {
+    newGqlTypeDefinition.type = {
+      kind: 'NonNullType',
+      type: {
+        kind: 'NamedType',
+        name: {
+          kind: 'Name',
+          value: 'ID',
+        }
+      }
+    };
+  }
 
   // List of field-select sql statements
   const fieldsSql = [];

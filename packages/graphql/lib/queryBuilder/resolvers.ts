@@ -184,6 +184,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
           };
 
           // PreMutationCommitHook (for auth register etc.)
+          // TODO: Move this in front of mutation
           for (const fn of hooks.preMutationCommit) {
             await fn(client, hookInfo);
           }
