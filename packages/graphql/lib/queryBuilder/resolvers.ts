@@ -163,8 +163,15 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
             const { rows: returnRows } = returnResult;
 
+            const resultData = returnRows[0][returnQuery.query.name];
+
+            if (resultData.length < 1) {
+              throw new Error(`The return-query of this mutation has no entries. Perhaps you are not permitted to access the results.` +
+              ` You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions.`);
+            }
+
             // set data from row 0
-            returnData = returnRows[0][returnQuery.query.name][0];
+            returnData = resultData[0];
           }
 
           const hookInfo = {
