@@ -3,9 +3,13 @@ import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
-import { getResolvers } from './queryBuilder/resolvers';
+import { getResolvers } from './resolvers';
+import { getDefaultResolvers } from './queryBuilder/resolvers';
 
 import { operatorsObject } from './compareOperators';
+
+import { getOperations } from './getOperations';
+import { getOperatorsDefinition } from './getOperatorsDefinition';
 
 // fullstack-one core
 import { Service, Inject, Container } from '@fullstack-one/di';
@@ -17,7 +21,6 @@ import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
 import { DbGeneralPool } from '@fullstack-one/db';
-import { getParser } from './getParser';
 
 @Service()
 export class GraphQl {
@@ -31,9 +34,7 @@ export class GraphQl {
   private server: Server;
   private dbGeneralPool: DbGeneralPool;
   private resolvers: any = {};
-  private customQueries: any = [];
-  private customMutations: any = [];
-  private customFields: any = {};
+  private operations: any = {};
 
   private hooks = {
     preQuery: [],
@@ -71,8 +72,6 @@ export class GraphQl {
       this.schemaBuilder.extendSchema(extendSchema);
     }
 
-    this.schemaBuilder.addParser(getParser(operatorsObject));
-
     // add boot function to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
   }
@@ -93,16 +92,13 @@ export class GraphQl {
     this.resolvers = Object.assign(this.resolvers, resolversObject);
   }
 
-  public addCustomQuery(operation) {
-    this.customQueries.push(operation);
-  }
+  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
+    gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
 
-  public addCustomMutation(operation) {
-    this.customMutations.push(operation);
-  }
+    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit));
+    this.operations = getOperations(gqlRuntimeDocument);
 
-  public addCustomFields(operations) {
-    this.customFields = Object.assign(this.customFields, operations);
+    return this.schemaBuilder.print(gqlRuntimeDocument);
   }
 
   private async boot() {
@@ -113,24 +109,17 @@ export class GraphQl {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await helper.requireFilesByGlobPatternAsObject(resolversPattern));
 
-    const gQlRuntimeObject = this.schemaBuilder.getGQlRuntimeObject();
+    const {
+      gqlRuntimeDocument,
+      dbMeta,
+      resolverMeta
+    } = this.schemaBuilder.getGQlRuntimeObject();
 
-    let customOperations: any = {};
-    if (gQlRuntimeObject.customOperations == null) {
-      this.logger.warn('boot.no.resolver.files.found');
-      gQlRuntimeObject.customOperations = {};
-      return;
-    } else {
-      customOperations = JSON.parse(JSON.stringify(gQlRuntimeObject.customOperations));
-      customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
-      customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
-      customOperations.fields = Object.assign(customOperations.fields, this.customFields);
-    }
+    const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
 
     const schema = makeExecutableSchema({
-      typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
-      resolvers: getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries,
-      gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
+      typeDefs: runtimeSchema,
+      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
     });
 
     const setCacheHeaders = async (ctx, next) => {

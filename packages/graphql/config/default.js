@@ -2,6 +2,7 @@ module.exports = {
   graphql: {
     endpoint:               '/graphql',
     graphiQlEndpointActive: true,
-    graphiQlEndpoint:       '/graphiql'
+    graphiQlEndpoint:       '/graphiql',
+    queryCostLimit:         2000000
   }
 };

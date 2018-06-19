@@ -1,4 +1,4 @@
-export default (name) => {
+export function createScalar(name) {
   return {
     kind: 'ScalarTypeDefinition',
     name: {
@@ -7,4 +7,4 @@ export default (name) => {
     },
     directives: []
   };
-};
+}

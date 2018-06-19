@@ -22,7 +22,7 @@ function getEnumDefinition(name, values) {
   };
 }
 
-export default (name, values) => {
+export function getEnum(name, values) {
 
   return getEnumDefinition(name, values);
-};
+}

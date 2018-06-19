@@ -9,11 +9,12 @@ type User @table @auth @versioning{
   tenantId: String @tenant @default(value: "default")
   email: String @unique @username
   password: String @password
-  gender: Gender
+  isAdmin: Boolean @default(value: false)
+  #gender: Gender
   firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
   payload: Payload @json @migrate(from:"payloadOld")
   posts: [Post!]! @relation(name: "PostOwner")
-  postContributions: [Post!]! @relation(name: "PostContributors")
+  #postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "date") @default(expression: "now()")
   acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyPolicyAcceptedAtInUTC
@@ -30,7 +31,7 @@ type PayloadData {
 }
 
 type Payload {
-  data: PayloadData
+  data: String
   secret: Int!
 }
 
@@ -40,7 +41,7 @@ input PayloadDataInput {
 }
 
 input PayloadInput {
-  data: PayloadDataInput!
+  data: String!
   secret: Int!
 }
 
@@ -83,12 +84,12 @@ extend type Query {
   add(a: Int! b: Int!): AdditionPayload @custom(resolver: "add")
 }
 
-enum UserType {
-  private
-  business
-}
+#enum UserType {
+#  private
+#  business
+#}
 
-enum Gender {
-  male
-  female
-}
+#enum Gender {
+#  male
+#  female
+#}

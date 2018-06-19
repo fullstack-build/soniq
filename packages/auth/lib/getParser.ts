@@ -1,6 +1,3 @@
-import { utils } from '@fullstack-one/schema-builder';
-
-const { findDirectiveIndex } = utils;
 
 function getAuthTokenArgument() {
   return {
@@ -59,67 +56,52 @@ function getMetaArgument() {
   };
 }
 
-export function getParser(setParserMeta) {
+export function getParser(setParserMeta, getParserMeta) {
   const parser: any = {};
 
-  parser.parseField = (field, ctx) => {
-    const fieldName = field.name.value;
-    const isIncluded = ctx.view.fields.indexOf(fieldName) >= 0;
+  parser.parseReadField = (ctx) => {
+    const { fieldName, directives, table } = ctx;
 
-    if (!isIncluded) {
-      return false;
-    }
-    const acceptedVersionDirectiveIndex = findDirectiveIndex(field, 'privacyPolicyAcceptedVersion');
-    const acceptedAtDirectiveIndex = findDirectiveIndex(field, 'privacyPolicyAcceptedAtInUTC');
-
-    if (acceptedVersionDirectiveIndex >= 0) {
+    if (directives.privacyPolicyAcceptedVersion != null) {
       setParserMeta('privacyPolicyAcceptedVersion', fieldName);
     }
-    if (acceptedAtDirectiveIndex >= 0) {
+    if (directives.privacyPolicyAcceptedAtInUTC != null) {
       setParserMeta('privacyPolicyAcceptedAtInUTC', fieldName);
     }
-    return false;
+    if (directives.username != null) {
+      setParserMeta('username', fieldName);
+    }
+    if (directives.tenant != null) {
+      setParserMeta('tenant', fieldName);
+    }
+    if (directives.password != null) {
+      setParserMeta('password', fieldName);
+    }
+    if (directives.password != null || directives.tenant != null || directives.username != null) {
+      setParserMeta('authTableName', table.tableName);
+      setParserMeta('authSchemaName', table.schemaName);
+      setParserMeta('authGqlTypeName', table.gqlTypeName);
+    }
+
+    return null;
   };
 
-  parser.parseView = (ctx) => {
-    const viewName = ctx.view.viewName;
-    const gqlTypeName = ctx.view.gqlTypeName;
-    const viewSchemaName = ctx.viewSchemaName;
-    const view = ctx.view;
-    // Add view to GraphQl graphQlDocument
+  parser.modifyMutation = (mutation) => {
+    if (mutation.type === 'CREATE' && mutation.gqlTypeName === getParserMeta('authGqlTypeName')) {
+      mutation.gqlReturnTypeName = 'ID';
+      mutation.extensions.auth = 'REGISTER_USER_MUTATION';
 
-    const authDirectiveIndex = findDirectiveIndex(ctx.tableView, 'auth');
-
-    if (view.type === 'CREATE' && authDirectiveIndex >= 0) {
-      ctx.tableView.kind = 'InputObjectTypeDefinition';
-
-      if (ctx.view.mutationIndex == null) {
-        ctx.graphQlDocument.definitions.push(ctx.tableView);
-      }
-
-      const mutation = {
-        name: viewName.toString(),
-        type: view.type,
-        inputType: viewName,
-        returnType: 'ID',
-        viewsEnumName: null,
-        viewName,
-        viewSchemaName,
-        gqlTypeName,
-        tableName: view.tableName,
+      return {
+        mutation,
         extendArguments: [
           getAuthTokenArgument(),
           getPrivacyTokenArgument(),
           getMetaArgument()
         ]
       };
-
-      if (ctx.view.mutationIndex == null) {
-        ctx.view.mutationIndex = ctx.mutations.push(mutation);
-      } else {
-        ctx.mutations[ctx.view.mutationIndex] = mutation;
-      }
     }
+
+    return null;
   };
 
   return parser;

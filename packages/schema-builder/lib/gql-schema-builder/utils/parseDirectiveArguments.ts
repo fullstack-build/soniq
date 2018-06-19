@@ -110,6 +110,6 @@ function getListValues(node) {
   return arr;
 }
 
-export default (argument) => {
+export function parseDirectiveArguments(argument) {
   return getArgumentsValue(argument);
-};
+}
