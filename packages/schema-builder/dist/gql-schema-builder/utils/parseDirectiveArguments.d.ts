@@ -1,2 +1,1 @@
-declare const _default: (argument: any) => {};
-export default _default;
+export declare function parseDirectiveArguments(argument: any): {};

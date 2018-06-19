@@ -1,4 +1,4 @@
-declare const _default: (name: any) => {
+export declare function createScalar(name: any): {
     kind: string;
     name: {
         kind: string;
@@ -6,4 +6,3 @@ declare const _default: (name: any) => {
     };
     directives: any[];
 };
-export default _default;

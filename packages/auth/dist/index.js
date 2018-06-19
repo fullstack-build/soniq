@@ -48,13 +48,6 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 __export(require("./signHelper"));
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
-        this.dbData = {
-            schema: null,
-            table: null,
-            username: null,
-            password: null,
-            tenant: null
-        };
         this.parserMeta = {};
         // register package config
         config.addConfigFolder(__dirname + '/../config');
@@ -75,8 +68,10 @@ let Auth = class Auth {
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
         this.schemaBuilder.extendSchema(schema);
-        this.schemaBuilder.addParser(getParser_1.getParser((key, value) => {
+        this.schemaBuilder.addExtension(getParser_1.getParser((key, value) => {
             this.parserMeta[key] = value;
+        }, (key) => {
+            return this.parserMeta[key];
         }));
         this.graphQl.addResolvers(this.getResolvers());
         // add migration path
@@ -655,37 +650,9 @@ let Auth = class Auth {
             return next();
         }));
     }
-    findAuthTableAndFields(dbMeta) {
-        Object.keys(dbMeta.schemas).forEach((schemaName) => {
-            const schemaObject = dbMeta.schemas[schemaName];
-            Object.keys(schemaObject.tables).forEach((tableName) => {
-                const tableObject = schemaObject.tables[tableName];
-                if (tableObject.extensions != null && tableObject.extensions.isAuth === true) {
-                    this.dbData.table = tableObject.name;
-                    this.dbData.schema = tableObject.schemaName;
-                    Object.keys(tableObject.columns).forEach((columnName) => {
-                        const columnObject = tableObject.columns[columnName];
-                        if (columnObject.extensions != null && columnObject.extensions.auth != null) {
-                            if (columnObject.extensions.auth.isUsername === true) {
-                                this.dbData.username = columnObject.name;
-                            }
-                            if (columnObject.extensions.auth.isPassword === true) {
-                                this.dbData.password = columnObject.name;
-                            }
-                            if (columnObject.extensions.auth.isTenant === true) {
-                                this.dbData.tenant = columnObject.name;
-                            }
-                        }
-                    });
-                    return;
-                }
-            });
-        });
-    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             const dbMeta = this.schemaBuilder.getDbMeta();
-            this.findAuthTableAndFields(dbMeta);
             const authRouter = new KoaRouter();
             const app = this.server.getApp();
             authRouter.use(koaBody());
@@ -796,7 +763,7 @@ let Auth = class Auth {
     preMutationCommitHook(client, hookInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             const mutation = hookInfo.mutationQuery.mutation;
-            if (mutation.type === 'CREATE' && mutation.tableName === this.dbData.table) {
+            if (mutation.extensions.auth === 'REGISTER_USER_MUTATION') {
                 const args = hookInfo.args;
                 const ctx = hookInfo.context.ctx;
                 const meta = args.meta || null;

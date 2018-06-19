@@ -1,4 +1,4 @@
-declare const _default: (fieldName: any) => {
+export declare function createIdField(fieldName: any): {
     kind: string;
     name: {
         kind: string;
@@ -14,4 +14,3 @@ declare const _default: (fieldName: any) => {
     };
     directives: any[];
 };
-export default _default;

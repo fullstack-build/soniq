@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = (fieldName) => {
+function createIdField(fieldName) {
     return {
         kind: 'FieldDefinition',
         name: {
@@ -17,4 +17,5 @@ exports.default = (fieldName) => {
         },
         directives: []
     };
-};
+}
+exports.createIdField = createIdField;
