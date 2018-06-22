@@ -30,11 +30,13 @@ const db_schema_builder_1 = require("./db-schema-builder");
 const helper_1 = require("@fullstack-one/helper");
 const utils = require("./gql-schema-builder/utils");
 exports.utils = utils;
+const createGrants_1 = require("./createGrants");
 // import sub modules
 const helper_2 = require("./helper");
-const gql_schema_builder_1 = require("./gql-schema-builder");
+const parsePermissions_1 = require("./gql-schema-builder/parsePermissions");
 const gQlAstToDbMeta_1 = require("./db-schema-builder/fromGQl/gQlAstToDbMeta");
 const pgToDbMeta_1 = require("./db-schema-builder/fromPg/pgToDbMeta");
+const graphql_1 = require("graphql");
 // export for extensions
 // helper: splitActionFromNode
 var helper_3 = require("./db-schema-builder/helper");
@@ -57,8 +59,8 @@ exports.registerColumnMigrationExtension = createSqlObjFromMigrationObject_1.reg
 exports.registerTableMigrationExtension = createSqlObjFromMigrationObject_1.registerTableMigrationExtension;
 let SchemaBuilder = class SchemaBuilder {
     constructor(loggerFactory, config, bootLoader, dbSchemaBuilder, pgToDbMeta) {
-        this.gQlSdlExtensions = [];
-        this.parsers = [];
+        this.gqlSdlExtensions = [];
+        this.extensions = [];
         // register package config
         config.addConfigFolder(__dirname + '/../config');
         this.dbSchemaBuilder = dbSchemaBuilder;
@@ -77,26 +79,20 @@ let SchemaBuilder = class SchemaBuilder {
             return yield this.pgToDbMeta.getPgDbMeta();
         });
     }
-    addParser(parser) {
-        this.parsers.push(parser);
+    addExtension(extension) {
+        this.extensions.push(extension);
     }
     getDbMeta() {
         return this.dbMeta;
     }
     extendSchema(schema) {
-        this.gQlSdlExtensions.push(schema);
+        this.gqlSdlExtensions.push(schema);
     }
     getGQlRuntimeObject() {
         return {
             dbMeta: this.dbMeta,
-            views: this.views,
-            expressions: this.expressions,
-            gQlRuntimeDocument: this.gQlRuntimeDocument,
-            gQlRuntimeSchema: this.gQlRuntimeSchema,
-            gQlTypes: this.gQlTypes,
-            mutations: this.mutations,
-            queries: this.queries,
-            customOperations: this.customOperations
+            gqlRuntimeDocument: this.gqlRuntimeDocument,
+            resolverMeta: this.resolverMeta
         };
     }
     getGQlSdl() {
@@ -106,6 +102,9 @@ let SchemaBuilder = class SchemaBuilder {
     getGQlAst() {
         // return copy instead of ref
         return Object.assign({}, this.gQlAst);
+    }
+    print(document) {
+        return graphql_1.print(document);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -119,40 +118,42 @@ let SchemaBuilder = class SchemaBuilder {
                     return;
                 }
                 // Combine all Schemas to a big one and add extensions from other modules
-                const gQlSdlCombined = this.gQlSdl.concat(this.gQlSdlExtensions.slice()).join('\n');
+                const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join('\n');
                 this.gQlAst = helper_2.graphQl.helper.parseGraphQlSchema(gQlSdlCombined);
                 this.dbMeta = gQlAstToDbMeta_1.parseGQlAstToDbMeta(this.gQlAst);
                 // load permissions and expressions and generate views and put them into schemas
                 // load permissions
-                const viewsPattern = this.ENVIRONMENT.path + this.graphQlConfig.viewsPattern;
-                const viewsArray = yield helper_1.helper.requireFilesByGlobPattern(viewsPattern);
-                this.views = [].concat.apply([], viewsArray);
+                const permissionsPattern = this.ENVIRONMENT.path + this.graphQlConfig.permissionsPattern;
+                const permissionsArray = yield helper_1.helper.requireFilesByGlobPattern(permissionsPattern);
+                this.permissions = [].concat.apply([], permissionsArray);
                 // load expressions
                 const expressionsPattern = this.ENVIRONMENT.path + this.graphQlConfig.expressionsPattern;
                 const expressionsArray = yield helper_1.helper.requireFilesByGlobPattern(expressionsPattern);
                 this.expressions = [].concat.apply([], expressionsArray);
-                const viewSchemaName = di_1.Container.get(config_1.Config).getConfig('db').viewSchemaName;
-                const combinedSchemaInformation = gql_schema_builder_1.gqlSchemaBuilder(this.gQlAst, this.views, this.expressions, this.dbMeta, viewSchemaName, this.parsers);
-                this.gQlRuntimeDocument = combinedSchemaInformation.document;
-                this.gQlRuntimeSchema = helper_2.graphQl.helper.printGraphQlDocument(this.gQlRuntimeDocument);
-                this.gQlTypes = combinedSchemaInformation.gQlTypes;
-                this.queries = combinedSchemaInformation.queries;
-                this.mutations = combinedSchemaInformation.mutations;
-                this.customOperations = {
-                    fields: combinedSchemaInformation.customFields,
-                    queries: combinedSchemaInformation.customQueries,
-                    mutations: combinedSchemaInformation.customMutations
+                const dbConfig = di_1.Container.get(config_1.Config).getConfig('db');
+                const config = {
+                    schemaName: dbConfig.viewSchemaName,
+                    userName: dbConfig.general.user,
+                    databaseName: dbConfig.general.database
                 };
-                // copy view objects into dbMeta
-                Object.values(combinedSchemaInformation.dbViews).forEach((dbView) => {
-                    if (this.dbMeta.schemas[dbView.viewSchemaName] == null) {
-                        this.dbMeta.schemas[dbView.viewSchemaName] = {
-                            tables: {},
-                            views: {}
-                        };
-                    }
-                    this.dbMeta.schemas[dbView.viewSchemaName].views[dbView.viewName] = dbView;
-                });
+                const context = {
+                    gqlDocument: this.gQlAst,
+                    dbMeta: this.dbMeta,
+                    expressions: this.expressions
+                };
+                const extensions = this.extensions;
+                const sql = createGrants_1.createGrants(config, this.dbMeta);
+                const data = parsePermissions_1.parsePermissions(this.permissions, context, extensions, config);
+                data.sql.forEach(statement => sql.push(statement));
+                data.gqlDocument.definitions.reverse();
+                // tslint:disable-next-line:forin
+                for (const i in sql) {
+                    // tslint:disable-next-line:no-console
+                    console.log(sql[i]);
+                }
+                this.resolverMeta = data.meta;
+                this.gqlRuntimeDocument = data.gqlDocument;
+                this.dbSchemaBuilder.setPermissionSqlStatements(sql);
                 return this.dbMeta;
             }
             catch (err) {

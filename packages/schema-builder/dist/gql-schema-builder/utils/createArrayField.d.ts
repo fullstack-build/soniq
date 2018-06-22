@@ -1,4 +1,4 @@
-declare const _default: (fieldName: any, type: any) => {
+export declare function createArrayField(fieldName: any, type: any): {
     kind: string;
     name: {
         kind: string;
@@ -20,4 +20,3 @@ declare const _default: (fieldName: any, type: any) => {
     };
     directives: any[];
 };
-export default _default;

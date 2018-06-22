@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = (name) => {
+function createScalar(name) {
     return {
         kind: 'ScalarTypeDefinition',
         name: {
@@ -9,4 +9,5 @@ exports.default = (name) => {
         },
         directives: []
     };
-};
+}
+exports.createScalar = createScalar;

@@ -33,7 +33,7 @@ const KoaRouter = require("koa-router");
 const koaBody = require("koa-bodyparser");
 const Minio = require("minio");
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
-const filesParser = require("./parser");
+const parser_1 = require("./parser");
 const defaultVerifier_1 = require("./defaultVerifier");
 const fs = require("fs");
 // extend migrations
@@ -54,7 +54,7 @@ let FileStorage = class FileStorage {
         // add migration path
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         this.schemaBuilder.extendSchema(schema);
-        this.schemaBuilder.addParser(filesParser);
+        this.schemaBuilder.addExtension(parser_1.getParser());
         this.graphQl.addResolvers(this.getResolvers());
         this.graphQl.addHook('postMutation', this.postMutationHook.bind(this));
         this.addVerifier('DEFAULT', defaultVerifier_1.defaultVerifier);
@@ -218,6 +218,9 @@ let FileStorage = class FileStorage {
             }),
             '@fullstack-one/file-storage/readFiles': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 const awaitingFileSignatures = [];
+                if (obj[info.fieldName] == null) {
+                    return [];
+                }
                 const data = obj[info.fieldName];
                 for (const fileName of data) {
                     try {

@@ -30,11 +30,11 @@ const config_1 = require("@fullstack-one/config");
 const logger_1 = require("@fullstack-one/logger");
 const db_1 = require("@fullstack-one/db");
 const migrationObject_1 = require("./migrationObject");
-const createViewsFromDbMeta_1 = require("./createViewsFromDbMeta");
 const createSqlObjFromMigrationObject_1 = require("./toPg/createSqlObjFromMigrationObject");
 let DbSchemaBuilder = class DbSchemaBuilder {
     constructor(bootLoader, config, loggerFactory, dbAppClient) {
         this.initSqlPaths = [__dirname + '/../..'];
+        this.permissionSqlStatements = [];
         // create logger
         this.logger = loggerFactory.create('DbSchemaBuilder');
         this.dbAppClient = dbAppClient;
@@ -49,6 +49,9 @@ let DbSchemaBuilder = class DbSchemaBuilder {
     }
     getMigrationDbMeta() {
         return _.cloneDeep(this.migrationObject);
+    }
+    setPermissionSqlStatements(permissionSqlStatements) {
+        this.permissionSqlStatements = permissionSqlStatements;
     }
     // run packages migration scripts based on initiated version
     initDb() {
@@ -176,8 +179,10 @@ let DbSchemaBuilder = class DbSchemaBuilder {
         return createSqlObjFromMigrationObject_1.sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
     }
     getViewsSql() {
-        this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
-        return createViewsFromDbMeta_1.default(this.toDbMeta, this.dbConfig.general.database, this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
+        return this.permissionSqlStatements;
+        // this.schemaBuilderConfig = this.config.getConfig('schemaBuilder');
+        // return createViewsFromDbMeta(this.toDbMeta, this.dbConfig.general.database,
+        // this.dbConfig.general.user, this.schemaBuilderConfig.setUserPrivileges);
     }
     getBootSql() {
         const bootSql = [];

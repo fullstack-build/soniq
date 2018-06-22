@@ -24,8 +24,11 @@ const apollo_server_koa_1 = require("apollo-server-koa");
 const graphql_tools_1 = require("graphql-tools");
 const koaBody = require("koa-bodyparser");
 const KoaRouter = require("koa-router");
-const resolvers_1 = require("./queryBuilder/resolvers");
+const resolvers_1 = require("./resolvers");
+const resolvers_2 = require("./queryBuilder/resolvers");
 const compareOperators_1 = require("./compareOperators");
+const getOperations_1 = require("./getOperations");
+const getOperatorsDefinition_1 = require("./getOperatorsDefinition");
 // fullstack-one core
 const di_1 = require("@fullstack-one/di");
 // DI imports
@@ -36,13 +39,10 @@ const schema_builder_1 = require("@fullstack-one/schema-builder");
 const helper_1 = require("@fullstack-one/helper");
 const server_1 = require("@fullstack-one/server");
 const db_1 = require("@fullstack-one/db");
-const getParser_1 = require("./getParser");
 let GraphQl = class GraphQl {
     constructor(loggerFactory, config, bootLoader, schemaBuilder, server, dbGeneralPool) {
         this.resolvers = {};
-        this.customQueries = [];
-        this.customMutations = [];
-        this.customFields = {};
+        this.operations = {};
         this.hooks = {
             preQuery: [],
             postMutation: [],
@@ -65,7 +65,6 @@ let GraphQl = class GraphQl {
         if (extendSchema !== '') {
             this.schemaBuilder.extendSchema(extendSchema);
         }
-        this.schemaBuilder.addParser(getParser_1.getParser(compareOperators_1.operatorsObject));
         // add boot function to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
@@ -82,14 +81,11 @@ let GraphQl = class GraphQl {
     addResolvers(resolversObject) {
         this.resolvers = Object.assign(this.resolvers, resolversObject);
     }
-    addCustomQuery(operation) {
-        this.customQueries.push(operation);
-    }
-    addCustomMutation(operation) {
-        this.customMutations.push(operation);
-    }
-    addCustomFields(operations) {
-        this.customFields = Object.assign(this.customFields, operations);
+    prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
+        gqlRuntimeDocument.definitions.push(getOperatorsDefinition_1.getOperatorsDefinition(compareOperators_1.operatorsObject));
+        this.addResolvers(resolvers_2.getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit));
+        this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
+        return this.schemaBuilder.print(gqlRuntimeDocument);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -97,22 +93,11 @@ let GraphQl = class GraphQl {
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
             this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
-            const gQlRuntimeObject = this.schemaBuilder.getGQlRuntimeObject();
-            let customOperations = {};
-            if (gQlRuntimeObject.customOperations == null) {
-                this.logger.warn('boot.no.resolver.files.found');
-                gQlRuntimeObject.customOperations = {};
-                return;
-            }
-            else {
-                customOperations = JSON.parse(JSON.stringify(gQlRuntimeObject.customOperations));
-                customOperations.queries = customOperations.queries.concat(this.customQueries.slice());
-                customOperations.mutations = customOperations.mutations.concat(this.customMutations.slice());
-                customOperations.fields = Object.assign(customOperations.fields, this.customFields);
-            }
+            const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
+            const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
             const schema = graphql_tools_1.makeExecutableSchema({
-                typeDefs: gQlRuntimeObject.gQlRuntimeSchema,
-                resolvers: resolvers_1.getResolvers(gQlRuntimeObject.gQlTypes, gQlRuntimeObject.dbMeta, gQlRuntimeObject.queries, gQlRuntimeObject.mutations, customOperations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
+                typeDefs: runtimeSchema,
+                resolvers: resolvers_1.getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();

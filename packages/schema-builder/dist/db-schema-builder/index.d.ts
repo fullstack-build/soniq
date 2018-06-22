@@ -11,13 +11,15 @@ export declare class DbSchemaBuilder {
     private dbConfig;
     private schemaBuilderConfig;
     private config;
+    private permissionSqlStatements;
     private logger;
     constructor(bootLoader?: any, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
     addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
+    setPermissionSqlStatements(permissionSqlStatements: any): void;
     initDb(): Promise<void>;
     getMigrationSqlStatements(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, renameInsteadOfDrop?: boolean): string[];
-    getViewsSql(): any[];
+    getViewsSql(): any;
     getBootSql(): any[];
     migrate(fromDbMeta: IDbMeta, toDbMeta: IDbMeta, renameInsteadOfDrop?: boolean): Promise<void>;
     private boot();

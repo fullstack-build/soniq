@@ -1,1 +1,1 @@
-export declare function getParser(setParserMeta: any): any;
+export declare function getParser(setParserMeta: any, getParserMeta: any): any;

@@ -22,6 +22,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const pg_1 = require("pg");
 exports.PgPool = pg_1.Pool;
+// stop po from parsing dates and timestamps without timezone
+pg_1.types.setTypeParser(1114, str => str);
+pg_1.types.setTypeParser(1082, str => str);
 const di_1 = require("@fullstack-one/di");
 const events_1 = require("@fullstack-one/events");
 const logger_1 = require("@fullstack-one/logger");

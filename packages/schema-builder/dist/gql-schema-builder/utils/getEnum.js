@@ -21,6 +21,7 @@ function getEnumDefinition(name, values) {
         values: values.map(getEnumValue)
     };
 }
-exports.default = (name, values) => {
+function getEnum(name, values) {
     return getEnumDefinition(name, values);
-};
+}
+exports.getEnum = getEnum;

@@ -82,6 +82,7 @@ function getListValues(node) {
     });
     return arr;
 }
-exports.default = (argument) => {
+function parseDirectiveArguments(argument) {
     return getArgumentsValue(argument);
-};
+}
+exports.parseDirectiveArguments = parseDirectiveArguments;

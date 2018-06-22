@@ -4,7 +4,6 @@ export declare class Auth {
     private readonly sodiumConfig;
     private authConfig;
     private notificationFunction;
-    private dbData;
     private dbGeneralPool;
     private logger;
     private server;
@@ -58,7 +57,6 @@ export declare class Auth {
     userTransaction(accessToken: any, callback: any): Promise<any>;
     userQuery(accessToken: any, ...queryArguments: any[]): Promise<any>;
     private addMiddleware();
-    private findAuthTableAndFields(dbMeta);
     private boot();
     private preQueryHook(client, context, authRequired);
     private preMutationCommitHook(client, hookInfo);

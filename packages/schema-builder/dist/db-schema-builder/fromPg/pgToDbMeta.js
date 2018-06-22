@@ -367,10 +367,12 @@ let PgToDbMeta = class PgToDbMeta {
         }
         // add constraint name to field
         const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
-        currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
-        currentColumnRef.constraintNames.push(constraintName);
-        // keep them sorted for better comparison of objects
-        currentColumnRef.constraintNames.sort();
+        if (currentColumnRef != null) {
+            currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
+            currentColumnRef.constraintNames.push(constraintName);
+            // keep them sorted for better comparison of objects
+            currentColumnRef.constraintNames.sort();
+        }
     }
     addCheck(constraintRow, refDbMetaCurrentTable) {
         const constraintName = constraintRow.constraint_name;

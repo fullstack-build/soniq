@@ -19,7 +19,8 @@ function buildJsonObject(obj, fieldExpression, prePath) {
     });
     return `jsonb_build_object(${values.join(', ')})`;
 }
-exports.default = (matchObject, fieldName, tableName) => {
-    const fieldExpression = `"${tableName}"."${fieldName}"`;
-    return `${buildJsonObject(matchObject[fieldName], fieldExpression, [])} AS ${fieldName}`;
-};
+function getJsonObjectBuilderExpression(matchObject, fieldName, tableName) {
+    const fieldExpression = `COALESCE("${tableName}"."${fieldName}", jsonb_build_object())`;
+    return `${buildJsonObject(matchObject[fieldName], fieldExpression, [])}`;
+}
+exports.getJsonObjectBuilderExpression = getJsonObjectBuilderExpression;
