@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.3.25",
+  "version": "0.3.26",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
