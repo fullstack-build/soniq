@@ -20,6 +20,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "reflect-metadata": "^0.1.12",
     "typedi": "^0.6.1"
   },
   "devDependencies": {
