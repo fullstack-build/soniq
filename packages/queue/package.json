@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/queue",
-  "version": "0.3.14",
+  "version": "0.3.25",
   "description": "fullstack.one queue package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,10 +20,10 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/config": "^0.3.14",
-    "@fullstack-one/db": "^0.3.14",
-    "@fullstack-one/di": "^0.3.14",
-    "@fullstack-one/logger": "^0.3.14",
+    "@fullstack-one/config": "^0.3.25",
+    "@fullstack-one/db": "^0.3.25",
+    "@fullstack-one/di": "^0.3.25",
+    "@fullstack-one/logger": "^0.3.25",
     "pg-boss": "^2.5.1"
   },
   "devDependencies": {
