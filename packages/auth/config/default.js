@@ -6,7 +6,7 @@ module.exports = {
       provider: null,
       cookie:   null,
       jwtRefreshToken: null,
-      privacyToken: null,
+      privacyAgreementAcceptanceToken: null,
       authToken: null
     },
     sodium: {},
@@ -43,10 +43,10 @@ module.exports = {
     corsOptions: {
       allowMethods: ['GET', 'POST']
     },
-    privacy: {
+    privacyAgreementAcceptance: {
       tokenMaxAgeInSeconds: 86400, // One Day
       versionToAccept: 0,
-      queryParameter: 'privacyToken'
+      queryParameter: 'privacyAgreementAcceptanceToken'
     }
   }
 };

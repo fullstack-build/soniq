@@ -1,0 +1,32 @@
+{
+  "name": "@fullstack-one/auth-fb-token",
+  "version": "0.3.24",
+  "description": "fullstack.one auth package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/auth": "^0.3.14",
+    "@fullstack-one/boot-loader": "^0.3.14",
+    "@fullstack-one/config": "^0.3.14",
+    "@fullstack-one/di": "^0.3.14",
+    "@fullstack-one/graphql": "^0.3.24",
+    "@fullstack-one/logger": "^0.3.14",
+    "@fullstack-one/schema-builder": "^0.3.24",
+    "axios": "^0.18.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.8.3"
+  }
+}

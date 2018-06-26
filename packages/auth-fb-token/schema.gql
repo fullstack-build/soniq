@@ -1,0 +1,8 @@
+
+extend type Mutation {
+
+  """
+  Validates a Facebook-Token and creates a Fullstack-ONE Auth-Token to login.
+  """
+  createAuthTokenFromFacebookToken(token: String!, tenant: String, privacyAgreementAcceptanceToken: String): AuthToken @custom(resolver: "@fullstack-one/auth-fb-token/createAuthTokenFromFacebookToken")
+}
