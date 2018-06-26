@@ -28,6 +28,7 @@ export class GraphQl {
   private graphQlConfig: any;
 
   // DI
+  private config: Config;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
   private schemaBuilder: SchemaBuilder;
@@ -43,21 +44,21 @@ export class GraphQl {
   };
 
   constructor (
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => Config) config?,
-    @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => SchemaBuilder) schemaBuilder?,
-    @Inject(type => Server) server?,
-    @Inject(type => DbGeneralPool) dbGeneralPool?
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => Config) config,
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => SchemaBuilder) schemaBuilder,
+    @Inject(type => Server) server,
+    @Inject(type => DbGeneralPool) dbGeneralPool
     ) {
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
+    this.config = config;
     this.dbGeneralPool = dbGeneralPool;
     this.server = server;
     this.schemaBuilder = schemaBuilder;
     this.logger = loggerFactory.create('GraphQl');
-    this.graphQlConfig = config.getConfig('graphql');
     this.ENVIRONMENT = config.ENVIRONMENT;
 
     let extendSchema = '';
@@ -102,6 +103,8 @@ export class GraphQl {
   }
 
   private async boot() {
+    // read config after boot
+    this.graphQlConfig = this.config.getConfig('graphql');
 
     const gqlKoaRouter = new KoaRouter();
 
