@@ -18,12 +18,12 @@ function getAuthTokenArgument() {
         directives: []
     };
 }
-function getPrivacyTokenArgument() {
+function getPrivacyAgreementAcceptanceTokenArgument() {
     return {
         kind: 'InputValueDefinition',
         name: {
             kind: 'Name',
-            value: 'privacyToken'
+            value: 'privacyAgreementAcceptanceToken'
         },
         type: {
             kind: 'NamedType',
@@ -58,11 +58,11 @@ function getParser(setParserMeta, getParserMeta) {
     const parser = {};
     parser.parseReadField = (ctx) => {
         const { fieldName, directives, table } = ctx;
-        if (directives.privacyPolicyAcceptedVersion != null) {
-            setParserMeta('privacyPolicyAcceptedVersion', fieldName);
+        if (directives.privacyAgreementAcceptedVersion != null) {
+            setParserMeta('privacyAgreementAcceptedVersion', fieldName);
         }
-        if (directives.privacyPolicyAcceptedAtInUTC != null) {
-            setParserMeta('privacyPolicyAcceptedAtInUTC', fieldName);
+        if (directives.privacyAgreementAcceptedAtInUTC != null) {
+            setParserMeta('privacyAgreementAcceptedAtInUTC', fieldName);
         }
         if (directives.username != null) {
             setParserMeta('username', fieldName);
@@ -88,7 +88,7 @@ function getParser(setParserMeta, getParserMeta) {
                 mutation,
                 extendArguments: [
                     getAuthTokenArgument(),
-                    getPrivacyTokenArgument(),
+                    getPrivacyAgreementAcceptanceTokenArgument(),
                     getMetaArgument()
                 ]
             };

@@ -62,7 +62,6 @@ let Config = class Config {
         if (!this.configFolder.includes(configPath)) {
             this.configFolder.push(configPath);
         }
-        console.log(this.configFolder);
         // config files
         const mainConfigPath = `${configPath}/default.js`;
         const envConfigPath = `${configPath}/${this.ENVIRONMENT.NODE_ENV}.js`;

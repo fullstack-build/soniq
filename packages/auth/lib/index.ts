@@ -630,7 +630,7 @@ export class Auth {
     return response;
   }
 
-  private validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken) {
+  public validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken) {
     if (this.isPrivacyAgreementCheckActive() === true && privacyAgreementAcceptanceToken !== true) {
       let tokenPayload;
       if (privacyAgreementAcceptanceToken == null) {
