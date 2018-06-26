@@ -14,6 +14,9 @@
     "type": "git",
     "url": "git+https://github.com/fullstack-build/fullstack.one.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [],
   "license": "MIT",
   "dependencies": {
