@@ -1,33 +1,46 @@
 
 type AccessTokenPayload {
-  userId: ID!,
-  provider: String!,
-  timestamp: String!,
-  userToken: String!,
+  userId: ID!
+  provider: String!
+  timestamp: String!
+  userToken: String!
   userTokenMaxAgeInSeconds: Int!
 }
 
 type LoginData {
-  userId: ID!,
-  refreshToken: String,
-  accessToken: String,
+  userId: ID!
+  refreshToken: String
+  accessToken: String
   sessionExpirationTimestamp: String!
   payload: AccessTokenPayload
 }
 
 type TokenMeta {
-  isValid: Boolean!,
-  userId: ID!,
-  provider: String!,
-  timestamp: String!,
-  issuedAt: Int!,
+  isValid: Boolean!
+  userId: ID!
+  provider: String!
+  timestamp: String!
+  issuedAt: Int!
   expiresAt: Int!
 }
 
-type PrivacyToken {
-  privacyToken: String!,
-  acceptedAtInUTC: String!,
+type PrivacyAgreementAcceptanceToken {
+  token: String!
+  acceptedAtInUTC: String!
   acceptedVersion: Int!
+}
+
+type AuthToken {
+  token: String!
+  payload: AuthTokenPayload
+}
+
+type AuthTokenPayload {
+  email: String!
+  providerName: String!
+  profileId: String!
+  tenant: String!
+  profile: JSON
 }
 
 extend type Mutation {
@@ -67,7 +80,7 @@ extend type Mutation {
   """
   Creates a JWT-Token which verifies the user-approval of the privacy terms
   """
-  createPrivacyToken(acceptedVersion: Int!): PrivacyToken @custom(resolver: "@fullstack-one/auth/createPrivacyToken")
+  createPrivacyAgreementAcceptanceToken(acceptedVersion: Int!): PrivacyAgreementAcceptanceToken @custom(resolver: "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken")
 }
 
 extend type Query {

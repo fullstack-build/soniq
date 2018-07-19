@@ -56,11 +56,22 @@ export declare class Auth {
     adminQuery(...queryArguments: any[]): Promise<any>;
     userTransaction(accessToken: any, callback: any): Promise<any>;
     userQuery(accessToken: any, ...queryArguments: any[]): Promise<any>;
+    createAuthToken(privacyAgreementAcceptanceToken: any, email: any, providerName: any, profileId: any, tenant: any, profile: any): {
+        payload: {
+            providerName: any;
+            profileId: any;
+            email: any;
+            tenant: any;
+            profile: any;
+        };
+        token: any;
+    };
+    validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken: any): void;
     private addMiddleware();
     private boot();
     private preQueryHook(client, context, authRequired);
     private preMutationCommitHook(client, hookInfo);
-    private createPrivacyToken(acceptedVersion);
-    private isPrivacyPolicyCheckActive();
+    private createPrivacyAgreementAcceptanceToken(acceptedVersion);
+    private isPrivacyAgreementCheckActive();
     private getResolvers();
 }

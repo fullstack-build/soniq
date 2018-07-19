@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/auto-migrate",
+  "name": "@fullstack-one/auth-fb-token",
   "version": "0.3.27",
-  "description": "fullstack.one helper package",
+  "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
@@ -20,13 +20,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/auth": "^0.3.27",
     "@fullstack-one/boot-loader": "^0.3.27",
     "@fullstack-one/config": "^0.3.27",
-    "@fullstack-one/db": "^0.3.27",
-    "@fullstack-one/di": "^0.3.25",
-    "@fullstack-one/events": "^0.3.27",
+    "@fullstack-one/di": "^0.3.14",
+    "@fullstack-one/graphql": "^0.3.27",
     "@fullstack-one/logger": "^0.3.27",
-    "@fullstack-one/schema-builder": "^0.3.27"
+    "@fullstack-one/schema-builder": "^0.3.27",
+    "axios": "^0.18.0"
   },
   "devDependencies": {
     "typescript": "^2.8.3"

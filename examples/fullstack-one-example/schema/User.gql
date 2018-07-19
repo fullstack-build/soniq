@@ -17,8 +17,8 @@ type User @table @auth @versioning{
   #postContributions: [Post!]! @relation(name: "PostContributors")
   stripeAccount: String @custom(resolver: "stripeAccount")
   testDefault: String @type(name: "date") @default(expression: "now()")
-  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyPolicyAcceptedAtInUTC
-  acceptedPrivacyTermsVersion: Int @privacyPolicyAcceptedVersion
+  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyAgreementAcceptedAtInUTC
+  acceptedPrivacyTermsVersion: Int @privacyAgreementAcceptedVersion
   #startTimeInUTC: String! @type(name:"timestamp")
   #type: UserType
   #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")

@@ -14,7 +14,11 @@ function createGrants(config, dbMeta) {
             // sql.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
             sql.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."A${table.name}" TO "${config.userName}";`);
             // TODO: @Eugene: Move this to versioning.ts
-            sql.push(`GRANT INSERT ON "_versions"."${table.schemaName}_${table.name}" TO "${config.userName}";`);
+            // Besides versioning should be a security defining trigger, executed
+            // with the permissions of function-creator. Thus this Grant should be removed.
+            if (table.extensions != null && table.extensions.versioning != null && table.extensions.versioning.isActive === true) {
+                sql.push(`GRANT INSERT ON "_versions"."${table.schemaName}_${table.name}" TO "${config.userName}";`);
+            }
         });
     });
     return sql;

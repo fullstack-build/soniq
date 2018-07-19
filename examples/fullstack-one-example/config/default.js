@@ -23,7 +23,7 @@ module.exports = {
       provider: process.env.AUTH_PROVIDERS_SECRET,
       cookie:   process.env.AUTH_COOKIE_SECRET,
       jwtRefreshToken:   process.env.AUTH_JWT_REFRESH_TOKEN_SECRET,
-      privacyToken:   process.env.AUTH_PRIVACY_TOKEN_SECRET,
+      privacyAgreementAcceptanceToken:   process.env.AUTH_PRIVACY_TOKEN_SECRET,
       authToken: process.env.AUTH_AUTH_TOKEN_SECRET
     },
     oAuth: {
@@ -54,6 +54,10 @@ module.exports = {
       ],
       serverApiAddress: 'http://localhost:3000'
     }
+  },
+  authFbToken: {
+    clientID: 2045088022395430,
+    clientSecret: 'ad5b17b47d056393b687c20b64fea2b5'
   },
   server: {
     port: process.env.PORT
