@@ -384,7 +384,7 @@ const GQL_JSON_PARSER = {
   ) => {
     // add new constraint
     const constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
-    createConstraint(constraintName, 'NOT NULL', {}, refDbMeta, refDbMetaCurrentTable,refDbMetaCurrentTableColumn);
+    createConstraint(constraintName, 'NOT NULL', {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 
     // parse sub type
     if (gQlSchemaNode.type != null) {

@@ -229,7 +229,7 @@ export class PgToDbMeta {
         AND
         table_name = $2
       ORDER BY
-        ordinal_position ASC;`,[schemaName, tableName]
+        ordinal_position ASC;`, [schemaName, tableName]
       );
 
       // iterate all columns
@@ -264,7 +264,7 @@ export class PgToDbMeta {
         // default value
         if (column.column_default !== null) {
           const isExpression = (column.column_default.indexOf('::') === -1);
-          const value = (isExpression) ? column.column_default : column.column_default.split('::')[0].replace(/'/g,'');
+          const value = (isExpression) ? column.column_default : column.column_default.split('::')[0].replace(/'/g, '');
           newColumn.defaultValue = {
             isExpression,
             value

@@ -165,7 +165,7 @@ registerQueryParser(async (dbClient, dbMeta) => {
       `SELECT * FROM _meta."Auth" WHERE key IN
         ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`
     );
-    const authObj = rows.reduce((result, row) => {result[row.key] = row.value; return result;}, {});
+    const authObj = rows.reduce((result, row) => { result[row.key] = row.value; return result; }, {});
 
     // get relevant table
     const thisTable = dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];

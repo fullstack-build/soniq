@@ -8,6 +8,7 @@ class Logger {
     constructor(moduleName = 'root', loggerConfig) {
         this.LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
         // tracer
+        // any should avoid: TS2409:Return type of constructor signature must be assignable to the instance type of the class.
         this.tracerLogger = null;
         // debug
         this.debugLogger = null;

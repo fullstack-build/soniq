@@ -101,7 +101,7 @@ export class Config {
     this.ENVIRONMENT.version          = PROJECT_PACKAGE.version;
     this.ENVIRONMENT.path             = projectPath;
     // unique instance ID (6 char)
-    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5,6);
+    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5, 6);
     // wait until core config is set
     if (this.config.core != null) {
       this.ENVIRONMENT.namespace      = this.config.core.namespace;
