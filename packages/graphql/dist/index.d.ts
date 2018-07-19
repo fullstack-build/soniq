@@ -1,5 +1,6 @@
 export declare class GraphQl {
     private graphQlConfig;
+    private config;
     private logger;
     private ENVIRONMENT;
     private schemaBuilder;
@@ -8,7 +9,7 @@ export declare class GraphQl {
     private resolvers;
     private operations;
     private hooks;
-    constructor(loggerFactory?: any, config?: any, bootLoader?: any, schemaBuilder?: any, server?: any, dbGeneralPool?: any);
+    constructor(loggerFactory: any, config: any, bootLoader: any, schemaBuilder: any, server: any, dbGeneralPool: any);
     addPreQueryHook(fn: any): void;
     addHook(name: any, fn: any): void;
     addResolvers(resolversObject: any): void;

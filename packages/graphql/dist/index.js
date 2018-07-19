@@ -50,11 +50,11 @@ let GraphQl = class GraphQl {
         };
         // register package config
         config.addConfigFolder(__dirname + '/../config');
+        this.config = config;
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
         this.schemaBuilder = schemaBuilder;
         this.logger = loggerFactory.create('GraphQl');
-        this.graphQlConfig = config.getConfig('graphql');
         this.ENVIRONMENT = config.ENVIRONMENT;
         let extendSchema = '';
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
@@ -89,6 +89,8 @@ let GraphQl = class GraphQl {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            // read config after boot
+            this.graphQlConfig = this.config.getConfig('graphql');
             const gqlKoaRouter = new KoaRouter();
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
