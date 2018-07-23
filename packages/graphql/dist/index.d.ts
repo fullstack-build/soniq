@@ -13,6 +13,6 @@ export declare class GraphQl {
     addPreQueryHook(fn: any): void;
     addHook(name: any, fn: any): void;
     addResolvers(resolversObject: any): void;
-    prepareSchema(gqlRuntimeDocument: any, dbMeta: any, resolverMeta: any): any;
+    prepareSchema(gqlRuntimeDocument: any, dbMeta: any, resolverMeta: any): string;
     private boot();
 }

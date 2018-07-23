@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/di",
-  "version": "0.3.25",
+  "version": "0.3.28",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -21,9 +21,9 @@
   "license": "MIT",
   "dependencies": {
     "reflect-metadata": "^0.1.12",
-    "typedi": "^0.6.1"
+    "typedi": "^0.8.0"
   },
   "devDependencies": {
-    "typescript": "^2.8.3"
+    "typescript": "^2.9.2"
   }
 }

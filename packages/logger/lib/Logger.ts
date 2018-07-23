@@ -13,7 +13,8 @@ export class Logger implements ILogger {
   private loggerName: string;
 
   // tracer
-  private tracerLogger: Tracer = null;
+  // any should avoid: TS2409:Return type of constructor signature must be assignable to the instance type of the class.
+  private tracerLogger: any = null;
   // debug
   private debugLogger: DebugLogger = null;
   // LogEntries
