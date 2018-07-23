@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/queue",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "description": "fullstack.one queue package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/config": "^0.3.28",
-    "@fullstack-one/db": "^0.3.28",
+    "@fullstack-one/db": "^0.3.29",
     "@fullstack-one/di": "^0.3.28",
     "@fullstack-one/logger": "^0.3.28",
     "pg-boss": "^2.5.1"
