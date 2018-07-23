@@ -21,6 +21,7 @@ import { getParser } from './getParser';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 
 import * as fs from 'fs';
+import { URL } from 'url';
 
 const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 
@@ -664,8 +665,7 @@ export class Auth {
         clientIdentifier: null,
         sameOriginApproved: {
           byReferrer: false,
-          byOrigin: false,
-          byHost: false
+          byOrigin: false
         }
       };
 
@@ -683,18 +683,26 @@ export class Auth {
 
       const origin = ctx.request.get('origin');
       const referrer = ctx.request.get('referrer');
-      const host = ctx.request.get('host');
+      let referrerOrigin = null;
 
-      // Validate same origin policy
-      if (ctx.request.origin != null && this.authConfig.validOrigins.includes(ctx.request.origin)) {
-        if (referrer.startsWith(ctx.request.origin + '/') || referrer === ctx.request.origin) {
+      // Validate same origin policy by origin header
+      if (origin != null && origin !== '' && this.authConfig.validOrigins.includes(origin)) {
+        ctx.securityContext.sameOriginApproved.byOrigin = true;
+      }
+
+      // Validate same origin policy by referrer header
+      if (referrer != null && referrer !== '') {
+        const referrerUrl = new URL(referrer);
+        referrerOrigin = referrerUrl.origin;
+        if (referrerOrigin != null && this.authConfig.validOrigins.includes(referrerOrigin)) {
           ctx.securityContext.sameOriginApproved.byReferrer = true;
         }
-        if (origin === ctx.request.origin) {
-          ctx.securityContext.sameOriginApproved.byOrigin = true;
-        }
-        if (host === ctx.request.host) {
-          ctx.securityContext.sameOriginApproved.byHost = true;
+      }
+
+      // When the request is approved by referrer and by origin header they must match
+      if (ctx.securityContext.sameOriginApproved.byReferrer === true && ctx.securityContext.sameOriginApproved.byOrigin === true) {
+        if (referrerOrigin !== origin) {
+          return ctx.throw(400, `Referrer and origin header are not matching.`);
         }
       }
 
@@ -706,18 +714,11 @@ export class Auth {
 
       if (ctx.securityContext.isBrowser === true) {
         if (ctx.securityContext.sameOriginApproved.byOrigin === true &&
-            ctx.securityContext.sameOriginApproved.byReferrer === true &&
-            ctx.securityContext.sameOriginApproved.byHost === true) {
+            ctx.securityContext.sameOriginApproved.byReferrer === true) {
           return next();
         }
         if (ctx.request.method === 'GET') {
-          if (ctx.securityContext.sameOriginApproved.byHost === true) {
-            return next();
-          }
-          if (ctx.securityContext.sameOriginApproved.byOrigin === true &&
-              ctx.securityContext.sameOriginApproved.byReferrer === true) {
-            return next();
-          }
+          return next();
         }
       } else {
         return next();
@@ -728,13 +729,7 @@ export class Auth {
 
     const corsOptions = Object.assign({}, this.authConfig.corsOptions, {
       origin: (ctx) => {
-        if (process.env.NODE_ENV === 'production') {
-          return ctx.request.origin;
-        }
-        if (this.authConfig.allowAllCorsOriginsOnDev === true) {
-          return '*';
-        }
-        return ctx.request.origin;
+        return ctx.request.get('origin');
       }
     });
 
