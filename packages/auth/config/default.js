@@ -41,7 +41,8 @@ module.exports = {
     allowAllCorsOriginsOnDev: true,
     apiClientOrigin: '#?API_CLIENT',
     corsOptions: {
-      allowMethods: ['GET', 'POST']
+      allowMethods: ['GET', 'POST'],
+      credentials: true
     },
     privacyAgreementAcceptance: {
       tokenMaxAgeInSeconds: 86400, // One Day

@@ -119,6 +119,23 @@ let GraphQl = class GraphQl {
                 }
                 ctx.set('Cache-Control', cacheHeader);
             });
+            const enforceOriginMatch = (ctx, next) => {
+                const errorMessage = `All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.`;
+                // If securityContext is missing, don't allow the request.
+                if (ctx.securityContext == null) {
+                    return ctx.throw(400, errorMessage);
+                }
+                // If a user is requesting data through an API-Client (not a Browser) simply allow everything
+                if (ctx.securityContext.isApiClient === true) {
+                    return next();
+                }
+                // If the request is approved by origin and referrer it is allowed
+                if (ctx.securityContext.sameOriginApproved.byOrigin === true && ctx.securityContext.sameOriginApproved.byReferrer === true) {
+                    return next();
+                }
+                // Else forbid everything
+                return ctx.throw(400, errorMessage);
+            };
             const gQlParam = (ctx) => {
                 ctx.state.authRequired = false;
                 ctx.state.includesMutation = false;
@@ -131,8 +148,8 @@ let GraphQl = class GraphQl {
                 };
             };
             // koaBody is needed just for POST.
-            gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlKoaRouter.get(this.graphQlConfig.endpoint, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+            gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+            gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
             // graphiql
             if (this.graphQlConfig.graphiQlEndpointActive) {
                 gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
