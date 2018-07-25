@@ -20,7 +20,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const apollo_server_koa_1 = require("apollo-server-koa");
+const apolloServer = require("apollo-server-koa");
+exports.apolloServer = apolloServer;
+const { graphiqlKoa, graphqlKoa } = apolloServer;
 const graphql_tools_1 = require("graphql-tools");
 const koaBody = require("koa-bodyparser");
 const KoaRouter = require("koa-router");
@@ -148,11 +150,11 @@ let GraphQl = class GraphQl {
                 };
             };
             // koaBody is needed just for POST.
-            gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
-            gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apollo_server_koa_1.graphqlKoa(gQlParam));
+            gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, graphqlKoa(gQlParam));
+            gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, graphqlKoa(gQlParam));
             // graphiql
             if (this.graphQlConfig.graphiQlEndpointActive) {
-                gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apollo_server_koa_1.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+                gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
             }
             const app = this.server.getApp();
             app.use(gqlKoaRouter.routes());
