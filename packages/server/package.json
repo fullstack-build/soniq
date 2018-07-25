@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/server",
-  "version": "0.3.31",
+  "version": "0.3.32",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -23,7 +23,7 @@
     "@fullstack-one/boot-loader": "^0.3.28",
     "@fullstack-one/config": "^0.3.28",
     "@fullstack-one/di": "^0.3.28",
-    "@fullstack-one/events": "^0.3.31",
+    "@fullstack-one/events": "^0.3.32",
     "@fullstack-one/logger": "^0.3.28",
     "koa": "^2.5.2"
   },
