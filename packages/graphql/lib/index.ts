@@ -1,4 +1,5 @@
-import { graphiqlKoa, graphqlKoa } from 'apollo-server-koa';
+import * as apolloServer from 'apollo-server-koa';
+const { graphiqlKoa, graphqlKoa } = apolloServer;
 import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
@@ -21,6 +22,8 @@ import { SchemaBuilder } from '@fullstack-one/schema-builder';
 import { helper } from '@fullstack-one/helper';
 import { Server } from '@fullstack-one/server';
 import { DbGeneralPool } from '@fullstack-one/db';
+
+export { apolloServer };
 
 @Service()
 export class GraphQl {
