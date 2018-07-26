@@ -114,10 +114,19 @@ class QueryBuilder {
         };
         // A field can be a COALESCE of view-columns. Thus we need to get the correct expression.
         const getField = (name) => {
-            if (gqlTypeMeta.fields[name] == null) {
+            let virtualFieldName = null;
+            Object.keys(gqlTypeMeta.fields).some((fieldName) => {
+                const field = gqlTypeMeta.fields[fieldName];
+                if (field.nativeFieldName === name) {
+                    virtualFieldName = fieldName;
+                    return true;
+                }
+                return false;
+            });
+            if (virtualFieldName == null) {
                 throw new Error(`Field '${name}' not found.`);
             }
-            if (gqlTypeMeta.publicFieldNames.indexOf(name) < 0) {
+            if (gqlTypeMeta.publicFieldNames.indexOf(virtualFieldName) < 0) {
                 authRequired = true;
                 authRequiredHere = true;
                 if (isAuthenticated !== true) {
