@@ -43,8 +43,8 @@ export class MutationBuilder {
     // Generate values to be inserted
     const v = fieldValues.map((value) => {
       let insertValue = value;
-      if (typeof value === 'object') {
-        insertValue = JSON.stringify(value);
+      if (insertValue != null && typeof insertValue === 'object') {
+        insertValue = JSON.stringify(insertValue);
       }
       values.push(insertValue);
       return '$' + values.length;
@@ -72,7 +72,7 @@ export class MutationBuilder {
         // Add field to update set list and it's value to values
 
         let updateValue = fieldValue;
-        if (typeof updateValue === 'object') {
+        if (updateValue != null && typeof updateValue === 'object') {
           updateValue = JSON.stringify(updateValue);
         }
         values.push(updateValue);
