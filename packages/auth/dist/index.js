@@ -49,6 +49,7 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 __export(require("./signHelper"));
 let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
+        this.possibleTransactionIsolationLevels = ['SERIALIZABLE', 'REPEATABLE READ', 'READ COMMITTED', 'READ UNCOMMITTED'];
         this.parserMeta = {};
         // register package config
         config.addConfigFolder(__dirname + '/../config');
@@ -89,12 +90,12 @@ let Auth = class Auth {
         }
         this.notificationFunction = notificationFunction;
     }
-    setUser(client, accessToken) {
+    setUser(dbClient, accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             try {
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
-                yield client.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
+                yield dbClient.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
                 return true;
             }
             catch (err) {
@@ -103,11 +104,11 @@ let Auth = class Auth {
             }
         });
     }
-    setAdmin(client) {
+    setAdmin(dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield client.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}';`);
-                return client;
+                yield dbClient.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(this.authConfig.secrets.admin)}';`);
+                return dbClient;
             }
             catch (err) {
                 this.logger.warn('setAdmin.error', err);
@@ -115,11 +116,11 @@ let Auth = class Auth {
             }
         });
     }
-    unsetAdmin(client) {
+    unsetAdmin(dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield client.query(`RESET auth.admin_token;`);
-                return client;
+                yield dbClient.query(`RESET auth.admin_token;`);
+                return dbClient;
             }
             catch (err) {
                 this.logger.warn('unsetAdmin.error', err);
@@ -127,12 +128,12 @@ let Auth = class Auth {
             }
         });
     }
-    initializeUser(client, userId) {
+    initializeUser(dbClient, userId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this.setAdmin(client);
-                const result = yield client.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
-                yield this.unsetAdmin(client);
+                yield this.setAdmin(dbClient);
+                const result = yield dbClient.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
+                yield this.unsetAdmin(dbClient);
                 const payload = result.rows[0].payload;
                 const user = {
                     userId: payload.userId,
@@ -160,12 +161,12 @@ let Auth = class Auth {
                     throw new Error('Failed to verify auth-token.');
                 }
             }
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
-                const metaResult = yield client.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
+                const metaResult = yield dbClient.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
                 const data = metaResult.rows[0].data;
                 let uid = data.userId;
                 let pw = password;
@@ -175,8 +176,8 @@ let Auth = class Auth {
                 }
                 const providerSignature = signHelper_1.getProviderSignature(this.authConfig.secrets.admin, provider, uid);
                 const pwData = yield crypto_1.hashByMeta(pw + providerSignature, data.pwMeta);
-                yield this.setAdmin(client);
-                const loginResult = yield client.query('SELECT _meta.login($1, $2, $3, $4) AS payload', [data.userId, provider, pwData.hash, clientIdentifier]);
+                yield this.setAdmin(dbClient);
+                const loginResult = yield dbClient.query('SELECT _meta.login($1, $2, $3, $4) AS payload', [data.userId, provider, pwData.hash, clientIdentifier]);
                 const payload = loginResult.rows[0].payload;
                 const ret = {
                     userId: data.userId,
@@ -190,17 +191,17 @@ let Auth = class Auth {
                     };
                     ret.refreshToken = signHelper_1.signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, payload.userTokenMaxAgeInSeconds);
                 }
-                yield client.query('COMMIT');
+                yield dbClient.query('COMMIT');
                 return ret;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('login.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
@@ -208,13 +209,13 @@ let Auth = class Auth {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
             const refreshToken = signHelper_1.verifyJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenJwt).token;
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, clientIdentifier, refreshToken];
-                const result = yield client.query('SELECT _meta.refresh_user_token($1, $2, $3, $4, $5, $6) AS payload', values);
+                const result = yield dbClient.query('SELECT _meta.refresh_user_token($1, $2, $3, $4, $5, $6) AS payload', values);
                 const newPayload = result.rows[0].payload;
                 const ret = {
                     userId: newPayload.userId,
@@ -228,17 +229,17 @@ let Auth = class Auth {
                     };
                     ret.refreshToken = signHelper_1.signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, newPayload.userTokenMaxAgeInSeconds);
                 }
-                yield client.query('COMMIT');
+                yield dbClient.query('COMMIT');
                 return ret;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('refreshUserToken.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
@@ -252,45 +253,45 @@ let Auth = class Auth {
             return values;
         });
     }
-    setPasswordWithClient(accessToken, provider, password, userIdentifier, client) {
+    setPasswordWithClient(accessToken, provider, password, userIdentifier, dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
             const values = yield this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
-            yield this.setAdmin(client);
-            yield client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
-            yield this.unsetAdmin(client);
+            yield this.setAdmin(dbClient);
+            yield dbClient.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+            yield this.unsetAdmin(dbClient);
         });
     }
     setPassword(accessToken, provider, password, userIdentifier) {
         return __awaiter(this, void 0, void 0, function* () {
             const values = yield this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
-                yield client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
-                yield client.query('COMMIT');
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
+                yield dbClient.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+                yield dbClient.query('COMMIT');
                 return true;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('setPassword.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     forgotPassword(username, tenant, meta) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
-                const result = yield client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
+                const result = yield dbClient.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
                 const payload = result.rows[0].data;
                 const user = {
                     userId: payload.userId,
@@ -300,54 +301,54 @@ let Auth = class Auth {
                     accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
                 yield this.notificationFunction(user, 'FORGOT_PASSWORD', meta);
-                yield client.query('COMMIT');
+                yield dbClient.query('COMMIT');
                 return true;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('forgotPassword.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     removeProvider(accessToken, provider) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider];
-                yield client.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
-                yield client.query('COMMIT');
+                yield dbClient.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
+                yield dbClient.query('COMMIT');
                 return true;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('removeProvider.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     getTokenMeta(accessToken, tempSecret = false, tempTime = false) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, tempSecret, tempTime];
-                const result = yield client.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
+                const result = yield dbClient.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
                 const isValid = result.rows[0].data === true;
                 const ret = {
                     isValid,
@@ -357,65 +358,65 @@ let Auth = class Auth {
                     issuedAt: payload.iat,
                     expiresAt: payload.exp
                 };
-                yield client.query('COMMIT');
+                yield dbClient.query('COMMIT');
                 return ret;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('getTokenMeta.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     invalidateUserToken(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
-                yield client.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
-                yield client.query('COMMIT');
+                yield dbClient.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
+                yield dbClient.query('COMMIT');
                 return true;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('invalidateUserToken.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     invalidateAllUserTokens(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
             const payload = signHelper_1.verifyJwt(this.authConfig.secrets.jwt, accessToken);
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
-                yield client.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
-                yield client.query('COMMIT');
+                yield dbClient.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
+                yield dbClient.query('COMMIT');
                 return true;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('invalidateAllUserTokens.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
@@ -423,19 +424,23 @@ let Auth = class Auth {
         return passport;
     }
     /* DB HELPER START */
-    createDbClientAdminTransaction(dbClient) {
+    createDbClientAdminTransaction(dbClient, isolationLevel = 'READ COMMITTED') {
         return __awaiter(this, void 0, void 0, function* () {
+            const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex(item => isolationLevel.toLowerCase() === item.toLowerCase());
+            const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
             // Begin transaction
-            yield dbClient.query('BEGIN');
-            const SECRET = this.authConfig.secrets.admin;
-            yield dbClient.query(`SET LOCAL auth.admin_token TO '${signHelper_1.getAdminSignature(SECRET)}'`);
+            yield dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
+            // set user (admin) for dbClient
+            yield this.setAdmin(dbClient);
             return dbClient;
         });
     }
-    createDbClientUserTransaction(dbClient, accessToken) {
+    createDbClientUserTransaction(dbClient, accessToken, isolationLevel = 'READ COMMITTED') {
         return __awaiter(this, void 0, void 0, function* () {
+            const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex(item => isolationLevel.toLowerCase() === item.toLowerCase());
+            const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
             // Begin transaction
-            yield dbClient.query('BEGIN');
+            yield dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
             // set user for dbClient
             yield this.setUser(dbClient, accessToken);
             return dbClient;
@@ -448,106 +453,106 @@ let Auth = class Auth {
     }
     getCurrentUserIdFromAccessToken(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             // set user for dbClient
-            yield this.setUser(client, accessToken);
+            yield this.setUser(dbClient, accessToken);
             // get user ID from DB Client
             let userId = null;
             try {
-                userId = yield this.getCurrentUserIdFromClient(client);
+                userId = yield this.getCurrentUserIdFromClient(dbClient);
             }
             catch ( /*ignore error, return empty userId */_a) { /*ignore error, return empty userId */ }
             // Release pgClient to pool
-            yield client.release();
+            yield dbClient.release();
             return userId;
         });
     }
-    adminTransaction(callback) {
+    // return admin transaction
+    adminTransaction(callback, isolationLevel = 'READ COMMITTED') {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
-                const ret = yield callback(client);
-                yield client.query('COMMIT');
-                return ret;
+                yield this.createDbClientAdminTransaction(dbClient, isolationLevel);
+                const result = yield callback(dbClient);
+                yield dbClient.query('COMMIT');
+                return result;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('adminTransaction.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     adminQuery(...queryArguments) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setAdmin(client);
+                yield dbClient.query('BEGIN');
+                yield this.setAdmin(dbClient);
                 // run query
-                const result = yield client.query.apply(client, queryArguments);
-                yield client.query('COMMIT');
+                const result = yield dbClient.query.apply(dbClient, queryArguments);
+                yield dbClient.query('COMMIT');
                 return result;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('adminQuery.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
-    userTransaction(accessToken, callback) {
+    // return user transaction
+    userTransaction(accessToken, callback, isolationLevel = 'READ COMMITTED') {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setUser(client, accessToken);
-                const ret = yield callback(client);
-                yield client.query('COMMIT');
-                return ret;
+                yield this.createDbClientUserTransaction(dbClient, accessToken, isolationLevel);
+                const result = yield callback(dbClient);
+                yield dbClient.query('COMMIT');
+                return result;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('userTransaction.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
     userQuery(accessToken, ...queryArguments) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield this.dbGeneralPool.pgPool.connect();
+            const dbClient = yield this.dbGeneralPool.pgPool.connect();
             try {
                 // Begin transaction
-                yield client.query('BEGIN');
-                yield this.setUser(client, accessToken);
-                const result = yield client.query.apply(client, queryArguments);
-                yield client.query('COMMIT');
+                yield dbClient.query('BEGIN');
+                yield this.setUser(dbClient, accessToken);
+                const result = yield dbClient.query.apply(dbClient, queryArguments);
+                yield dbClient.query('COMMIT');
                 return result;
             }
             catch (err) {
-                yield client.query('ROLLBACK');
+                yield dbClient.query('ROLLBACK');
                 this.logger.warn('userQuery.error', err);
                 throw err;
             }
             finally {
                 // Release pgClient to pool
-                client.release();
+                dbClient.release();
             }
         });
     }
@@ -633,7 +638,7 @@ let Auth = class Auth {
                     return ctx.throw(400, `Referrer and origin header are not matching.`);
                 }
             }
-            // If the client is no Browser we don't need to worry about cors.
+            // If the client is not a browser we don't need to worry about CORS.
             if (origin === this.authConfig.apiClientOrigin) {
                 ctx.securityContext.isApiClient = true;
                 ctx.securityContext.isBrowser = false;
@@ -771,14 +776,14 @@ let Auth = class Auth {
             app.use(authRouter.allowedMethods());
         });
     }
-    preQueryHook(client, context, authRequired) {
+    preQueryHook(dbClient, context, authRequired) {
         return __awaiter(this, void 0, void 0, function* () {
             if (authRequired === true && context.accessToken != null) {
-                yield this.setUser(client, context.accessToken);
+                yield this.setUser(dbClient, context.accessToken);
             }
         });
     }
-    preMutationCommitHook(client, hookInfo) {
+    preMutationCommitHook(dbClient, hookInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             const mutation = hookInfo.mutationQuery.mutation;
             if (mutation.extensions.auth === 'REGISTER_USER_MUTATION') {
@@ -811,7 +816,7 @@ let Auth = class Auth {
                             ` '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
                     }
                 }
-                const user = yield this.initializeUser(client, hookInfo.entityId);
+                const user = yield this.initializeUser(dbClient, hookInfo.entityId);
                 const notificationContext = {
                     user,
                     input: args.input,
@@ -830,7 +835,7 @@ let Auth = class Auth {
                     }
                     notificationContext.tokenPayload = tokenPayload;
                     // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
-                    yield this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, client);
+                    yield this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, dbClient);
                     yield this.notificationFunction('REGISTER_OAUTH', notificationContext);
                 }
                 else {

@@ -37,6 +37,6 @@ export declare class SchemaBuilder {
     };
     getGQlSdl(): any;
     getGQlAst(): any;
-    print(document: any): any;
+    print(document: any): string;
     private boot();
 }

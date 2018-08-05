@@ -1,5 +1,5 @@
 import { Service, Inject, Container } from '@fullstack-one/di';
-import { DbGeneralPool } from '@fullstack-one/db';
+import { DbGeneralPool, PgClient, PgPoolClient } from '@fullstack-one/db';
 import { Server } from '@fullstack-one/server';
 import { BootLoader } from '@fullstack-one/boot-loader';
 import { registerDirectiveParser, SchemaBuilder } from '@fullstack-one/schema-builder';
@@ -34,6 +34,8 @@ export class Auth {
   private readonly sodiumConfig;
   private authConfig;
   private notificationFunction;
+  private possibleTransactionIsolationLevels: [string, string, string, string] =
+    ['SERIALIZABLE', 'REPEATABLE READ', 'READ COMMITTED', 'READ UNCOMMITTED'];
 
   // DI
   private dbGeneralPool: DbGeneralPool;
@@ -108,13 +110,13 @@ export class Auth {
     this.notificationFunction = notificationFunction;
   }
 
-  public async setUser(client, accessToken) {
+  public async setUser(dbClient, accessToken) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     try {
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
-      await client.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
+      await dbClient.query('SELECT _meta.set_user_token($1, $2, $3, $4);', values);
 
       return true;
     } catch (err) {
@@ -123,33 +125,33 @@ export class Auth {
     }
   }
 
-  public async setAdmin(client) {
+  public async setAdmin(dbClient) {
     try {
-      await client.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}';`);
-      return client;
+      await dbClient.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}';`);
+      return dbClient;
     } catch (err) {
       this.logger.warn('setAdmin.error', err);
       throw err;
     }
   }
 
-  public async unsetAdmin(client) {
+  public async unsetAdmin(dbClient) {
     try {
-      await client.query(`RESET auth.admin_token;`);
-      return client;
+      await dbClient.query(`RESET auth.admin_token;`);
+      return dbClient;
     } catch (err) {
       this.logger.warn('unsetAdmin.error', err);
       throw err;
     }
   }
 
-  public async initializeUser(client, userId) {
+  public async initializeUser(dbClient, userId) {
     try {
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
-      const result = await client.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
+      const result = await dbClient.query('SELECT _meta.initialize_user($1) AS payload', [userId]);
 
-      await this.unsetAdmin(client);
+      await this.unsetAdmin(dbClient);
 
       const payload = result.rows[0].payload;
 
@@ -180,15 +182,15 @@ export class Auth {
       }
     }
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
-      const metaResult = await client.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
+      const metaResult = await dbClient.query('SELECT _meta.get_user_pw_meta($1, $2, $3) AS data', [username, provider, tenant]);
       const data = metaResult.rows[0].data;
 
       let uid = data.userId;
@@ -201,9 +203,11 @@ export class Auth {
 
       const pwData: any = await hashByMeta(pw + providerSignature, data.pwMeta);
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
-      const loginResult = await client.query('SELECT _meta.login($1, $2, $3, $4) AS payload', [data.userId, provider, pwData.hash, clientIdentifier]);
+      const loginResult = await dbClient.query(
+        'SELECT _meta.login($1, $2, $3, $4) AS payload',
+        [data.userId, provider, pwData.hash, clientIdentifier]);
       const payload = loginResult.rows[0].payload;
 
       const ret = {
@@ -220,15 +224,15 @@ export class Auth {
         ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, payload.userTokenMaxAgeInSeconds);
       }
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return ret;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('login.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
@@ -236,17 +240,17 @@ export class Auth {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
     const refreshToken = verifyJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenJwt).token;
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, clientIdentifier, refreshToken];
 
-      const result = await client.query('SELECT _meta.refresh_user_token($1, $2, $3, $4, $5, $6) AS payload', values);
+      const result = await dbClient.query('SELECT _meta.refresh_user_token($1, $2, $3, $4, $5, $6) AS payload', values);
 
       const newPayload = result.rows[0].payload;
 
@@ -264,15 +268,15 @@ export class Auth {
         ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, newPayload.userTokenMaxAgeInSeconds);
       }
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return ret;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('refreshUserToken.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
@@ -287,52 +291,52 @@ export class Auth {
     return values;
   }
 
-  public async setPasswordWithClient(accessToken, provider, password, userIdentifier, client) {
+  public async setPasswordWithClient(accessToken, provider, password, userIdentifier, dbClient) {
     const values = await this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
 
-    await this.setAdmin(client);
+    await this.setAdmin(dbClient);
 
-    await client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+    await dbClient.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
 
-    await this.unsetAdmin(client);
+    await this.unsetAdmin(dbClient);
   }
 
   public async setPassword(accessToken, provider, password, userIdentifier) {
     const values = await this.createSetPasswordValues(accessToken, provider, password, userIdentifier);
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
-      await client.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
+      await dbClient.query('SELECT _meta.set_password($1, $2, $3, $4, $5, $6, $7) AS payload', values);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return true;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('setPassword.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async forgotPassword(username, tenant, meta) {
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
-      const result = await client.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
+      const result = await dbClient.query('SELECT _meta.forgot_password($1, $2) AS data', [username, tenant]);
       const payload = result.rows[0].data;
 
       const user = {
@@ -345,59 +349,59 @@ export class Auth {
 
       await this.notificationFunction(user, 'FORGOT_PASSWORD', meta);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return true;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('forgotPassword.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async removeProvider(accessToken, provider) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, provider];
 
-      await client.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
+      await dbClient.query('SELECT _meta.remove_provider($1, $2, $3, $4, $5) AS data', values);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return true;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('removeProvider.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async getTokenMeta(accessToken, tempSecret = false, tempTime = false) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp, tempSecret, tempTime];
 
-      const result = await client.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
+      const result = await dbClient.query('SELECT _meta.is_user_token_valid($1, $2, $3, $4, $5, $6) AS data', values);
       const isValid = result.rows[0].data === true;
 
       const ret = {
@@ -409,69 +413,69 @@ export class Auth {
         expiresAt: payload.exp
       };
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return ret;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('getTokenMeta.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async invalidateUserToken(accessToken) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
-      await client.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
+      await dbClient.query('SELECT _meta.invalidate_user_token($1, $2, $3, $4) AS data', values);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return true;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('invalidateUserToken.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async invalidateAllUserTokens(accessToken) {
     const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
 
-      await client.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
+      await dbClient.query('SELECT _meta.invalidate_all_user_tokens($1, $2, $3, $4) AS data', values);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return true;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('invalidateAllUserTokens.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
@@ -480,17 +484,30 @@ export class Auth {
   }
 
   /* DB HELPER START */
-  public async createDbClientAdminTransaction(dbClient) {
+  public async createDbClientAdminTransaction(
+    dbClient: PgPoolClient,
+    isolationLevel: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED' = 'READ COMMITTED'): Promise<PgPoolClient> {
+
+    const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex(item => isolationLevel.toLowerCase() === item.toLowerCase());
+    const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
+
     // Begin transaction
-    await dbClient.query('BEGIN');
-    const SECRET = this.authConfig.secrets.admin;
-    await dbClient.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(SECRET)}'`);
+    await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
+    // set user (admin) for dbClient
+    await this.setAdmin(dbClient);
     return dbClient;
   }
 
-  public async createDbClientUserTransaction(dbClient, accessToken) {
+  public async createDbClientUserTransaction(
+    dbClient: PgPoolClient,
+    accessToken,
+    isolationLevel: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED' = 'READ COMMITTED'): Promise<PgPoolClient> {
+
+    const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex(item => isolationLevel.toLowerCase() === item.toLowerCase());
+    const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
+
     // Begin transaction
-    await dbClient.query('BEGIN');
+    await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
     // set user for dbClient
     await this.setUser(dbClient, accessToken);
     return dbClient;
@@ -501,113 +518,119 @@ export class Auth {
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken) {
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
     // set user for dbClient
-    await this.setUser(client, accessToken);
+    await this.setUser(dbClient, accessToken);
     // get user ID from DB Client
     let userId = null;
     try {
-      userId = await this.getCurrentUserIdFromClient(client);
+      userId = await this.getCurrentUserIdFromClient(dbClient);
     } catch { /*ignore error, return empty userId */ }
     // Release pgClient to pool
-    await client.release();
+    await dbClient.release();
     return userId;
   }
 
-  public async adminTransaction(callback): Promise<any> {
+  // return admin transaction
+  public async adminTransaction(
+    callback,
+    isolationLevel: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED' = 'READ COMMITTED'): Promise<any> {
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await this.createDbClientAdminTransaction(dbClient, isolationLevel);
 
-      await this.setAdmin(client);
+      const result = await callback(dbClient);
 
-      const ret = await callback(client);
+      await dbClient.query('COMMIT');
+      return result;
 
-      await client.query('COMMIT');
-      return ret;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('adminTransaction.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async adminQuery(...queryArguments: any[]): Promise<any> {
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setAdmin(client);
+      await this.setAdmin(dbClient);
 
       // run query
-      const result = await client.query.apply(client, queryArguments);
+      const result = await dbClient.query.apply(dbClient, queryArguments);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return result;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('adminQuery.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
-  public async userTransaction(accessToken, callback): Promise<any> {
+  // return user transaction
+  public async userTransaction(
+    accessToken,
+    callback,
+    isolationLevel: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED' = 'READ COMMITTED'): Promise<any> {
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
+
       // Begin transaction
-      await client.query('BEGIN');
+      await this.createDbClientUserTransaction(dbClient, accessToken, isolationLevel);
 
-      await this.setUser(client, accessToken);
+      const result = await callback(dbClient);
 
-      const ret = await callback(client);
+      await dbClient.query('COMMIT');
+      return result;
 
-      await client.query('COMMIT');
-      return ret;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('userTransaction.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
   public async userQuery(accessToken, ...queryArguments: any[]): Promise<any> {
 
-    const client = await this.dbGeneralPool.pgPool.connect();
+    const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
       // Begin transaction
-      await client.query('BEGIN');
+      await dbClient.query('BEGIN');
 
-      await this.setUser(client, accessToken);
+      await this.setUser(dbClient, accessToken);
 
-      const result = await client.query.apply(client, queryArguments);
+      const result = await dbClient.query.apply(dbClient, queryArguments);
 
-      await client.query('COMMIT');
+      await dbClient.query('COMMIT');
       return result;
     } catch (err) {
-      await client.query('ROLLBACK');
+      await dbClient.query('ROLLBACK');
       this.logger.warn('userQuery.error', err);
       throw err;
     } finally {
       // Release pgClient to pool
-      client.release();
+      dbClient.release();
     }
   }
 
@@ -706,7 +729,7 @@ export class Auth {
         }
       }
 
-      // If the client is no Browser we don't need to worry about cors.
+      // If the client is not a browser we don't need to worry about CORS.
       if (origin === this.authConfig.apiClientOrigin) {
         ctx.securityContext.isApiClient = true;
         ctx.securityContext.isBrowser = false;
@@ -869,13 +892,13 @@ export class Auth {
     app.use(authRouter.allowedMethods());
   }
 
-  private async preQueryHook(client, context, authRequired) {
+  private async preQueryHook(dbClient, context, authRequired) {
     if (authRequired === true && context.accessToken != null) {
-      await this.setUser(client, context.accessToken);
+      await this.setUser(dbClient, context.accessToken);
     }
   }
 
-  private async preMutationCommitHook(client, hookInfo) {
+  private async preMutationCommitHook(dbClient, hookInfo) {
     const mutation = hookInfo.mutationQuery.mutation;
 
     if (mutation.extensions.auth === 'REGISTER_USER_MUTATION') {
@@ -909,7 +932,7 @@ export class Auth {
         }
       }
 
-      const user = await this.initializeUser(client, hookInfo.entityId);
+      const user = await this.initializeUser(dbClient, hookInfo.entityId);
 
       const notificationContext = {
         user,
@@ -934,7 +957,8 @@ export class Auth {
 
         // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
 
-        await this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, client);
+        await this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, dbClient
+        );
 
         await this.notificationFunction('REGISTER_OAUTH', notificationContext);
       } else {

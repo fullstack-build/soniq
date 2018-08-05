@@ -1,9 +1,11 @@
+import { PgPoolClient } from '@fullstack-one/db';
 import { LoggerFactory } from '@fullstack-one/logger';
 export * from './signHelper';
 export declare class Auth {
     private readonly sodiumConfig;
     private authConfig;
     private notificationFunction;
+    private possibleTransactionIsolationLevels;
     private dbGeneralPool;
     private logger;
     private server;
@@ -12,10 +14,10 @@ export declare class Auth {
     private parserMeta;
     constructor(dbGeneralPool?: any, server?: any, bootLoader?: any, schemaBuilder?: any, config?: any, graphQl?: any, loggerFactory?: LoggerFactory);
     setNotificationFunction(notificationFunction: any): void;
-    setUser(client: any, accessToken: any): Promise<boolean>;
-    setAdmin(client: any): Promise<any>;
-    unsetAdmin(client: any): Promise<any>;
-    initializeUser(client: any, userId: any): Promise<{
+    setUser(dbClient: any, accessToken: any): Promise<boolean>;
+    setAdmin(dbClient: any): Promise<any>;
+    unsetAdmin(dbClient: any): Promise<any>;
+    initializeUser(dbClient: any, userId: any): Promise<{
         userId: any;
         payload: any;
         accessToken: any;
@@ -33,7 +35,7 @@ export declare class Auth {
         refreshToken: any;
     }>;
     createSetPasswordValues(accessToken: any, provider: any, password: any, userIdentifier: any): Promise<any[]>;
-    setPasswordWithClient(accessToken: any, provider: any, password: any, userIdentifier: any, client: any): Promise<void>;
+    setPasswordWithClient(accessToken: any, provider: any, password: any, userIdentifier: any, dbClient: any): Promise<void>;
     setPassword(accessToken: any, provider: any, password: any, userIdentifier: any): Promise<boolean>;
     forgotPassword(username: any, tenant: any, meta: any): Promise<boolean>;
     removeProvider(accessToken: any, provider: any): Promise<boolean>;
@@ -48,13 +50,13 @@ export declare class Auth {
     invalidateUserToken(accessToken: any): Promise<boolean>;
     invalidateAllUserTokens(accessToken: any): Promise<boolean>;
     getPassport(): any;
-    createDbClientAdminTransaction(dbClient: any): Promise<any>;
-    createDbClientUserTransaction(dbClient: any, accessToken: any): Promise<any>;
+    createDbClientAdminTransaction(dbClient: PgPoolClient, isolationLevel?: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED'): Promise<PgPoolClient>;
+    createDbClientUserTransaction(dbClient: PgPoolClient, accessToken: any, isolationLevel?: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED'): Promise<PgPoolClient>;
     getCurrentUserIdFromClient(dbClient: any): Promise<any>;
     getCurrentUserIdFromAccessToken(accessToken: any): Promise<any>;
-    adminTransaction(callback: any): Promise<any>;
+    adminTransaction(callback: any, isolationLevel?: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED'): Promise<any>;
     adminQuery(...queryArguments: any[]): Promise<any>;
-    userTransaction(accessToken: any, callback: any): Promise<any>;
+    userTransaction(accessToken: any, callback: any, isolationLevel?: 'SERIALIZABLE' | 'REPEATABLE READ' | 'READ COMMITTED' | 'READ UNCOMMITTED'): Promise<any>;
     userQuery(accessToken: any, ...queryArguments: any[]): Promise<any>;
     createAuthToken(privacyAgreementAcceptanceToken: any, email: any, providerName: any, profileId: any, tenant: any, profile: any): {
         payload: {
@@ -69,8 +71,8 @@ export declare class Auth {
     validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken: any): void;
     private addMiddleware();
     private boot();
-    private preQueryHook(client, context, authRequired);
-    private preMutationCommitHook(client, hookInfo);
+    private preQueryHook(dbClient, context, authRequired);
+    private preMutationCommitHook(dbClient, hookInfo);
     private createPrivacyAgreementAcceptanceToken(acceptedVersion);
     private isPrivacyAgreementCheckActive();
     private getResolvers();

@@ -1,11 +1,11 @@
 
 import { IDb } from './IDb';
-import { Pool as PgPool, PoolConfig as PgPoolConfig, Client as PgClient, types as PgTypes } from 'pg';
-// stop po from parsing dates and timestamps without timezone
+import { Pool as PgPool, PoolConfig as PgPoolConfig, PoolClient as PgPoolClient, types as PgTypes } from 'pg';
+// stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, str => str);
 PgTypes.setTypeParser(1082, str => str);
 
-export { PgPool };
+export { PgPool, PgPoolClient };
 import { Service, Inject, Container } from '@fullstack-one/di';
 import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';

@@ -5,7 +5,7 @@ import { IEnvironment, Config } from '@fullstack-one/config';
 import { BootLoader } from '@fullstack-one/boot-loader';
 import { IDb } from './IDb';
 import { Client as PgClient, ClientConfig as PgClientConfig, types as PgTypes } from 'pg';
-// stop po from parsing dates and timestamps without timezone
+// stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, str => str);
 PgTypes.setTypeParser(1082, str => str);
 

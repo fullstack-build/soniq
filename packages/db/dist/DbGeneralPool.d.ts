@@ -1,6 +1,6 @@
 import { IDb } from './IDb';
-import { Pool as PgPool } from 'pg';
-export { PgPool };
+import { Pool as PgPool, PoolClient as PgPoolClient } from 'pg';
+export { PgPool, PgPoolClient };
 export declare class DbGeneralPool implements IDb {
     private readonly config;
     private applicationName;

@@ -27,7 +27,7 @@ const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 const pg_1 = require("pg");
 exports.PgClient = pg_1.Client;
-// stop po from parsing dates and timestamps without timezone
+// stop pg from parsing dates and timestamps without timezone
 pg_1.types.setTypeParser(1114, str => str);
 pg_1.types.setTypeParser(1082, str => str);
 let DbAppClient = class DbAppClient {
