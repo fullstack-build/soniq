@@ -72,7 +72,7 @@ function parseUpdateField(ctx) {
         const { foreignGqlTypeName, isListType, isNonNullType } = utils_1.getRelationMetasFromDefinition(gqlFieldDefinition);
         const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
         if (ownRelation.columnName != null) {
-            if (foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+            if (foreignRelation != null && foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
                 // In case of ManyToMany it's an array
                 return [utils_1.createIdArrayField(ownRelation.columnName)];
             }
