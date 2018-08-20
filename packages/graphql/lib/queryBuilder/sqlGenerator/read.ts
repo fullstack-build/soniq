@@ -92,14 +92,14 @@ export class QueryBuilder {
       if (gqlTypeMeta.fields[field.name] == null) {
         throw new Error(`The field '${gqlTypeName}.${field.name}' is not available.`);
       }
-      if (gqlTypeMeta.publicFieldNames.indexOf(field.name) < 0) {
+      const fieldMeta = gqlTypeMeta.fields[field.name];
+      if (gqlTypeMeta.publicFieldNames.indexOf(field.name) < 0 && fieldMeta.nativeFieldName != null) {
         authRequired = true;
         authRequiredHere = true;
         if (isAuthenticated !== true) {
           throw new Error(`The field '${gqlTypeName}.${field.name}' is not available without authentication.`);
         }
       }
-      const fieldMeta = gqlTypeMeta.fields[field.name];
       if (fieldMeta.meta != null && fieldMeta.meta.relationName != null) {
 
         // If the field is a relation we need to resolve it with a subquery
