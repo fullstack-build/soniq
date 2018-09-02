@@ -26,6 +26,9 @@ const { graphiqlKoa, graphqlKoa } = apolloServer;
 const graphql_tools_1 = require("graphql-tools");
 const koaBody = require("koa-bodyparser");
 const KoaRouter = require("koa-router");
+const apollo_client_1 = require("apollo-client");
+const apollo_cache_inmemory_1 = require("apollo-cache-inmemory");
+const apollo_link_schema_1 = require("apollo-link-schema");
 const resolvers_1 = require("./resolvers");
 const resolvers_2 = require("./queryBuilder/resolvers");
 const compareOperators_1 = require("./compareOperators");
@@ -89,6 +92,19 @@ let GraphQl = class GraphQl {
         this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
         return this.schemaBuilder.print(gqlRuntimeDocument);
     }
+    getApolloClient(getPrivateClient = false) {
+        if (this.apolloSchema == null) {
+            throw new Error('Please call getApolloClient after everything booted.');
+        }
+        if (getPrivateClient === true) {
+            return new apollo_client_1.ApolloClient({
+                ssrMode: true,
+                cache: new apollo_cache_inmemory_1.InMemoryCache(),
+                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema })
+            });
+        }
+        return this.apolloClient;
+    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             // read config after boot
@@ -102,6 +118,12 @@ let GraphQl = class GraphQl {
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: runtimeSchema,
                 resolvers: resolvers_1.getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
+            });
+            this.apolloSchema = schema;
+            const graphqlClient = new apollo_client_1.ApolloClient({
+                ssrMode: true,
+                cache: new apollo_cache_inmemory_1.InMemoryCache(),
+                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema })
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();

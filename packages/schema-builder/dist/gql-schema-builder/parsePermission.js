@@ -31,7 +31,7 @@ function parsePermission(permission, context, extensions, config) {
     const gqlTypeDefinition = gqlDocument.definitions.splice(definitionIndex, 1)[0];
     const table = {
         gqlTypeName: permission.gqlTypeName,
-        schemaName: directives.table.tableName || 'public',
+        schemaName: directives.table.schemaName || 'public',
         tableName: directives.table.tableName || permission.gqlTypeName,
         gqlTypeDefinition
     };

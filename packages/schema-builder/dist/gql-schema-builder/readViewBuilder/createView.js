@@ -7,7 +7,7 @@ const createExpressions_1 = require("../createExpressions");
 const defaultFieldCreator_1 = require("./defaultFieldCreator");
 function buildReadView(table, readExpressions, context, extensions, config) {
     // Get some data from table
-    const { gqlTypeName, tableName, gqlTypeDefinition } = table;
+    const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
     // Initialize meta object. Required for querybuilder
     const meta = {
         viewSchemaName: config.schemaName,
@@ -15,7 +15,9 @@ function buildReadView(table, readExpressions, context, extensions, config) {
         authViewName: `${tableName.toUpperCase()}_READ_AUTH`,
         publicFieldNames: [],
         authFieldNames: [],
-        fields: {}
+        fields: {},
+        tableName,
+        tableSchemaName: schemaName
     };
     // Create a copy of the current gqlDefinition and set fields to an empty array
     const newGqlDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));

@@ -2,6 +2,8 @@ import * as apolloServer from 'apollo-server-koa';
 export { apolloServer };
 export declare class GraphQl {
     private graphQlConfig;
+    private apolloSchema;
+    private apolloClient;
     private config;
     private logger;
     private ENVIRONMENT;
@@ -15,6 +17,7 @@ export declare class GraphQl {
     addPreQueryHook(fn: any): void;
     addHook(name: any, fn: any): void;
     addResolvers(resolversObject: any): void;
-    prepareSchema(gqlRuntimeDocument: any, dbMeta: any, resolverMeta: any): any;
+    prepareSchema(gqlRuntimeDocument: any, dbMeta: any, resolverMeta: any): string;
+    getApolloClient(getPrivateClient?: boolean): any;
     private boot();
 }

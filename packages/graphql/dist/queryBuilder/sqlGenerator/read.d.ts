@@ -1,7 +1,6 @@
 export declare class QueryBuilder {
     private resolverMeta;
     private dbMeta;
-    private aggregationLimits;
     private costLimit;
     constructor(resolverMeta: any, dbMeta: any, costLimit: any);
     build(obj: any, args: any, context: any, info: any, isAuthenticated: any, match?: any): {
@@ -10,13 +9,15 @@ export declare class QueryBuilder {
         query: any;
         authRequired: any;
         potentialHighCost: boolean;
+        costTree: {};
         cost: number;
     };
+    private calculateCost(costTree);
     private getLocalName(counter);
     private getFieldExpression(name, localName);
     private getFromExpression(gqlTypeMeta, localName, authRequired);
-    private resolveTable(c, query, values, isAuthenticated, match, isAggregation);
-    private resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated);
-    private rowToJson(c, query, values, isAuthenticated, match);
-    private jsonAgg(c, query, values, isAuthenticated, match);
+    private resolveTable(c, query, values, isAuthenticated, match, isAggregation, costTree);
+    private resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated, costTree);
+    private rowToJson(c, query, values, isAuthenticated, match, costTree);
+    private jsonAgg(c, query, values, isAuthenticated, match, costTree);
 }

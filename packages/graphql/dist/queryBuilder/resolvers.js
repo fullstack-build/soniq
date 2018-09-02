@@ -11,8 +11,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const read_1 = require("./sqlGenerator/read");
 const mutate_1 = require("./sqlGenerator/mutate");
 const injectionProtector_1 = require("./injectionProtector");
-function checkCosts(client, query, costLimit) {
+const crypto = require("crypto");
+function sha1Base64(input) {
+    return crypto.createHash('sha1').update(input).digest('base64');
+}
+exports.sha1Base64 = sha1Base64;
+const costCache = {};
+const COST_CACHE_MAX_AGE = 1000 * 60 * 60 * 24; // One Day
+function getCurrentCosts(client, query) {
     return __awaiter(this, void 0, void 0, function* () {
+        const queryHash = sha1Base64(query.sql + query.values.join(''));
+        if (costCache[queryHash] != null) {
+            if (costCache[queryHash].t + COST_CACHE_MAX_AGE > Date.now()) {
+                return costCache[queryHash].c;
+            }
+            else {
+                costCache[queryHash] = null;
+                delete costCache[queryHash];
+            }
+        }
         const result = yield client.query(`EXPLAIN ${query.sql}`, query.values);
         const queryPlan = result.rows[0]['QUERY PLAN'];
         const data = {};
@@ -24,11 +41,29 @@ function checkCosts(client, query, costLimit) {
         let currentCost = 0;
         costs.forEach((cost) => {
             currentCost = cost > currentCost ? cost : currentCost;
-            if (cost > costLimit) {
-                throw new Error(`This query seems to be to exprensive. Please set some limits. ` +
-                    `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`);
+        });
+        costCache[queryHash] = {
+            c: currentCost,
+            t: Date.now()
+        };
+        // Clean up cache
+        Object.keys(costCache).forEach((key) => {
+            const now = Date.now();
+            if (costCache[key].time + COST_CACHE_MAX_AGE < now) {
+                costCache[key] = null;
+                delete costCache[key];
             }
         });
+        return currentCost;
+    });
+}
+function checkCosts(client, query, costLimit) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const currentCost = yield getCurrentCosts(client, query);
+        if (currentCost > costLimit) {
+            throw new Error(`This query seems to be to exprensive. Please set some limits. ` +
+                `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`);
+        }
         return currentCost;
     });
 }

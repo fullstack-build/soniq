@@ -4,25 +4,41 @@ const graphql_parse_resolve_info_1 = require("graphql-parse-resolve-info");
 const custom_1 = require("./custom");
 class QueryBuilder {
     constructor(resolverMeta, dbMeta, costLimit) {
-        this.aggregationLimits = [];
         this.resolverMeta = resolverMeta;
         this.dbMeta = dbMeta;
         this.costLimit = costLimit;
     }
     build(obj, args, context, info, isAuthenticated, match = null) {
-        this.aggregationLimits = [];
         // Use PostGraphile parser to get nested query object
         const query = graphql_parse_resolve_info_1.parseResolveInfo(info);
+        const costTree = {};
         // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
-        const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match);
-        let cost = 1;
-        this.aggregationLimits.forEach((limit) => {
-            if (limit > 0) {
-                cost *= limit;
+        const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
+        const cost = this.calculateCost(costTree);
+        const potentialHighCost = cost > this.costLimit;
+        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, cost };
+    }
+    calculateCost(costTree) {
+        let cost = 0;
+        let leafCost = 1.101111;
+        if (costTree.__meta.type === 'aggregation') {
+            if (costTree.__meta.limit != null) {
+                leafCost = costTree.__meta.limit;
+            }
+            else {
+                leafCost = this.costLimit / 2 + 0.101111;
+            }
+        }
+        Object.keys(costTree).forEach((key) => {
+            if (key !== '__meta') {
+                const subLeafCost = this.calculateCost(costTree[key]);
+                cost += leafCost * subLeafCost;
             }
         });
-        const potentialHighCost = cost > this.costLimit;
-        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, cost };
+        if (cost < 1) {
+            cost = leafCost;
+        }
+        return cost;
     }
     // Generate local alias name for views/tables
     getLocalName(counter) {
@@ -38,12 +54,14 @@ class QueryBuilder {
         return `"${gqlTypeMeta.viewSchemaName}"."${viewName}" AS "${localName}"`;
     }
     // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-    resolveTable(c, query, values, isAuthenticated, match, isAggregation) {
+    resolveTable(c, query, values, isAuthenticated, match, isAggregation, costTree) {
         // Get the tableName from the nested query object
         const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
         // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
         const gqlTypeMeta = this.resolverMeta.query[gqlTypeName];
         const gqlTypePermissionMeta = this.resolverMeta.permissionMeta[gqlTypeName] || {};
+        costTree.__meta.tableName = gqlTypeMeta.tableName;
+        costTree.__meta.tableSchemaName = gqlTypeMeta.tableSchemaName;
         const isRootLevelGenericAggregation = isAggregation === true && c < 2 && match == null;
         if (isRootLevelGenericAggregation === true && gqlTypePermissionMeta.disallowGenericRootLevelAggregation === true) {
             throw new Error(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
@@ -79,7 +97,7 @@ class QueryBuilder {
                     // A ONE relation has a certain fieldIdExpression like "ownerUserId"
                     const fieldIdExpression = this.getFieldExpression(fieldMeta.nativeFieldName, localName);
                     // Resolve the field with a subquery which loads the related data
-                    const ret = this.resolveRelation(counter, field, fieldMeta, localName, fieldIdExpression, values, isAuthenticated);
+                    const ret = this.resolveRelation(counter, field, fieldMeta, localName, fieldIdExpression, values, isAuthenticated, costTree);
                     // The resolveRelation() function can also increase the counter because it may loads relations
                     // So we need to take the counter from there
                     counter = ret.counter;
@@ -92,7 +110,7 @@ class QueryBuilder {
                     // A many relation just needs to match by it's idExpression
                     // Resolve the field with a subquery which loads the related data
                     // tslint:disable-next-line:max-line-length
-                    const ret = this.resolveRelation(counter, field, fieldMeta, localName, idExpression, values, isAuthenticated);
+                    const ret = this.resolveRelation(counter, field, fieldMeta, localName, idExpression, values, isAuthenticated, costTree);
                     // The resolveRelation() function can also increase the counter because it may loads relations
                     // So we need to take the counter from there
                     counter = ret.counter;
@@ -135,12 +153,8 @@ class QueryBuilder {
             }
             return this.getFieldExpression(name, localName);
         };
-        if (isAggregation === true) {
-            const defaultLimit = this.costLimit / 2 > 1 ? this.costLimit / 2 + 0.101111 : 1.101111;
-            this.aggregationLimits.push(query.args.limit || defaultLimit);
-        }
-        else {
-            this.aggregationLimits.push(1.101111);
+        if (query.args.limit != null) {
+            costTree.__meta.limit = query.args.limit;
         }
         // Add possible custom queries to the main query. (where/limit/offset/orderBy)
         const customQuery = custom_1.generateCustomSql(match != null, query.args, getParam, getField);
@@ -168,7 +182,7 @@ class QueryBuilder {
         };
     }
     // Resolves a relation of a column/field to a new Subquery
-    resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated) {
+    resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated, costTree) {
         // Get the relation from dbMeta
         const relationConnections = this.dbMeta.relations[fieldMeta.meta.relationName];
         const relationConnectionsArray = Object.values(relationConnections);
@@ -187,7 +201,7 @@ class QueryBuilder {
             // If this is the ONE part/column/field of the relation we need to match by its id
             match.foreignFieldName = 'id';
             // A ONE relation will respond a single object
-            return this.rowToJson(c, query, values, isAuthenticated, match);
+            return this.rowToJson(c, query, values, isAuthenticated, match, costTree);
         }
         else {
             // check if this is a many to many relation
@@ -197,25 +211,30 @@ class QueryBuilder {
                     fieldExpression: this.getFieldExpression(ownRelation.columnName, localName),
                     foreignFieldName: 'id'
                 };
-                return this.jsonAgg(c, query, values, isAuthenticated, arrayMatch);
+                return this.jsonAgg(c, query, values, isAuthenticated, arrayMatch, costTree);
             }
             else {
                 // If this is the MANY part/column/field of the relation we need to match by its foreignColumnName
                 match.foreignFieldName = foreignRelation.columnName;
                 // A MANY relation will respond an array of objects
-                return this.jsonAgg(c, query, values, isAuthenticated, match);
+                return this.jsonAgg(c, query, values, isAuthenticated, match, costTree);
             }
         }
     }
     // Generates an object from a select query (This is needed for ONE relations like loading a owner of a post)
-    rowToJson(c, query, values, isAuthenticated, match) {
+    rowToJson(c, query, values, isAuthenticated, match, costTree) {
         // Counter is to generate unique local aliases for all Tables (Joins of Views)
         let counter = c;
         // Generate new local alias (e.g. "_local_1_")
         const localTableName = this.getLocalName(counter);
         counter += 1;
+        costTree[query.name] = {
+            __meta: {
+                type: 'row'
+            }
+        };
         // Get SELECT query for current Table (Join of Views)
-        const ret = this.resolveTable(counter, query, values, isAuthenticated, match, false);
+        const ret = this.resolveTable(counter, query, values, isAuthenticated, match, false, costTree[query.name]);
         // The resolveTable() function can also increase the counter because it may loads relations
         // So we need to take the counter from there
         counter = ret.counter;
@@ -232,14 +251,19 @@ class QueryBuilder {
         };
     }
     // Generates Array of Objects from a select query
-    jsonAgg(c, query, values, isAuthenticated, match) {
+    jsonAgg(c, query, values, isAuthenticated, match, costTree) {
         // Counter is to generate unique local aliases for all Tables (Joins of Views)
         let counter = c;
         // Generate new local alias (e.g. "_local_1_")
         const localName = this.getLocalName(counter);
         counter += 1;
+        costTree[query.name] = {
+            __meta: {
+                type: 'aggregation'
+            }
+        };
         // Get SELECT query for current Table (Join of Views)
-        const ret = this.resolveTable(counter, query, values, isAuthenticated, match, true);
+        const ret = this.resolveTable(counter, query, values, isAuthenticated, match, true, costTree[query.name]);
         // The resolveTable() function can also increase the counter because it may loads relations
         // So we need to take the counter from there
         counter = ret.counter;
