@@ -10,7 +10,7 @@ import { CreateDefaultField } from './defaultFieldCreator';
 
 export function buildReadView(table, readExpressions, context, extensions, config) {
   // Get some data from table
-  const { gqlTypeName, tableName, gqlTypeDefinition } = table;
+  const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
 
   // Initialize meta object. Required for querybuilder
   const meta: any = {
@@ -19,7 +19,9 @@ export function buildReadView(table, readExpressions, context, extensions, confi
     authViewName: `${tableName.toUpperCase()}_READ_AUTH`,
     publicFieldNames: [],
     authFieldNames: [],
-    fields: {}
+    fields: {},
+    tableName,
+    tableSchemaName: schemaName
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array

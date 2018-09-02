@@ -4,6 +4,10 @@ import { makeExecutableSchema } from 'graphql-tools';
 import * as koaBody from 'koa-bodyparser';
 import * as KoaRouter from 'koa-router';
 
+import { ApolloClient } from 'apollo-client';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import { SchemaLink } from 'apollo-link-schema';
+
 import { getResolvers } from './resolvers';
 import { getDefaultResolvers } from './queryBuilder/resolvers';
 
@@ -29,6 +33,8 @@ export { apolloServer };
 export class GraphQl {
 
   private graphQlConfig: any;
+  private apolloSchema: any;
+  private apolloClient: any;
 
   // DI
   private config: Config;
@@ -105,6 +111,22 @@ export class GraphQl {
     return this.schemaBuilder.print(gqlRuntimeDocument);
   }
 
+  public getApolloClient(getPrivateClient: boolean = false) {
+    if (this.apolloSchema == null) {
+      throw new Error('Please call getApolloClient after everything booted.');
+    }
+
+    if (getPrivateClient === true) {
+      return new ApolloClient({
+        ssrMode: true,
+        cache: new InMemoryCache(),
+        link: new SchemaLink({ schema: this.apolloSchema })
+      });
+    }
+
+    return this.apolloClient;
+  }
+
   private async boot() {
     // read config after boot
     this.graphQlConfig = this.config.getConfig('graphql');
@@ -126,6 +148,14 @@ export class GraphQl {
     const schema = makeExecutableSchema({
       typeDefs: runtimeSchema,
       resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
+    });
+
+    this.apolloSchema = schema;
+
+    const graphqlClient = new ApolloClient({
+      ssrMode: true,
+      cache: new InMemoryCache(),
+      link: new SchemaLink({ schema: this.apolloSchema })
     });
 
     const setCacheHeaders = async (ctx, next) => {

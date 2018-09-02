@@ -2,8 +2,27 @@ import { parseResolveInfo } from 'graphql-parse-resolve-info';
 import { QueryBuilder } from './sqlGenerator/read';
 import { MutationBuilder } from './sqlGenerator/mutate';
 import { checkQueryResult } from './injectionProtector';
+import * as crypto from 'crypto';
 
-async function checkCosts(client, query, costLimit) {
+export function sha1Base64(input) {
+  return crypto.createHash('sha1').update(input).digest('base64');
+}
+
+const costCache = {};
+const COST_CACHE_MAX_AGE = 1000 * 60 * 60 * 24; // One Day
+
+async function getCurrentCosts(client, query) {
+  const queryHash = sha1Base64(query.sql + query.values.join(''));
+
+  if (costCache[queryHash] != null) {
+    if (costCache[queryHash].t + COST_CACHE_MAX_AGE > Date.now()) {
+      return costCache[queryHash].c;
+    } else {
+      costCache[queryHash] = null;
+      delete costCache[queryHash];
+    }
+  }
+
   const result = await client.query(`EXPLAIN ${query.sql}`, query.values);
 
   const queryPlan = result.rows[0]['QUERY PLAN'];
@@ -21,11 +40,33 @@ async function checkCosts(client, query, costLimit) {
 
   costs.forEach((cost) => {
     currentCost = cost > currentCost ? cost : currentCost;
-    if (cost > costLimit) {
-      throw new Error(`This query seems to be to exprensive. Please set some limits. ` +
-      `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`);
+  });
+
+  costCache[queryHash] = {
+    c: currentCost,
+    t: Date.now()
+  };
+
+  // Clean up cache
+  Object.keys(costCache).forEach((key) => {
+    const now = Date.now();
+
+    if (costCache[key].time + COST_CACHE_MAX_AGE < now) {
+      costCache[key] = null;
+      delete costCache[key];
     }
   });
+
+  return currentCost;
+}
+
+async function checkCosts(client, query, costLimit) {
+  const currentCost = await getCurrentCosts(client, query);
+
+  if (currentCost > costLimit) {
+    throw new Error(`This query seems to be to exprensive. Please set some limits. ` +
+    `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`);
+  }
 
   return currentCost;
 }

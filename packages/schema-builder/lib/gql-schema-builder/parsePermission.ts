@@ -35,7 +35,7 @@ export function parsePermission(permission, context, extensions, config) {
 
   const table = {
     gqlTypeName: permission.gqlTypeName,
-    schemaName: directives.table.tableName || 'public',
+    schemaName: directives.table.schemaName || 'public',
     tableName: directives.table.tableName || permission.gqlTypeName,
     gqlTypeDefinition
   };
