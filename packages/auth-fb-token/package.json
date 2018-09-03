@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth-fb-token",
-  "version": "0.3.40",
+  "version": "0.3.41",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,11 +20,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.3.40",
+    "@fullstack-one/auth": "^0.3.41",
     "@fullstack-one/boot-loader": "^0.3.38",
     "@fullstack-one/config": "^0.3.38",
     "@fullstack-one/di": "^0.3.38",
-    "@fullstack-one/graphql": "^0.3.40",
+    "@fullstack-one/graphql": "^0.3.41",
     "@fullstack-one/logger": "^0.3.38",
     "@fullstack-one/schema-builder": "^0.3.38",
     "axios": "^0.18.0"
