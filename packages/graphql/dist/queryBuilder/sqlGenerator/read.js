@@ -14,7 +14,7 @@ class QueryBuilder {
         const costTree = {};
         // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
         const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
-        const cost = this.calculateCost(costTree);
+        const cost = this.calculateCost(costTree[query.name]);
         const potentialHighCost = cost > this.costLimit;
         return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, cost };
     }
