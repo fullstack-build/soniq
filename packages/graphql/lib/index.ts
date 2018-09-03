@@ -152,7 +152,7 @@ export class GraphQl {
 
     this.apolloSchema = schema;
 
-    const graphqlClient = new ApolloClient({
+    this.apolloClient = new ApolloClient({
       ssrMode: true,
       cache: new InMemoryCache(),
       link: new SchemaLink({ schema: this.apolloSchema })
