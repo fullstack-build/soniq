@@ -27,7 +27,7 @@ export class QueryBuilder {
       authRequired
     } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
 
-    const cost = this.calculateCost(costTree);
+    const cost = this.calculateCost(costTree[query.name]);
 
     const potentialHighCost = cost > this.costLimit;
 
