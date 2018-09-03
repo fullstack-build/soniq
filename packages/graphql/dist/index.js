@@ -92,15 +92,19 @@ let GraphQl = class GraphQl {
         this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
         return this.schemaBuilder.print(gqlRuntimeDocument);
     }
-    getApolloClient(getPrivateClient = false) {
+    getApolloClient(accessToken = null, ctx = {}) {
         if (this.apolloSchema == null) {
             throw new Error('Please call getApolloClient after everything booted.');
         }
-        if (getPrivateClient === true) {
+        if (accessToken != null) {
             return new apollo_client_1.ApolloClient({
                 ssrMode: true,
                 cache: new apollo_cache_inmemory_1.InMemoryCache(),
-                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema })
+                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
+                        ctx,
+                        accessToken
+                    }
+                })
             });
         }
         return this.apolloClient;
@@ -123,7 +127,11 @@ let GraphQl = class GraphQl {
             this.apolloClient = new apollo_client_1.ApolloClient({
                 ssrMode: true,
                 cache: new apollo_cache_inmemory_1.InMemoryCache(),
-                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema })
+                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
+                        ctx: {},
+                        accessToken: null
+                    }
+                })
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();
