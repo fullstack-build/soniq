@@ -120,7 +120,7 @@ let GraphQl = class GraphQl {
                 resolvers: resolvers_1.getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
             });
             this.apolloSchema = schema;
-            const graphqlClient = new apollo_client_1.ApolloClient({
+            this.apolloClient = new apollo_client_1.ApolloClient({
                 ssrMode: true,
                 cache: new apollo_cache_inmemory_1.InMemoryCache(),
                 link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema })
