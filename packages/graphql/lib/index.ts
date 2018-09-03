@@ -111,16 +111,20 @@ export class GraphQl {
     return this.schemaBuilder.print(gqlRuntimeDocument);
   }
 
-  public getApolloClient(getPrivateClient: boolean = false) {
+  public getApolloClient(accessToken: string = null, ctx: any = {}) {
     if (this.apolloSchema == null) {
       throw new Error('Please call getApolloClient after everything booted.');
     }
 
-    if (getPrivateClient === true) {
+    if (accessToken != null) {
       return new ApolloClient({
         ssrMode: true,
         cache: new InMemoryCache(),
-        link: new SchemaLink({ schema: this.apolloSchema })
+        link: new SchemaLink({ schema: this.apolloSchema, context: {
+            ctx,
+            accessToken
+          }
+        })
       });
     }
 
@@ -155,7 +159,11 @@ export class GraphQl {
     this.apolloClient = new ApolloClient({
       ssrMode: true,
       cache: new InMemoryCache(),
-      link: new SchemaLink({ schema: this.apolloSchema })
+      link: new SchemaLink({ schema: this.apolloSchema, context: {
+          ctx: {},
+          accessToken: null
+        }
+      })
     });
 
     const setCacheHeaders = async (ctx, next) => {
