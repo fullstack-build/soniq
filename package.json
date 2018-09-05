@@ -15,7 +15,8 @@
     "link": "sh scripts/dev.sh",
     "build": "sh scripts/buildall.sh",
     "cleanNodeModules": "sh scripts/cleanNodeModules.sh",
-    "cleanDistFolders": "sh scripts/cleanDistFolders.sh"
+    "cleanDistFolders": "sh scripts/cleanDistFolders.sh",
+    "reinstall": "rm -rf examples/fullstack-one-example/node_modules/ examples/fullstack-one-example/package-lock.json && npm run cleanDistFolders && npm run cleanNodeModules && npm run link && npm run build"
   },
   "repository": {
     "type": "git",
