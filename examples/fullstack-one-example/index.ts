@@ -21,12 +21,12 @@ const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
 const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
-const auth: Auth = Container.get(Auth);
+const $auth: Auth = Container.get(Auth);
 const $fs: FileStorage = Container.get(FileStorage);
 const authfbtoken: AuthFbToken = Container.get(AuthFbToken);
 const $email: Email = Container.get(Email);
 
-auth.setNotificationFunction(async (user, caller, meta) => {
+$auth.setNotificationFunction(async (user, caller, meta) => {
   console.log('> NOTIFY!', user.userId, caller, meta);
   console.log('>', user.accessToken);
 });
@@ -34,11 +34,17 @@ auth.setNotificationFunction(async (user, caller, meta) => {
 (async () => {
   await $one.boot();
 
-  /*const posts = (await $auth.adminQuery('SELECT * FROM "VPost"')).rows;
+  // normal query example
+  const posts = (await $auth.adminQuery('SELECT * FROM "APost"')).rows;
   console.log('Posts query: ', posts);
+  // admin query example
+  await $auth.adminTransaction(async (dbClient) => {
+    console.log('Posts transaction: ', (await dbClient.query('SELECT * FROM "APost"')).rows);
+  });
 
-  await auth.adminTransaction(async (dbClient) => {
-    console.log('Posts transaction: ', (await dbClient.query('SELECT * FROM "VPost"')).rows);
-  });*/
+  // send mail example
+  await $email.sendMessage('user@fullstack.one',
+    'Welcome to fullstack.one',
+    'Hello <b>User</b>!', [], 'user@fullstack.one', { singletonKey: 'welcome:user@fullstack.one' });
 
 })();
