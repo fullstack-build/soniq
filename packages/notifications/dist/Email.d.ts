@@ -2,6 +2,7 @@ export declare class Email {
     private isReady;
     private transport;
     private readonly queueName;
+    private config;
     private CONFIG;
     private logger;
     private eventEmitter;

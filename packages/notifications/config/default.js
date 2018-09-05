@@ -3,8 +3,14 @@ module.exports = {
     testing: true,
     transport: {
       smtp: {
-        host: 'username',
-        port: 'password',
+        host: 'host',
+        port: 'port',
+        secure: true,
+        auth: {
+          type: 'type',
+          username: 'username',
+          pass: 'pass'
+        },
         // Security options to disallow using attachments from file or URL
         disableFileAccess: true,
         disableUrlAccess: true,

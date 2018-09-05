@@ -17,6 +17,7 @@ export class Email {
   private readonly queueName = 'notifications.Email';
 
   // DI dependencies
+  private config: Config;
   private CONFIG: any;
   private logger: ILogger;
   @Inject()
@@ -31,18 +32,26 @@ export class Email {
     @Inject(type => SchemaBuilder) schemaBuilder,
     @Inject(type => BootLoader) bootLoader) {
 
-    // register package config
-    config.addConfigFolder(__dirname + '/../config');
-
     // set DI dependencies
-    this.CONFIG = config.getConfig('email');
     this.queueFactory = queueFactory;
+    this.config = config;
 
     this.logger = loggerFactory.create('Email');
+
+    // register package config
+    this.config.addConfigFolder(__dirname + '/../config');
 
     // add migration path
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  private async boot(): Promise<void> {
+    this.CONFIG = this.config.getConfig('email');
+
+    // create transport with settings
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {
         if (err != null) {
@@ -67,14 +76,7 @@ export class Email {
       if (this.CONFIG.transport && this.CONFIG.transport.smtp) {
         this.createTransport(this.CONFIG.transport.smtp);
       }
-
     }
-
-    // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
-  }
-
-  private async boot(): Promise<void> {
 
     // subscribe to sendmail jobs in queue
     const queue = await this.queueFactory.getQueue();
