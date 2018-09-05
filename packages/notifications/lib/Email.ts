@@ -14,6 +14,7 @@ export class Email {
 
   private isReady = false;
   private transport;
+  private readonly queueName = 'notifications.Email';
 
   // DI dependencies
   private CONFIG: any;
@@ -76,32 +77,36 @@ export class Email {
   private async boot(): Promise<void> {
 
     // subscribe to sendmail jobs in queue
-    (async () => {
-      const queue = await this.queueFactory.getQueue();
-      queue.subscribe('sendmail', this._sendMail.bind(this))
-        .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-        .catch((err) => {
-          this.logger.warn('subscribed.job.sendmail.error', err);
-          throw err;
-        });
-    })();
+    const queue = await this.queueFactory.getQueue();
+    queue.subscribe(this.queueName, this._sendMail.bind(this))
+      .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+      .catch((err) => {
+        this.logger.warn('subscribed.job.sendmail.error', err);
+        throw err;
+      });
   }
 
-  public async sendMessage(to: string, subject: string, html: string, attachments: undefined[] = [], from?: string): Promise<any> {
-    if (this.isReady) {
+  public async sendMessage(to: string,
+                           subject: string,
+                           html: string,
+                           attachments: undefined[] = [],
+                           from?: string,
+                           jobOptions: any = {}): Promise<any> { // todo: jobOptions: use pg-boss interface here
 
+    if (this.isReady) {
       // Message object
       const message = { from, to, subject, html };
 
       try {
 
-        const jobOptions = {
-          ... this.CONFIG.queue
+        const finalJobOptions = {
+          ... jobOptions,
+          ... this.CONFIG.queue // override methode jobOptions if they interfere
         };
 
         // create sendmail job in queue
         const queue = await this.queueFactory.getQueue();
-        const jobId = await queue.publish('sendmail', message, jobOptions);
+        const jobId = await queue.publish(this.queueName, message, finalJobOptions);
         this.logger.trace('sendMessage.job.creation.success', jobId);
         return jobId;
 

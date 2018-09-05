@@ -54,7 +54,7 @@ let GraphQl = class GraphQl {
             preMutationCommit: []
         };
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.addConfigFolder(`${__dirname}/../config`);
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
@@ -64,7 +64,7 @@ let GraphQl = class GraphQl {
         let extendSchema = '';
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
             if (operator.extendSchema != null) {
-                extendSchema += operator.extendSchema + '\n';
+                extendSchema += `${operator.extendSchema}\n`;
             }
         });
         if (extendSchema !== '') {
@@ -74,7 +74,7 @@ let GraphQl = class GraphQl {
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     addPreQueryHook(fn) {
-        this.logger.warn(`Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.`);
+        this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
         this.hooks.preQuery.push(fn);
     }
     addHook(name, fn) {
@@ -152,7 +152,7 @@ let GraphQl = class GraphQl {
                 ctx.set('Cache-Control', cacheHeader);
             });
             const enforceOriginMatch = (ctx, next) => {
-                const errorMessage = `All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.`;
+                const errorMessage = 'All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.';
                 // If securityContext is missing, don't allow the request.
                 if (ctx.securityContext == null) {
                     return ctx.throw(400, errorMessage);

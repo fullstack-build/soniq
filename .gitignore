@@ -91,3 +91,6 @@ fabric.properties
 
 .DS_Store
 .vscode/
+
+.ts-node
+.ts-node*

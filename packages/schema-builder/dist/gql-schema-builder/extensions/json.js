@@ -37,7 +37,7 @@ function createJsonSubset(expressions, columnExpression) {
 }
 function getJsonMerge(jsonFields) {
     if (jsonFields.length < 1) {
-        return `jsonb_build_object()`;
+        return 'jsonb_build_object()';
     }
     if (jsonFields.length < 2) {
         return jsonFields.pop();

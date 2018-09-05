@@ -22,7 +22,7 @@ var sqlObjFromMigrationObject;
         renameInsteadOfDrop = pRenameInsteadOfDrop;
         // check if pMigrationObj is empty -> Parsing error
         if (pMigrationObj == null || Object.keys(pMigrationObj).length === 0) {
-            throw new Error(`Migration Error: Provided migration object state is empty.`);
+            throw new Error('Migration Error: Provided migration object state is empty.');
         }
         migrationObj = pMigrationObj;
         // save final state for comparison

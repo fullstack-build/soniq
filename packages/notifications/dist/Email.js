@@ -32,6 +32,7 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 let Email = class Email {
     constructor(loggerFactory, queueFactory, config, schemaBuilder, bootLoader) {
         this.isReady = false;
+        this.queueName = 'notifications.Email';
         // register package config
         config.addConfigFolder(__dirname + '/../config');
         // set DI dependencies
@@ -71,27 +72,26 @@ let Email = class Email {
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             // subscribe to sendmail jobs in queue
-            (() => __awaiter(this, void 0, void 0, function* () {
-                const queue = yield this.queueFactory.getQueue();
-                queue.subscribe('sendmail', this._sendMail.bind(this))
-                    .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-                    .catch((err) => {
-                    this.logger.warn('subscribed.job.sendmail.error', err);
-                    throw err;
-                });
-            }))();
+            const queue = yield this.queueFactory.getQueue();
+            queue.subscribe(this.queueName, this._sendMail.bind(this))
+                .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+                .catch((err) => {
+                this.logger.warn('subscribed.job.sendmail.error', err);
+                throw err;
+            });
         });
     }
-    sendMessage(to, subject, html, attachments = [], from) {
+    sendMessage(to, subject, html, attachments = [], from, jobOptions = {}) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.isReady) {
                 // Message object
                 const message = { from, to, subject, html };
                 try {
-                    const jobOptions = Object.assign({}, this.CONFIG.queue);
+                    const finalJobOptions = Object.assign({}, jobOptions, this.CONFIG.queue // override methode jobOptions if they interfere
+                    );
                     // create sendmail job in queue
                     const queue = yield this.queueFactory.getQueue();
-                    const jobId = yield queue.publish('sendmail', message, jobOptions);
+                    const jobId = yield queue.publish(this.queueName, message, finalJobOptions);
                     this.logger.trace('sendMessage.job.creation.success', jobId);
                     return jobId;
                 }

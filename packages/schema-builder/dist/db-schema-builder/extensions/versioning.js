@@ -39,7 +39,7 @@ index_1.registerTableMigrationExtension('versioning', (extensionDefinitionWithAc
     // create versioning table and trigger
     if (versioningAction.add) {
         // (re-)create versioning table if not exists
-        nodeSqlObj.up.push(`CREATE SCHEMA IF NOT EXISTS "_versions";`);
+        nodeSqlObj.up.push('CREATE SCHEMA IF NOT EXISTS "_versions";');
         nodeSqlObj.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
           (
             id uuid NOT NULL DEFAULT uuid_generate_v4(),

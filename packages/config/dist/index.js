@@ -93,9 +93,9 @@ let Config = class Config {
     setEnvironment() {
         // load project package.js
         const projectPath = path.dirname(require.main.filename);
-        const PROJECT_PACKAGE = require(projectPath + `/package.json`);
+        const PROJECT_PACKAGE = require(projectPath + '/package.json');
         // each package in the mono repo has the same version
-        const MODULE_PACKAGE = require(`../package.json`);
+        const MODULE_PACKAGE = require('../package.json');
         // update ENV
         this.ENVIRONMENT.frameworkVersion = MODULE_PACKAGE.version;
         this.ENVIRONMENT.NODE_ENV = process.env.NODE_ENV;

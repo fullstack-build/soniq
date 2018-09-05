@@ -56,7 +56,7 @@ function buildDeleteView(table, expressionsInput, context, extensions, config) {
     });
     const viewSql = helpers_1.createView(table, config, mutationName, expressions);
     if (meta.requiresAuth !== true) {
-        throw new Error(`Due to security reasons it is not allowed to create DELETE permissions ` +
+        throw new Error('Due to security reasons it is not allowed to create DELETE permissions ' +
             `without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
     }
     return {

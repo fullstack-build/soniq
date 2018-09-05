@@ -52,7 +52,7 @@ let Auth = class Auth {
         this.possibleTransactionIsolationLevels = ['SERIALIZABLE', 'REPEATABLE READ', 'READ COMMITTED', 'READ UNCOMMITTED'];
         this.parserMeta = {};
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.addConfigFolder(`${__dirname}/../config`);
         this.logger = loggerFactory.create('Auth');
         // DI
         this.server = server;
@@ -119,7 +119,7 @@ let Auth = class Auth {
     unsetAdmin(dbClient) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield dbClient.query(`RESET auth.admin_token;`);
+                yield dbClient.query('RESET auth.admin_token;');
                 return dbClient;
             }
             catch (err) {
@@ -587,7 +587,7 @@ let Auth = class Auth {
                 throw new Error('PrivacyAgreementAcceptanceToken invalid!');
             }
             if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-                throw new Error(`The accepted version of privacyAgreementAcceptanceToken ` +
+                throw new Error('The accepted version of privacyAgreementAcceptanceToken ' +
                     `is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
             }
         }
@@ -635,7 +635,7 @@ let Auth = class Auth {
             // When the request is approved by referrer and by origin header they must match
             if (ctx.securityContext.sameOriginApproved.byReferrer === true && ctx.securityContext.sameOriginApproved.byOrigin === true) {
                 if (referrerOrigin !== origin) {
-                    return ctx.throw(400, `Referrer and origin header are not matching.`);
+                    return ctx.throw(400, 'Referrer and origin header are not matching.');
                 }
             }
             // If the client is not a browser we don't need to worry about CORS.
@@ -798,7 +798,7 @@ let Auth = class Auth {
                             ` '${privacyAgreementAcceptedVersion}') are required for creating a user.`);
                     }
                     if (args.privacyAgreementAcceptanceToken == null) {
-                        throw new Error(`Missing privacyAgreementAcceptanceToken argument.`);
+                        throw new Error('Missing privacyAgreementAcceptanceToken argument.');
                     }
                     try {
                         tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, args.privacyAgreementAcceptanceToken);
@@ -812,7 +812,7 @@ let Auth = class Auth {
                             ` '${privacyAgreementAcceptedVersion}') must match the payload of the privacy-token.`);
                     }
                     if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-                        throw new Error(`The accepted version of your privacy-token is not version` +
+                        throw new Error('The accepted version of your privacy-token is not version' +
                             ` '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
                     }
                 }
@@ -831,7 +831,7 @@ let Auth = class Auth {
                         throw new Error('Failed to verify auth-token.');
                     }
                     if (tokenPayload.email !== user.payload.username) {
-                        throw new Error(`The authToken email does not match username.`);
+                        throw new Error('The authToken email does not match username.');
                     }
                     notificationContext.tokenPayload = tokenPayload;
                     // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
