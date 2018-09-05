@@ -6,7 +6,7 @@ export function parseReadField(ctx) {
   if (readExpressions[fieldName] != null && directives.custom != null) {
     const { defaultFieldCreator } = ctx;
 
-    const columnExpression = `NULL::text`;
+    const columnExpression = 'NULL::text';
 
     const {
       publicFieldSql,

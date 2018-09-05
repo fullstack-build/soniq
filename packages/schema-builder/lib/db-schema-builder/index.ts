@@ -67,7 +67,7 @@ export class DbSchemaBuilder {
     // check latest version migrated
     let latestVersion = 0;
     try {
-      const dbInitVersion = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
+      const dbInitVersion = (await dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0];
 
       if (dbInitVersion != null && dbInitVersion.value != null) {
         latestVersion = parseInt(dbInitVersion.value, 10);
@@ -180,7 +180,7 @@ export class DbSchemaBuilder {
 
     // check if toDbMeta is empty -> Parsing error
     if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
-      throw new Error(`Migration Error: Provided migration final state is empty.`);
+      throw new Error('Migration Error: Provided migration final state is empty.');
     }
 
     // crete copy of objects
@@ -236,7 +236,7 @@ export class DbSchemaBuilder {
     const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
 
     // get previous migration and compare to current
-    const previousMigrationRow: any = (await dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
+    const previousMigrationRow: any = (await dbClient.query('SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;')).rows[0];
     const  previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
 
     // Migrate if any statements where generated (e.g. DB was changed but not DBMeta) OR any changes occurred to DBMeta
@@ -266,11 +266,11 @@ export class DbSchemaBuilder {
         }
 
         // current framework db version
-        const dbVersion: string = (await dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0].value;
+        const dbVersion: string = (await dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0].value;
 
         // last step, save final dbMeta in _meta
         this.logger.trace('migration.state.saved');
-        await dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, toDbMeta]);
+        await dbClient.query('INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)', [dbVersion, toDbMeta]);
 
         // commit
         this.logger.trace('migration.commit');

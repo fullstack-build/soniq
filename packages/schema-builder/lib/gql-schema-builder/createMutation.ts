@@ -15,7 +15,7 @@ export function createMutation(name, gqlTypeName, gqlInputTypeName, extendArgume
         kind: 'FieldDefinition',
         description: {
           kind: 'StringValue',
-          value: ``, // Mutates type ${gqlTypeName}.
+          value: '', // Mutates type ${gqlTypeName}.
           block: true
         },
         name: {

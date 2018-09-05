@@ -56,7 +56,7 @@ export class Auth {
   ) {
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.addConfigFolder(`${__dirname}/../config`);
 
     this.logger = loggerFactory.create('Auth');
 
@@ -137,7 +137,7 @@ export class Auth {
 
   public async unsetAdmin(dbClient) {
     try {
-      await dbClient.query(`RESET auth.admin_token;`);
+      await dbClient.query('RESET auth.admin_token;');
       return dbClient;
     } catch (err) {
       this.logger.warn('unsetAdmin.error', err);
@@ -668,7 +668,7 @@ export class Auth {
         throw new Error('PrivacyAgreementAcceptanceToken invalid!');
       }
       if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-        throw new Error(`The accepted version of privacyAgreementAcceptanceToken ` +
+        throw new Error('The accepted version of privacyAgreementAcceptanceToken ' +
         `is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
       }
     }
@@ -725,7 +725,7 @@ export class Auth {
       // When the request is approved by referrer and by origin header they must match
       if (ctx.securityContext.sameOriginApproved.byReferrer === true && ctx.securityContext.sameOriginApproved.byOrigin === true) {
         if (referrerOrigin !== origin) {
-          return ctx.throw(400, `Referrer and origin header are not matching.`);
+          return ctx.throw(400, 'Referrer and origin header are not matching.');
         }
       }
 
@@ -914,7 +914,7 @@ export class Auth {
           ` '${privacyAgreementAcceptedVersion}') are required for creating a user.`);
         }
         if (args.privacyAgreementAcceptanceToken == null) {
-          throw new Error(`Missing privacyAgreementAcceptanceToken argument.`);
+          throw new Error('Missing privacyAgreementAcceptanceToken argument.');
         }
         try {
           tokenPayload = verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, args.privacyAgreementAcceptanceToken);
@@ -927,7 +927,7 @@ export class Auth {
           ` '${privacyAgreementAcceptedVersion}') must match the payload of the privacy-token.`);
         }
         if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-          throw new Error(`The accepted version of your privacy-token is not version` +
+          throw new Error('The accepted version of your privacy-token is not version' +
           ` '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
         }
       }
@@ -950,7 +950,7 @@ export class Auth {
         }
 
         if (tokenPayload.email !== user.payload.username) {
-          throw new Error(`The authToken email does not match username.`);
+          throw new Error('The authToken email does not match username.');
         }
 
         notificationContext.tokenPayload = tokenPayload;

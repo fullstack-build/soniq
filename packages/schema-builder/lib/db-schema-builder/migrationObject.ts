@@ -17,7 +17,7 @@ export namespace migrationObject {
 
     // check if toDbMeta is empty -> Parsing error
     if (pToDbMeta == null || Object.keys(pFromDbMeta).length === 0) {
-      throw new Error(`Migration Error: Provided migration final state is empty.`);
+      throw new Error('Migration Error: Provided migration final state is empty.');
     }
 
     // crete copy of objects

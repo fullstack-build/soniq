@@ -85,12 +85,12 @@ export class DbAppClient implements IDb {
     this.eventEmitter.emit('db.application.pgClient.created', this.applicationName);
 
     // collect known nodes
-    this.eventEmitter.onAnyInstance(`db.application.client.connect.success`, (nodeId) => {
+    this.eventEmitter.onAnyInstance('db.application.client.connect.success', (nodeId) => {
       this.updateNodeIdsFromDb();
     });
 
     // update number of clients on exit
-    this.eventEmitter.onAnyInstance(`db.application.client.end.start`, (nodeId) => {
+    this.eventEmitter.onAnyInstance('db.application.client.end.start', (nodeId) => {
       // wait one tick until it actually finishes
       process.nextTick(() => { this.updateNodeIdsFromDb(); });
     });

@@ -64,7 +64,7 @@ async function checkCosts(client, query, costLimit) {
   const currentCost = await getCurrentCosts(client, query);
 
   if (currentCost > costLimit) {
-    throw new Error(`This query seems to be to exprensive. Please set some limits. ` +
+    throw new Error('This query seems to be to exprensive. Please set some limits. ' +
     `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`);
   }
 
@@ -105,7 +105,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
         if (selectQuery.potentialHighCost === true) {
           const currentCost = await checkCosts(client, selectQuery, costLimit);
-          logger.warn(`The current query has been identified as potential to expensive. It could be denied in future` +
+          logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
           ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${selectQuery.cost})`);
         }
 
@@ -170,7 +170,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
           let match;
 
           if (entityId == null && mutationQuery.mutation.type === 'CREATE') {
-            const idResult = await client.query(`SELECT "_meta"."get_last_generated_uuid"() AS "id";`);
+            const idResult = await client.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
             entityId = idResult.rows[0].id;
           }
 
@@ -194,7 +194,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
             if (returnQuery.potentialHighCost === true) {
               const currentCost = await checkCosts(client, returnQuery, costLimit);
-              logger.warn(`The current query has been identified as potential to expensive. It could be denied in future` +
+              logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
               ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${returnQuery.cost})`);
             }
 
@@ -207,8 +207,8 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
             const resultData = returnRows[0][returnQuery.query.name];
 
             if (resultData.length < 1) {
-              throw new Error(`The return-query of this mutation has no entries. Perhaps you are not permitted to access the results.` +
-              ` You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions.`);
+              throw new Error('The return-query of this mutation has no entries. Perhaps you are not permitted to access the results.' +
+              " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions.");
             }
 
             // set data from row 0

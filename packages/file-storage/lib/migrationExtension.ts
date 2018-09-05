@@ -30,7 +30,7 @@ registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 registerQueryParser(async (dbClient, dbMeta) => {
   try {
     const { rows } = await dbClient.pgClient.query(
-      `SELECT * FROM _meta."FileFields";`
+      'SELECT * FROM _meta."FileFields";'
     );
 
     rows.forEach((row) => {
@@ -118,7 +118,7 @@ registerColumnMigrationExtension('isFileColumn', (extensionDefinitionWithAction,
         `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
     } else {
       thisSqlObj.up.push(
-        `INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` +
+        'INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ' +
         `VALUES('${schemaName}', '${tableName}', '${columnName}', '${fileNodeDefinition.types}') ` +
         `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "types"='${fileNodeDefinition.types}';`);
     }

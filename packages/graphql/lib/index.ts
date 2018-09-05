@@ -61,7 +61,7 @@ export class GraphQl {
     @Inject(type => DbGeneralPool) dbGeneralPool
     ) {
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.addConfigFolder(`${__dirname}/../config`);
 
     this.config = config;
     this.dbGeneralPool = dbGeneralPool;
@@ -74,7 +74,7 @@ export class GraphQl {
 
     Object.values(operatorsObject).forEach((operator: any) => {
       if (operator.extendSchema != null) {
-        extendSchema += operator.extendSchema + '\n';
+        extendSchema += `${operator.extendSchema}\n`;
       }
     });
 
@@ -87,7 +87,7 @@ export class GraphQl {
   }
 
   public addPreQueryHook(fn) {
-    this.logger.warn(`Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.`);
+    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
     this.hooks.preQuery.push(fn);
   }
 
@@ -185,7 +185,7 @@ export class GraphQl {
     };
 
     const enforceOriginMatch = (ctx, next) => {
-      const errorMessage = `All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.`;
+      const errorMessage = 'All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.';
 
       // If securityContext is missing, don't allow the request.
       if (ctx.securityContext == null) {

@@ -96,7 +96,7 @@ export function buildUpdateView(table, view, context, extensions, config) {
   const viewSql = createView(table, config, mutationName, fieldsSql, expressions);
 
   if (meta.requiresAuth !== true) {
-    throw new Error(`Due to security reasons it is not allowed to create UPDATE permissions ` +
+    throw new Error('Due to security reasons it is not allowed to create UPDATE permissions ' +
     `without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
   }
 

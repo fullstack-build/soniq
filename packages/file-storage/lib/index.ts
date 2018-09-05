@@ -105,7 +105,7 @@ export class FileStorage {
   private async postMutationHook(info, context) {
     try {
       const entityId = info.entityId;
-      const result = await this.auth.adminQuery(`SELECT * FROM _meta.file_todelete_by_entity($1);`, [entityId]);
+      const result = await this.auth.adminQuery('SELECT * FROM _meta.file_todelete_by_entity($1);', [entityId]);
       result.rows.forEach((row) => {
         this.deleteFileAsAdmin(`${row.id}.${row.extension}`);
       });
@@ -133,9 +133,9 @@ export class FileStorage {
     try {
       await this.auth.adminTransaction(async (client) => {
         const fileId = fileName.split('.')[0];
-        const result = await client.query(`SELECT * FROM _meta.file_deleteone_admin($1);`, [fileId]);
+        const result = await client.query('SELECT * FROM _meta.file_deleteone_admin($1);', [fileId]);
         if (result.rows.length < 1) {
-          throw new Error(`Failed to delete file 'fileId' from db.`);
+          throw new Error("Failed to delete file 'fileId' from db.");
         }
         if (fileInBucket === true) {
           await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
@@ -159,7 +159,7 @@ export class FileStorage {
     try {
       await this.auth.userTransaction(context.accessToken, async (client) => {
         const fileId = fileName.split('.')[0];
-        await client.query(`SELECT * FROM _meta.file_deleteone($1);`, [fileId]);
+        await client.query('SELECT * FROM _meta.file_deleteone($1);', [fileId]);
         if (fileInBucket === true) {
           await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
         }
@@ -181,7 +181,7 @@ export class FileStorage {
           throw new Error(`A verifier for type '${type}' hasn't been defined.`);
         }
 
-        const result = await this.auth.userQuery(context.accessToken, `SELECT _meta.file_create($1, $2) AS "fileId";`, [extension, type]);
+        const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
         const fileId = result.rows[0].fileId;
         const fileName = fileId + '.' + extension;
 
@@ -198,7 +198,7 @@ export class FileStorage {
         const fileName = args.fileName;
         const fileId = fileName.split('.')[0];
 
-        const result = await this.auth.userQuery(context.accessToken, `SELECT _meta.file_get_type_to_verify($1) AS "type";`, [fileId]);
+        const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileId]);
         const type = result.rows[0].type;
 
         if (this.verifiers[type] == null) {
@@ -213,7 +213,7 @@ export class FileStorage {
 
         await this.verifiers[type](ctx);
 
-        await this.auth.userQuery(context.accessToken, `SELECT _meta.file_verify($1);`, [fileId]);
+        await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
 
         const presignedGetUrl = await this.presignedGetObject(fileName);
 
@@ -227,9 +227,9 @@ export class FileStorage {
 
         if (args.fileName != null) {
           const fileId = args.fileName.split('.')[0];
-          result = await this.auth.userQuery(context.accessToken, `SELECT * FROM _meta.file_clearupone($1);`, [fileId]);
+          result = await this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearupone($1);', [fileId]);
         } else {
-          result = await this.auth.userQuery(context.accessToken, `SELECT * FROM _meta.file_clearup();`);
+          result = await this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearup();');
         }
 
         const filesDeleted = result.rows.map(row => `${row.id}.${row.extension}`);
