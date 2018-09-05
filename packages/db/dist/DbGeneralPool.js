@@ -41,6 +41,15 @@ let DbGeneralPool = class DbGeneralPool {
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const env = di_1.Container.get('ENVIRONMENT');
+            this.applicationName = env.namespace + '_pool_' + env.nodeId;
+            this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
+            // calculate pool size and create pool
+            yield this.gracefullyAdjustPoolSize();
+        });
+    }
     end() {
         return __awaiter(this, void 0, void 0, function* () {
             this.logger.trace('Postgres pool ending initiated');
@@ -62,15 +71,6 @@ let DbGeneralPool = class DbGeneralPool {
     // return public readonly instance of the managed pool
     get pgPool() {
         return this.managedPool;
-    }
-    boot() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const env = di_1.Container.get('ENVIRONMENT');
-            this.applicationName = env.namespace + '_pool_' + env.nodeId;
-            this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
-            // calculate pool size and create pool
-            yield this.gracefullyAdjustPoolSize();
-        });
     }
     // calculate number of max conections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {

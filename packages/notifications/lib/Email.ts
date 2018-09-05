@@ -3,10 +3,11 @@ import { htmlToText } from 'nodemailer-html-to-text';
 
 import { QueueFactory } from '@fullstack-one/queue';
 import { Service, Inject, Container } from '@fullstack-one/di';
-import { Config } from '@fullstack-one/config';
+import { Config, IEnvironment } from '@fullstack-one/config';
 import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import { SchemaBuilder } from '@fullstack-one/schema-builder';
+import { BootLoader } from '@fullstack-one/boot-loader';
 
 @Service()
 export class Email {
@@ -23,10 +24,11 @@ export class Email {
   private readonly queueFactory: QueueFactory;
 
   constructor(
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => QueueFactory) queueFactory?,
-    @Inject(type => Config) config?,
-    @Inject(type => SchemaBuilder) schemaBuilder?) {
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => QueueFactory) queueFactory,
+    @Inject(type => Config) config,
+    @Inject(type => SchemaBuilder) schemaBuilder,
+    @Inject(type => BootLoader) bootLoader) {
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
@@ -67,17 +69,22 @@ export class Email {
 
     }
 
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  private async boot(): Promise<void> {
+
     // subscribe to sendmail jobs in queue
     (async () => {
       const queue = await this.queueFactory.getQueue();
       queue.subscribe('sendmail', this._sendMail.bind(this))
-      .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-      .catch((err) => {
-        this.logger.warn('subscribed.job.sendmail.error', err);
-        throw err;
-      });
+        .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+        .catch((err) => {
+          this.logger.warn('subscribed.job.sendmail.error', err);
+          throw err;
+        });
     })();
-
   }
 
   public async sendMessage(to: string, subject: string, html: string, attachments: undefined[] = [], from?: string): Promise<any> {

@@ -1,5 +1,5 @@
 {
-    "version": "2.6",
+    "version": "2.9",
     "compileOnSave": false,
     "compilerOptions": {
         "lib": ["es2017"],

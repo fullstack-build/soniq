@@ -32,15 +32,15 @@
   "devDependencies": {
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.0.57",
-    "ts-node-dev": "^1.0.0-pre.19",
     "tslint": "^5.8.0",
-    "tslint-config-airbnb": "^5.4.2"
+    "tslint-config-airbnb": "^5.4.2",
+    "ts-node": "^4.1.0",
+    "ts-node-dev": "^1.0.0-pre.26",
+    "typescript": "^2.6.2"
   },
   "dependencies": {
     "dotenv": "^4.0.0",
     "passport-facebook": "^2.1.1",
-    "passport-google-oauth20": "^1.0.0",
-    "ts-node": "^4.1.0",
-    "typescript": "^2.6.2"
+    "passport-google-oauth20": "^1.0.0"
   }
 }

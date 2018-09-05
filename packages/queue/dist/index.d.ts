@@ -7,5 +7,5 @@ export declare class QueueFactory {
     private generalPool;
     constructor(loggerFactory?: any, generalPool?: any, config?: Config);
     getQueue(): Promise<PgBoss>;
-    private start();
+    private start;
 }

@@ -9,9 +9,9 @@ export declare class DbGeneralPool implements IDb {
     private logger;
     private eventEmitter;
     constructor(bootLoader?: any, eventEmitter?: any, loggerFactory?: any, config?: any);
+    private boot();
     end(): Promise<void>;
     readonly pgPool: PgPool;
-    private boot();
     private gracefullyAdjustPoolSize();
     private initConnect();
 }

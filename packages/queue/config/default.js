@@ -7,6 +7,6 @@ module.exports = {
 //    password: 'postgres',
 //    poolSize: 1,
     archiveCompletedJobsEvery: '2 days',
-    schema: 'pgboss'
+    schema: 'queue'
   }
 };

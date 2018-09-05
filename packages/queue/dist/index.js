@@ -57,6 +57,9 @@ let QueueFactory = class QueueFactory {
                 boss = new PgBoss(queueConfig);
             }
             else {
+                if (this.generalPool.pgPool == null) {
+                    throw Error('DB.generalPool not ready');
+                }
                 // get new connection from the pool
                 const pgCon = yield this.generalPool.pgPool.connect();
                 // Add `close` and `executeSql` functions for PgBoss to function

@@ -42,6 +42,16 @@ export class DbGeneralPool implements IDb  {
 
   }
 
+  private async boot(): Promise<void> {
+
+    const env: IEnvironment = Container.get('ENVIRONMENT');
+    this.applicationName = env.namespace + '_pool_' + env.nodeId;
+    this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
+
+    // calculate pool size and create pool
+    await this.gracefullyAdjustPoolSize();
+  }
+
   public async end(): Promise<void> {
 
     this.logger.trace('Postgres pool ending initiated');
@@ -66,18 +76,8 @@ export class DbGeneralPool implements IDb  {
   }
 
   // return public readonly instance of the managed pool
-  get pgPool() {
+  get pgPool(): PgPool {
     return this.managedPool;
-  }
-
-  private async boot(): Promise<void> {
-
-    const env: IEnvironment = Container.get('ENVIRONMENT');
-    this.applicationName = env.namespace + '_pool_' + env.nodeId;
-    this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
-
-    // calculate pool size and create pool
-    await this.gracefullyAdjustPoolSize();
   }
 
   // calculate number of max conections and adjust pool based on number of connected nodes
