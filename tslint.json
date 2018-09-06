@@ -17,6 +17,7 @@
     "no-else-after-return": false,
     "trailing-comma": false,
     "strict-boolean-expressions": false,
+    "no-increment-decrement": false,
     "triple-equals": [true, "allow-null-check"],
     "member-ordering": false,
     "prefer-template": false,
