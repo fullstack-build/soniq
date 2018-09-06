@@ -29,7 +29,7 @@ schema_builder_1.registerDirectiveParser('files', (gQlDirectiveNode, dbMetaNode,
 // query parser
 schema_builder_1.registerQueryParser((dbClient, dbMeta) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const { rows } = yield dbClient.pgClient.query(`SELECT * FROM _meta."FileFields";`);
+        const { rows } = yield dbClient.pgClient.query('SELECT * FROM _meta."FileFields";');
         rows.forEach((row) => {
             const thisColumn = dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
             thisColumn.extensions.isFileColumn = {
@@ -96,7 +96,7 @@ schema_builder_1.registerColumnMigrationExtension('isFileColumn', (extensionDefi
                 `AND "tableName" = '${tableName}' AND "columnName" = '${columnName}'`);
         }
         else {
-            thisSqlObj.up.push(`INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ` +
+            thisSqlObj.up.push('INSERT INTO "_meta"."FileColumns"("schemaName", "tableName", "columnName", "types") ' +
                 `VALUES('${schemaName}', '${tableName}', '${columnName}', '${fileNodeDefinition.types}') ` +
                 `ON CONFLICT ("schemaName", "tableName", "columnName") DO UPDATE SET "types"='${fileNodeDefinition.types}';`);
         }

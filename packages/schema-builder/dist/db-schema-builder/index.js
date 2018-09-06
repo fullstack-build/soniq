@@ -62,7 +62,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
             // check latest version migrated
             let latestVersion = 0;
             try {
-                const dbInitVersion = (yield dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0];
+                const dbInitVersion = (yield dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0];
                 if (dbInitVersion != null && dbInitVersion.value != null) {
                     latestVersion = parseInt(dbInitVersion.value, 10);
                     this.logger.debug('migration.db.init.version.detected', latestVersion);
@@ -166,7 +166,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
     getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop = true) {
         // check if toDbMeta is empty -> Parsing error
         if (toDbMeta == null || Object.keys(toDbMeta).length === 0) {
-            throw new Error(`Migration Error: Provided migration final state is empty.`);
+            throw new Error('Migration Error: Provided migration final state is empty.');
         }
         // crete copy of objects
         // new
@@ -206,7 +206,7 @@ let DbSchemaBuilder = class DbSchemaBuilder {
             // get migration statements
             const migrationSqlStatements = this.getMigrationSqlStatements(fromDbMeta, toDbMeta, renameInsteadOfDrop);
             // get previous migration and compare to current
-            const previousMigrationRow = (yield dbClient.query(`SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;`)).rows[0];
+            const previousMigrationRow = (yield dbClient.query('SELECT state FROM _meta.migrations ORDER BY created_at DESC LIMIT 1;')).rows[0];
             const previousMigrationStateJSON = (previousMigrationRow == null) ? {} : previousMigrationRow.state;
             // Migrate if any statements where generated (e.g. DB was changed but not DBMeta) OR any changes occurred to DBMeta
             if (migrationSqlStatements.length > 0 || deep_diff_1.diff(previousMigrationStateJSON, toDbMeta) != null) {
@@ -230,10 +230,10 @@ let DbSchemaBuilder = class DbSchemaBuilder {
                         yield dbClient.query(thisSql);
                     }
                     // current framework db version
-                    const dbVersion = (yield dbClient.query(`SELECT value FROM _meta.info WHERE key = 'version';`)).rows[0].value;
+                    const dbVersion = (yield dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0].value;
                     // last step, save final dbMeta in _meta
                     this.logger.trace('migration.state.saved');
-                    yield dbClient.query(`INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)`, [dbVersion, toDbMeta]);
+                    yield dbClient.query('INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)', [dbVersion, toDbMeta]);
                     // commit
                     this.logger.trace('migration.commit');
                     yield dbClient.query('COMMIT');

@@ -14,8 +14,10 @@ export class Email {
 
   private isReady = false;
   private transport;
+  private readonly queueName = 'notifications.Email';
 
   // DI dependencies
+  private config: Config;
   private CONFIG: any;
   private logger: ILogger;
   @Inject()
@@ -30,18 +32,26 @@ export class Email {
     @Inject(type => SchemaBuilder) schemaBuilder,
     @Inject(type => BootLoader) bootLoader) {
 
-    // register package config
-    config.addConfigFolder(__dirname + '/../config');
-
     // set DI dependencies
-    this.CONFIG = config.getConfig('email');
     this.queueFactory = queueFactory;
+    this.config = config;
 
     this.logger = loggerFactory.create('Email');
+
+    // register package config
+    this.config.addConfigFolder(__dirname + '/../config');
 
     // add migration path
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
 
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  private async boot(): Promise<void> {
+    this.CONFIG = this.config.getConfig('email');
+
+    // create transport with settings
     if (this.CONFIG.testing) {
       createTestAccount((err, account) => {
         if (err != null) {
@@ -66,42 +76,39 @@ export class Email {
       if (this.CONFIG.transport && this.CONFIG.transport.smtp) {
         this.createTransport(this.CONFIG.transport.smtp);
       }
-
     }
 
-    // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
-  }
-
-  private async boot(): Promise<void> {
-
     // subscribe to sendmail jobs in queue
-    (async () => {
-      const queue = await this.queueFactory.getQueue();
-      queue.subscribe('sendmail', this._sendMail.bind(this))
-        .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-        .catch((err) => {
-          this.logger.warn('subscribed.job.sendmail.error', err);
-          throw err;
-        });
-    })();
+    const queue = await this.queueFactory.getQueue();
+    queue.subscribe(this.queueName, this._sendMail.bind(this))
+      .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+      .catch((err) => {
+        this.logger.warn('subscribed.job.sendmail.error', err);
+        throw err;
+      });
   }
 
-  public async sendMessage(to: string, subject: string, html: string, attachments: undefined[] = [], from?: string): Promise<any> {
-    if (this.isReady) {
+  public async sendMessage(to: string,
+                           subject: string,
+                           html: string,
+                           attachments: undefined[] = [],
+                           from?: string,
+                           jobOptions: any = {}): Promise<any> { // todo: jobOptions: use pg-boss interface here
 
+    if (this.isReady) {
       // Message object
       const message = { from, to, subject, html };
 
       try {
 
-        const jobOptions = {
-          ... this.CONFIG.queue
+        const finalJobOptions = {
+          ... jobOptions,
+          ... this.CONFIG.queue // override methode jobOptions if they interfere
         };
 
         // create sendmail job in queue
         const queue = await this.queueFactory.getQueue();
-        const jobId = await queue.publish('sendmail', message, jobOptions);
+        const jobId = await queue.publish(this.queueName, message, finalJobOptions);
         this.logger.trace('sendMessage.job.creation.success', jobId);
         return jobId;
 

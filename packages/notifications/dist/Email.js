@@ -32,66 +32,68 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 let Email = class Email {
     constructor(loggerFactory, queueFactory, config, schemaBuilder, bootLoader) {
         this.isReady = false;
-        // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        this.queueName = 'notifications.Email';
         // set DI dependencies
-        this.CONFIG = config.getConfig('email');
         this.queueFactory = queueFactory;
+        this.config = config;
         this.logger = loggerFactory.create('Email');
+        // register package config
+        this.config.addConfigFolder(__dirname + '/../config');
         // add migration path
         schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
-        if (this.CONFIG.testing) {
-            nodemailer_1.createTestAccount((err, account) => {
-                if (err != null) {
-                    this.logger.warn('testingAccount.creation.error', err);
-                    throw err;
-                }
-                else {
-                    this.logger.trace('testingAccount.creation.success', account.user);
-                }
-                this.createTransport({
-                    host: account.smtp.host,
-                    port: account.smtp.port,
-                    secure: account.smtp.secure,
-                    auth: {
-                        user: account.user,
-                        pass: account.pass // generated ethereal password
-                    }
-                });
-            });
-        }
-        else {
-            if (this.CONFIG.transport && this.CONFIG.transport.smtp) {
-                this.createTransport(this.CONFIG.transport.smtp);
-            }
-        }
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            // subscribe to sendmail jobs in queue
-            (() => __awaiter(this, void 0, void 0, function* () {
-                const queue = yield this.queueFactory.getQueue();
-                queue.subscribe('sendmail', this._sendMail.bind(this))
-                    .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-                    .catch((err) => {
-                    this.logger.warn('subscribed.job.sendmail.error', err);
-                    throw err;
+            this.CONFIG = this.config.getConfig('email');
+            // create transport with settings
+            if (this.CONFIG.testing) {
+                nodemailer_1.createTestAccount((err, account) => {
+                    if (err != null) {
+                        this.logger.warn('testingAccount.creation.error', err);
+                        throw err;
+                    }
+                    else {
+                        this.logger.trace('testingAccount.creation.success', account.user);
+                    }
+                    this.createTransport({
+                        host: account.smtp.host,
+                        port: account.smtp.port,
+                        secure: account.smtp.secure,
+                        auth: {
+                            user: account.user,
+                            pass: account.pass // generated ethereal password
+                        }
+                    });
                 });
-            }))();
+            }
+            else {
+                if (this.CONFIG.transport && this.CONFIG.transport.smtp) {
+                    this.createTransport(this.CONFIG.transport.smtp);
+                }
+            }
+            // subscribe to sendmail jobs in queue
+            const queue = yield this.queueFactory.getQueue();
+            queue.subscribe(this.queueName, this._sendMail.bind(this))
+                .then(() => this.logger.trace('subscribed.job.sendmail.success'))
+                .catch((err) => {
+                this.logger.warn('subscribed.job.sendmail.error', err);
+                throw err;
+            });
         });
     }
-    sendMessage(to, subject, html, attachments = [], from) {
+    sendMessage(to, subject, html, attachments = [], from, jobOptions = {}) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.isReady) {
                 // Message object
                 const message = { from, to, subject, html };
                 try {
-                    const jobOptions = Object.assign({}, this.CONFIG.queue);
+                    const finalJobOptions = Object.assign({}, jobOptions, this.CONFIG.queue // override methode jobOptions if they interfere
+                    );
                     // create sendmail job in queue
                     const queue = yield this.queueFactory.getQueue();
-                    const jobId = yield queue.publish('sendmail', message, jobOptions);
+                    const jobId = yield queue.publish(this.queueName, message, finalJobOptions);
                     this.logger.trace('sendMessage.job.creation.success', jobId);
                     return jobId;
                 }

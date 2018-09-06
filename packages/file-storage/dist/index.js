@@ -86,7 +86,7 @@ let FileStorage = class FileStorage {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const entityId = info.entityId;
-                const result = yield this.auth.adminQuery(`SELECT * FROM _meta.file_todelete_by_entity($1);`, [entityId]);
+                const result = yield this.auth.adminQuery('SELECT * FROM _meta.file_todelete_by_entity($1);', [entityId]);
                 result.rows.forEach((row) => {
                     this.deleteFileAsAdmin(`${row.id}.${row.extension}`);
                 });
@@ -119,9 +119,9 @@ let FileStorage = class FileStorage {
             try {
                 yield this.auth.adminTransaction((client) => __awaiter(this, void 0, void 0, function* () {
                     const fileId = fileName.split('.')[0];
-                    const result = yield client.query(`SELECT * FROM _meta.file_deleteone_admin($1);`, [fileId]);
+                    const result = yield client.query('SELECT * FROM _meta.file_deleteone_admin($1);', [fileId]);
                     if (result.rows.length < 1) {
-                        throw new Error(`Failed to delete file 'fileId' from db.`);
+                        throw new Error("Failed to delete file 'fileId' from db.");
                     }
                     if (fileInBucket === true) {
                         yield this.client.removeObject(this.fileStorageConfig.bucket, fileName);
@@ -148,7 +148,7 @@ let FileStorage = class FileStorage {
             try {
                 yield this.auth.userTransaction(context.accessToken, (client) => __awaiter(this, void 0, void 0, function* () {
                     const fileId = fileName.split('.')[0];
-                    yield client.query(`SELECT * FROM _meta.file_deleteone($1);`, [fileId]);
+                    yield client.query('SELECT * FROM _meta.file_deleteone($1);', [fileId]);
                     if (fileInBucket === true) {
                         yield this.client.removeObject(this.fileStorageConfig.bucket, fileName);
                     }
@@ -169,7 +169,7 @@ let FileStorage = class FileStorage {
                 if (this.verifiers[type] == null) {
                     throw new Error(`A verifier for type '${type}' hasn't been defined.`);
                 }
-                const result = yield this.auth.userQuery(context.accessToken, `SELECT _meta.file_create($1, $2) AS "fileId";`, [extension, type]);
+                const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
                 const fileId = result.rows[0].fileId;
                 const fileName = fileId + '.' + extension;
                 const presignedPutUrl = yield this.presignedPutObject(fileName);
@@ -183,7 +183,7 @@ let FileStorage = class FileStorage {
             '@fullstack-one/file-storage/verifyFile': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 const fileName = args.fileName;
                 const fileId = fileName.split('.')[0];
-                const result = yield this.auth.userQuery(context.accessToken, `SELECT _meta.file_get_type_to_verify($1) AS "type";`, [fileId]);
+                const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileId]);
                 const type = result.rows[0].type;
                 if (this.verifiers[type] == null) {
                     throw new Error(`A verifier for type '${type}' hasn't been defined.`);
@@ -194,7 +194,7 @@ let FileStorage = class FileStorage {
                     bucket: this.fileStorageConfig.bucket
                 };
                 yield this.verifiers[type](ctx);
-                yield this.auth.userQuery(context.accessToken, `SELECT _meta.file_verify($1);`, [fileId]);
+                yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
                 const presignedGetUrl = yield this.presignedGetObject(fileName);
                 return {
                     fileName,
@@ -205,10 +205,10 @@ let FileStorage = class FileStorage {
                 let result;
                 if (args.fileName != null) {
                     const fileId = args.fileName.split('.')[0];
-                    result = yield this.auth.userQuery(context.accessToken, `SELECT * FROM _meta.file_clearupone($1);`, [fileId]);
+                    result = yield this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearupone($1);', [fileId]);
                 }
                 else {
-                    result = yield this.auth.userQuery(context.accessToken, `SELECT * FROM _meta.file_clearup();`);
+                    result = yield this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearup();');
                 }
                 const filesDeleted = result.rows.map(row => `${row.id}.${row.extension}`);
                 filesDeleted.forEach((fileName) => {

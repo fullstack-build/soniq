@@ -40,13 +40,13 @@ function generateCustomSql(match, customs, getParam, getField) {
         return Object.keys(field).map((operatorName) => {
             const value = field[operatorName];
             return createOperator(operatorName, fieldName, value);
-        }).join(` AND `);
+        }).join(' AND ');
     }
     function createAndList(list) {
-        return list.map(createFilter).join(` AND `);
+        return list.map(createFilter).join(' AND ');
     }
     function createOrList(list) {
-        return list.map(createFilter).join(` OR `);
+        return list.map(createFilter).join(' OR ');
     }
     function createFilter(filter) {
         const sqlList = [];
@@ -60,15 +60,15 @@ function generateCustomSql(match, customs, getParam, getField) {
             }
             sqlList.push(`(${createOperators(fieldName, field)})`);
         });
-        return sqlList.join(` AND `);
+        return sqlList.join(' AND ');
     }
     let sql = '';
     if (customs.where != null) {
         if (match === true) {
-            sql += ` AND `;
+            sql += ' AND ';
         }
         else {
-            sql += ` WHERE `;
+            sql += ' WHERE ';
         }
         sql += `(${createFilter(customs.where)})`;
     }

@@ -51,7 +51,7 @@ index_1.registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitio
     const triggerUpdatedAtActionObject = _splitActionFromNode(extensionDefinitionWithAction);
     const triggerUpdatedAtAction = triggerUpdatedAtActionObject.action;
     const triggerUpdatedAtDef = triggerUpdatedAtActionObject.node;
-    const triggerName = `table_trigger_updatedat`;
+    const triggerName = 'table_trigger_updatedat';
     // drop trigger for remove and before add (in case it's already there)
     if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
         nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);

@@ -5,7 +5,7 @@ function parseReadField(ctx) {
     // Has field any permission-expression
     if (readExpressions[fieldName] != null && directives.custom != null) {
         const { defaultFieldCreator } = ctx;
-        const columnExpression = `NULL::text`;
+        const columnExpression = 'NULL::text';
         const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
         return [{
                 gqlFieldName: fieldName,
