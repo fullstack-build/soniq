@@ -2,7 +2,8 @@ export declare class QueryBuilder {
     private resolverMeta;
     private dbMeta;
     private costLimit;
-    constructor(resolverMeta: any, dbMeta: any, costLimit: any);
+    private minQueryDepthToCheckCostLimit;
+    constructor(resolverMeta: any, dbMeta: any, costLimit: any, minQueryDepthToCheckCostLimit: any);
     build(obj: any, args: any, context: any, info: any, isAuthenticated: any, match?: any): {
         sql: string;
         values: any;
@@ -10,9 +11,9 @@ export declare class QueryBuilder {
         authRequired: any;
         potentialHighCost: boolean;
         costTree: {};
-        cost: number;
+        maxDepth: number;
     };
-    private calculateCost(costTree);
+    private calculateMaxDepth(costTree);
     private getLocalName(counter);
     private getFieldExpression(name, localName);
     private getFromExpression(gqlTypeMeta, localName, authRequired);
