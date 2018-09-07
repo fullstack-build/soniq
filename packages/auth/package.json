@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth",
-  "version": "0.3.42",
+  "version": "0.3.43",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -24,7 +24,7 @@
     "@fullstack-one/config": "^0.3.42",
     "@fullstack-one/db": "^0.3.42",
     "@fullstack-one/di": "^0.3.42",
-    "@fullstack-one/graphql": "^0.3.42",
+    "@fullstack-one/graphql": "^0.3.43",
     "@fullstack-one/logger": "^0.3.42",
     "@fullstack-one/schema-builder": "^0.3.42",
     "@fullstack-one/server": "^0.3.42",

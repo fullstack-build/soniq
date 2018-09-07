@@ -71,8 +71,8 @@ async function checkCosts(client, query, costLimit) {
   return currentCost;
 }
 
-export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit) {
-  const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, costLimit);
+export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit, minQueryDepthToCheckCostLimit) {
+  const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 
   return {
@@ -105,8 +105,8 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
         if (selectQuery.potentialHighCost === true) {
           const currentCost = await checkCosts(client, selectQuery, costLimit);
-          logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
-          ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${selectQuery.cost})`);
+          logger.warn('The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger.' +
+          ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${selectQuery.maxDepth})`);
         }
 
         // Run query against pg to get data
@@ -194,8 +194,8 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, 
 
             if (returnQuery.potentialHighCost === true) {
               const currentCost = await checkCosts(client, returnQuery, costLimit);
-              logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
-              ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${returnQuery.cost})`);
+              logger.warn('The current query has been identified as potentially too expensive and could get denied in case the' +
+              ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQuery.maxDepth})`);
             }
 
             // Run SQL query on pg to get response-data

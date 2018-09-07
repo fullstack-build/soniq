@@ -6,11 +6,13 @@ export class QueryBuilder {
   private resolverMeta: any;
   private dbMeta: any;
   private costLimit;
+  private minQueryDepthToCheckCostLimit;
 
-  constructor(resolverMeta, dbMeta, costLimit) {
+  constructor(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit) {
     this.resolverMeta = resolverMeta;
     this.dbMeta = dbMeta;
     this.costLimit = costLimit;
+    this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
   }
 
   public build(obj, args, context, info, isAuthenticated, match = null) {
@@ -27,39 +29,27 @@ export class QueryBuilder {
       authRequired
     } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
 
-    const cost = this.calculateCost(costTree[query.name]);
+    const maxDepth = this.calculateMaxDepth(costTree[query.name]);
 
-    const potentialHighCost = cost > this.costLimit;
+    const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
 
-    return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, cost };
+    return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
   }
 
-  private calculateCost(costTree) {
-    let cost = 0;
-
-    let leafCost = 1.101111;
+  private calculateMaxDepth(costTree) {
+    let depth = 0;
 
     if (costTree.__meta.type === 'aggregation') {
-      if (costTree.__meta.limit != null) {
-        leafCost = costTree.__meta.limit;
-      } else {
-        leafCost = this.costLimit / 2 + 0.101111;
-      }
+      depth++;
     }
 
     Object.keys(costTree).forEach((key) => {
       if (key !== '__meta') {
-        const subLeafCost = this.calculateCost(costTree[key]);
-
-        cost += leafCost * subLeafCost;
+        depth += this.calculateMaxDepth(costTree[key]);
       }
     });
 
-    if (cost < 1) {
-      cost = leafCost;
-    }
-
-    return cost;
+    return depth;
   }
 
   // Generate local alias name for views/tables

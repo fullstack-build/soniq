@@ -67,8 +67,8 @@ function checkCosts(client, query, costLimit) {
         return currentCost;
     });
 }
-function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit) {
-    const queryBuilder = new read_1.QueryBuilder(resolverMeta, dbMeta, costLimit);
+function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit, minQueryDepthToCheckCostLimit) {
+    const queryBuilder = new read_1.QueryBuilder(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit);
     const mutationBuilder = new mutate_1.MutationBuilder(resolverMeta);
     return {
         '@fullstack-one/graphql/queryResolver': (obj, args, context, info) => __awaiter(this, void 0, void 0, function* () {
@@ -94,8 +94,8 @@ function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger,
                 logger.trace('queryResolver.run', selectQuery.sql, selectQuery.values);
                 if (selectQuery.potentialHighCost === true) {
                     const currentCost = yield checkCosts(client, selectQuery, costLimit);
-                    logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
-                        ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${selectQuery.cost})`);
+                    logger.warn('The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger.' +
+                        ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${selectQuery.maxDepth})`);
                 }
                 // Run query against pg to get data
                 const result = yield client.query(selectQuery.sql, selectQuery.values);
@@ -168,8 +168,8 @@ function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger,
                     logger.trace('mutationResolver.returnQuery.run', returnQuery.sql, returnQuery.values);
                     if (returnQuery.potentialHighCost === true) {
                         const currentCost = yield checkCosts(client, returnQuery, costLimit);
-                        logger.warn('The current query has been identified as potential to expensive. It could be denied in future' +
-                            ` when your data gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${returnQuery.cost})`);
+                        logger.warn('The current query has been identified as potentially too expensive and could get denied in case the' +
+                            ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQuery.maxDepth})`);
                     }
                     // Run SQL query on pg to get response-data
                     const returnResult = yield client.query(returnQuery.sql, returnQuery.values);

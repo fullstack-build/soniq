@@ -3,10 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const graphql_parse_resolve_info_1 = require("graphql-parse-resolve-info");
 const custom_1 = require("./custom");
 class QueryBuilder {
-    constructor(resolverMeta, dbMeta, costLimit) {
+    constructor(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit) {
         this.resolverMeta = resolverMeta;
         this.dbMeta = dbMeta;
         this.costLimit = costLimit;
+        this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
     }
     build(obj, args, context, info, isAuthenticated, match = null) {
         // Use PostGraphile parser to get nested query object
@@ -14,31 +15,21 @@ class QueryBuilder {
         const costTree = {};
         // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
         const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
-        const cost = this.calculateCost(costTree[query.name]);
-        const potentialHighCost = cost > this.costLimit;
-        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, cost };
+        const maxDepth = this.calculateMaxDepth(costTree[query.name]);
+        const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
+        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
     }
-    calculateCost(costTree) {
-        let cost = 0;
-        let leafCost = 1.101111;
+    calculateMaxDepth(costTree) {
+        let depth = 0;
         if (costTree.__meta.type === 'aggregation') {
-            if (costTree.__meta.limit != null) {
-                leafCost = costTree.__meta.limit;
-            }
-            else {
-                leafCost = this.costLimit / 2 + 0.101111;
-            }
+            depth++;
         }
         Object.keys(costTree).forEach((key) => {
             if (key !== '__meta') {
-                const subLeafCost = this.calculateCost(costTree[key]);
-                cost += leafCost * subLeafCost;
+                depth += this.calculateMaxDepth(costTree[key]);
             }
         });
-        if (cost < 1) {
-            cost = leafCost;
-        }
-        return cost;
+        return depth;
     }
     // Generate local alias name for views/tables
     getLocalName(counter) {

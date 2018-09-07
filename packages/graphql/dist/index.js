@@ -88,7 +88,7 @@ let GraphQl = class GraphQl {
     }
     prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
         gqlRuntimeDocument.definitions.push(getOperatorsDefinition_1.getOperatorsDefinition(compareOperators_1.operatorsObject));
-        this.addResolvers(resolvers_2.getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit));
+        this.addResolvers(resolvers_2.getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
         this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
         return this.schemaBuilder.print(gqlRuntimeDocument);
     }

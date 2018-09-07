@@ -105,7 +105,8 @@ export class GraphQl {
   public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
     gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
 
-    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit));
+    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger,
+    this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
     this.operations = getOperations(gqlRuntimeDocument);
 
     return this.schemaBuilder.print(gqlRuntimeDocument);
