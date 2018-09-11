@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/file-storage",
-  "version": "0.3.49",
+  "version": "0.3.50",
   "description": "fullstack.one example package",
   "main": "index.js",
   "types": "lib/index.ts",
