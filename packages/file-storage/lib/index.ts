@@ -224,8 +224,8 @@ export class FileStorage {
         const verifyCopyConditions = new Minio.CopyConditions();
         verifyCopyConditions.setMatchETag(stat.etag);
 
-        await this.client.copyObject(this.fileStorageConfig.bucket, uploadFileName,
-        `/${this.fileStorageConfig.bucket}/${verifyFileName}`, verifyCopyConditions);
+        await this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName,
+        `/${this.fileStorageConfig.bucket}/${uploadFileName}`, verifyCopyConditions);
 
         const ctx = {
           client: this.client,
@@ -240,10 +240,17 @@ export class FileStorage {
         const finalCopyConditions = new Minio.CopyConditions();
         finalCopyConditions.setMatchETag(etag);
 
-        await this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName,
-        `/${this.fileStorageConfig.bucket}/${fileName}`, finalCopyConditions);
+        await this.client.copyObject(this.fileStorageConfig.bucket, fileName,
+        `/${this.fileStorageConfig.bucket}/${verifyFileName}`, finalCopyConditions);
 
         await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
+
+        // Try to clean up temp objects. However, don't care if it fails.
+        try {
+          await this.client.removeObjects(this.fileStorageConfig.bucket, [uploadFileName, verifyFileName]);
+        } catch (err) {
+          this.logger.warn('verifyFile.removeObjectsFail', err);
+        }
 
         const presignedGetUrl = await this.presignedGetObject(fileName);
 
