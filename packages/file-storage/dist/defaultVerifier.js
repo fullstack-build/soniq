@@ -11,7 +11,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 function defaultVerifier(ctx) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const stats = yield ctx.client.statObject(ctx.bucket, ctx.fileName);
+            const stat = yield ctx.client.statObject(ctx.bucket, ctx.verifyFileName);
+            return stat.etag;
         }
         catch (e) {
             if (e.message.toLowerCase().indexOf('not found') >= 0) {

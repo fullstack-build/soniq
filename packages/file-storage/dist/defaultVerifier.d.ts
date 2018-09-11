@@ -1,1 +1,1 @@
-export declare function defaultVerifier(ctx: any): Promise<void>;
+export declare function defaultVerifier(ctx: any): Promise<any>;
