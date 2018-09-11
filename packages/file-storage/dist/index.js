@@ -205,7 +205,7 @@ let FileStorage = class FileStorage {
                 const verifyFileName = `${fileId}_temp_${Date.now()}_${Math.round(Math.random() * 100000000000)}.${extension}`;
                 const verifyCopyConditions = new Minio.CopyConditions();
                 verifyCopyConditions.setMatchETag(stat.etag);
-                yield this.client.copyObject(this.fileStorageConfig.bucket, uploadFileName, `/${this.fileStorageConfig.bucket}/${verifyFileName}`, verifyCopyConditions);
+                yield this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName, `/${this.fileStorageConfig.bucket}/${uploadFileName}`, verifyCopyConditions);
                 const ctx = {
                     client: this.client,
                     fileName,
@@ -216,8 +216,15 @@ let FileStorage = class FileStorage {
                 const etag = yield this.verifiers[type](ctx);
                 const finalCopyConditions = new Minio.CopyConditions();
                 finalCopyConditions.setMatchETag(etag);
-                yield this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName, `/${this.fileStorageConfig.bucket}/${fileName}`, finalCopyConditions);
+                yield this.client.copyObject(this.fileStorageConfig.bucket, fileName, `/${this.fileStorageConfig.bucket}/${verifyFileName}`, finalCopyConditions);
                 yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
+                // Try to clean up temp objects. However, don't care if it fails.
+                try {
+                    yield this.client.removeObjects(this.fileStorageConfig.bucket, [uploadFileName, verifyFileName]);
+                }
+                catch (err) {
+                    this.logger.warn('verifyFile.removeObjectsFail', err);
+                }
                 const presignedGetUrl = yield this.presignedGetObject(fileName);
                 return {
                     fileName,
