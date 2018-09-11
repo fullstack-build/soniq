@@ -183,35 +183,65 @@ export class FileStorage {
 
         const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
         const fileId = result.rows[0].fileId;
-        const fileName = fileId + '.' + extension;
+        const fileName = `${fileId}.${extension}`;
+        const uploadFileName = `${fileId}_upload.${extension}`;
 
-        const presignedPutUrl = await this.presignedPutObject(fileName);
+        const presignedPutUrl = await this.presignedPutObject(uploadFileName);
 
         return {
           extension,
           type,
           fileName,
+          uploadFileName,
           presignedPutUrl
         };
       },
       '@fullstack-one/file-storage/verifyFile': async (obj, args, context, info, params) => {
         const fileName = args.fileName;
         const fileId = fileName.split('.')[0];
+        const extension = fileName.split('.')[1];
+        const uploadFileName = `${fileId}_upload.${extension}`;
 
         const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileId]);
         const type = result.rows[0].type;
+        let stat = null;
 
         if (this.verifiers[type] == null) {
           throw new Error(`A verifier for type '${type}' hasn't been defined.`);
         }
 
+        try {
+          stat = await this.client.statObject(this.fileStorageConfig.bucket, uploadFileName);
+        } catch (e) {
+          if (e.message.toLowerCase().indexOf('not found') >= 0) {
+            throw new Error('Please upload a file before verifying.');
+          }
+          throw e;
+        }
+
+        const verifyFileName = `${fileId}_temp_${Date.now()}_${Math.round(Math.random() * 100000000000)}.${extension}`;
+
+        const verifyCopyConditions = new Minio.CopyConditions();
+        verifyCopyConditions.setMatchETag(stat.etag);
+
+        await this.client.copyObject(this.fileStorageConfig.bucket, uploadFileName,
+        `/${this.fileStorageConfig.bucket}/${verifyFileName}`, verifyCopyConditions);
+
         const ctx = {
           client: this.client,
           fileName,
+          verifyFileName,
+          uploadFileName,
           bucket: this.fileStorageConfig.bucket
         };
 
-        await this.verifiers[type](ctx);
+        const etag = await this.verifiers[type](ctx);
+
+        const finalCopyConditions = new Minio.CopyConditions();
+        finalCopyConditions.setMatchETag(etag);
+
+        await this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName,
+        `/${this.fileStorageConfig.bucket}/${fileName}`, finalCopyConditions);
 
         await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
 
@@ -282,43 +312,3 @@ export class FileStorage {
     };
   }
 }
-
-/*
-const Minio = require('minio')
-
-var client = new Minio.Client({
-    endPoint: 'play.minio.io',
-    port: 9000,
-    secure: true,
-    accessKey: 'Q3AM3UQ867SPQQA43P2F',
-    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
-})
-
-// express is a small HTTP server wrapper, but this works with any HTTP server
-const server = require('express')()
-
-server.get('/presignedUrl', (req, res) => {
-    client.presignedPutObject('bauhaus', req.query.name, (err, url) => {
-        if (err) throw err
-        res.end(url)
-    })
-})
-
-server.get('/presignedGetUrl', (req, res) => {
-    client.presignedGetObject('bauhaus', req.query.name, 24*60*60, (err, url) => {
-        if (err) throw err
-        res.end(url)
-    })
-})
-
-server.get('/image/:name', (req, res) => {
-    client.presignedGetObject('bauhaus', req.params.name, 4*60, (err, url) => {
-        if (err) throw err
-        res.redirect(url)
-    })
-})
-
-server.get('/', (req, res) => {
-    res.sendFile(__dirname + '/test.html');
-})
-*/

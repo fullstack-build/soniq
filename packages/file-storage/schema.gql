@@ -3,6 +3,7 @@ type UploadFile {
   extension: String!
   type: String!
   fileName: String!
+  uploadFileName: String!
   presignedPutUrl: String!
 }
 
