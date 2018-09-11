@@ -287,7 +287,6 @@ FileStorage = __decorate([
     __param(5, di_1.Inject(type => graphql_1.GraphQl)),
     __param(6, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
     __param(7, di_1.Inject(type => auth_1.Auth)),
-    __metadata("design:paramtypes", [typeof (_a = typeof logger_1.LoggerFactory !== "undefined" && logger_1.LoggerFactory) === "function" && _a || Object, Object, Object, Object, Object, Object, Object, Object])
+    __metadata("design:paramtypes", [logger_1.LoggerFactory, Object, Object, Object, Object, Object, Object, Object])
 ], FileStorage);
 exports.FileStorage = FileStorage;
-var _a;
