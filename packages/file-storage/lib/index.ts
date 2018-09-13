@@ -356,7 +356,7 @@ export class FileStorage {
             const objects = [];
             // const presignedGetUrl = await fileObject.presignedGetUrlPromise;
             const fileName = fileObject.fileName;
-            for (const object of fileObject.files) {
+            for (const object of fileObject.objects) {
               try {
                 objects.push({
                   objectName: object.objectName,
