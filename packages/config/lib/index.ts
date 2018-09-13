@@ -27,10 +27,22 @@ export class Config {
   constructor(
     @Inject(type => BootLoader) bootLoader
   ) {
+    // start with empty objects in DI
     Container.set('CONFIG', {});
+    Container.set('ENVIRONMENT', {});
 
     // register boot function
     bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  private async boot() {
+
+    // load project config files (last step, to override all the others)
+    const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
+    this.addConfigFolder(projectConfigFolderPath);
+
+    // apply config
+    this.applyConfig();
   }
 
   public getConfig(pModuleName?: string): any {
@@ -47,47 +59,14 @@ export class Config {
   }
 
   // load config based on ENV
-  public addConfigFolder(configPath: string): void {
+  public addConfigFolder(configFolderPath: string): void {
     // check if path was already included
-    if (!this.configFolder.includes(configPath)) {
-      this.configFolder.push(configPath);
+    if (!this.configFolder.includes(configFolderPath)) {
+      this.configFolder.push(configFolderPath);
     }
   }
 
-  // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
-  private setEnvironment() {
-    // load project package.js
-    const projectPath = path.dirname(require.main.filename);
-    const PROJECT_PACKAGE = require(projectPath + '/package.json');
-    // each package in the mono repo has the same version
-    const MODULE_PACKAGE = require('../package.json');
-
-    // update ENV
-    this.ENVIRONMENT.frameworkVersion = MODULE_PACKAGE.version;
-    this.ENVIRONMENT.NODE_ENV         = process.env.NODE_ENV;
-    this.ENVIRONMENT.name             = PROJECT_PACKAGE.name;
-    this.ENVIRONMENT.version          = PROJECT_PACKAGE.version;
-    this.ENVIRONMENT.path             = projectPath;
-    // unique instance ID (6 char)
-    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5, 6);
-    // wait until core config is set
-    if (this.config.core != null) {
-      this.ENVIRONMENT.namespace      = this.config.core.namespace;
-    }
-    // wait until server config is set
-    if (this.config.server != null) {
-      this.ENVIRONMENT.port           = this.config.server.port;
-    }
-
-    // put config into DI
-    Container.set('ENVIRONMENT', this.ENVIRONMENT);
-  }
-
-  private async boot() {
-
-    // load project config files (last step, to override all the others)
-    const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
-    this.addConfigFolder(projectConfigFolderPath);
+  private applyConfig() {
 
     // iterate over config folders
     this.configFolder.forEach((configFolderPath: string) => {
@@ -162,6 +141,35 @@ export class Config {
     Container.set('CONFIG', this.config);
     // update ENVIRONMENT
     this.setEnvironment();
+  }
+
+  // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
+  private setEnvironment() {
+    // load project package.js
+    const projectPath = path.dirname(require.main.filename);
+    const PROJECT_PACKAGE = require(projectPath + '/package.json');
+    // each package in the mono repo has the same version
+    const MODULE_PACKAGE = require('../package.json');
+
+    // update ENV
+    this.ENVIRONMENT.frameworkVersion = MODULE_PACKAGE.version;
+    this.ENVIRONMENT.NODE_ENV         = process.env.NODE_ENV;
+    this.ENVIRONMENT.name             = PROJECT_PACKAGE.name;
+    this.ENVIRONMENT.version          = PROJECT_PACKAGE.version;
+    this.ENVIRONMENT.path             = projectPath;
+    // unique instance ID (6 char)
+    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5, 6);
+    // wait until core config is set
+    if (this.config.core != null) {
+      this.ENVIRONMENT.namespace      = this.config.core.namespace;
+    }
+    // wait until server config is set
+    if (this.config.server != null) {
+      this.ENVIRONMENT.port           = this.config.server.port;
+    }
+
+    // put config into DI
+    Container.set('ENVIRONMENT', this.ENVIRONMENT);
   }
 
   /* HELPER */
