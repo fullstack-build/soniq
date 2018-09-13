@@ -30,14 +30,14 @@ BEGIN
     v_file_name := v_file_elements[1];
     v_file_extension := v_file_elements[2];
 
-    v_file_name_elements = regexp_split_to_array(v_file_name, '_');
+    v_file_name_elements = regexp_split_to_array(v_file_name, '-');
 
-    if array_length(v_file_name_elements, 1) < 2 THEN
+    if array_length(v_file_name_elements, 1) != 6 THEN
         RAISE EXCEPTION 'Invalid fileName.';
     END IF;
 
-    v_file_id := v_file_name_elements[1];
-    v_file_type := v_file_name_elements[2];
+    v_file_id := v_file_name_elements[1] || v_file_name_elements[2] || v_file_name_elements[3] || v_file_name_elements[4] || v_file_name_elements[5];
+    v_file_type := v_file_name_elements[6];
 
     v_query := $tok$SELECT "id", "ownerUserId", "deletedAt", "entityId", "verifiedAt", "type", "extension" FROM _meta."Files" WHERE id = %L$tok$;
     EXECUTE format(v_query, v_file_id) INTO v_id, v_owner_user_id, v_deletedAt, v_entity_id, v_verifiedAt, v_type, v_extension;
@@ -80,7 +80,7 @@ BEGIN
 
     -- If the position is null, the type is not in the list and thereby not allowed.
     IF v_type_position IS NULL THEN
-        RAISE EXCEPTION 'The file-type you are trying to add is not.';
+        RAISE EXCEPTION 'The file-type you are trying to add is not allowed for this field.';
     END IF;
     
 
