@@ -8,14 +8,14 @@ export declare class PgToDbMeta {
     private readonly dbMeta;
     constructor(dbAppClient?: any);
     getPgDbMeta(): Promise<IDbMeta>;
-    private iterateAndAddSchemas;
-    private iterateEnumTypes;
-    private iterateAndAddTables;
-    private iterateAndAddColumns;
-    private iterateAndAddConstraints;
-    private addConstraint;
-    private addCheck;
-    private iterateAndAddTriggers;
-    private relationBuilderHelper;
-    private manyToManyRelationBuilderHelper;
+    private iterateAndAddSchemas();
+    private iterateEnumTypes(schemaName);
+    private iterateAndAddTables(schemaName);
+    private iterateAndAddColumns(schemaName, tableName);
+    private iterateAndAddConstraints(schemaName, tableName);
+    private addConstraint(constraintType, constraintRow, refDbMetaCurrentTable);
+    private addCheck(constraintRow, refDbMetaCurrentTable);
+    private iterateAndAddTriggers(schemaName, tableName);
+    private relationBuilderHelper(constraint);
+    private manyToManyRelationBuilderHelper(columnDescribingRelation, schemaName, tableName, mtmPayload);
 }

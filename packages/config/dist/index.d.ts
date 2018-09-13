@@ -7,7 +7,7 @@ export declare class Config {
     constructor(bootLoader: any);
     getConfig(pModuleName?: string): any;
     addConfigFolder(configPath: string): void;
-    private setEnvironment;
-    private boot;
-    private deepMapHelper;
+    private setEnvironment();
+    private boot();
+    private deepMapHelper(obj, callback, nestedPath?);
 }

@@ -1,5 +1,6 @@
 
 import { Client } from 'minio';
+import { FileName } from './FileName';
 
 export interface IBucketObject {
   objectName: string;
@@ -15,14 +16,14 @@ export class Verifier {
     this.bucket = bucket;
   }
 
-  public async verify(verifyFileName: string, id: string, type: string, extension: string): Promise<void> {
+  public async verify(verifyFileName: string, fName: FileName): Promise<void> {
     // tslint:disable-next-line:quotemark
-    throw new Error(`Please implement the 'verify(verifyFileName, id, type, extension)' method when extending class Verifier.`);
+    throw new Error(`Please implement the 'verify(verifyFileName: string, fName: FileName)' method when extending class Verifier.`);
   }
 
   // Returns a
-  public getObjectNames(id: string, type: string, extension: string): IBucketObject[] {
+  public getObjectNames(fName: FileName): IBucketObject[] {
     // tslint:disable-next-line:quotemark
-    throw new Error(`Please implement the 'getObjectNames(id, type, extension)' method when extending class Verifier.`);
+    throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class Verifier.`);
   }
 }

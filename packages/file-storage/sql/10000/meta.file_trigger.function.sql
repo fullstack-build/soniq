@@ -6,9 +6,9 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
     		throw new Error('Invalid fileName.');
     	}
         try {
-            var fileNameWithoutExtension = fileName.split('.')[0].split('_');
-            var fileId = fileNameWithoutExtension[0];
-            var fileType = fileNameWithoutExtension[1];
+            var fileNameWithoutExtension = fileName.split('.')[0].split('-');
+            var fileType = fileNameWithoutExtension.pop();
+            var fileId = fileNameWithoutExtension.join('-');
         } catch (e) {
             throw new Error('Invalid fileName.');
         }
@@ -31,9 +31,9 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
     		throw new Error('Invalid fileName.');
     	}
         try {
-            var fileNameWithoutExtension = fileName.split('.')[0].split('_');
-            var fileId = fileNameWithoutExtension[0];
-            var fileType = fileNameWithoutExtension[1];
+            var fileNameWithoutExtension = fileName.split('.')[0].split('-');
+            var fileType = fileNameWithoutExtension.pop();
+            var fileId = fileNameWithoutExtension.join('-');
         } catch (e) {
             throw new Error('Invalid fileName.');
         }

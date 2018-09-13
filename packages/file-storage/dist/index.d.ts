@@ -2,7 +2,8 @@ import { LoggerFactory } from '@fullstack-one/logger';
 import * as Minio from 'minio';
 import { Verifier, IBucketObject } from './Verifier';
 import { DefaultVerifier } from './DefaultVerifier';
-export { DefaultVerifier, Verifier, Minio, IBucketObject };
+import { FileName } from './FileName';
+export { DefaultVerifier, Verifier, Minio, IBucketObject, FileName };
 import './migrationExtension';
 export declare class FileStorage {
     private client;
@@ -18,13 +19,13 @@ export declare class FileStorage {
     private verifiers;
     private verifierObjects;
     constructor(loggerFactory: LoggerFactory, dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any, graphQl?: any, schemaBuilder?: any, auth?: any);
-    private boot();
     addVerifier(type: any, fn: any): void;
+    private boot();
     private postMutationHook(info, context);
     private presignedPutObject(objectName);
     private presignedGetObject(objectName);
-    private deleteFileAsAdmin(fileName);
-    private deleteFile(fileName, context);
+    private deleteFileAsAdmin(fName);
+    private deleteFile(fName, context);
     private deleteObjects(filePrefix);
     private getResolvers();
 }

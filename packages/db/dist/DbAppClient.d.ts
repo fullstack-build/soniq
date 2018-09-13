@@ -11,7 +11,7 @@ export declare class DbAppClient implements IDb {
     private eventEmitter;
     private config;
     constructor(bootLoader?: any, eventEmitter?: any, loggerFactory?: any, config?: any);
-    private boot;
+    private boot();
     end(): Promise<void>;
-    private updateNodeIdsFromDb;
+    private updateNodeIdsFromDb();
 }

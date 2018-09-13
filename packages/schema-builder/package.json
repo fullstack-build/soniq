@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/schema-builder",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "fullstack.one schema builder package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,11 +22,11 @@
   "dependencies": {
     "@fullstack-one/auth": "latest",
     "@fullstack-one/boot-loader": "^0.4.0",
-    "@fullstack-one/config": "^0.4.0",
-    "@fullstack-one/db": "^0.4.0",
+    "@fullstack-one/config": "^0.4.1",
+    "@fullstack-one/db": "^0.4.1",
     "@fullstack-one/di": "^0.4.0",
-    "@fullstack-one/helper": "^0.4.0",
-    "@fullstack-one/logger": "^0.4.0",
+    "@fullstack-one/helper": "^0.4.1",
+    "@fullstack-one/logger": "^0.4.1",
     "deep-diff": "^1.0.0",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1",
