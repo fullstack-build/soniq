@@ -3,7 +3,7 @@ module.exports = {
     minio: {
       endPoint:   null,
       port:       9000,
-      secure:     true,
+      useSSL:     true,
       accessKey:  null,
       secretKey:  null
     }

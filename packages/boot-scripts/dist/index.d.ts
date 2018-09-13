@@ -4,5 +4,5 @@ export declare class BootScripts {
     private logger;
     private eventEmitter;
     constructor(loggerFactory?: any, bootLoader?: any);
-    private boot();
+    private boot;
 }

@@ -1,3 +1,3 @@
 export interface ITableMigrationExtensions {
-    [name: string]: (extensionDefinition, sqlMigrationObj, nodeSqlObj, schemaName, tableNameDown, tableNameUp) => void;
+    [name: string]: (extensionDefinition: any, sqlMigrationObj: any, nodeSqlObj: any, schemaName: any, tableNameDown: any, tableNameUp: any) => void;
 }

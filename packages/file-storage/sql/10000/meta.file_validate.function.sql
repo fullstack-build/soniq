@@ -11,7 +11,10 @@ DECLARE
     v_types TEXT[];
     v_type_position INT;
     v_file_elements TEXT[];
+    v_file_name TEXT;
+    v_file_name_elements TEXT[];
     v_file_id uuid;
+    v_file_type TEXT;
     v_file_extension TEXT;
     v_extension TEXT;
     v_id uuid;
@@ -24,8 +27,17 @@ BEGIN
         RAISE EXCEPTION 'Invalid fileName.';
     END IF;
 
-    v_file_id := v_file_elements[1];
+    v_file_name := v_file_elements[1];
     v_file_extension := v_file_elements[2];
+
+    v_file_name_elements = regexp_split_to_array(v_file_name, '_');
+
+    if array_length(v_file_name_elements, 1) < 2 THEN
+        RAISE EXCEPTION 'Invalid fileName.';
+    END IF;
+
+    v_file_id := v_file_name_elements[1];
+    v_file_type := v_file_name_elements[2];
 
     v_query := $tok$SELECT "id", "ownerUserId", "deletedAt", "entityId", "verifiedAt", "type", "extension" FROM _meta."Files" WHERE id = %L$tok$;
     EXECUTE format(v_query, v_file_id) INTO v_id, v_owner_user_id, v_deletedAt, v_entity_id, v_verifiedAt, v_type, v_extension;
@@ -40,6 +52,10 @@ BEGIN
 
     if v_extension != v_file_extension THEN
         RAISE EXCEPTION 'Invalid file extension.';
+    END IF;
+
+    if v_type != v_file_type THEN
+        RAISE EXCEPTION 'Invalid file type.';
     END IF;
 
     if v_owner_user_id != v_user_id THEN

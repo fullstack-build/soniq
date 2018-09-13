@@ -12,7 +12,10 @@ import * as koaBody from 'koa-bodyparser';
 import * as Minio from 'minio';
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 import { getParser } from './parser';
-import { defaultVerifier } from './defaultVerifier';
+import { Verifier, IBucketObject } from './Verifier';
+import { DefaultVerifier } from './DefaultVerifier';
+
+export { DefaultVerifier, Verifier, Minio, IBucketObject };
 
 import * as fs from 'fs';
 
@@ -24,7 +27,7 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 @Service()
 export class FileStorage {
 
-  private client;
+  private client: Minio.Client;
   private fileStorageConfig;
 
   // DI
@@ -37,6 +40,7 @@ export class FileStorage {
   private config: Config;
   private auth: Auth;
   private verifiers: any = {};
+  private verifierObjects: any = {};
 
   constructor(
     @Inject(type => LoggerFactory) loggerFactory: LoggerFactory,
@@ -70,7 +74,7 @@ export class FileStorage {
 
     this.graphQl.addHook('postMutation', this.postMutationHook.bind(this));
 
-    this.addVerifier('DEFAULT', defaultVerifier);
+    this.addVerifier('DEFAULT', DefaultVerifier);
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
@@ -81,6 +85,12 @@ export class FileStorage {
     this.fileStorageConfig = this.config.getConfig('fileStorage');
 
     this.client = new Minio.Client(this.fileStorageConfig.minio);
+
+    Object.keys(this.verifiers).forEach((key) => {
+      // tslint:disable-next-line:variable-name
+      const CurrentVerifier = this.verifiers[key];
+      this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
+    });
 
     const authRouter = new KoaRouter();
 
@@ -109,39 +119,31 @@ export class FileStorage {
       const entityId = info.entityId;
       const result = await this.auth.adminQuery('SELECT * FROM _meta.file_todelete_by_entity($1);', [entityId]);
       result.rows.forEach((row) => {
-        this.deleteFileAsAdmin(`${row.id}.${row.extension}`);
+        this.deleteFileAsAdmin(`${row.id}_${row.type}.${row.extension}`);
       });
     } catch (e) {
       // I don't care
     }
   }
 
-  private async presignedPutObject(fileName) {
-    return await this.client.presignedPutObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
+  private async presignedPutObject(objectName) {
+    return await this.client.presignedPutObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
   }
 
-  private async presignedGetObject(fileName) {
-    return await this.client.presignedGetObject(this.fileStorageConfig.bucket, fileName, 12 * 60 * 60);
+  private async presignedGetObject(objectName) {
+    return await this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
   }
 
   private async deleteFileAsAdmin(fileName) {
-    let fileInBucket = false;
-    try {
-      const stats = await this.client.statObject(this.fileStorageConfig.bucket, fileName);
-      fileInBucket = true;
-    } catch (e) {
-      // The file has never been created.
-    }
     try {
       await this.auth.adminTransaction(async (client) => {
-        const fileId = fileName.split('.')[0];
+        const filePrefix = fileName.split('.')[0];
+        const fileId = filePrefix.split('_')[0];
         const result = await client.query('SELECT * FROM _meta.file_deleteone_admin($1);', [fileId]);
         if (result.rows.length < 1) {
           throw new Error("Failed to delete file 'fileId' from db.");
         }
-        if (fileInBucket === true) {
-          await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
-        }
+        await this.deleteObjects(filePrefix);
       });
     } catch (e) {
       this.logger.warn('deleteFileAsAdmin.error', `Failed to delete file '${fileName}'.`, e);
@@ -151,26 +153,45 @@ export class FileStorage {
   }
 
   private async deleteFile(fileName, context) {
-    let fileInBucket = false;
-    try {
-      const stats = await this.client.statObject(this.fileStorageConfig.bucket, fileName);
-      fileInBucket = true;
-    } catch (e) {
-      // The file has never been created.
-    }
     try {
       await this.auth.userTransaction(context.accessToken, async (client) => {
-        const fileId = fileName.split('.')[0];
+        const filePrefix = fileName.split('.')[0];
+        const fileId = filePrefix.split('_')[0];
         await client.query('SELECT * FROM _meta.file_deleteone($1);', [fileId]);
-        if (fileInBucket === true) {
-          await this.client.removeObject(this.fileStorageConfig.bucket, fileName);
-        }
+        await this.deleteObjects(filePrefix);
       });
     } catch (e) {
       this.logger.warn('deleteFile.error', `Failed to delete file '${fileName}'.`, e);
       // I don't care => File will be deleted by a cleanup-script some time
       return;
     }
+  }
+
+  private deleteObjects(filePrefix) {
+    return new Promise((resolve, reject) => {
+      const objectsList = [];
+
+      // List all object paths in bucket my-bucketname.
+      // Cast this to any because minio returntype of listObjects is broken
+      const objectsStream: any = this.client.listObjects(this.fileStorageConfig.bucket, filePrefix, true);
+
+      objectsStream.on('data', (obj) => {
+        objectsList.push(obj.name);
+      });
+
+      objectsStream.on('error', (err) => {
+        reject(err);
+      });
+
+      objectsStream.on('end', async () => {
+        try {
+          await this.client.removeObjects(this.fileStorageConfig.bucket, objectsList);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
   }
 
   private getResolvers() {
@@ -185,43 +206,94 @@ export class FileStorage {
 
         const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
         const fileId = result.rows[0].fileId;
-        const fileName = fileId + '.' + extension;
+        const fileName = `${fileId}_${type}.${extension}`;
+        const uploadFileName = `${fileId}_${type}_upload.${extension}`;
 
-        const presignedPutUrl = await this.presignedPutObject(fileName);
+        const presignedPutUrl = await this.presignedPutObject(uploadFileName);
 
         return {
           extension,
           type,
           fileName,
+          uploadFileName,
           presignedPutUrl
         };
       },
       '@fullstack-one/file-storage/verifyFile': async (obj, args, context, info, params) => {
         const fileName = args.fileName;
-        const fileId = fileName.split('.')[0];
+        const fileNameWithoutExtension = fileName.split('.')[0].split('_');
+        const fileId = fileNameWithoutExtension[0];
+        const fileType = fileNameWithoutExtension[1];
+        const extension = fileName.split('.')[1];
+        const uploadFileName = `${fileId}_${fileType}_upload.${extension}`;
 
         const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileId]);
         const type = result.rows[0].type;
+        let stat = null;
 
-        if (this.verifiers[type] == null) {
+        if (this.verifierObjects[type] == null) {
           throw new Error(`A verifier for type '${type}' hasn't been defined.`);
         }
 
-        const ctx = {
-          client: this.client,
-          fileName,
-          bucket: this.fileStorageConfig.bucket
-        };
+        if (type !== fileType) {
+          throw new Error(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`);
+        }
 
-        await this.verifiers[type](ctx);
+        try {
+          stat = await this.client.statObject(this.fileStorageConfig.bucket, uploadFileName);
+        } catch (e) {
+          if (e.message.toLowerCase().indexOf('not found') >= 0) {
+            throw new Error('Please upload a file before verifying.');
+          }
+          throw e;
+        }
+
+        const verifyFileName = `${fileId}_temp_${Date.now()}_${Math.round(Math.random() * 100000000000)}.${extension}`;
+
+        const verifyCopyConditions = new Minio.CopyConditions();
+        verifyCopyConditions.setMatchETag(stat.etag);
+
+        await this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName,
+        `/${this.fileStorageConfig.bucket}/${uploadFileName}`, verifyCopyConditions);
+
+        await this.verifierObjects[type].verify(verifyFileName, fileId, fileType, extension);
 
         await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
 
-        const presignedGetUrl = await this.presignedGetObject(fileName);
+        // Try to clean up temp objects. However, don't care if it fails.
+        try {
+          await this.client.removeObjects(this.fileStorageConfig.bucket, [uploadFileName, verifyFileName]);
+        } catch (err) {
+          this.logger.warn('verifyFile.removeObjectsFail', err);
+        }
+
+        const objectNames = this.verifierObjects[fileType].getObjectNames(fileId, fileType, extension);
+
+        const objects = objectNames.map((object) => {
+          return {
+            objectName: object.objectName,
+            info: object.info,
+            presignedGetUrlPromise: this.presignedGetObject(object.objectName)
+          };
+        });
+
+        const bucketObjects = [];
+
+        for (const object of objects) {
+          try {
+            bucketObjects.push({
+              objectName: object.objectName,
+              info: object.info,
+              presignedGetUrl: await object.presignedGetUrlPromise
+            });
+          } catch (err) {
+            this.logger.warn('readFiles.signFail.promise', err);
+          }
+        }
 
         return {
           fileName,
-          presignedGetUrl
+          objects: bucketObjects
         };
       },
       '@fullstack-one/file-storage/clearUpFiles': async (obj, args, context, info, params) => {
@@ -234,7 +306,7 @@ export class FileStorage {
           result = await this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearup();');
         }
 
-        const filesDeleted = result.rows.map(row => `${row.id}.${row.extension}`);
+        const filesDeleted = result.rows.map(row => `${row.id}_${row.type}.${row.extension}`);
 
         filesDeleted.forEach((fileName) => {
           this.deleteFile(fileName, context);
@@ -253,9 +325,25 @@ export class FileStorage {
 
         for (const fileName of data) {
           try {
+            const splittedFileName = fileName.split('.');
+            const fileNameWithoutExtension = splittedFileName[0].split('_');
+            const fileId = fileNameWithoutExtension[0];
+            const fileType = fileNameWithoutExtension[1];
+            const extension = splittedFileName[1];
+
+            const objectNames = this.verifierObjects[fileType].getObjectNames(fileId, fileType, extension);
+
+            const objects = objectNames.map((object) => {
+              return {
+                objectName: object.objectName,
+                presignedGetUrlPromise: this.presignedGetObject(object.objectName),
+                info: object.info
+              };
+            });
+
             awaitingFileSignatures.push({
               fileName,
-              presignedGetUrlPromise: this.presignedGetObject(fileName)
+              objects
             });
           } catch (err) {
             // Errors can be ignored => Failed Signs are not returned
@@ -267,11 +355,24 @@ export class FileStorage {
 
         for (const fileObject of awaitingFileSignatures) {
           try {
-            const presignedGetUrl = await fileObject.presignedGetUrlPromise;
+            const objects = [];
+            // const presignedGetUrl = await fileObject.presignedGetUrlPromise;
             const fileName = fileObject.fileName;
+            for (const object of fileObject.objects) {
+              try {
+                objects.push({
+                  objectName: object.objectName,
+                  info: object.info,
+                  presignedGetUrl: await object.presignedGetUrlPromise
+                });
+              } catch (err) {
+                this.logger.warn('readFiles.signFail.promise', err);
+              }
+            }
+
             results.push({
               fileName,
-              presignedGetUrl
+              objects
             });
           } catch (err) {
             // Errors can be ignored => Failed Signs are not returned
@@ -284,43 +385,3 @@ export class FileStorage {
     };
   }
 }
-
-/*
-const Minio = require('minio')
-
-var client = new Minio.Client({
-    endPoint: 'play.minio.io',
-    port: 9000,
-    secure: true,
-    accessKey: 'Q3AM3UQ867SPQQA43P2F',
-    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
-})
-
-// express is a small HTTP server wrapper, but this works with any HTTP server
-const server = require('express')()
-
-server.get('/presignedUrl', (req, res) => {
-    client.presignedPutObject('bauhaus', req.query.name, (err, url) => {
-        if (err) throw err
-        res.end(url)
-    })
-})
-
-server.get('/presignedGetUrl', (req, res) => {
-    client.presignedGetObject('bauhaus', req.query.name, 24*60*60, (err, url) => {
-        if (err) throw err
-        res.end(url)
-    })
-})
-
-server.get('/image/:name', (req, res) => {
-    client.presignedGetObject('bauhaus', req.params.name, 4*60, (err, url) => {
-        if (err) throw err
-        res.redirect(url)
-    })
-})
-
-server.get('/', (req, res) => {
-    res.sendFile(__dirname + '/test.html');
-})
-*/

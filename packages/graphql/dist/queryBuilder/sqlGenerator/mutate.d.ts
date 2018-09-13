@@ -7,7 +7,7 @@ export declare class MutationBuilder {
         mutation: any;
         id: any;
     };
-    private resolveCreateMutation(query, mutation);
-    private resolveUpdateMutation(query, mutation);
-    private resolveDeleteMutation(query, mutation);
+    private resolveCreateMutation;
+    private resolveUpdateMutation;
+    private resolveDeleteMutation;
 }

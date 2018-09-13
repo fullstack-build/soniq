@@ -70,7 +70,6 @@ let Email = class Email {
                 });
             }
             else {
-                console.log(this.CONFIG.transport);
                 if (this.CONFIG.transport && this.CONFIG.transport.smtp) {
                     this.createTransport(this.CONFIG.transport.smtp);
                 }
