@@ -8,18 +8,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-function defaultVerifier(ctx) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const stat = yield ctx.client.statObject(ctx.bucket, ctx.verifyFileName);
-            return stat.etag;
-        }
-        catch (e) {
-            if (e.message.toLowerCase().indexOf('not found') >= 0) {
-                throw new Error('Please upload a file before verifying.');
+const Minio = require("minio");
+const Verifier_1 = require("./Verifier");
+class DefaultVerifier extends Verifier_1.Verifier {
+    verify(verifyFileName, id, type, extension) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const stat = yield this.client.statObject(this.bucket, verifyFileName);
+                const copyConditions = new Minio.CopyConditions();
+                copyConditions.setMatchETag(stat.etag);
+                const fileName = `${id}_${type}.${extension}`;
+                yield this.client.copyObject(this.bucket, fileName, `/${this.bucket}/${verifyFileName}`, copyConditions);
             }
-            throw e;
-        }
-    });
+            catch (e) {
+                if (e.message.toLowerCase().indexOf('not found') >= 0) {
+                    throw new Error('Please upload a file before verifying.');
+                }
+                throw e;
+            }
+        });
+    }
+    getObjectNames(id, type, extension) {
+        return [{
+                objectName: `${id}_${type}.${extension}`,
+                info: 'default'
+            }];
+    }
 }
-exports.defaultVerifier = defaultVerifier;
+exports.DefaultVerifier = DefaultVerifier;

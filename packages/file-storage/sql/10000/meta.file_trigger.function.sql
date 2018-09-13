@@ -2,10 +2,16 @@
 CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
     function validateFile(fileName, entityId, types) {
-    	if (fileName == null || fileName.length < 38 || fileName[36] !== '.') {
+    	if (fileName == null || fileName.length < 39) {
     		throw new Error('Invalid fileName.');
     	}
-        var fileId = fileName.split('.')[0];
+        try {
+            var fileNameWithoutExtension = fileName.split('.')[0].split('_');
+            var fileId = fileNameWithoutExtension[0];
+            var fileType = fileNameWithoutExtension[1];
+        } catch (e) {
+            throw new Error('Invalid fileName.');
+        }
         var uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         
         if (uuidRegex.test(fileId) !== true) {
@@ -21,10 +27,16 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
     }
 
     function invalidateFile(fileName, entityId) {
-    	if (fileName == null || fileName.length < 38 || fileName[36] !== '.') {
+    	if (fileName == null || fileName.length < 39) {
     		throw new Error('Invalid fileName.');
     	}
-        var fileId = fileName.split('.')[0];
+        try {
+            var fileNameWithoutExtension = fileName.split('.')[0].split('_');
+            var fileId = fileNameWithoutExtension[0];
+            var fileType = fileNameWithoutExtension[1];
+        } catch (e) {
+            throw new Error('Invalid fileName.');
+        }
         var uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         
         if (uuidRegex.test(fileId) !== true) {
