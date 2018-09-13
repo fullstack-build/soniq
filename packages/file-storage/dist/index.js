@@ -39,6 +39,8 @@ const Verifier_1 = require("./Verifier");
 exports.Verifier = Verifier_1.Verifier;
 const DefaultVerifier_1 = require("./DefaultVerifier");
 exports.DefaultVerifier = DefaultVerifier_1.DefaultVerifier;
+const FileName_1 = require("./FileName");
+exports.FileName = FileName_1.FileName;
 const fs = require("fs");
 // extend migrations
 require("./migrationExtension");
@@ -66,6 +68,11 @@ let FileStorage = class FileStorage {
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     addVerifier(type, fn) {
+        const regex = '^[_a-zA-Z][_a-zA-Z0-9]{3,30}$';
+        const regexp = new RegExp(regex);
+        if (regexp.test(type) !== true) {
+            throw new Error(`The type '${type}' has to match RegExp '${regex}'.`);
+        }
         if (this.verifiers[type] == null) {
             this.verifiers[type] = fn;
         }
@@ -98,7 +105,8 @@ let FileStorage = class FileStorage {
                 const entityId = info.entityId;
                 const result = yield this.auth.adminQuery('SELECT * FROM _meta.file_todelete_by_entity($1);', [entityId]);
                 result.rows.forEach((row) => {
-                    this.deleteFileAsAdmin(`${row.id}_${row.type}.${row.extension}`);
+                    const fileName = new FileName_1.FileName(row);
+                    this.deleteFileAsAdmin(fileName.name);
                 });
             }
             catch (e) {
@@ -116,38 +124,34 @@ let FileStorage = class FileStorage {
             return yield this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
         });
     }
-    deleteFileAsAdmin(fileName) {
+    deleteFileAsAdmin(fName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 yield this.auth.adminTransaction((client) => __awaiter(this, void 0, void 0, function* () {
-                    const filePrefix = fileName.split('.')[0];
-                    const fileId = filePrefix.split('_')[0];
-                    const result = yield client.query('SELECT * FROM _meta.file_deleteone_admin($1);', [fileId]);
+                    const result = yield client.query('SELECT * FROM _meta.file_deleteone_admin($1);', [fName.id]);
                     if (result.rows.length < 1) {
                         throw new Error("Failed to delete file 'fileId' from db.");
                     }
-                    yield this.deleteObjects(filePrefix);
+                    yield this.deleteObjects(fName.prefix);
                 }));
             }
             catch (e) {
-                this.logger.warn('deleteFileAsAdmin.error', `Failed to delete file '${fileName}'.`, e);
+                this.logger.warn('deleteFileAsAdmin.error', `Failed to delete file '${fName.name}'.`, e);
                 // I don't care => File will be deleted by a cleanup-script some time
                 return;
             }
         });
     }
-    deleteFile(fileName, context) {
+    deleteFile(fName, context) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 yield this.auth.userTransaction(context.accessToken, (client) => __awaiter(this, void 0, void 0, function* () {
-                    const filePrefix = fileName.split('.')[0];
-                    const fileId = filePrefix.split('_')[0];
-                    yield client.query('SELECT * FROM _meta.file_deleteone($1);', [fileId]);
-                    yield this.deleteObjects(filePrefix);
+                    yield client.query('SELECT * FROM _meta.file_deleteone($1);', [fName.id]);
+                    yield this.deleteObjects(fName.prefix);
                 }));
             }
             catch (e) {
-                this.logger.warn('deleteFile.error', `Failed to delete file '${fileName}'.`, e);
+                this.logger.warn('deleteFile.error', `Failed to delete file '${fName.name}'.`, e);
                 // I don't care => File will be deleted by a cleanup-script some time
                 return;
             }
@@ -185,36 +189,33 @@ let FileStorage = class FileStorage {
                     throw new Error(`A verifier for type '${type}' hasn't been defined.`);
                 }
                 const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
-                const fileId = result.rows[0].fileId;
-                const fileName = `${fileId}_${type}.${extension}`;
-                const uploadFileName = `${fileId}_${type}_upload.${extension}`;
-                const presignedPutUrl = yield this.presignedPutObject(uploadFileName);
+                const fName = new FileName_1.FileName({
+                    id: result.rows[0].fileId,
+                    type,
+                    extension
+                });
+                const presignedPutUrl = yield this.presignedPutObject(fName.uploadName);
                 return {
                     extension,
                     type,
-                    fileName,
-                    uploadFileName,
+                    fileName: fName.name,
+                    uploadFileName: fName.uploadName,
                     presignedPutUrl
                 };
             }),
             '@fullstack-one/file-storage/verifyFile': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
-                const fileName = args.fileName;
-                const fileNameWithoutExtension = fileName.split('.')[0].split('_');
-                const fileId = fileNameWithoutExtension[0];
-                const fileType = fileNameWithoutExtension[1];
-                const extension = fileName.split('.')[1];
-                const uploadFileName = `${fileId}_${fileType}_upload.${extension}`;
-                const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileId]);
+                const fName = new FileName_1.FileName(args.fileName);
+                const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
                 const type = result.rows[0].type;
                 let stat = null;
                 if (this.verifierObjects[type] == null) {
                     throw new Error(`A verifier for type '${type}' hasn't been defined.`);
                 }
-                if (type !== fileType) {
+                if (type !== fName.type) {
                     throw new Error(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`);
                 }
                 try {
-                    stat = yield this.client.statObject(this.fileStorageConfig.bucket, uploadFileName);
+                    stat = yield this.client.statObject(this.fileStorageConfig.bucket, fName.uploadName);
                 }
                 catch (e) {
                     if (e.message.toLowerCase().indexOf('not found') >= 0) {
@@ -222,20 +223,20 @@ let FileStorage = class FileStorage {
                     }
                     throw e;
                 }
-                const verifyFileName = `${fileId}_temp_${Date.now()}_${Math.round(Math.random() * 100000000000)}.${extension}`;
+                const verifyFileName = fName.createTempName();
                 const verifyCopyConditions = new Minio.CopyConditions();
                 verifyCopyConditions.setMatchETag(stat.etag);
-                yield this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName, `/${this.fileStorageConfig.bucket}/${uploadFileName}`, verifyCopyConditions);
-                yield this.verifierObjects[type].verify(verifyFileName, fileId, fileType, extension);
-                yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fileId]);
+                yield this.client.copyObject(this.fileStorageConfig.bucket, verifyFileName, `/${this.fileStorageConfig.bucket}/${fName.uploadName}`, verifyCopyConditions);
+                yield this.verifierObjects[type].verify(verifyFileName, fName);
+                yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_verify($1);', [fName.id]);
                 // Try to clean up temp objects. However, don't care if it fails.
                 try {
-                    yield this.client.removeObjects(this.fileStorageConfig.bucket, [uploadFileName, verifyFileName]);
+                    yield this.client.removeObjects(this.fileStorageConfig.bucket, [fName.uploadName, verifyFileName]);
                 }
                 catch (err) {
                     this.logger.warn('verifyFile.removeObjectsFail', err);
                 }
-                const objectNames = this.verifierObjects[fileType].getObjectNames(fileId, fileType, extension);
+                const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
                 const objects = objectNames.map((object) => {
                     return {
                         objectName: object.objectName,
@@ -257,24 +258,24 @@ let FileStorage = class FileStorage {
                     }
                 }
                 return {
-                    fileName,
+                    fileName: fName.name,
                     objects: bucketObjects
                 };
             }),
             '@fullstack-one/file-storage/clearUpFiles': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 let result;
                 if (args.fileName != null) {
-                    const fileId = args.fileName.split('.')[0];
-                    result = yield this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearupone($1);', [fileId]);
+                    const fName = new FileName_1.FileName(args.fieldName);
+                    result = yield this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearupone($1);', [fName.id]);
                 }
                 else {
                     result = yield this.auth.userQuery(context.accessToken, 'SELECT * FROM _meta.file_clearup();');
                 }
-                const filesDeleted = result.rows.map(row => `${row.id}_${row.type}.${row.extension}`);
-                filesDeleted.forEach((fileName) => {
-                    this.deleteFile(fileName, context);
+                const filesDeleted = result.rows.map(row => new FileName_1.FileName(row));
+                filesDeleted.forEach((fName) => {
+                    this.deleteFile(fName, context);
                 });
-                return filesDeleted;
+                return filesDeleted.map(fName => fName.name);
             }),
             '@fullstack-one/file-storage/readFiles': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 const awaitingFileSignatures = [];
@@ -284,12 +285,8 @@ let FileStorage = class FileStorage {
                 const data = obj[info.fieldName];
                 for (const fileName of data) {
                     try {
-                        const splittedFileName = fileName.split('.');
-                        const fileNameWithoutExtension = splittedFileName[0].split('_');
-                        const fileId = fileNameWithoutExtension[0];
-                        const fileType = fileNameWithoutExtension[1];
-                        const extension = splittedFileName[1];
-                        const objectNames = this.verifierObjects[fileType].getObjectNames(fileId, fileType, extension);
+                        const fName = new FileName_1.FileName(fileName);
+                        const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
                         const objects = objectNames.map((object) => {
                             return {
                                 objectName: object.objectName,

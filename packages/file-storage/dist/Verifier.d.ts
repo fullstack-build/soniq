@@ -1,4 +1,5 @@
 import { Client } from 'minio';
+import { FileName } from './FileName';
 export interface IBucketObject {
     objectName: string;
     info: string;
@@ -7,6 +8,6 @@ export declare class Verifier {
     client: Client;
     bucket: string;
     constructor(client: Client, bucket: string);
-    verify(verifyFileName: string, id: string, type: string, extension: string): Promise<void>;
-    getObjectNames(id: string, type: string, extension: string): IBucketObject[];
+    verify(verifyFileName: string, fName: FileName): Promise<void>;
+    getObjectNames(fName: FileName): IBucketObject[];
 }

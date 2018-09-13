@@ -13,16 +13,16 @@ class Verifier {
         this.client = client;
         this.bucket = bucket;
     }
-    verify(verifyFileName, id, type, extension) {
+    verify(verifyFileName, fName) {
         return __awaiter(this, void 0, void 0, function* () {
             // tslint:disable-next-line:quotemark
-            throw new Error(`Please implement the 'verify(verifyFileName, id, type, extension)' method when extending class Verifier.`);
+            throw new Error(`Please implement the 'verify(verifyFileName: string, fName: FileName)' method when extending class Verifier.`);
         });
     }
     // Returns a
-    getObjectNames(id, type, extension) {
+    getObjectNames(fName) {
         // tslint:disable-next-line:quotemark
-        throw new Error(`Please implement the 'getObjectNames(id, type, extension)' method when extending class Verifier.`);
+        throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class Verifier.`);
     }
 }
 exports.Verifier = Verifier;

@@ -33,7 +33,12 @@ function getParser() {
             const { defaultFieldCreator, localTable } = ctx;
             const params = directives.files.params || {};
             const types = directives.files.types || ['DEFAULT'];
+            const regex = '^[_a-zA-Z][_a-zA-Z0-9]{3,30}$';
+            const regexp = new RegExp(regex);
             types.forEach((type) => {
+                if (regexp.test(type) !== true) {
+                    throw new Error(`The type '${type}' has to match RegExp '${regex}'. Have a look at ${ctx.table.gqlTypeName}.${ctx.fieldName}`);
+                }
                 typesObject[type] = true;
             });
             const columnExpression = `"${localTable}"."${fieldName}"`;

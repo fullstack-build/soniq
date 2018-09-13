@@ -11,14 +11,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Minio = require("minio");
 const Verifier_1 = require("./Verifier");
 class DefaultVerifier extends Verifier_1.Verifier {
-    verify(verifyFileName, id, type, extension) {
+    verify(verifyFileName, fName) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const stat = yield this.client.statObject(this.bucket, verifyFileName);
                 const copyConditions = new Minio.CopyConditions();
                 copyConditions.setMatchETag(stat.etag);
-                const fileName = `${id}_${type}.${extension}`;
-                yield this.client.copyObject(this.bucket, fileName, `/${this.bucket}/${verifyFileName}`, copyConditions);
+                yield this.client.copyObject(this.bucket, fName.name, `/${this.bucket}/${verifyFileName}`, copyConditions);
             }
             catch (e) {
                 if (e.message.toLowerCase().indexOf('not found') >= 0) {
@@ -28,9 +27,9 @@ class DefaultVerifier extends Verifier_1.Verifier {
             }
         });
     }
-    getObjectNames(id, type, extension) {
+    getObjectNames(fName) {
         return [{
-                objectName: `${id}_${type}.${extension}`,
+                objectName: fName.name,
                 info: 'default'
             }];
     }
