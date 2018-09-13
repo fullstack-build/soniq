@@ -54,7 +54,7 @@ export class EventEmitter implements IEventEmitter {
     this.dbClient = Container.get(DbAppClient);
     await this.finishInitialisation();
 
-    // set listeners that were cached during booting
+    // set listeners that were cached during booting, clean cache afterwards
     Object.entries(this.listenersCache).forEach((listenerEntry) => {
       const eventName     = listenerEntry[0];
       const eventListeners = listenerEntry[1];
@@ -62,7 +62,9 @@ export class EventEmitter implements IEventEmitter {
         this.on(eventName, listener);
       });
     });
-    // fire events that were cached during booting
+    this.listenersCache = {};
+
+    // fire events that were cached during booting, clean cache afterwards
     Object.entries(this.emittersCache).forEach((emitterEntry) => {
       const eventName     = emitterEntry[0];
       const eventEmitters = emitterEntry[1];
@@ -70,6 +72,7 @@ export class EventEmitter implements IEventEmitter {
         this.emit(eventName, emitter.instanceId, ...emitter.args);
       });
     });
+    this.emittersCache = {};
   }
 
   public emit(eventName: string, ...args: any[]): void {

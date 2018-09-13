@@ -52,7 +52,7 @@ let EventEmitter = class EventEmitter {
             });
             this.dbClient = di_1.Container.get(db_1.DbAppClient);
             yield this.finishInitialisation();
-            // set listeners that were cached during booting
+            // set listeners that were cached during booting, clean cache afterwards
             Object.entries(this.listenersCache).forEach((listenerEntry) => {
                 const eventName = listenerEntry[0];
                 const eventListeners = listenerEntry[1];
@@ -60,7 +60,8 @@ let EventEmitter = class EventEmitter {
                     this.on(eventName, listener);
                 });
             });
-            // fire events that were cached during booting
+            this.listenersCache = {};
+            // fire events that were cached during booting, clean cache afterwards
             Object.entries(this.emittersCache).forEach((emitterEntry) => {
                 const eventName = emitterEntry[0];
                 const eventEmitters = emitterEntry[1];
@@ -68,6 +69,7 @@ let EventEmitter = class EventEmitter {
                     this.emit(eventName, emitter.instanceId, ...emitter.args);
                 });
             });
+            this.emittersCache = {};
         });
     }
     emit(eventName, ...args) {
