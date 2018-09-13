@@ -32,30 +32,16 @@ const exitHook = require("async-exit-hook");
 const terminus = require("@godaddy/terminus");
 let GracefulShutdown = class GracefulShutdown {
     constructor(eventEmitter, loggerFactory, bootLoader, dbAppClient, dbPoolObj, config) {
+        this.loggerFactory = loggerFactory;
         this.eventEmitter = eventEmitter;
         this.dbAppClient = dbAppClient;
         this.dbPoolObj = dbPoolObj;
-        this.logger = loggerFactory.create('GracefulShutdown');
-        // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         bootLoader.addBootFunction(this.boot.bind(this));
     }
-    disconnectDB() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                // end setup pgClient and pool
-                yield Promise.all([
-                    this.dbAppClient.end(),
-                    this.dbPoolObj.end()
-                ]);
-                return true;
-            }
-            catch (err) {
-                throw err;
-            }
-        });
-    }
     boot() {
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        // get settings from DI container
+        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         terminus(di_1.Container.get(server_1.Server).getServer(), {
             // healtcheck options
             healthChecks: {
@@ -88,6 +74,21 @@ let GracefulShutdown = class GracefulShutdown {
                 throw err;
             }
         }));
+    }
+    disconnectDB() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // end setup pgClient and pool
+                yield Promise.all([
+                    this.dbAppClient.end(),
+                    this.dbPoolObj.end()
+                ]);
+                return true;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
     }
     emit(eventName, ...args) {
         // add namespace

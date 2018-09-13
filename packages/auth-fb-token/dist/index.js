@@ -34,8 +34,8 @@ let AuthFbToken = class AuthFbToken {
     constructor(auth, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         // register package config
         config.addConfigFolder(__dirname + '/../config');
-        this.logger = loggerFactory.create('AuthFbToken');
         // DI
+        this.loggerFactory = loggerFactory;
         this.auth = auth;
         this.config = config;
         // add to boot loader
@@ -45,6 +45,7 @@ let AuthFbToken = class AuthFbToken {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
             this.authFbTokenConfig = this.config.getConfig('authFbToken');
             this.fbHelper = new fbHelper_1.FbHelper(this.authFbTokenConfig, this.logger);
             return;

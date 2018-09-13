@@ -37,30 +37,13 @@ let DbAppClient = class DbAppClient {
         this.config.addConfigFolder(__dirname + '/../config');
         // set DI dependencies
         this.eventEmitter = eventEmitter;
-        this.logger = loggerFactory.create('DbAppClient');
+        this.loggerFactory = loggerFactory;
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
-    end() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.logger.trace('Postgres connection ending initiated');
-            this.eventEmitter.emit('db.application.pgClient.end.start', this.applicationName);
-            try {
-                const clientEndResult = yield this.pgClient.end();
-                this.logger.trace('Postgres connection ended successfully');
-                // can only be caught locally (=> db connection ended)
-                this.eventEmitter.emit('db.application.pgClient.end.success', this.applicationName);
-                return clientEndResult;
-            }
-            catch (err) {
-                this.logger.warn('Postgres connection ended with an error', err);
-                this.eventEmitter.emit('db.application.pgClient.end.error', this.applicationName, err);
-                throw err;
-            }
-        });
-    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
             // get settings from DI container
             this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
             const configDB = this.config.getConfig('db');
@@ -95,6 +78,24 @@ let DbAppClient = class DbAppClient {
                 throw err;
             }
             return this.pgClient;
+        });
+    }
+    end() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logger.trace('Postgres connection ending initiated');
+            this.eventEmitter.emit('db.application.pgClient.end.start', this.applicationName);
+            try {
+                const clientEndResult = yield this.pgClient.end();
+                this.logger.trace('Postgres connection ended successfully');
+                // can only be caught locally (=> db connection ended)
+                this.eventEmitter.emit('db.application.pgClient.end.success', this.applicationName);
+                return clientEndResult;
+            }
+            catch (err) {
+                this.logger.warn('Postgres connection ended with an error', err);
+                this.eventEmitter.emit('db.application.pgClient.end.error', this.applicationName, err);
+                throw err;
+            }
         });
     }
     updateNodeIdsFromDb() {

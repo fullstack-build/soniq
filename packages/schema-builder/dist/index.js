@@ -58,56 +58,23 @@ var createSqlObjFromMigrationObject_1 = require("./db-schema-builder/toPg/create
 exports.registerColumnMigrationExtension = createSqlObjFromMigrationObject_1.registerColumnMigrationExtension;
 exports.registerTableMigrationExtension = createSqlObjFromMigrationObject_1.registerTableMigrationExtension;
 let SchemaBuilder = class SchemaBuilder {
-    constructor(loggerFactory, config, bootLoader, dbSchemaBuilder, pgToDbMeta) {
+    constructor(config, loggerFactory, bootLoader, dbSchemaBuilder, pgToDbMeta) {
         this.gqlSdlExtensions = [];
         this.extensions = [];
-        // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        this.loggerFactory = loggerFactory;
         this.dbSchemaBuilder = dbSchemaBuilder;
         this.pgToDbMeta = pgToDbMeta;
-        this.logger = loggerFactory.create('SchemaBuilder');
-        this.graphQlConfig = config.getConfig('graphql');
-        this.ENVIRONMENT = config.ENVIRONMENT;
+        this.config = config;
+        // register package config
+        this.config.addConfigFolder(__dirname + '/../config');
         bootLoader.addBootFunction(this.boot.bind(this));
         this.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
     }
-    getDbSchemaBuilder() {
-        return this.dbSchemaBuilder;
-    }
-    getPgDbMeta() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.pgToDbMeta.getPgDbMeta();
-        });
-    }
-    addExtension(extension) {
-        this.extensions.push(extension);
-    }
-    getDbMeta() {
-        return this.dbMeta;
-    }
-    extendSchema(schema) {
-        this.gqlSdlExtensions.push(schema);
-    }
-    getGQlRuntimeObject() {
-        return {
-            dbMeta: this.dbMeta,
-            gqlRuntimeDocument: this.gqlRuntimeDocument,
-            resolverMeta: this.resolverMeta
-        };
-    }
-    getGQlSdl() {
-        // return copy instead of ref
-        return Object.assign({}, this.gQlSdl);
-    }
-    getGQlAst() {
-        // return copy instead of ref
-        return Object.assign({}, this.gQlAst);
-    }
-    print(document) {
-        return graphql_1.print(document);
-    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
+            this.graphQlConfig = this.config.getConfig('graphql');
+            this.ENVIRONMENT = this.config.ENVIRONMENT;
             try {
                 // load schema
                 const gQlSdlPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
@@ -162,11 +129,46 @@ let SchemaBuilder = class SchemaBuilder {
             }
         });
     }
+    getDbSchemaBuilder() {
+        return this.dbSchemaBuilder;
+    }
+    getPgDbMeta() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.pgToDbMeta.getPgDbMeta();
+        });
+    }
+    addExtension(extension) {
+        this.extensions.push(extension);
+    }
+    getDbMeta() {
+        return this.dbMeta;
+    }
+    extendSchema(schema) {
+        this.gqlSdlExtensions.push(schema);
+    }
+    getGQlRuntimeObject() {
+        return {
+            dbMeta: this.dbMeta,
+            gqlRuntimeDocument: this.gqlRuntimeDocument,
+            resolverMeta: this.resolverMeta
+        };
+    }
+    getGQlSdl() {
+        // return copy instead of ref
+        return Object.assign({}, this.gQlSdl);
+    }
+    getGQlAst() {
+        // return copy instead of ref
+        return Object.assign({}, this.gQlAst);
+    }
+    print(document) {
+        return graphql_1.print(document);
+    }
 };
 SchemaBuilder = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject(type => config_1.Config)),
+    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
     __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
     __param(3, di_1.Inject(type => db_schema_builder_1.DbSchemaBuilder)),
     __param(4, di_1.Inject(type => pgToDbMeta_1.PgToDbMeta)),

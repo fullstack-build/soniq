@@ -16,29 +16,48 @@ export class Server {
   private server: http.Server;
   private app: Koa;
 
-  private ENVIRONMENT: IEnvironment;
+  private config: Config;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
+  private ENVIRONMENT: IEnvironment;
   // private eventEmitter: EventEmitter;
 
   constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => Config) config?,
-    @Inject(tpye => BootLoader) bootLoader?) {
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => Config) config,
+    @Inject(tpye => BootLoader) bootLoader) {
+    this.config = config;
+    this.loggerFactory = loggerFactory;
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
-    // this.eventEmitter = eventEmitter;
-    this.logger = loggerFactory.create('Server');
-
-    // get settings from DI container
-    this.serverConfig = config.getConfig('server');
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
-
     this.bootKoa();
     bootLoader.addBootFunction(this.boot.bind(this));
 
+  }
+
+  private async boot(): Promise<void> {
+    // this.eventEmitter = eventEmitter;
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    // get settings from DI container
+    this.serverConfig = this.config.getConfig('server');
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+
+    try {
+      // start KOA on PORT
+      this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
+
+      // emit event
+      this.emit('server.up', this.serverConfig.port);
+      // success log
+      this.logger.info('Server listening on port', this.serverConfig.port);
+    } catch (e) {
+      // tslint:disable-next-line:no-console
+      console.error(e);
+    }
   }
 
   public getApp() {
@@ -52,21 +71,6 @@ export class Server {
   private async bootKoa(): Promise<void> {
     try {
       this.app = new Koa();
-    } catch (e) {
-      // tslint:disable-next-line:no-console
-      console.error(e);
-    }
-  }
-
-  private async boot(): Promise<void> {
-    try {
-      // start KOA on PORT
-      this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
-
-      // emit event
-      this.emit('server.up', this.serverConfig.port);
-      // success log
-      this.logger.info('Server listening on port', this.serverConfig.port);
     } catch (e) {
       // tslint:disable-next-line:no-console
       console.error(e);

@@ -22,7 +22,8 @@ let LoggerFactory = class LoggerFactory {
         this.config = config;
     }
     create(moduleName) {
-        return new Logger_1.Logger(moduleName, this.config.getConfig('logger'));
+        const env = di_1.Container.get('ENVIRONMENT');
+        return new Logger_1.Logger(moduleName, this.config.getConfig('logger'), env);
     }
 };
 LoggerFactory = __decorate([

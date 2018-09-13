@@ -55,12 +55,11 @@ let GraphQl = class GraphQl {
         };
         // register package config
         config.addConfigFolder(`${__dirname}/../config`);
+        this.loggerFactory = loggerFactory;
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
         this.schemaBuilder = schemaBuilder;
-        this.logger = loggerFactory.create('GraphQl');
-        this.ENVIRONMENT = config.ENVIRONMENT;
         let extendSchema = '';
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
             if (operator.extendSchema != null) {
@@ -73,44 +72,10 @@ let GraphQl = class GraphQl {
         // add boot function to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
-    addPreQueryHook(fn) {
-        this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
-        this.hooks.preQuery.push(fn);
-    }
-    addHook(name, fn) {
-        if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
-            throw new Error(`The hook '${name}' does not exist.`);
-        }
-        this.hooks[name].push(fn);
-    }
-    addResolvers(resolversObject) {
-        this.resolvers = Object.assign(this.resolvers, resolversObject);
-    }
-    prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
-        gqlRuntimeDocument.definitions.push(getOperatorsDefinition_1.getOperatorsDefinition(compareOperators_1.operatorsObject));
-        this.addResolvers(resolvers_2.getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
-        this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
-        return this.schemaBuilder.print(gqlRuntimeDocument);
-    }
-    getApolloClient(accessToken = null, ctx = {}) {
-        if (this.apolloSchema == null) {
-            throw new Error('Please call getApolloClient after everything booted.');
-        }
-        if (accessToken != null) {
-            return new apollo_client_1.ApolloClient({
-                ssrMode: true,
-                cache: new apollo_cache_inmemory_1.InMemoryCache(),
-                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
-                        ctx,
-                        accessToken
-                    }
-                })
-            });
-        }
-        return this.apolloClient;
-    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
+            this.ENVIRONMENT = this.config.ENVIRONMENT;
             // read config after boot
             this.graphQlConfig = this.config.getConfig('graphql');
             const gqlKoaRouter = new KoaRouter();
@@ -190,6 +155,42 @@ let GraphQl = class GraphQl {
             app.use(gqlKoaRouter.routes());
             app.use(gqlKoaRouter.allowedMethods());
         });
+    }
+    addPreQueryHook(fn) {
+        this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
+        this.hooks.preQuery.push(fn);
+    }
+    addHook(name, fn) {
+        if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
+            throw new Error(`The hook '${name}' does not exist.`);
+        }
+        this.hooks[name].push(fn);
+    }
+    addResolvers(resolversObject) {
+        this.resolvers = Object.assign(this.resolvers, resolversObject);
+    }
+    prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
+        gqlRuntimeDocument.definitions.push(getOperatorsDefinition_1.getOperatorsDefinition(compareOperators_1.operatorsObject));
+        this.addResolvers(resolvers_2.getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger, this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
+        this.operations = getOperations_1.getOperations(gqlRuntimeDocument);
+        return this.schemaBuilder.print(gqlRuntimeDocument);
+    }
+    getApolloClient(accessToken = null, ctx = {}) {
+        if (this.apolloSchema == null) {
+            throw new Error('Please call getApolloClient after everything booted.');
+        }
+        if (accessToken != null) {
+            return new apollo_client_1.ApolloClient({
+                ssrMode: true,
+                cache: new apollo_cache_inmemory_1.InMemoryCache(),
+                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
+                        ctx,
+                        accessToken
+                    }
+                })
+            });
+        }
+        return this.apolloClient;
     }
 };
 GraphQl = __decorate([

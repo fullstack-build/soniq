@@ -38,6 +38,7 @@ export class GraphQl {
 
   // DI
   private config: Config;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
   private schemaBuilder: SchemaBuilder;
@@ -63,13 +64,11 @@ export class GraphQl {
     // register package config
     config.addConfigFolder(`${__dirname}/../config`);
 
+    this.loggerFactory = loggerFactory;
     this.config = config;
     this.dbGeneralPool = dbGeneralPool;
     this.server = server;
     this.schemaBuilder = schemaBuilder;
-    this.logger = loggerFactory.create('GraphQl');
-    this.ENVIRONMENT = config.ENVIRONMENT;
-
     let extendSchema = '';
 
     Object.values(operatorsObject).forEach((operator: any) => {
@@ -86,53 +85,10 @@ export class GraphQl {
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
-  public addPreQueryHook(fn) {
-    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
-    this.hooks.preQuery.push(fn);
-  }
-
-  public addHook(name, fn) {
-    if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
-      throw new Error(`The hook '${name}' does not exist.`);
-    }
-    this.hooks[name].push(fn);
-  }
-
-  public addResolvers(resolversObject) {
-    this.resolvers = Object.assign(this.resolvers, resolversObject);
-  }
-
-  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
-    gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
-
-    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger,
-    this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
-    this.operations = getOperations(gqlRuntimeDocument);
-
-    return this.schemaBuilder.print(gqlRuntimeDocument);
-  }
-
-  public getApolloClient(accessToken: string = null, ctx: any = {}) {
-    if (this.apolloSchema == null) {
-      throw new Error('Please call getApolloClient after everything booted.');
-    }
-
-    if (accessToken != null) {
-      return new ApolloClient({
-        ssrMode: true,
-        cache: new InMemoryCache(),
-        link: new SchemaLink({ schema: this.apolloSchema, context: {
-            ctx,
-            accessToken
-          }
-        })
-      });
-    }
-
-    return this.apolloClient;
-  }
-
   private async boot() {
+    this.logger = this.loggerFactory.create(this.constructor.name);
+    this.ENVIRONMENT = this.config.ENVIRONMENT;
+
     // read config after boot
     this.graphQlConfig = this.config.getConfig('graphql');
 
@@ -233,6 +189,52 @@ export class GraphQl {
     app.use(gqlKoaRouter.routes());
     app.use(gqlKoaRouter.allowedMethods());
 
+  }
+
+  public addPreQueryHook(fn) {
+    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
+    this.hooks.preQuery.push(fn);
+  }
+
+  public addHook(name, fn) {
+    if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
+      throw new Error(`The hook '${name}' does not exist.`);
+    }
+    this.hooks[name].push(fn);
+  }
+
+  public addResolvers(resolversObject) {
+    this.resolvers = Object.assign(this.resolvers, resolversObject);
+  }
+
+  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
+    gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
+
+    this.addResolvers(getDefaultResolvers(resolverMeta, this.hooks, dbMeta, this.dbGeneralPool, this.logger,
+    this.graphQlConfig.queryCostLimit, this.graphQlConfig.minQueryDepthToCheckCostLimit));
+    this.operations = getOperations(gqlRuntimeDocument);
+
+    return this.schemaBuilder.print(gqlRuntimeDocument);
+  }
+
+  public getApolloClient(accessToken: string = null, ctx: any = {}) {
+    if (this.apolloSchema == null) {
+      throw new Error('Please call getApolloClient after everything booted.');
+    }
+
+    if (accessToken != null) {
+      return new ApolloClient({
+        ssrMode: true,
+        cache: new InMemoryCache(),
+        link: new SchemaLink({ schema: this.apolloSchema, context: {
+            ctx,
+            accessToken
+          }
+        })
+      });
+    }
+
+    return this.apolloClient;
   }
 
 }

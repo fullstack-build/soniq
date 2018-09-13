@@ -4,13 +4,15 @@ export declare class Server {
     private serverConfig;
     private server;
     private app;
-    private ENVIRONMENT;
+    private config;
+    private loggerFactory;
     private logger;
-    constructor(loggerFactory?: any, config?: any, bootLoader?: any);
+    private ENVIRONMENT;
+    constructor(loggerFactory: any, config: any, bootLoader: any);
+    private boot;
     getApp(): any;
     getServer(): http.Server;
     private bootKoa;
-    private boot;
     private emit;
     private on;
 }

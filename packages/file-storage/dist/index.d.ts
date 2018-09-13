@@ -7,13 +7,14 @@ export declare class FileStorage {
     private server;
     private graphQl;
     private schemaBuilder;
+    private loggerFactory;
     private logger;
     private config;
     private auth;
     private verifiers;
     constructor(loggerFactory: LoggerFactory, dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any, graphQl?: any, schemaBuilder?: any, auth?: any);
-    addVerifier(type: any, fn: any): void;
     private boot();
+    addVerifier(type: any, fn: any): void;
     private postMutationHook(info, context);
     private presignedPutObject(fileName);
     private presignedGetObject(fileName);

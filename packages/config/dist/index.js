@@ -40,9 +40,8 @@ let Config = class Config {
         };
         this.configFolder = [];
         this.config = {};
-        // load package config
-        this.addConfigFolder(__dirname + '/../config');
-        // register boot function to load the projects config file
+        di_1.Container.set('CONFIG', {});
+        // register boot function
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     getConfig(pModuleName) {
@@ -62,32 +61,6 @@ let Config = class Config {
         if (!this.configFolder.includes(configPath)) {
             this.configFolder.push(configPath);
         }
-        // config files
-        const mainConfigPath = `${configPath}/default.js`;
-        const envConfigPath = `${configPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
-        // require config files
-        let config = null;
-        // require default config - fail if not found
-        try {
-            config = require(mainConfigPath);
-        }
-        catch (err) {
-            process.stderr.write('config.default.loading.error.not.found: ' + mainConfigPath + '\n');
-            process.exit();
-        }
-        // try to load env config – ignore if not found
-        try {
-            config = _.merge(config, require(envConfigPath));
-        }
-        catch (err) {
-            // ignore if not found
-        }
-        // everything seems to be fine so far -> merge with the global settings object
-        this.config = _.merge(this.config, config);
-        // put config into DI
-        di_1.Container.set('CONFIG', this.config);
-        // update ENVIRONMENT
-        this.setEnvironment();
     }
     // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
     setEnvironment() {
@@ -117,10 +90,40 @@ let Config = class Config {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            // load project config files
-            this.addConfigFolder(this.config.config.folder);
+            // load project config files (last step, to override all the others)
+            const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
+            this.addConfigFolder(projectConfigFolderPath);
+            // iterate over config folders
+            this.configFolder.forEach((configFolderPath) => {
+                // config files
+                const mainConfigPath = `${configFolderPath}/default.js`;
+                const envConfigPath = `${configFolderPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
+                // require config files
+                let config = null;
+                // require default config - fail if not found
+                try {
+                    config = require(mainConfigPath);
+                }
+                catch (err) {
+                    process.stderr.write('config.default.loading.error.not.found: ' + mainConfigPath + '\n');
+                    process.exit();
+                }
+                // try to load env config – ignore if not found
+                try {
+                    config = _.merge(config, require(envConfigPath));
+                }
+                catch (err) {
+                    // ignore if not found
+                }
+                // everything seems to be fine so far -> merge with the global settings object
+                this.config = _.merge(this.config, config);
+            });
             // copy and override config with ENVs (dot = nested object separator)
             Object.keys(process.env).map((envName) => {
+                // parse 'true' and 'false' to booleans
+                const envValue = (process.env[envName].toLocaleLowerCase() === 'true') ? true :
+                    (process.env[envName].toLocaleLowerCase() === 'false') ? false :
+                        process.env[envName];
                 // if name includes a dot it means its a nested object
                 if (envName.includes('.')) {
                     const envNameAsArray = envName.split('.');
@@ -130,13 +133,13 @@ let Config = class Config {
                             obj[key] = obj[key] || {};
                         }
                         else {
-                            obj[key] = process.env[envName];
+                            obj[key] = envValue;
                         }
                         return obj[key];
                     }, this.config);
                 }
                 else {
-                    this.config[envName] = process.env[envName];
+                    this.config[envName] = envValue;
                 }
             });
             // LAST STEP: check config for undefined settings
@@ -151,6 +154,10 @@ let Config = class Config {
             if (!!foundMissingConfig) {
                 process.exit();
             }
+            // put config into DI
+            di_1.Container.set('CONFIG', this.config);
+            // update ENVIRONMENT
+            this.setEnvironment();
         });
     }
     /* HELPER */

@@ -5,6 +5,7 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 import { DbAppClient } from '@fullstack-one/db';
 export declare class AutoMigrate {
     private ENVIRONMENT;
+    private loggerFactory;
     private logger;
     private eventEmitter;
     private schemaBuilder;

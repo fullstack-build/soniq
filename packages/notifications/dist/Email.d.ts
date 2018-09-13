@@ -4,6 +4,7 @@ export declare class Email {
     private readonly queueName;
     private config;
     private CONFIG;
+    private loggerFactory;
     private logger;
     private eventEmitter;
     private readonly queueFactory;

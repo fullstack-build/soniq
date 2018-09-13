@@ -1,19 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const di_1 = require("@fullstack-one/di");
 const DebugLogger = require("debug-logger");
 // import * as LE from 'le_node';
 const Tracer = require("tracer");
 class Logger {
-    constructor(moduleName = 'root', loggerConfig) {
+    constructor(moduleName = 'root', loggerConfig, env) {
         this.LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
         // tracer
         // any should avoid: TS2409:Return type of constructor signature must be assignable to the instance type of the class.
         this.tracerLogger = null;
         // debug
         this.debugLogger = null;
-        const env = di_1.Container.get('ENVIRONMENT');
-        // const config: any = Container.get('CONFIG');
         this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
         this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
         // setup tracer

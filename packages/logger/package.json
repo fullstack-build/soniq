@@ -20,6 +20,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@fullstack-one/boot-loader": "^0.3.45",
     "@fullstack-one/config": "^0.3.45",
     "@fullstack-one/di": "^0.3.45",
     "debug-logger": "^0.4.1",

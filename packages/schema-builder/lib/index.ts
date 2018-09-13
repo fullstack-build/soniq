@@ -58,73 +58,36 @@ export class SchemaBuilder {
   private extensions: any = [];
 
   // DI
+  private config: Config;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
 
   constructor (
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => Config) config?,
-    @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => DbSchemaBuilder) dbSchemaBuilder?,
-    @Inject(type => PgToDbMeta) pgToDbMeta?
+    @Inject(type => Config) config,
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => DbSchemaBuilder) dbSchemaBuilder,
+    @Inject(type => PgToDbMeta) pgToDbMeta
     ) {
-    // register package config
-    config.addConfigFolder(__dirname + '/../config');
-
+    this.loggerFactory = loggerFactory;
     this.dbSchemaBuilder = dbSchemaBuilder;
     this.pgToDbMeta = pgToDbMeta;
-    this.logger = loggerFactory.create('SchemaBuilder');
-    this.graphQlConfig = config.getConfig('graphql');
-    this.ENVIRONMENT = config.ENVIRONMENT;
+    this.config = config;
+
+    // register package config
+    this.config.addConfigFolder(__dirname + '/../config');
 
     bootLoader.addBootFunction(this.boot.bind(this));
 
     this.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
   }
 
-  public getDbSchemaBuilder() {
-    return this.dbSchemaBuilder;
-  }
-
-  public async getPgDbMeta(): Promise<IDbMeta> {
-    return await this.pgToDbMeta.getPgDbMeta();
-  }
-
-  public addExtension(extension) {
-    this.extensions.push(extension);
-  }
-
-  public getDbMeta() {
-    return this.dbMeta;
-  }
-
-  public extendSchema(schema: string) {
-    this.gqlSdlExtensions.push(schema);
-  }
-
-  public getGQlRuntimeObject() {
-    return {
-      dbMeta: this.dbMeta,
-      gqlRuntimeDocument: this.gqlRuntimeDocument,
-      resolverMeta: this.resolverMeta
-    };
-  }
-
-  public getGQlSdl() {
-    // return copy instead of ref
-    return { ... this.gQlSdl };
-  }
-
-  public getGQlAst() {
-    // return copy instead of ref
-    return { ... this.gQlAst };
-  }
-
-  public print(document) {
-    return print(document);
-  }
-
   private async boot(): Promise<any> {
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+    this.graphQlConfig = this.config.getConfig('graphql');
+    this.ENVIRONMENT = this.config.ENVIRONMENT;
 
     try {
 
@@ -196,6 +159,48 @@ export class SchemaBuilder {
       throw err;
     }
 
+  }
+
+  public getDbSchemaBuilder() {
+    return this.dbSchemaBuilder;
+  }
+
+  public async getPgDbMeta(): Promise<IDbMeta> {
+    return await this.pgToDbMeta.getPgDbMeta();
+  }
+
+  public addExtension(extension) {
+    this.extensions.push(extension);
+  }
+
+  public getDbMeta() {
+    return this.dbMeta;
+  }
+
+  public extendSchema(schema: string) {
+    this.gqlSdlExtensions.push(schema);
+  }
+
+  public getGQlRuntimeObject() {
+    return {
+      dbMeta: this.dbMeta,
+      gqlRuntimeDocument: this.gqlRuntimeDocument,
+      resolverMeta: this.resolverMeta
+    };
+  }
+
+  public getGQlSdl() {
+    // return copy instead of ref
+    return { ... this.gQlSdl };
+  }
+
+  public getGQlAst() {
+    // return copy instead of ref
+    return { ... this.gQlAst };
+  }
+
+  public print(document) {
+    return print(document);
   }
 
 }

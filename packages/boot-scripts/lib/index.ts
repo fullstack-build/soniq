@@ -11,23 +11,25 @@ import * as fastGlob from 'fast-glob';
 export class BootScripts {
 
   private ENVIRONMENT: IEnvironment;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
 
   constructor(
     @Inject(type => LoggerFactory) loggerFactory?,
     @Inject(tpye => BootLoader) bootLoader?) {
-
-    this.logger = loggerFactory.create('BootScripts');
-
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+    this.loggerFactory = loggerFactory;
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   // execute all boot scripts in the boot folder
   private async boot() {
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+
     // get all boot files sync
     const files: any = fastGlob.sync(`${this.ENVIRONMENT.path}/boot/*.{ts,js}`, {
       deep: true,

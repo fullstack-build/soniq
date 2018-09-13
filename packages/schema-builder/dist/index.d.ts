@@ -22,9 +22,12 @@ export declare class SchemaBuilder {
     private pgToDbMeta;
     private dbMeta;
     private extensions;
+    private config;
+    private loggerFactory;
     private logger;
     private ENVIRONMENT;
-    constructor(loggerFactory?: any, config?: any, bootLoader?: any, dbSchemaBuilder?: any, pgToDbMeta?: any);
+    constructor(config: any, loggerFactory: any, bootLoader: any, dbSchemaBuilder: any, pgToDbMeta: any);
+    private boot();
     getDbSchemaBuilder(): DbSchemaBuilder;
     getPgDbMeta(): Promise<IDbMeta>;
     addExtension(extension: any): void;
@@ -38,5 +41,4 @@ export declare class SchemaBuilder {
     getGQlSdl(): any;
     getGQlAst(): any;
     print(document: any): string;
-    private boot();
 }

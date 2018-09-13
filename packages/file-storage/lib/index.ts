@@ -32,6 +32,7 @@ export class FileStorage {
   private server: Server;
   private graphQl: GraphQl;
   private schemaBuilder: SchemaBuilder;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private config: Config;
   private auth: Auth;
@@ -50,8 +51,7 @@ export class FileStorage {
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
-    this.logger = loggerFactory.create('AutoMigrate');
-
+    this.loggerFactory = loggerFactory;
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
@@ -75,15 +75,9 @@ export class FileStorage {
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
-  public addVerifier(type, fn) {
-    if (this.verifiers[type] == null) {
-      this.verifiers[type] = fn;
-    } else {
-      throw new Error(`A verifier for type '${type}' already exists.`);
-    }
-  }
-
   private async boot() {
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
     this.fileStorageConfig = this.config.getConfig('fileStorage');
 
     this.client = new Minio.Client(this.fileStorageConfig.minio);
@@ -100,6 +94,14 @@ export class FileStorage {
 
     app.use(authRouter.routes());
     app.use(authRouter.allowedMethods());
+  }
+
+  public addVerifier(type, fn) {
+    if (this.verifiers[type] == null) {
+      this.verifiers[type] = fn;
+    } else {
+      throw new Error(`A verifier for type '${type}' already exists.`);
+    }
   }
 
   private async postMutationHook(info, context) {

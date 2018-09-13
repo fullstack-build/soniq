@@ -19,6 +19,7 @@ export class Email {
   // DI dependencies
   private config: Config;
   private CONFIG: any;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   @Inject()
   private eventEmitter: EventEmitter;
@@ -33,10 +34,9 @@ export class Email {
     @Inject(type => BootLoader) bootLoader) {
 
     // set DI dependencies
+    this.loggerFactory = loggerFactory;
     this.queueFactory = queueFactory;
     this.config = config;
-
-    this.logger = loggerFactory.create('Email');
 
     // register package config
     this.config.addConfigFolder(__dirname + '/../config');
@@ -49,6 +49,7 @@ export class Email {
   }
 
   private async boot(): Promise<void> {
+    this.logger = this.loggerFactory.create(this.constructor.name);
     this.CONFIG = this.config.getConfig('email');
 
     // create transport with settings

@@ -26,13 +26,20 @@ const di_1 = require("@fullstack-one/di");
 const logger_1 = require("@fullstack-one/logger");
 const db_1 = require("@fullstack-one/db");
 const config_1 = require("@fullstack-one/config");
+const boot_loader_1 = require("@fullstack-one/boot-loader");
 let QueueFactory = class QueueFactory {
-    constructor(loggerFactory, generalPool, config) {
+    constructor(bootLoader, loggerFactory, generalPool, config) {
         // set DI dependencies
+        this.loggerFactory = loggerFactory;
         this.generalPool = generalPool;
-        this.logger = loggerFactory.create('Queue');
         // register package config
         config.addConfigFolder(__dirname + '/../config');
+        bootLoader.addBootFunction(this.boot.bind(this));
+    }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
+        });
     }
     getQueue() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -85,9 +92,10 @@ let QueueFactory = class QueueFactory {
 };
 QueueFactory = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => db_1.DbGeneralPool)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __metadata("design:paramtypes", [Object, Object, config_1.Config])
+    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(2, di_1.Inject(type => db_1.DbGeneralPool)),
+    __param(3, di_1.Inject(type => config_1.Config)),
+    __metadata("design:paramtypes", [Object, Object, Object, config_1.Config])
 ], QueueFactory);
 exports.QueueFactory = QueueFactory;
