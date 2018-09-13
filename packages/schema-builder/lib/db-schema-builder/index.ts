@@ -23,6 +23,7 @@ export class DbSchemaBuilder {
   private dbConfig;
   private schemaBuilderConfig;
   private config;
+  private loggerFactory: LoggerFactory;
   private permissionSqlStatements: any = [];
 
   // DI
@@ -33,15 +34,23 @@ export class DbSchemaBuilder {
               @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory,
               @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
 
-    // create logger
-    this.logger = loggerFactory.create('DbSchemaBuilder');
     this.dbAppClient = dbAppClient;
-
+    this.loggerFactory = loggerFactory;
     this.config = config;
-    this.dbConfig = config.getConfig('db');
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  // boot and load all extensions
+  private async boot(): Promise<void> {
+
+    // create logger
+    this.logger = this.loggerFactory.create(this.constructor.name);
+    this.dbConfig = this.config.getConfig('db');
+
+    // load all extensions
+    require('./extensions');
   }
 
   // add paths with migration sql scripts
@@ -290,12 +299,6 @@ export class DbSchemaBuilder {
       await  dbClient.query(sql);
     }
 
-  }
-
-  // boot and load all extensions
-  private async boot(): Promise<void> {
-    // load all extensions
-    require('./extensions');
   }
 
 }

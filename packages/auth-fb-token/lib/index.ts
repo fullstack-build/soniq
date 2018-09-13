@@ -17,6 +17,7 @@ export class AuthFbToken {
   private authFbTokenConfig;
 
   // DI
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private auth: Auth;
   private config: Config;
@@ -34,9 +35,8 @@ export class AuthFbToken {
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
-    this.logger = loggerFactory.create('AuthFbToken');
-
     // DI
+    this.loggerFactory = loggerFactory;
     this.auth = auth;
     this.config = config;
 
@@ -49,6 +49,9 @@ export class AuthFbToken {
   }
 
   private async boot() {
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
     this.authFbTokenConfig = this.config.getConfig('authFbToken');
     this.fbHelper = new FbHelper(this.authFbTokenConfig, this.logger);
     return;

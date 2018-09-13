@@ -26,14 +26,15 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 const fastGlob = require("fast-glob");
 let BootScripts = class BootScripts {
     constructor(loggerFactory, bootLoader) {
-        this.logger = loggerFactory.create('BootScripts');
-        // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        this.loggerFactory = loggerFactory;
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     // execute all boot scripts in the boot folder
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
+            // get settings from DI container
+            this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
             // get all boot files sync
             const files = fastGlob.sync(`${this.ENVIRONMENT.path}/boot/*.{ts,js}`, {
                 deep: true,

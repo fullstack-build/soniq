@@ -34,9 +34,9 @@ let Email = class Email {
         this.isReady = false;
         this.queueName = 'notifications.Email';
         // set DI dependencies
+        this.loggerFactory = loggerFactory;
         this.queueFactory = queueFactory;
         this.config = config;
-        this.logger = loggerFactory.create('Email');
         // register package config
         this.config.addConfigFolder(__dirname + '/../config');
         // add migration path
@@ -46,6 +46,7 @@ let Email = class Email {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
             this.CONFIG = this.config.getConfig('email');
             // create transport with settings
             if (this.CONFIG.testing) {

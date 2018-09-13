@@ -13,20 +13,23 @@ import { Config, IEnvironment } from '@fullstack-one/config';
 
 @Service()
 export class FullstackOneCore implements IFullstackOneCore {
+  // DI
+  private config: Config;
   private bootLoader: BootLoader;
   private ENVIRONMENT: IEnvironment;
 
-  constructor(@Inject(type => BootLoader) bootLoader?, @Inject(type => Config) config?) {
+  constructor(@Inject(type => BootLoader) bootLoader, @Inject(type => Config) config) {
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
-    this.ENVIRONMENT = config.ENVIRONMENT;
+    this.config = config;
     this.bootLoader = bootLoader;
   }
 
   public async boot() {
     await this.bootLoader.boot();
+    this.ENVIRONMENT = this.config.ENVIRONMENT;
     this.cliArt();
     return;
   }

@@ -1,6 +1,3 @@
-
-import { Container, Service, Inject } from '@fullstack-one/di';
-import { Config } from '@fullstack-one/config';
 import * as DebugLogger from 'debug-logger';
 // import * as LE from 'le_node';
 import * as Tracer from 'tracer';
@@ -9,7 +6,6 @@ import { ILogObject } from './ILogObject';
 
 export class Logger implements ILogger {
   private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
-
   private loggerName: string;
 
   // tracer
@@ -23,10 +19,7 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor(moduleName: string = 'root', loggerConfig) {
-
-    const env: any = Container.get('ENVIRONMENT');
-    // const config: any = Container.get('CONFIG');
+  constructor(moduleName: string = 'root', loggerConfig: any, env: any) {
 
     this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
@@ -52,7 +45,6 @@ export class Logger implements ILogger {
     LOGENTRIES_CONFIG.levels = this._LEVELS;
     this._leNode = new LE(LOGENTRIES_CONFIG);
     */
-
     // overriding class with tracer API
     return this.tracerLogger;
   }

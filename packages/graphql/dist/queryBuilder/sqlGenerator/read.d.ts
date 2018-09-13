@@ -13,12 +13,12 @@ export declare class QueryBuilder {
         costTree: {};
         maxDepth: number;
     };
-    private calculateMaxDepth(costTree);
-    private getLocalName(counter);
-    private getFieldExpression(name, localName);
-    private getFromExpression(gqlTypeMeta, localName, authRequired);
-    private resolveTable(c, query, values, isAuthenticated, match, isAggregation, costTree);
-    private resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated, costTree);
-    private rowToJson(c, query, values, isAuthenticated, match, costTree);
-    private jsonAgg(c, query, values, isAuthenticated, match, costTree);
+    private calculateMaxDepth;
+    private getLocalName;
+    private getFieldExpression;
+    private getFromExpression;
+    private resolveTable;
+    private resolveRelation;
+    private rowToJson;
+    private jsonAgg;
 }

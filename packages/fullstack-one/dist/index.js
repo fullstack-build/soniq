@@ -30,12 +30,13 @@ let FullstackOneCore = class FullstackOneCore {
     constructor(bootLoader, config) {
         // register package config
         config.addConfigFolder(__dirname + '/../config');
-        this.ENVIRONMENT = config.ENVIRONMENT;
+        this.config = config;
         this.bootLoader = bootLoader;
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.bootLoader.boot();
+            this.ENVIRONMENT = this.config.ENVIRONMENT;
             this.cliArt();
             return;
         });

@@ -51,7 +51,7 @@ let FileStorage = class FileStorage {
         this.verifierObjects = {};
         // register package config
         config.addConfigFolder(__dirname + '/../config');
-        this.logger = loggerFactory.create('AutoMigrate');
+        this.loggerFactory = loggerFactory;
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
@@ -82,6 +82,7 @@ let FileStorage = class FileStorage {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
             this.fileStorageConfig = this.config.getConfig('fileStorage');
             this.client = new Minio.Client(this.fileStorageConfig.minio);
             Object.keys(this.verifiers).forEach((key) => {
@@ -98,6 +99,14 @@ let FileStorage = class FileStorage {
             app.use(authRouter.routes());
             app.use(authRouter.allowedMethods());
         });
+    }
+    addVerifier(type, fn) {
+        if (this.verifiers[type] == null) {
+            this.verifiers[type] = fn;
+        }
+        else {
+            throw new Error(`A verifier for type '${type}' already exists.`);
+        }
     }
     postMutationHook(info, context) {
         return __awaiter(this, void 0, void 0, function* () {

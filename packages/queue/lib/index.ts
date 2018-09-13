@@ -5,6 +5,7 @@ import { Service, Inject, Container } from '@fullstack-one/di';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import { DbGeneralPool } from '@fullstack-one/db';
 import { Config } from '@fullstack-one/config';
+import { BootLoader } from '@fullstack-one/boot-loader';
 
 @Service()
 export class QueueFactory {
@@ -12,21 +13,28 @@ export class QueueFactory {
   private queue: PgBoss;
 
   // DI
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private generalPool: DbGeneralPool;
 
   constructor(
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => DbGeneralPool) generalPool?,
-    @Inject(type => Config) config?: Config
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => DbGeneralPool) generalPool,
+    @Inject(type => Config) config: Config
   ) {
     // set DI dependencies
+    this.loggerFactory = loggerFactory;
     this.generalPool = generalPool;
-    this.logger = loggerFactory.create('Queue');
 
     // register package config
     config.addConfigFolder(__dirname + '/../config');
 
+    bootLoader.addBootFunction(this.boot.bind(this));
+  }
+
+  private async boot() {
+    this.logger = this.loggerFactory.create(this.constructor.name);
   }
 
   public async getQueue(): Promise<PgBoss> {

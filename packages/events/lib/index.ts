@@ -13,22 +13,36 @@ export interface IEventEmitter {
 @Service()
 export class EventEmitter implements IEventEmitter {
 
+  private config: Config;
   private eventEmitter: EventEmitter2;
 
   private nodeId: string;
   private dbClient: DbAppClient;
   private namespace: string = 'one';
 
+  // cache during boot
+  private listenersCache = {};
+  private emittersCache = {};
+
   constructor(
-    @Inject(type => Config) config?,
-    @Inject(type => BootLoader) bootLoader?) {
+    @Inject(type => Config) config,
+    @Inject(type => BootLoader) bootLoader) {
+
+    this.config = config;
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    this.config.addConfigFolder(__dirname + '/../config');
+
+    // finish initialization after ready event => out because ready never gets called due to resolving circular deps
+    // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
+    bootLoader.onBootReady(this.boot.bind(this));
+  }
+
+  private async boot() {
 
     const env: IEnvironment = Container.get('ENVIRONMENT');
     this.nodeId = env.nodeId;
-    this.namespace = config.getConfig('core').namespace;
+    this.namespace = this.config.getConfig('core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',
@@ -37,9 +51,28 @@ export class EventEmitter implements IEventEmitter {
       verboseMemoryLeak: true,
     });
 
-    // finish initialization after ready event => out because ready never gets called due to resolving circular deps
-    // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
-    bootLoader.onBootReady(this.boot.bind(this));
+    this.dbClient = Container.get(DbAppClient);
+    await this.finishInitialisation();
+
+    // set listeners that were cached during booting, clean cache afterwards
+    Object.entries(this.listenersCache).forEach((listenerEntry) => {
+      const eventName     = listenerEntry[0];
+      const eventListeners = listenerEntry[1];
+      Object.values(eventListeners).forEach((listener) => {
+        this.on(eventName, listener);
+      });
+    });
+    this.listenersCache = {};
+
+    // fire events that were cached during booting, clean cache afterwards
+    Object.entries(this.emittersCache).forEach((emitterEntry) => {
+      const eventName     = emitterEntry[0];
+      const eventEmitters = emitterEntry[1];
+      Object.values(eventEmitters).forEach((emitter) => {
+        this.emit(eventName, emitter.instanceId, ...emitter.args);
+      });
+    });
+    this.emittersCache = {};
   }
 
   public emit(eventName: string, ...args: any[]): void {
@@ -52,24 +85,39 @@ export class EventEmitter implements IEventEmitter {
   }
 
   public on(eventName: string, listener: (...args: any[]) => void) {
-    const eventNameForThisInstanceOnly = `${this.nodeId}.${eventName}`;
-    this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
+    if (this.eventEmitter != null) {
+      const eventNameForThisInstanceOnly = `${this.nodeId}.${eventName}`;
+      this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
+    } else {
+      // cache listeners during booting
+      const thisEventListener = this.listenersCache[eventName] = this.listenersCache[eventName] || [];
+      thisEventListener.push(listener);
+    }
+
   }
 
   public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
-    this.eventEmitter.on(eventNameForAnyInstance, listener);
-  }
-
-  private async boot() {
-    this.dbClient = Container.get(DbAppClient);
-    await this.finishInitialisation();
+    this.on(eventNameForAnyInstance, listener);
   }
 
   /* private methods */
   private _emit(eventName: string, instanceId: string, ...args: any[]): void {
-    const eventNameWithInstanceId = `${instanceId}.${eventName}`;
-    this.eventEmitter.emit(eventNameWithInstanceId, instanceId, ...args);
+    // emit only when emitter is ready
+    if (this.eventEmitter != null) {
+      const eventNameWithInstanceId = `${instanceId}.${eventName}`;
+      this.eventEmitter.emit(eventNameWithInstanceId, instanceId, ...args);
+    } else {
+      // cache events fired during booting
+      const thisEventEmitter = this.emittersCache[eventName] = this.emittersCache[eventName] || [];
+      const eventEmitted = {
+        instanceId,
+        args
+      };
+      thisEventEmitter.push(eventEmitted);
+
+    }
+
   }
 
   private async finishInitialisation() {

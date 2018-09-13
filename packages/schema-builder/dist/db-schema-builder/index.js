@@ -35,13 +35,21 @@ let DbSchemaBuilder = class DbSchemaBuilder {
     constructor(bootLoader, config, loggerFactory, dbAppClient) {
         this.initSqlPaths = [__dirname + '/../..'];
         this.permissionSqlStatements = [];
-        // create logger
-        this.logger = loggerFactory.create('DbSchemaBuilder');
         this.dbAppClient = dbAppClient;
+        this.loggerFactory = loggerFactory;
         this.config = config;
-        this.dbConfig = config.getConfig('db');
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
+    }
+    // boot and load all extensions
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // create logger
+            this.logger = this.loggerFactory.create(this.constructor.name);
+            this.dbConfig = this.config.getConfig('db');
+            // load all extensions
+            require('./extensions');
+        });
     }
     // add paths with migration sql scripts
     addMigrationPath(path) {
@@ -251,13 +259,6 @@ let DbSchemaBuilder = class DbSchemaBuilder {
                 this.logger.trace('migration.boot.sql.statement', sql);
                 yield dbClient.query(sql);
             }
-        });
-    }
-    // boot and load all extensions
-    boot() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // load all extensions
-            require('./extensions');
         });
     }
 };

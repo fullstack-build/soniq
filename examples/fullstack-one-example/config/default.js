@@ -89,13 +89,12 @@ module.exports = {
     testing: false,
     transport: {
       smtp: {
-        host: 'host',
-        port: 'port',
-        secure: true,
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT, 10),
+        secure: (process.env.EMAIL_SECURE.toLowerCase() === 'true'),
         auth: {
-          type: 'type',
-          username: 'username',
-          pass: 'pass'
+          user:  process.env.EMAIL_AUTH_USERNAME,
+          pass:  process.env.EMAIL_AUTH_PASSWORD
         },
         // Security options to disallow using attachments from file or URL
         disableFileAccess: true,

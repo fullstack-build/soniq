@@ -20,22 +20,23 @@ export class DbGeneralPool implements IDb  {
   private managedPool: PgPool;
 
   // DI
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
 
   constructor(
-    @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => Config) config?
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => EventEmitter) eventEmitter,
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => Config) config
     ) {
     // register package config
     this.config = config;
     this.config.addConfigFolder(__dirname + '/../config');
 
     // DI
+    this.loggerFactory = loggerFactory;
     this.eventEmitter = eventEmitter;
-    this.logger = loggerFactory.create('DbGeneralPool');
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
@@ -44,6 +45,7 @@ export class DbGeneralPool implements IDb  {
 
   private async boot(): Promise<void> {
 
+    this.logger = this.loggerFactory.create(this.constructor.name);
     const env: IEnvironment = Container.get('ENVIRONMENT');
     this.applicationName = env.namespace + '_pool_' + env.nodeId;
     this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });

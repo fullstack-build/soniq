@@ -18,44 +18,33 @@ export class GracefulShutdown {
   private dbPoolObj: DbGeneralPool;
 
   private ENVIRONMENT: IEnvironment;
+  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
 
   constructor(
-    @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => DbAppClient) dbAppClient?,
-    @Inject(type => DbGeneralPool) dbPoolObj?,
-    @Inject(type => Config) config?) {
+    @Inject(type => EventEmitter) eventEmitter,
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => DbAppClient) dbAppClient,
+    @Inject(type => DbGeneralPool) dbPoolObj,
+    @Inject(type => Config) config) {
 
+    this.loggerFactory = loggerFactory;
     this.eventEmitter = eventEmitter;
     this.dbAppClient = dbAppClient;
     this.dbPoolObj = dbPoolObj;
-    this.logger = loggerFactory.create('GracefulShutdown');
-
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
-   private async disconnectDB() {
-
-    try {
-      // end setup pgClient and pool
-      await Promise.all([
-          this.dbAppClient.end(),
-          this.dbPoolObj.end()
-        ]);
-      return true;
-    } catch (err) {
-      throw err;
-    }
-
-  }
-
   private boot() {
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+
     terminus(Container.get(Server).getServer(), {
       // healtcheck options
       healthChecks: {
@@ -94,6 +83,21 @@ export class GracefulShutdown {
         throw err;
       }
     });
+
+  }
+
+  private async disconnectDB() {
+
+    try {
+      // end setup pgClient and pool
+      await Promise.all([
+        this.dbAppClient.end(),
+        this.dbPoolObj.end()
+      ]);
+      return true;
+    } catch (err) {
+      throw err;
+    }
 
   }
 

@@ -5,7 +5,7 @@ export declare class Logger implements ILogger {
     private tracerLogger;
     private debugLogger;
     private projectEnvString;
-    constructor(moduleName: string, loggerConfig: any);
+    constructor(moduleName: string, loggerConfig: any, env: any);
     /**
      * Empty functions for code completion
      * implementation is within tracer

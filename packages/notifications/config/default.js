@@ -7,8 +7,7 @@ module.exports = {
         port: 'port',
         secure: true,
         auth: {
-          type: 'type',
-          username: 'username',
+          user: 'username',
           pass: 'pass'
         },
         // Security options to disallow using attachments from file or URL
@@ -22,6 +21,8 @@ module.exports = {
     htmlToText: {},
     queue: {
       retryLimit: 10,
+      retryBackoff: true,
+      retryDelay: 1,
       expireIn:   '60 min'
     }
   }

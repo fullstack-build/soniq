@@ -36,13 +36,14 @@ let DbGeneralPool = class DbGeneralPool {
         this.config = config;
         this.config.addConfigFolder(__dirname + '/../config');
         // DI
+        this.loggerFactory = loggerFactory;
         this.eventEmitter = eventEmitter;
-        this.logger = loggerFactory.create('DbGeneralPool');
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
             const env = di_1.Container.get('ENVIRONMENT');
             this.applicationName = env.namespace + '_pool_' + env.nodeId;
             this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });

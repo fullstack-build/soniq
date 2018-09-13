@@ -51,22 +51,20 @@ let Auth = class Auth {
     constructor(dbGeneralPool, server, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         this.possibleTransactionIsolationLevels = ['SERIALIZABLE', 'REPEATABLE READ', 'READ COMMITTED', 'READ UNCOMMITTED'];
         this.parserMeta = {};
-        // register package config
-        config.addConfigFolder(`${__dirname}/../config`);
-        this.logger = loggerFactory.create('Auth');
         // DI
+        this.config = config;
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
         this.graphQl = graphQl;
         this.schemaBuilder = schemaBuilder;
-        this.authConfig = config.getConfig('auth');
-        this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
+        this.loggerFactory = loggerFactory;
+        // register package config
+        this.config.addConfigFolder(`${__dirname}/../config`);
         this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('No notification function has been defined.');
         });
         graphQl.addHook('preQuery', this.preQueryHook.bind(this));
         graphQl.addHook('preMutationCommit', this.preMutationCommitHook.bind(this));
-        this.addMiddleware();
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
         this.schemaBuilder.extendSchema(schema);
@@ -83,6 +81,103 @@ let Auth = class Auth {
         // register Auth migration directive parser
         migrationHelper_1.setDirectiveParser(schema_builder_1.registerDirectiveParser);
         // this.linkPassport();
+    }
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logger = this.loggerFactory.create(this.constructor.name);
+            this.authConfig = this.config.getConfig('auth');
+            this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
+            this.addMiddleware();
+            const dbMeta = this.schemaBuilder.getDbMeta();
+            const authRouter = new KoaRouter();
+            const app = this.server.getApp();
+            authRouter.use(koaBody());
+            app.keys = [this.authConfig.secrets.cookie];
+            authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
+            authRouter.use(passport.initialize());
+            authRouter.get('/auth/oAuthFailure', (ctx) => __awaiter(this, void 0, void 0, function* () {
+                const message = {
+                    err: 'ERROR_AUTH',
+                    data: null
+                };
+                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
+            }));
+            authRouter.get('/auth/oAuthFailure/:err', (ctx) => __awaiter(this, void 0, void 0, function* () {
+                const message = {
+                    err: ctx.params.err,
+                    data: null
+                };
+                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
+            }));
+            authRouter.get('/auth/oAuthSuccess/:data', (ctx) => __awaiter(this, void 0, void 0, function* () {
+                const message = {
+                    err: null,
+                    data: JSON.parse(ctx.params.data)
+                };
+                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
+            }));
+            Object.keys(this.authConfig.oAuth.providers).forEach((key) => {
+                const provider = this.authConfig.oAuth.providers[key];
+                const callbackPath = '/auth/oAuthCallback/' + key;
+                const serverApiAddress = this.authConfig.oAuth.serverApiAddress;
+                const callbackURL = serverApiAddress + callbackPath;
+                const providerConfig = Object.assign({}, provider.config, { callbackURL });
+                const providerOptions = Object.assign({ scope: ['email'] }, provider.options, { session: false });
+                passport.use(new provider.strategy(providerConfig, (accessToken, refreshToken, profile, cb) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        let email = profile.email || profile._json.email;
+                        if (email == null && profile.emails != null && profile.emails[0] != null && profile.emails[0].value != null) {
+                            email = profile.emails[0].value;
+                        }
+                        if (profile == null || email == null || profile.id == null) {
+                            throw new Error('Email or id is missing!');
+                        }
+                        const response = this.createAuthToken(true, email, provider.name, profile.id, provider.tenant, profile);
+                        cb(null, response);
+                    }
+                    catch (err) {
+                        this.logger.warn('passport.strategylogin.error', err);
+                        cb(err);
+                    }
+                })));
+                authRouter.get('/auth/oAuth/' + key, (ctx, next) => {
+                    const { queryParameter } = this.authConfig.privacyAgreementAcceptance;
+                    if (this.isPrivacyAgreementCheckActive() === true) {
+                        let tokenPayload;
+                        if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
+                            this.logger.warn('passport.oAuthFailure.error.missingPrivacyAgreementAcceptanceToken');
+                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent(`Missing privacy token query parameter. '${queryParameter}'`));
+                        }
+                        try {
+                            tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, ctx.request.query[queryParameter]);
+                        }
+                        catch (e) {
+                            this.logger.warn('passport.oAuthFailure.error.invalidPrivacyAgreementAcceptanceToken');
+                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent('Invalid privacy token.'));
+                        }
+                        if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
+                            throw new Error(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
+                        }
+                    }
+                    next();
+                }, passport.authenticate(provider.name, providerOptions));
+                const errorCatcher = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        yield next();
+                    }
+                    catch (err) {
+                        this.logger.warn('passport.oAuthFailure.error', err);
+                        ctx.redirect('/auth/oAuthFailure');
+                    }
+                });
+                // tslint:disable-next-line:max-line-length
+                authRouter.get(callbackPath, errorCatcher, passport.authenticate(provider.name, { failureRedirect: '/auth/oAuthFailure', session: false }), (ctx) => {
+                    ctx.redirect('/auth/oAuthSuccess/' + encodeURIComponent(JSON.stringify(ctx.state.user)));
+                });
+            });
+            app.use(authRouter.routes());
+            app.use(authRouter.allowedMethods());
+        });
     }
     setNotificationFunction(notificationFunction) {
         if (notificationFunction == null || typeof notificationFunction !== 'function') {
@@ -682,99 +777,6 @@ let Auth = class Auth {
             }
             return next();
         }));
-    }
-    boot() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const dbMeta = this.schemaBuilder.getDbMeta();
-            const authRouter = new KoaRouter();
-            const app = this.server.getApp();
-            authRouter.use(koaBody());
-            app.keys = [this.authConfig.secrets.cookie];
-            authRouter.use(koaSession(this.authConfig.oAuth.cookie, app));
-            authRouter.use(passport.initialize());
-            authRouter.get('/auth/oAuthFailure', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                const message = {
-                    err: 'ERROR_AUTH',
-                    data: null
-                };
-                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
-            }));
-            authRouter.get('/auth/oAuthFailure/:err', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                const message = {
-                    err: ctx.params.err,
-                    data: null
-                };
-                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
-            }));
-            authRouter.get('/auth/oAuthSuccess/:data', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                const message = {
-                    err: null,
-                    data: JSON.parse(ctx.params.data)
-                };
-                ctx.body = oAuthCallback_1.default(message, this.authConfig.oAuth.frontendOrigins);
-            }));
-            Object.keys(this.authConfig.oAuth.providers).forEach((key) => {
-                const provider = this.authConfig.oAuth.providers[key];
-                const callbackPath = '/auth/oAuthCallback/' + key;
-                const serverApiAddress = this.authConfig.oAuth.serverApiAddress;
-                const callbackURL = serverApiAddress + callbackPath;
-                const providerConfig = Object.assign({}, provider.config, { callbackURL });
-                const providerOptions = Object.assign({ scope: ['email'] }, provider.options, { session: false });
-                passport.use(new provider.strategy(providerConfig, (accessToken, refreshToken, profile, cb) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        let email = profile.email || profile._json.email;
-                        if (email == null && profile.emails != null && profile.emails[0] != null && profile.emails[0].value != null) {
-                            email = profile.emails[0].value;
-                        }
-                        if (profile == null || email == null || profile.id == null) {
-                            throw new Error('Email or id is missing!');
-                        }
-                        const response = this.createAuthToken(true, email, provider.name, profile.id, provider.tenant, profile);
-                        cb(null, response);
-                    }
-                    catch (err) {
-                        this.logger.warn('passport.strategylogin.error', err);
-                        cb(err);
-                    }
-                })));
-                authRouter.get('/auth/oAuth/' + key, (ctx, next) => {
-                    const { queryParameter } = this.authConfig.privacyAgreementAcceptance;
-                    if (this.isPrivacyAgreementCheckActive() === true) {
-                        let tokenPayload;
-                        if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
-                            this.logger.warn('passport.oAuthFailure.error.missingPrivacyAgreementAcceptanceToken');
-                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent(`Missing privacy token query parameter. '${queryParameter}'`));
-                        }
-                        try {
-                            tokenPayload = signHelper_1.verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, ctx.request.query[queryParameter]);
-                        }
-                        catch (e) {
-                            this.logger.warn('passport.oAuthFailure.error.invalidPrivacyAgreementAcceptanceToken');
-                            return ctx.redirect('/auth/oAuthFailure/' + encodeURIComponent('Invalid privacy token.'));
-                        }
-                        if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-                            throw new Error(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
-                        }
-                    }
-                    next();
-                }, passport.authenticate(provider.name, providerOptions));
-                const errorCatcher = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        yield next();
-                    }
-                    catch (err) {
-                        this.logger.warn('passport.oAuthFailure.error', err);
-                        ctx.redirect('/auth/oAuthFailure');
-                    }
-                });
-                // tslint:disable-next-line:max-line-length
-                authRouter.get(callbackPath, errorCatcher, passport.authenticate(provider.name, { failureRedirect: '/auth/oAuthFailure', session: false }), (ctx) => {
-                    ctx.redirect('/auth/oAuthSuccess/' + encodeURIComponent(JSON.stringify(ctx.state.user)));
-                });
-            });
-            app.use(authRouter.routes());
-            app.use(authRouter.allowedMethods());
-        });
     }
     preQueryHook(dbClient, context, authRequired) {
         return __awaiter(this, void 0, void 0, function* () {
