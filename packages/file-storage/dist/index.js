@@ -100,14 +100,6 @@ let FileStorage = class FileStorage {
             app.use(authRouter.allowedMethods());
         });
     }
-    addVerifier(type, fn) {
-        if (this.verifiers[type] == null) {
-            this.verifiers[type] = fn;
-        }
-        else {
-            throw new Error(`A verifier for type '${type}' already exists.`);
-        }
-    }
     postMutationHook(info, context) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

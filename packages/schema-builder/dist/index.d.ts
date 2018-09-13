@@ -27,7 +27,7 @@ export declare class SchemaBuilder {
     private logger;
     private ENVIRONMENT;
     constructor(config: any, loggerFactory: any, bootLoader: any, dbSchemaBuilder: any, pgToDbMeta: any);
-    private boot;
+    private boot();
     getDbSchemaBuilder(): DbSchemaBuilder;
     getPgDbMeta(): Promise<IDbMeta>;
     addExtension(extension: any): void;

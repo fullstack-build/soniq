@@ -15,7 +15,7 @@ export declare class DbSchemaBuilder {
     private permissionSqlStatements;
     private logger;
     constructor(bootLoader?: any, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
-    private boot;
+    private boot();
     addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
     setPermissionSqlStatements(permissionSqlStatements: any): void;
