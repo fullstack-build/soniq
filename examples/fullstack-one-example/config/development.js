@@ -1,5 +1,5 @@
 module.exports = {
-  logger: {
+  Logger: {
     minLevel: 'trace',
   },
 };

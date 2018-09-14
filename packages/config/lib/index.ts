@@ -43,7 +43,7 @@ export class Config {
   }
 
   // load config based on ENV
-  public registerConfig(moduleName: string, moduleConfigPath: string): void {
+  public registerConfig(moduleName: string, moduleConfigPath: string): any {
     // check if path was already included
     if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
       const configModule: IConfigModule = {

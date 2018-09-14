@@ -43,7 +43,7 @@ export class QueueFactory {
   private async start(): Promise<PgBoss> {
 
     let boss;
-    const queueConfig = Container.get(Config).getConfig('queue');
+    const queueConfig = Container.get(Config).getConfig('Queue');
 
     // create new connection if set in config, otherwise use one from the pool
     if (queueConfig != null &&
