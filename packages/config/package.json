@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/config",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "fullstack.one config package",
   "main": "index.js",
   "types": "lib/index.ts",
