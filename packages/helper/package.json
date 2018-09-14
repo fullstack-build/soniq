@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/helper",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,7 +20,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/di": "^0.4.0",
+    "@fullstack-one/di": "^0.4.2",
     "fast-glob": "^1.0.1"
   },
   "devDependencies": {

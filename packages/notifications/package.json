@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/notifications",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "fullstack.one notifications package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,13 +20,13 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.0",
-    "@fullstack-one/config": "^0.4.1",
-    "@fullstack-one/di": "^0.4.0",
-    "@fullstack-one/events": "^0.4.1",
-    "@fullstack-one/logger": "^0.4.1",
-    "@fullstack-one/queue": "^0.4.1",
-    "@fullstack-one/schema-builder": "^0.4.1",
+    "@fullstack-one/boot-loader": "^0.4.2",
+    "@fullstack-one/config": "^0.4.2",
+    "@fullstack-one/di": "^0.4.2",
+    "@fullstack-one/events": "^0.4.2",
+    "@fullstack-one/logger": "^0.4.2",
+    "@fullstack-one/queue": "^0.4.2",
+    "@fullstack-one/schema-builder": "^0.4.2",
     "nodemailer": "^4.6.8",
     "nodemailer-direct-transport": "^3.3.2",
     "nodemailer-html-to-text": "^2.1.0"
