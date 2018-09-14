@@ -18,6 +18,6 @@ export class LoggerFactory {
   }
   public create(moduleName) {
     const env: any = Container.get('ENVIRONMENT');
-    return new Logger(moduleName, this.config.getConfig('logger'), env);
+    return new Logger(moduleName, this.config.getConfig('Logger'), env);
   }
 }

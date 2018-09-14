@@ -5,6 +5,5 @@ export interface IEnvironment {
   path: string;
   version: string;
   namespace: string;
-  port: number;
   nodeId: string;
 }

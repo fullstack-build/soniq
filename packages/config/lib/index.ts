@@ -21,7 +21,6 @@ export class Config {
     name:       null,
     version:    null,
     path:       null,
-    port:       null,
     namespace:  null,
     // unique instance ID (6 char)
     nodeId:     null
@@ -40,6 +39,9 @@ export class Config {
     // load project config
     const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
     this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
+
+    // register package config
+    this.registerConfig('Config', __dirname + '/../config');
   }
 
   // load config based on ENV
@@ -155,15 +157,9 @@ export class Config {
     this.ENVIRONMENT.version          = PROJECT_PACKAGE.version;
     this.ENVIRONMENT.path             = projectPath;
     // unique instance ID (6 char)
-    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5, 6);
+    this.ENVIRONMENT.nodeId           = this.ENVIRONMENT.nodeId || randomBytes(20).toString('hex').substr(5, 6);
     // wait until core config is set
-    if (this.config.core != null) {
-      this.ENVIRONMENT.namespace      = this.config.core.namespace;
-    }
-    // wait until server config is set
-    if (this.config.server != null) {
-      this.ENVIRONMENT.port           = this.config.server.port;
-    }
+    this.ENVIRONMENT.namespace      = this.getConfig('Config').namespace;
 
     // put config into DI
     Container.set('ENVIRONMENT', this.ENVIRONMENT);
