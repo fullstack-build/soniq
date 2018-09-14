@@ -185,7 +185,7 @@ export class Email {
     const emailBody = this.mailGenerator.generate(template);
 
     // Generate the plaintext version of the e-mail (for clients that do not support HTML)
-    const emailText = text || this.mailGenerator.generatePlaintext(emailBody);
+    const emailText = text || this.mailGenerator.generatePlaintext(template);
 
     return this.sendMessage(to, subject, emailBody, emailText, attachments, from, jobOptions);
 
