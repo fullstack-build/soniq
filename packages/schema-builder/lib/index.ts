@@ -44,7 +44,7 @@ export { registerColumnMigrationExtension, registerTableMigrationExtension } fro
 @Service()
 export class SchemaBuilder {
 
-  private graphQlConfig: any;
+  private schemaBuilderConfig: any;
   private gQlSdl: any;
   private gqlSdlExtensions: any = [];
   private gQlAst: any;
@@ -76,7 +76,11 @@ export class SchemaBuilder {
     this.config = config;
 
     // register package config
-    this.config.registerConfig(__dirname + '/../config');
+    this.config.registerConfig('SchemaBuilder', __dirname + '/../config');
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+    this.schemaBuilderConfig = this.config.getConfig('SchemaBuilder');
+    this.ENVIRONMENT = this.config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));
 
@@ -85,14 +89,10 @@ export class SchemaBuilder {
 
   private async boot(): Promise<any> {
 
-    this.logger = this.loggerFactory.create(this.constructor.name);
-    this.graphQlConfig = this.config.getConfig('graphql');
-    this.ENVIRONMENT = this.config.ENVIRONMENT;
-
     try {
 
       // load schema
-      const gQlSdlPattern = this.ENVIRONMENT.path + this.graphQlConfig.schemaPattern;
+      const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await helper.loadFilesByGlobPattern(gQlSdlPattern);
 
       // check if any files were loaded
@@ -110,16 +110,16 @@ export class SchemaBuilder {
       // load permissions and expressions and generate views and put them into schemas
 
       // load permissions
-      const permissionsPattern = this.ENVIRONMENT.path + this.graphQlConfig.permissionsPattern;
+      const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
       const permissionsArray = await helper.requireFilesByGlobPattern(permissionsPattern);
       this.permissions = [].concat.apply([], permissionsArray);
 
       // load expressions
-      const expressionsPattern = this.ENVIRONMENT.path + this.graphQlConfig.expressionsPattern;
+      const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
       const expressionsArray = await helper.requireFilesByGlobPattern(expressionsPattern);
       this.expressions = [].concat.apply([], expressionsArray);
 
-      const dbConfig = Container.get(Config).getConfig('db');
+      const dbConfig = this.config.getConfig('Db');
 
       const config = {
         schemaName: dbConfig.viewSchemaName,

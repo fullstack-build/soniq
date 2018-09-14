@@ -17,9 +17,9 @@ const config_1 = require("@fullstack-one/config");
 const Logger_1 = require("./Logger");
 let LoggerFactory = class LoggerFactory {
     constructor(config) {
-        // register package config
-        config.registerConfig(__dirname + '/../config');
         this.config = config;
+        // register package config
+        this.config.registerConfig('Logger', __dirname + '/../config');
     }
     create(moduleName) {
         const env = di_1.Container.get('ENVIRONMENT');

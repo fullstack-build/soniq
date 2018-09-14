@@ -10,7 +10,7 @@ export { registerQueryParser } from './db-schema-builder/fromPg/pgToDbMeta';
 export { registerTriggerParser } from './db-schema-builder/fromPg/pgToDbMeta';
 export { registerColumnMigrationExtension, registerTableMigrationExtension } from './db-schema-builder/toPg/createSqlObjFromMigrationObject';
 export declare class SchemaBuilder {
-    private graphQlConfig;
+    private schemaBuilderConfig;
     private gQlSdl;
     private gqlSdlExtensions;
     private gQlAst;
@@ -27,7 +27,7 @@ export declare class SchemaBuilder {
     private logger;
     private ENVIRONMENT;
     constructor(config: any, loggerFactory: any, bootLoader: any, dbSchemaBuilder: any, pgToDbMeta: any);
-    private boot();
+    private boot;
     getDbSchemaBuilder(): DbSchemaBuilder;
     getPgDbMeta(): Promise<IDbMeta>;
     addExtension(extension: any): void;

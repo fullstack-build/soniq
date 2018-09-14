@@ -10,12 +10,11 @@ export declare class DbSchemaBuilder {
     private initSqlPaths;
     private dbConfig;
     private schemaBuilderConfig;
-    private config;
-    private loggerFactory;
     private permissionSqlStatements;
-    private logger;
-    constructor(bootLoader?: any, config?: Config, loggerFactory?: LoggerFactory, dbAppClient?: DbAppClient);
-    private boot();
+    private readonly config;
+    private readonly logger;
+    constructor(bootLoader: any, config: Config, loggerFactory: LoggerFactory, dbAppClient: DbAppClient);
+    private boot;
     addMigrationPath(path: string): void;
     getMigrationDbMeta(): IDbMeta;
     setPermissionSqlStatements(permissionSqlStatements: any): void;

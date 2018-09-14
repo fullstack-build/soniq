@@ -36,17 +36,17 @@ let Server = class Server {
         this.config = config;
         this.loggerFactory = loggerFactory;
         // register package config
-        config.registerConfig(__dirname + '/../config');
+        config.registerConfig('Server', __dirname + '/../config');
+        // this.eventEmitter = eventEmitter;
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        // get settings from DI container
+        this.serverConfig = this.config.getConfig('Server');
+        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         this.bootKoa();
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            // this.eventEmitter = eventEmitter;
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            // get settings from DI container
-            this.serverConfig = this.config.getConfig('server');
-            this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
             try {
                 // start KOA on PORT
                 this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);

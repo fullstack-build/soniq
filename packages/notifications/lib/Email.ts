@@ -39,7 +39,7 @@ export class Email {
     this.config.registerConfig('Notifications', __dirname + '/../config');
 
     this.logger = loggerFactory.create(this.constructor.name);
-    this.CONFIG = this.config.getConfig('Notifications').email;
+    this.CONFIG = this.config.getConfig('Notifications').Email;
 
     // add migration path
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');

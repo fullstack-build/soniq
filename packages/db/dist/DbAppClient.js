@@ -32,21 +32,21 @@ pg_1.types.setTypeParser(1114, str => str);
 pg_1.types.setTypeParser(1082, str => str);
 let DbAppClient = class DbAppClient {
     constructor(bootLoader, eventEmitter, loggerFactory, config) {
-        this.config = config;
-        // register package config
-        this.config.registerConfig(__dirname + '/../config');
         // set DI dependencies
+        this.config = config;
         this.eventEmitter = eventEmitter;
-        this.loggerFactory = loggerFactory;
+        // register package config
+        this.config.registerConfig('Db', __dirname + '/../config');
+        // get settings from DI container
+        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        // init logger
+        this.logger = loggerFactory.create(this.constructor.name);
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            // get settings from DI container
-            this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
-            const configDB = this.config.getConfig('db');
+            const configDB = this.config.getConfig('Db');
             this.credentials = configDB.appClient;
             this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
             // create PG pgClient

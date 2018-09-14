@@ -53,9 +53,6 @@ export class FileStorage {
     @Inject(type => SchemaBuilder) schemaBuilder?,
     @Inject(type => Auth) auth?
   ) {
-    // register package config
-    config.registerConfig(__dirname + '/../config');
-
     this.loggerFactory = loggerFactory;
     this.server = server;
     this.dbGeneralPool = dbGeneralPool;
@@ -63,6 +60,12 @@ export class FileStorage {
     this.schemaBuilder = schemaBuilder;
     this.config = config;
     this.auth = auth;
+    // register package config
+    config.registerConfig('FileStorage', __dirname + '/../config');
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    this.fileStorageConfig = this.config.getConfig('FileStorage');
 
     // add migration path
     this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
@@ -94,9 +97,6 @@ export class FileStorage {
   }
 
   private async boot() {
-    this.logger = this.loggerFactory.create(this.constructor.name);
-
-    this.fileStorageConfig = this.config.getConfig('fileStorage');
 
     this.client = new Minio.Client(this.fileStorageConfig.minio);
 

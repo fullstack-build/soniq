@@ -15,7 +15,7 @@ export declare class Auth {
     private schemaBuilder;
     private parserMeta;
     constructor(dbGeneralPool: any, server: any, bootLoader: any, schemaBuilder: any, config: any, graphQl: any, loggerFactory: LoggerFactory);
-    private boot();
+    private boot;
     setNotificationFunction(notificationFunction: any): void;
     setUser(dbClient: any, accessToken: any): Promise<boolean>;
     setAdmin(dbClient: any): Promise<any>;
@@ -72,10 +72,10 @@ export declare class Auth {
         token: any;
     };
     validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken: any): void;
-    private addMiddleware();
-    private preQueryHook(dbClient, context, authRequired);
-    private preMutationCommitHook(dbClient, hookInfo);
-    private createPrivacyAgreementAcceptanceToken(acceptedVersion);
-    private isPrivacyAgreementCheckActive();
-    private getResolvers();
+    private addMiddleware;
+    private preQueryHook;
+    private preMutationCommitHook;
+    private createPrivacyAgreementAcceptanceToken;
+    private isPrivacyAgreementCheckActive;
+    private getResolvers;
 }

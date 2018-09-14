@@ -49,8 +49,6 @@ let FileStorage = class FileStorage {
     constructor(loggerFactory, dbGeneralPool, server, bootLoader, config, graphQl, schemaBuilder, auth) {
         this.verifiers = {};
         this.verifierObjects = {};
-        // register package config
-        config.registerConfig(__dirname + '/../config');
         this.loggerFactory = loggerFactory;
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;
@@ -58,6 +56,10 @@ let FileStorage = class FileStorage {
         this.schemaBuilder = schemaBuilder;
         this.config = config;
         this.auth = auth;
+        // register package config
+        config.registerConfig('FileStorage', __dirname + '/../config');
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        this.fileStorageConfig = this.config.getConfig('FileStorage');
         // add migration path
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         this.schemaBuilder.extendSchema(schema);
@@ -82,8 +84,6 @@ let FileStorage = class FileStorage {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.fileStorageConfig = this.config.getConfig('fileStorage');
             this.client = new Minio.Client(this.fileStorageConfig.minio);
             Object.keys(this.verifiers).forEach((key) => {
                 // tslint:disable-next-line:variable-name

@@ -29,16 +29,17 @@ const db_1 = require("@fullstack-one/db");
 const _ = require("lodash");
 let AutoMigrate = class AutoMigrate {
     constructor(loggerFactory, bootLoader, config, schemaBuilder, dbAppClient) {
-        this.loggerFactory = loggerFactory;
+        // DI
         this.schemaBuilder = schemaBuilder;
         this.config = config;
+        // init logger
+        this.logger = loggerFactory.create(this.constructor.name);
+        // get settings from DI container
+        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            // get settings from DI container
-            this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
             // TODO: Check config automigrate = true?
             return yield this.runMigration();
         });

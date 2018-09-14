@@ -5,13 +5,12 @@ export declare class DbAppClient implements IDb {
     pgClient: PgClient;
     private applicationName;
     private credentials;
-    private ENVIRONMENT;
-    private loggerFactory;
-    private logger;
-    private eventEmitter;
-    private config;
-    constructor(bootLoader?: any, eventEmitter?: any, loggerFactory?: any, config?: any);
-    private boot();
+    private readonly ENVIRONMENT;
+    private readonly config;
+    private readonly logger;
+    private readonly eventEmitter;
+    constructor(bootLoader: any, eventEmitter: any, loggerFactory: any, config: any);
+    private boot;
     end(): Promise<void>;
-    private updateNodeIdsFromDb();
+    private updateNodeIdsFromDb;
 }

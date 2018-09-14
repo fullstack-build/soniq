@@ -33,12 +33,16 @@ export class AuthFbToken {
   ) {
 
     // register package config
-    config.registerConfig(__dirname + '/../config');
+    config.registerConfig('AuthFbToken', __dirname + '/../config');
 
     // DI
     this.loggerFactory = loggerFactory;
     this.auth = auth;
     this.config = config;
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    this.authFbTokenConfig = this.config.getConfig('AuthFbToken');
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
@@ -49,10 +53,6 @@ export class AuthFbToken {
   }
 
   private async boot() {
-
-    this.logger = this.loggerFactory.create(this.constructor.name);
-
-    this.authFbTokenConfig = this.config.getConfig('authFbToken');
     this.fbHelper = new FbHelper(this.authFbTokenConfig, this.logger);
     return;
   }

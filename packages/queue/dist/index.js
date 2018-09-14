@@ -30,16 +30,11 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 let QueueFactory = class QueueFactory {
     constructor(bootLoader, loggerFactory, generalPool, config) {
         // set DI dependencies
-        this.loggerFactory = loggerFactory;
         this.generalPool = generalPool;
         // register package config
-        config.registerConfig(__dirname + '/../config');
-        bootLoader.addBootFunction(this.boot.bind(this));
-    }
-    boot() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-        });
+        config.registerConfig('Queue', __dirname + '/../config');
+        // init logger
+        this.logger = loggerFactory.create(this.constructor.name);
     }
     getQueue() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -53,7 +48,7 @@ let QueueFactory = class QueueFactory {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             let boss;
-            const queueConfig = di_1.Container.get(config_1.Config).getConfig('queue');
+            const queueConfig = di_1.Container.get(config_1.Config).getConfig('Queue');
             // create new connection if set in config, otherwise use one from the pool
             if (queueConfig != null &&
                 queueConfig.host &&

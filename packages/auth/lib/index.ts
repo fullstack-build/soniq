@@ -65,7 +65,11 @@ export class Auth {
     this.loggerFactory = loggerFactory;
 
     // register package config
-    this.config.registerConfig(`${__dirname}/../config`);
+    this.config.registerConfig('Auth', `${__dirname}/../config`);
+
+    this.logger = this.loggerFactory.create(this.constructor.name);
+    this.authConfig = this.config.getConfig('Auth');
+    this.sodiumConfig = createConfig(this.authConfig.sodium);
 
     this.notificationFunction = async (caller: string, user, meta: string) => {
       throw new Error('No notification function has been defined.');
@@ -96,17 +100,12 @@ export class Auth {
     // register Auth migration directive parser
     setDirectiveParser(registerDirectiveParser);
 
+    this.addMiddleware();
+
     // this.linkPassport();
   }
 
   private async boot() {
-
-    this.logger = this.loggerFactory.create(this.constructor.name);
-    this.authConfig = this.config.getConfig('auth');
-    this.sodiumConfig = createConfig(this.authConfig.sodium);
-
-    this.addMiddleware();
-
     const dbMeta = this.schemaBuilder.getDbMeta();
     const authRouter = new KoaRouter();
     const app = this.server.getApp();

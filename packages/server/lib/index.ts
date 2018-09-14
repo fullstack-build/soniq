@@ -31,7 +31,13 @@ export class Server {
     this.loggerFactory = loggerFactory;
 
     // register package config
-    config.registerConfig(__dirname + '/../config');
+    config.registerConfig('Server', __dirname + '/../config');
+    // this.eventEmitter = eventEmitter;
+    this.logger = this.loggerFactory.create(this.constructor.name);
+
+    // get settings from DI container
+    this.serverConfig = this.config.getConfig('Server');
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     this.bootKoa();
     bootLoader.addBootFunction(this.boot.bind(this));
@@ -39,13 +45,6 @@ export class Server {
   }
 
   private async boot(): Promise<void> {
-    // this.eventEmitter = eventEmitter;
-    this.logger = this.loggerFactory.create(this.constructor.name);
-
-    // get settings from DI container
-    this.serverConfig = this.config.getConfig('server');
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
-
     try {
       // start KOA on PORT
       this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);

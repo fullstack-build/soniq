@@ -34,11 +34,12 @@ let Email = class Email {
         this.isReady = false;
         this.queueName = 'notifications.Email';
         // set DI dependencies
-        this.loggerFactory = loggerFactory;
         this.queueFactory = queueFactory;
         this.config = config;
         // register package config
-        this.config.registerConfig(__dirname + '/../config');
+        this.config.registerConfig('Notifications', __dirname + '/../config');
+        this.logger = loggerFactory.create(this.constructor.name);
+        this.CONFIG = this.config.getConfig('Notifications').Email;
         // add migration path
         schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // add to boot loader
@@ -46,8 +47,6 @@ let Email = class Email {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.CONFIG = this.config.getConfig('email');
             // create transport with settings
             if (this.CONFIG.testing) {
                 nodemailer_1.createTestAccount((err, account) => {

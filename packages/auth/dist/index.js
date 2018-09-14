@@ -59,7 +59,10 @@ let Auth = class Auth {
         this.schemaBuilder = schemaBuilder;
         this.loggerFactory = loggerFactory;
         // register package config
-        this.config.registerConfig(`${__dirname}/../config`);
+        this.config.registerConfig('Auth', `${__dirname}/../config`);
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        this.authConfig = this.config.getConfig('Auth');
+        this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
         this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('No notification function has been defined.');
         });
@@ -80,14 +83,11 @@ let Auth = class Auth {
         // require('./migrationHelper');
         // register Auth migration directive parser
         migrationHelper_1.setDirectiveParser(schema_builder_1.registerDirectiveParser);
+        this.addMiddleware();
         // this.linkPassport();
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.authConfig = this.config.getConfig('auth');
-            this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
-            this.addMiddleware();
             const dbMeta = this.schemaBuilder.getDbMeta();
             const authRouter = new KoaRouter();
             const app = this.server.getApp();

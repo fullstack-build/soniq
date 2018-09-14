@@ -36,17 +36,16 @@ let DbSchemaBuilder = class DbSchemaBuilder {
         this.initSqlPaths = [__dirname + '/../..'];
         this.permissionSqlStatements = [];
         this.dbAppClient = dbAppClient;
-        this.loggerFactory = loggerFactory;
         this.config = config;
+        // init logger
+        this.logger = loggerFactory.create(this.constructor.name);
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     // boot and load all extensions
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            // create logger
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.dbConfig = this.config.getConfig('db');
+            this.dbConfig = this.config.getConfig('Db');
             // load all extensions
             require('./extensions');
         });

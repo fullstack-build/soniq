@@ -54,13 +54,17 @@ let GraphQl = class GraphQl {
             preMutationCommit: []
         };
         // register package config
-        config.registerConfig(`${__dirname}/../config`);
+        config.registerConfig('GraphQl', `${__dirname}/../config`);
         this.loggerFactory = loggerFactory;
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
         this.schemaBuilder = schemaBuilder;
         let extendSchema = '';
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        this.ENVIRONMENT = this.config.ENVIRONMENT;
+        // read config after boot
+        this.graphQlConfig = this.config.getConfig('GraphQl');
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
             if (operator.extendSchema != null) {
                 extendSchema += `${operator.extendSchema}\n`;
@@ -74,10 +78,6 @@ let GraphQl = class GraphQl {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.ENVIRONMENT = this.config.ENVIRONMENT;
-            // read config after boot
-            this.graphQlConfig = this.config.getConfig('graphql');
             const gqlKoaRouter = new KoaRouter();
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;

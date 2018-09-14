@@ -33,11 +33,13 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 let AuthFbToken = class AuthFbToken {
     constructor(auth, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         // register package config
-        config.registerConfig(__dirname + '/../config');
+        config.registerConfig('AuthFbToken', __dirname + '/../config');
         // DI
         this.loggerFactory = loggerFactory;
         this.auth = auth;
         this.config = config;
+        this.logger = this.loggerFactory.create(this.constructor.name);
+        this.authFbTokenConfig = this.config.getConfig('AuthFbToken');
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
         schemaBuilder.extendSchema(schema);
@@ -45,8 +47,6 @@ let AuthFbToken = class AuthFbToken {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
-            this.authFbTokenConfig = this.config.getConfig('authFbToken');
             this.fbHelper = new fbHelper_1.FbHelper(this.authFbTokenConfig, this.logger);
             return;
         });

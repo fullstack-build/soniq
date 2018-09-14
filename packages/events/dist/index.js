@@ -33,7 +33,7 @@ let EventEmitter = class EventEmitter {
         this.emittersCache = {};
         this.config = config;
         // register package config
-        this.config.registerConfig(__dirname + '/../config');
+        this.config.registerConfig('Events', __dirname + '/../config');
         // finish initialization after ready event => out because ready never gets called due to resolving circular deps
         // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
         bootLoader.onBootReady(this.boot.bind(this));
@@ -42,7 +42,7 @@ let EventEmitter = class EventEmitter {
         return __awaiter(this, void 0, void 0, function* () {
             const env = di_1.Container.get('ENVIRONMENT');
             this.nodeId = env.nodeId;
-            this.namespace = this.config.getConfig('core').namespace;
+            this.namespace = this.config.getConfig('Core').namespace;
             this.eventEmitter = new eventemitter2_1.EventEmitter2({
                 wildcard: true,
                 delimiter: '.',

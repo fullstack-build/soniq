@@ -32,18 +32,16 @@ const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let DbGeneralPool = class DbGeneralPool {
     constructor(bootLoader, eventEmitter, loggerFactory, config) {
-        // register package config
-        this.config = config;
-        this.config.registerConfig(__dirname + '/../config');
         // DI
-        this.loggerFactory = loggerFactory;
         this.eventEmitter = eventEmitter;
+        this.config = config;
+        this.config.registerConfig('Db', __dirname + '/../config');
+        this.logger = loggerFactory.create(this.constructor.name);
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.logger = this.loggerFactory.create(this.constructor.name);
             const env = di_1.Container.get('ENVIRONMENT');
             this.applicationName = env.namespace + '_pool_' + env.nodeId;
             this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
@@ -76,7 +74,7 @@ let DbGeneralPool = class DbGeneralPool {
     // calculate number of max conections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {
         return __awaiter(this, void 0, void 0, function* () {
-            const configDB = this.config.getConfig('db');
+            const configDB = this.config.getConfig('Db');
             const configDbGeneral = configDB.general;
             // get known nodes from container, initially assume we are the first one
             let knownNodesCount = 1;
