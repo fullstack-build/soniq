@@ -59,7 +59,7 @@ let Auth = class Auth {
         this.schemaBuilder = schemaBuilder;
         this.loggerFactory = loggerFactory;
         // register package config
-        this.config.addConfigFolder(`${__dirname}/../config`);
+        this.config.registerConfig(`${__dirname}/../config`);
         this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('No notification function has been defined.');
         });

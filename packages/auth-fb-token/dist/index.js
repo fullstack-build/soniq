@@ -33,7 +33,7 @@ const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
 let AuthFbToken = class AuthFbToken {
     constructor(auth, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.registerConfig(__dirname + '/../config');
         // DI
         this.loggerFactory = loggerFactory;
         this.auth = auth;

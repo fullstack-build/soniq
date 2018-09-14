@@ -21,7 +21,7 @@ export class FullstackOneCore implements IFullstackOneCore {
   constructor(@Inject(type => BootLoader) bootLoader, @Inject(type => Config) config) {
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     this.config = config;
     this.bootLoader = bootLoader;

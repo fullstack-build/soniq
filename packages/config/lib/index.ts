@@ -7,6 +7,11 @@ import { IEnvironment } from './IEnvironment';
 import { BootLoader } from '@fullstack-one/boot-loader';
 export { IEnvironment };
 
+interface IConfigModule {
+  name: string;
+  path: string;
+}
+
 @Service()
 export class Config {
 
@@ -21,7 +26,8 @@ export class Config {
     // unique instance ID (6 char)
     nodeId:     null
   };
-  private configFolder = [];
+  private configModules: IConfigModule[] = [];
+  private projectConfig: any = {};
   private config: any = {};
 
   constructor(
@@ -31,71 +37,61 @@ export class Config {
     Container.set('CONFIG', {});
     Container.set('ENVIRONMENT', {});
 
-    // register boot function
-    bootLoader.addBootFunction(this.boot.bind(this));
-  }
-
-  private async boot() {
-
-    // load project config files (last step, to override all the others)
+    // load project config
     const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
-    this.addConfigFolder(projectConfigFolderPath);
-
-    // apply config
-    this.applyConfig();
-  }
-
-  public getConfig(pModuleName?: string): any {
-
-    const config = Container.get('CONFIG');
-
-    if (pModuleName == null) {
-      // return copy instead of a ref
-      return { ... config };
-    } else {
-      // return copy instead of a ref
-      return { ... config[pModuleName] };
-    }
+    this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
   }
 
   // load config based on ENV
-  public addConfigFolder(configFolderPath: string): void {
+  public registerConfig(moduleName: string, moduleConfigPath: string): void {
     // check if path was already included
-    if (!this.configFolder.includes(configFolderPath)) {
-      this.configFolder.push(configFolderPath);
+    if (this.configModules.find(configModule => configModule.name === moduleName)) {
+      const configModule: IConfigModule = {
+        name: moduleName,
+        path: moduleConfigPath
+      };
+      this.configModules.push(configModule);
+
+      // apply config to global config object
+      return this.applyConfig(moduleName, moduleConfigPath);
     }
   }
 
-  private applyConfig() {
+  private requireConfigFiles(moduleConfigPath): any {
+    // config files
+    const mainConfigPath = `${moduleConfigPath}/default.js`;
+    const envConfigPath = `${moduleConfigPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
 
-    // iterate over config folders
-    this.configFolder.forEach((configFolderPath: string) => {
-      // config files
-      const mainConfigPath = `${configFolderPath}/default.js`;
-      const envConfigPath = `${configFolderPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
+    // require config files
+    let config = null;
+    // require default config - fail if not found
+    try {
+      config = require(mainConfigPath);
+    } catch (err) {
+      process.stderr.write(
+        'config.default.loading.error.not.found: ' + mainConfigPath + '\n',
+      );
+      process.exit();
+    }
+    // try to load env config – ignore if not found
+    try {
+      config = _.merge(config, require(envConfigPath));
+    } catch (err) {
+      // ignore if not found
+    }
+    return config;
+  }
 
-      // require config files
-      let config = null;
-      // require default config - fail if not found
-      try {
-        config = require(mainConfigPath);
-      } catch (err) {
-        process.stderr.write(
-          'config.default.loading.error.not.found: ' + mainConfigPath + '\n',
-        );
-        process.exit();
-      }
+  // apply config to the global config object and return entire config
+  private applyConfig(moduleName: string, moduleConfigPath: string): any {
 
-      // try to load env config – ignore if not found
-      try {
-        config = _.merge(config, require(envConfigPath));
-      } catch (err) {
-        // ignore if not found
-      }
+    const moduleConfig = this.requireConfigFiles(moduleConfigPath);
 
-      // everything seems to be fine so far -> merge with the global settings object
-      this.config = _.merge(this.config, config);
-    });
+    // everything seems to be fine so far -> merge with the global settings object
+    this.config = _.merge(this.config, { moduleName: moduleConfig });
+
+    // LAST STEP: merge with project config file
+    this.config = _.merge(this.config, this.projectConfig);
 
     // copy and override config with ENVs (dot = nested object separator)
     Object.keys(process.env).map((envName) => {
@@ -141,6 +137,7 @@ export class Config {
     Container.set('CONFIG', this.config);
     // update ENVIRONMENT
     this.setEnvironment();
+    return this.config;
   }
 
   // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
@@ -170,6 +167,19 @@ export class Config {
 
     // put config into DI
     Container.set('ENVIRONMENT', this.ENVIRONMENT);
+  }
+
+  public getConfig(moduleName?: string): any {
+
+    const config = Container.get('CONFIG');
+
+    if (moduleName == null) {
+      // return copy instead of a ref
+      return { ... config };
+    } else {
+      // return copy instead of a ref
+      return { ... config[moduleName] };
+    }
   }
 
   /* HELPER */

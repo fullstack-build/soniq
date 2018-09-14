@@ -66,7 +66,7 @@ let SchemaBuilder = class SchemaBuilder {
         this.pgToDbMeta = pgToDbMeta;
         this.config = config;
         // register package config
-        this.config.addConfigFolder(__dirname + '/../config');
+        this.config.registerConfig(__dirname + '/../config');
         bootLoader.addBootFunction(this.boot.bind(this));
         this.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
     }

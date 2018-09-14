@@ -29,7 +29,7 @@ const config_1 = require("@fullstack-one/config");
 let FullstackOneCore = class FullstackOneCore {
     constructor(bootLoader, config) {
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.registerConfig(__dirname + '/../config');
         this.config = config;
         this.bootLoader = bootLoader;
     }

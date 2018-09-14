@@ -76,7 +76,7 @@ export class SchemaBuilder {
     this.config = config;
 
     // register package config
-    this.config.addConfigFolder(__dirname + '/../config');
+    this.config.registerConfig(__dirname + '/../config');
 
     bootLoader.addBootFunction(this.boot.bind(this));
 

@@ -50,7 +50,7 @@ let FileStorage = class FileStorage {
         this.verifiers = {};
         this.verifierObjects = {};
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.registerConfig(__dirname + '/../config');
         this.loggerFactory = loggerFactory;
         this.server = server;
         this.dbGeneralPool = dbGeneralPool;

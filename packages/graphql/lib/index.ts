@@ -62,7 +62,7 @@ export class GraphQl {
     @Inject(type => DbGeneralPool) dbGeneralPool
     ) {
     // register package config
-    config.addConfigFolder(`${__dirname}/../config`);
+    config.registerConfig(`${__dirname}/../config`);
 
     this.loggerFactory = loggerFactory;
     this.config = config;

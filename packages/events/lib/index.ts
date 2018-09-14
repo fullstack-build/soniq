@@ -31,7 +31,7 @@ export class EventEmitter implements IEventEmitter {
     this.config = config;
 
     // register package config
-    this.config.addConfigFolder(__dirname + '/../config');
+    this.config.registerConfig(__dirname + '/../config');
 
     // finish initialization after ready event => out because ready never gets called due to resolving circular deps
     // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());

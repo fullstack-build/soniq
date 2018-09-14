@@ -31,7 +31,7 @@ export class Server {
     this.loggerFactory = loggerFactory;
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     this.bootKoa();
     bootLoader.addBootFunction(this.boot.bind(this));

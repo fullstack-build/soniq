@@ -54,7 +54,7 @@ export class FileStorage {
     @Inject(type => Auth) auth?
   ) {
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     this.loggerFactory = loggerFactory;
     this.server = server;

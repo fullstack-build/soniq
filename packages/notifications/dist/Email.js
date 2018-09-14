@@ -38,7 +38,7 @@ let Email = class Email {
         this.queueFactory = queueFactory;
         this.config = config;
         // register package config
-        this.config.addConfigFolder(__dirname + '/../config');
+        this.config.registerConfig(__dirname + '/../config');
         // add migration path
         schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // add to boot loader

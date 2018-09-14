@@ -39,7 +39,7 @@ export class Email {
     this.config = config;
 
     // register package config
-    this.config.addConfigFolder(__dirname + '/../config');
+    this.config.registerConfig(__dirname + '/../config');
 
     // add migration path
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');

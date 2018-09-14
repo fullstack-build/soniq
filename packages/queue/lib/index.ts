@@ -28,7 +28,7 @@ export class QueueFactory {
     this.generalPool = generalPool;
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }

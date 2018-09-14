@@ -33,7 +33,7 @@ export class AuthFbToken {
   ) {
 
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     // DI
     this.loggerFactory = loggerFactory;

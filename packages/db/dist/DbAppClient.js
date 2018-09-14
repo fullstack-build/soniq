@@ -34,7 +34,7 @@ let DbAppClient = class DbAppClient {
     constructor(bootLoader, eventEmitter, loggerFactory, config) {
         this.config = config;
         // register package config
-        this.config.addConfigFolder(__dirname + '/../config');
+        this.config.registerConfig(__dirname + '/../config');
         // set DI dependencies
         this.eventEmitter = eventEmitter;
         this.loggerFactory = loggerFactory;

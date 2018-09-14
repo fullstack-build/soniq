@@ -12,7 +12,7 @@ export class LoggerFactory {
     @Inject(type => Config) config: Config
   ) {
     // register package config
-    config.addConfigFolder(__dirname + '/../config');
+    config.registerConfig(__dirname + '/../config');
 
     this.config = config;
   }

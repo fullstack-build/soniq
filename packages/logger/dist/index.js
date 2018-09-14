@@ -18,7 +18,7 @@ const Logger_1 = require("./Logger");
 let LoggerFactory = class LoggerFactory {
     constructor(config) {
         // register package config
-        config.addConfigFolder(__dirname + '/../config');
+        config.registerConfig(__dirname + '/../config');
         this.config = config;
     }
     create(moduleName) {

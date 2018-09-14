@@ -92,7 +92,7 @@ let Config = class Config {
         return __awaiter(this, void 0, void 0, function* () {
             // load project config files (last step, to override all the others)
             const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
-            this.addConfigFolder(projectConfigFolderPath);
+            this.registerConfig(projectConfigFolderPath);
             // iterate over config folders
             this.configFolder.forEach((configFolderPath) => {
                 // config files

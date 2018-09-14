@@ -34,7 +34,7 @@ let DbGeneralPool = class DbGeneralPool {
     constructor(bootLoader, eventEmitter, loggerFactory, config) {
         // register package config
         this.config = config;
-        this.config.addConfigFolder(__dirname + '/../config');
+        this.config.registerConfig(__dirname + '/../config');
         // DI
         this.loggerFactory = loggerFactory;
         this.eventEmitter = eventEmitter;

@@ -54,7 +54,7 @@ let GraphQl = class GraphQl {
             preMutationCommit: []
         };
         // register package config
-        config.addConfigFolder(`${__dirname}/../config`);
+        config.registerConfig(`${__dirname}/../config`);
         this.loggerFactory = loggerFactory;
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;

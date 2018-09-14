@@ -65,7 +65,7 @@ export class Auth {
     this.loggerFactory = loggerFactory;
 
     // register package config
-    this.config.addConfigFolder(`${__dirname}/../config`);
+    this.config.registerConfig(`${__dirname}/../config`);
 
     this.notificationFunction = async (caller: string, user, meta: string) => {
       throw new Error('No notification function has been defined.');
