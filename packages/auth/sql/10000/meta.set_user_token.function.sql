@@ -10,13 +10,13 @@ DECLARE
     v_transaction_payload TEXT;
     v_transaction_token TEXT;
 BEGIN
-    -- Check if the user-token is valid. Raise exeption if not.
+    -- Check if the user-token is valid. Raise exxeption if not.
     v_is_user_token_valid := _meta.is_user_token_valid(i_user_id, i_user_token, i_provider, i_timestamp, false, false);
     IF v_is_user_token_valid = FALSE THEN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';
     SELECT value INTO v_transaction_token_timestamp FROM _meta."Auth" WHERE key = 'transaction_token_timestamp';

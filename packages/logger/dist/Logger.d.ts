@@ -2,8 +2,8 @@ import { ILogger } from './ILogger';
 export declare class Logger implements ILogger {
     private LEVELS;
     private loggerName;
-    private tracerLogger;
-    private debugLogger;
+    private readonly tracerLogger;
+    private readonly debugLogger;
     private projectEnvString;
     constructor(moduleName: string, loggerConfig: any, env: any);
     /**

@@ -25,7 +25,6 @@ let Config = class Config {
             name: null,
             version: null,
             path: null,
-            port: null,
             namespace: null,
             // unique instance ID (6 char)
             nodeId: null
@@ -39,6 +38,8 @@ let Config = class Config {
         // load project config
         const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
         this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
+        // register package config
+        this.registerConfig('Config', __dirname + '/../config');
     }
     // load config based on ENV
     registerConfig(moduleName, moduleConfigPath) {
@@ -76,7 +77,7 @@ let Config = class Config {
         }
         return config;
     }
-    // apply config to the global config object and return entire config
+    // apply config to the global config object and return config part that was added after application
     applyConfig(moduleName, moduleConfigPath) {
         const moduleConfig = this.requireConfigFiles(moduleConfigPath);
         // everything seems to be fine so far -> merge with the global settings object
@@ -123,7 +124,7 @@ let Config = class Config {
         di_1.Container.set('CONFIG', this.config);
         // update ENVIRONMENT
         this.setEnvironment();
-        return this.config;
+        return this.config[moduleName];
     }
     // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
     setEnvironment() {
@@ -139,15 +140,9 @@ let Config = class Config {
         this.ENVIRONMENT.version = PROJECT_PACKAGE.version;
         this.ENVIRONMENT.path = projectPath;
         // unique instance ID (6 char)
-        this.ENVIRONMENT.nodeId = crypto_1.randomBytes(20).toString('hex').substr(5, 6);
+        this.ENVIRONMENT.nodeId = this.ENVIRONMENT.nodeId || crypto_1.randomBytes(20).toString('hex').substr(5, 6);
         // wait until core config is set
-        if (this.config.core != null) {
-            this.ENVIRONMENT.namespace = this.config.core.namespace;
-        }
-        // wait until server config is set
-        if (this.config.server != null) {
-            this.ENVIRONMENT.port = this.config.server.port;
-        }
+        this.ENVIRONMENT.namespace = this.getConfig('Config').namespace;
         // put config into DI
         di_1.Container.set('ENVIRONMENT', this.ENVIRONMENT);
     }

@@ -18,7 +18,7 @@ DECLARE
     v_provider jsonb;
     v_password jsonb;
 BEGIN
-    -- Check if the user is admin. Raise exeption if not.
+    -- Check if the user is admin. Raise exception if not.
 	v_is_admin := _meta.is_admin();
 	IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
@@ -31,7 +31,7 @@ BEGIN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_auth_table FROM _meta."Auth" WHERE key = 'auth_table';
     SELECT value INTO v_auth_table_schema FROM _meta."Auth" WHERE key = 'auth_table_schema';

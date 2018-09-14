@@ -29,7 +29,7 @@ BEGIN
         RAISE EXCEPTION 'You cannot remove the provider of your current session.';
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_auth_table FROM _meta."Auth" WHERE key = 'auth_table';
     SELECT value INTO v_auth_table_schema FROM _meta."Auth" WHERE key = 'auth_table_schema';

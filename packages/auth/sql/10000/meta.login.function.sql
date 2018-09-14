@@ -20,13 +20,13 @@ DECLARE
     v_refresh_token_payload TEXT;
     v_refresh_token TEXT;
 BEGIN
-    -- Check if the user is admin. Raise exeption if not.
+    -- Check if the user is admin. Raise exception if not.
     v_is_admin := _meta.is_admin();
     IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_user_token_secret FROM _meta."Auth" WHERE key = 'user_token_secret';
     SELECT value INTO v_user_token_max_age_in_seconds FROM _meta."Auth" WHERE key = 'user_token_max_age_in_seconds';

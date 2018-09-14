@@ -84,7 +84,7 @@ export class Config {
     return config;
   }
 
-  // apply config to the global config object and return entire config
+  // apply config to the global config object and return config part that was added after application
   private applyConfig(moduleName: string, moduleConfigPath: string): any {
 
     const moduleConfig = this.requireConfigFiles(moduleConfigPath);
@@ -139,7 +139,7 @@ export class Config {
     Container.set('CONFIG', this.config);
     // update ENVIRONMENT
     this.setEnvironment();
-    return this.config;
+    return this.config[moduleName];
   }
 
   // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
