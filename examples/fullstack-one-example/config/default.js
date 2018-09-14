@@ -2,7 +2,7 @@ const FacebookStrategy  = require('passport-facebook');
 const GoogleStrategy    = require('passport-google-oauth20');
 
 module.exports = {
-  db: {
+  Db: {
     appClient: {
       database: process.env.DB_DATABASE,
       host:     process.env.DB_HOST,
@@ -16,7 +16,7 @@ module.exports = {
       password: process.env.DB_GENERAL_PASSWORD
     }
   },
-  auth: {
+  Auth: {
     secrets: {
       jwt:      process.env.AUTH_JWT_SECRET,
       admin:    process.env.AUTH_ADMIN_SECRET,
@@ -55,14 +55,14 @@ module.exports = {
       serverApiAddress: 'http://localhost:3000'
     }
   },
-  authFbToken: {
+  AuthFbToken: {
     clientID: 2045088022395430,
     clientSecret: 'ad5b17b47d056393b687c20b64fea2b5'
   },
-  server: {
+  Server: {
     port: process.env.PORT
   },
-  fileStorage: {
+  FileStorage: {
     minio: {
       endPoint: 'play.minio.io',
       port: 9000,
@@ -72,11 +72,11 @@ module.exports = {
     },
     bucket: 'fullstackonetest'
   },
-  schemaBuilder: {
+  SchemaBuilder: {
     setUserPrivileges: true
   },
-  queue: {
-// leaving this settings out will use a connection from the general pool
+  Queue: {
+    // leaving this settings out will use a connection from the general pool
     database: 'fullstack-one-example',
     host: 'localhost',
     user: 'postgres',
@@ -85,29 +85,31 @@ module.exports = {
     archiveCompletedJobsEvery: '2 days',
     //schema: '_queue'
   },
-  email: {
-    testing: false,
-    transport: {
-      smtp: {
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT, 10),
-        secure: (process.env.EMAIL_SECURE.toLowerCase() === 'true'),
-        auth: {
-          user:  process.env.EMAIL_AUTH_USERNAME,
-          pass:  process.env.EMAIL_AUTH_PASSWORD
-        },
-        // Security options to disallow using attachments from file or URL
-        disableFileAccess: true,
-        disableUrlAccess: true,
-        // create a smtp connection pool
-        pool: true
+  Notifications: {
+    Email: {
+      testing: false,
+      transport: {
+        smtp: {
+          host: process.env.EMAIL_HOST,
+          port: parseInt(process.env.EMAIL_PORT, 10),
+          secure: (process.env.EMAIL_SECURE.toLowerCase() === 'true'),
+          auth: {
+            user:  process.env.EMAIL_AUTH_USERNAME,
+            pass:  process.env.EMAIL_AUTH_PASSWORD
+          },
+          // Security options to disallow using attachments from file or URL
+          disableFileAccess: true,
+          disableUrlAccess: true,
+          // create a smtp connection pool
+          pool: true
+        }
+      },
+      defaults: {},
+      htmlToText: {},
+      queue: {
+        retryLimit: 10,
+        expireIn:   '60 min'
       }
-    },
-    defaults: {},
-    htmlToText: {},
-    queue: {
-      retryLimit: 10,
-      expireIn:   '60 min'
     }
   }
 };

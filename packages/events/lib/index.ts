@@ -31,7 +31,7 @@ export class EventEmitter implements IEventEmitter {
     this.config = config;
 
     // register package config
-    this.config.registerConfig(__dirname + '/../config');
+    this.config.registerConfig('Events', __dirname + '/../config');
 
     // finish initialization after ready event => out because ready never gets called due to resolving circular deps
     // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
@@ -42,7 +42,7 @@ export class EventEmitter implements IEventEmitter {
 
     const env: IEnvironment = Container.get('ENVIRONMENT');
     this.nodeId = env.nodeId;
-    this.namespace = this.config.getConfig('core').namespace;
+    this.namespace = this.config.getConfig('Core').namespace;
     this.eventEmitter = new EventEmitter2({
       wildcard: true,
       delimiter: '.',

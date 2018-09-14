@@ -14,15 +14,15 @@ import { BootLoader } from '@fullstack-one/boot-loader';
 
 @Service()
 export class DbGeneralPool implements IDb  {
-  private readonly config: Config;
+
   private applicationName: string;
   private credentials: PgPoolConfig;
   private managedPool: PgPool;
 
   // DI
-  private loggerFactory: LoggerFactory;
-  private logger: ILogger;
-  private eventEmitter: EventEmitter;
+  private readonly config: Config;
+  private readonly logger: ILogger;
+  private readonly eventEmitter: EventEmitter;
 
   constructor(
     @Inject(type => BootLoader) bootLoader,
@@ -30,13 +30,12 @@ export class DbGeneralPool implements IDb  {
     @Inject(type => LoggerFactory) loggerFactory,
     @Inject(type => Config) config
     ) {
-    // register package config
-    this.config = config;
-    this.config.registerConfig(__dirname + '/../config');
-
     // DI
-    this.loggerFactory = loggerFactory;
     this.eventEmitter = eventEmitter;
+    this.config = config;
+
+    this.config.registerConfig('Db', __dirname + '/../config');
+    this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
@@ -45,7 +44,6 @@ export class DbGeneralPool implements IDb  {
 
   private async boot(): Promise<void> {
 
-    this.logger = this.loggerFactory.create(this.constructor.name);
     const env: IEnvironment = Container.get('ENVIRONMENT');
     this.applicationName = env.namespace + '_pool_' + env.nodeId;
     this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
@@ -85,7 +83,7 @@ export class DbGeneralPool implements IDb  {
   // calculate number of max conections and adjust pool based on number of connected nodes
   private async gracefullyAdjustPoolSize(): Promise<PgPool> {
 
-    const configDB = this.config.getConfig('db');
+    const configDB = this.config.getConfig('Db');
     const configDbGeneral  = configDB.general;
 
     // get known nodes from container, initially assume we are the first one

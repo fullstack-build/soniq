@@ -13,7 +13,6 @@ export class QueueFactory {
   private queue: PgBoss;
 
   // DI
-  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private generalPool: DbGeneralPool;
 
@@ -24,17 +23,12 @@ export class QueueFactory {
     @Inject(type => Config) config: Config
   ) {
     // set DI dependencies
-    this.loggerFactory = loggerFactory;
     this.generalPool = generalPool;
 
     // register package config
-    config.registerConfig(__dirname + '/../config');
-
-    bootLoader.addBootFunction(this.boot.bind(this));
-  }
-
-  private async boot() {
-    this.logger = this.loggerFactory.create(this.constructor.name);
+    config.registerConfig('Queue', __dirname + '/../config');
+    // init logger
+    this.logger = loggerFactory.create(this.constructor.name);
   }
 
   public async getQueue(): Promise<PgBoss> {

@@ -17,12 +17,11 @@ export class Email {
   private readonly queueName = 'notifications.Email';
 
   // DI dependencies
-  private config: Config;
-  private CONFIG: any;
-  private loggerFactory: LoggerFactory;
-  private logger: ILogger;
+  private readonly config: Config;
+  private readonly CONFIG: any;
+  private readonly logger: ILogger;
   @Inject()
-  private eventEmitter: EventEmitter;
+  private readonly eventEmitter: EventEmitter;
 
   private readonly queueFactory: QueueFactory;
 
@@ -34,12 +33,13 @@ export class Email {
     @Inject(type => BootLoader) bootLoader) {
 
     // set DI dependencies
-    this.loggerFactory = loggerFactory;
     this.queueFactory = queueFactory;
     this.config = config;
-
     // register package config
-    this.config.registerConfig(__dirname + '/../config');
+    this.config.registerConfig('Notifications', __dirname + '/../config');
+
+    this.logger = loggerFactory.create(this.constructor.name);
+    this.CONFIG = this.config.getConfig('Notifications').email;
 
     // add migration path
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
@@ -49,8 +49,6 @@ export class Email {
   }
 
   private async boot(): Promise<void> {
-    this.logger = this.loggerFactory.create(this.constructor.name);
-    this.CONFIG = this.config.getConfig('email');
 
     // create transport with settings
     if (this.CONFIG.testing) {

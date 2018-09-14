@@ -12,9 +12,7 @@ import * as _ from 'lodash';
 export class AutoMigrate {
 
   private ENVIRONMENT: IEnvironment;
-  private loggerFactory: LoggerFactory;
   private logger: ILogger;
-  private eventEmitter: EventEmitter;
   private schemaBuilder: SchemaBuilder;
   private config: Config;
 
@@ -25,18 +23,18 @@ export class AutoMigrate {
     @Inject(type => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject(type => DbAppClient) dbAppClient: DbAppClient) {
 
-    this.loggerFactory = loggerFactory;
+    // DI
     this.schemaBuilder = schemaBuilder;
     this.config = config;
+    // init logger
+    this.logger = loggerFactory.create(this.constructor.name);
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   public async boot() {
-    this.logger = this.loggerFactory.create(this.constructor.name);
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
-
     // TODO: Check config automigrate = true?
     return await this.runMigration();
   }

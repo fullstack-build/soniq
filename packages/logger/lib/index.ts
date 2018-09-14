@@ -11,10 +11,10 @@ export class LoggerFactory {
   constructor(
     @Inject(type => Config) config: Config
   ) {
-    // register package config
-    config.registerConfig(__dirname + '/../config');
-
     this.config = config;
+
+    // register package config
+    this.config.registerConfig('Logger', __dirname + '/../config');
   }
   public create(moduleName) {
     const env: any = Container.get('ENVIRONMENT');

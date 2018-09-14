@@ -45,7 +45,7 @@ export class Config {
   // load config based on ENV
   public registerConfig(moduleName: string, moduleConfigPath: string): void {
     // check if path was already included
-    if (this.configModules.find(configModule => configModule.name === moduleName)) {
+    if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
       const configModule: IConfigModule = {
         name: moduleName,
         path: moduleConfigPath
@@ -88,9 +88,9 @@ export class Config {
     const moduleConfig = this.requireConfigFiles(moduleConfigPath);
 
     // everything seems to be fine so far -> merge with the global settings object
-    this.config = _.merge(this.config, { moduleName: moduleConfig });
+    this.config = _.merge(this.config, { [moduleName]: moduleConfig });
 
-    // LAST STEP: merge with project config file
+    // ALWAYS merge with project config file at the END
     this.config = _.merge(this.config, this.projectConfig);
 
     // copy and override config with ENVs (dot = nested object separator)

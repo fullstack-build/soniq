@@ -18,7 +18,6 @@ export class GracefulShutdown {
   private dbPoolObj: DbGeneralPool;
 
   private ENVIRONMENT: IEnvironment;
-  private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
 
@@ -30,17 +29,15 @@ export class GracefulShutdown {
     @Inject(type => DbGeneralPool) dbPoolObj,
     @Inject(type => Config) config) {
 
-    this.loggerFactory = loggerFactory;
     this.eventEmitter = eventEmitter;
     this.dbAppClient = dbAppClient;
     this.dbPoolObj = dbPoolObj;
+    this.logger = loggerFactory.create(this.constructor.name);
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   private boot() {
-
-    this.logger = this.loggerFactory.create(this.constructor.name);
 
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');

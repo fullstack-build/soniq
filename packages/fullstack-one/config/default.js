@@ -1,5 +1,3 @@
 module.exports = {
-  core: {
-    namespace: 'one'
-  }
+  namespace: 'one'
 };

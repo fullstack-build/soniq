@@ -1,7 +1,6 @@
 
 import { Service, Container, Inject } from '@fullstack-one/di';
 import { IEnvironment } from '@fullstack-one/config';
-import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 import { BootLoader } from '@fullstack-one/boot-loader';
 
@@ -10,25 +9,23 @@ import * as fastGlob from 'fast-glob';
 @Service()
 export class BootScripts {
 
-  private ENVIRONMENT: IEnvironment;
-  private loggerFactory: LoggerFactory;
-  private logger: ILogger;
-  private eventEmitter: EventEmitter;
+  private readonly ENVIRONMENT: IEnvironment;
+  private readonly logger: ILogger;
 
   constructor(
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(tpye => BootLoader) bootLoader?) {
-    this.loggerFactory = loggerFactory;
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(tpye => BootLoader) bootLoader) {
+
+    this.logger = loggerFactory.create(this.constructor.name);
+
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   // execute all boot scripts in the boot folder
   private async boot() {
-    this.logger = this.loggerFactory.create(this.constructor.name);
-
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
 
     // get all boot files sync
     const files: any = fastGlob.sync(`${this.ENVIRONMENT.path}/boot/*.{ts,js}`, {

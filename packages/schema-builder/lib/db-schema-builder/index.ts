@@ -22,21 +22,22 @@ export class DbSchemaBuilder {
   private initSqlPaths = [__dirname + '/../..'];
   private dbConfig;
   private schemaBuilderConfig;
-  private config;
-  private loggerFactory: LoggerFactory;
   private permissionSqlStatements: any = [];
 
   // DI
-  private logger: ILogger;
+  private readonly config;
+  private readonly logger: ILogger;
 
-  constructor(@Inject(type => BootLoader) bootLoader?,
-              @Inject(type => Config) config?: Config,
-              @Inject(type => LoggerFactory) loggerFactory?: LoggerFactory,
-              @Inject(type => DbAppClient) dbAppClient?: DbAppClient) {
+  constructor(@Inject(type => BootLoader) bootLoader,
+              @Inject(type => Config) config: Config,
+              @Inject(type => LoggerFactory) loggerFactory: LoggerFactory,
+              @Inject(type => DbAppClient) dbAppClient: DbAppClient) {
 
     this.dbAppClient = dbAppClient;
-    this.loggerFactory = loggerFactory;
     this.config = config;
+
+    // init logger
+    this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
@@ -45,9 +46,7 @@ export class DbSchemaBuilder {
   // boot and load all extensions
   private async boot(): Promise<void> {
 
-    // create logger
-    this.logger = this.loggerFactory.create(this.constructor.name);
-    this.dbConfig = this.config.getConfig('db');
+    this.dbConfig = this.config.getConfig('Db');
 
     // load all extensions
     require('./extensions');

@@ -1,8 +1,6 @@
 // DI
 import 'reflect-metadata';
-import { Container, Inject, Service } from '@fullstack-one/di';
-
-import { randomBytes } from 'crypto';
+import { Inject, Service } from '@fullstack-one/di';
 
 // fullstack-one interfaces
 import { IFullstackOneCore } from './IFullstackOneCore';
@@ -16,20 +14,21 @@ export class FullstackOneCore implements IFullstackOneCore {
   // DI
   private config: Config;
   private bootLoader: BootLoader;
-  private ENVIRONMENT: IEnvironment;
+  private readonly ENVIRONMENT: IEnvironment;
 
   constructor(@Inject(type => BootLoader) bootLoader, @Inject(type => Config) config) {
-
-    // register package config
-    config.registerConfig(__dirname + '/../config');
-
+    // DI
     this.config = config;
     this.bootLoader = bootLoader;
+
+    // register package config
+    this.config.registerConfig('Core', __dirname + '/../config');
+    this.ENVIRONMENT = this.config.ENVIRONMENT;
+
   }
 
   public async boot() {
     await this.bootLoader.boot();
-    this.ENVIRONMENT = this.config.ENVIRONMENT;
     this.cliArt();
     return;
   }
@@ -45,43 +44,3 @@ export class FullstackOneCore implements IFullstackOneCore {
     process.stdout.write('____________________________________\n');
   }
 }
-
-// GETTER
-
-// ONE SINGLETON
-/*const $one: FullstackOneCore = Container.get(FullstackOneCore);
-export function getInstance(): FullstackOneCore {
-  return $one;
-}
-
-// return finished booting promise
-export function getReadyPromise(): Promise<FullstackOneCore> {
-  return new Promise(($resolve, $reject) => {
-
-    // already booted?
-    if ($one.isReady) {
-      $resolve($one);
-    } else {
-
-      // catch ready event
-      Container.get(EventEmitter).on(`${$one.ENVIRONMENT.namespace}.ready`, () => {
-        $resolve($one);
-      });
-      // catch not ready event
-      Container.get(EventEmitter).on(`${$one.ENVIRONMENT.namespace}.not-ready`, (err) => {
-        $reject(err);
-      });
-    }
-
-  });
-}
-
-// helper to convert an event into a promise
-export function eventToPromise(pEventName: string): Promise<any> {
-  return new Promise(($resolve, $reject) => {
-    Container.get(EventEmitter).on(pEventName, (...args: any[]) => {
-      $resolve([... args]);
-    });
-
-  });
-}*/

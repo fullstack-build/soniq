@@ -1,5 +1,5 @@
 module.exports = {
-  email: {
+  Email: {
     testing: true,
     transport: {
       smtp: {

@@ -22,37 +22,36 @@ export class DbAppClient implements IDb {
   private credentials: any;
 
   // DI
-  private ENVIRONMENT: IEnvironment;
-  private loggerFactory: LoggerFactory;
-  private logger: ILogger;
-  private eventEmitter: EventEmitter;
-  private config: Config;
+  private readonly ENVIRONMENT: IEnvironment;
+  private readonly config: Config;
+  private readonly logger: ILogger;
+  private readonly eventEmitter: EventEmitter;
 
   constructor(
-    @Inject(type => BootLoader) bootLoader?,
-    @Inject(type => EventEmitter) eventEmitter?,
-    @Inject(type => LoggerFactory) loggerFactory?,
-    @Inject(type => Config) config?
+    @Inject(type => BootLoader) bootLoader,
+    @Inject(type => EventEmitter) eventEmitter,
+    @Inject(type => LoggerFactory) loggerFactory,
+    @Inject(type => Config) config
   ) {
-    this.config = config;
-    // register package config
-    this.config.registerConfig(__dirname + '/../config');
-
     // set DI dependencies
+    this.config = config;
     this.eventEmitter = eventEmitter;
-    this.loggerFactory = loggerFactory;
+
+    // register package config
+    this.config.registerConfig('Db', __dirname + '/../config');
+
+    // get settings from DI container
+    this.ENVIRONMENT = Container.get('ENVIRONMENT');
+    // init logger
+    this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
   }
 
   private async boot(): Promise<PgClient> {
-    this.logger = this.loggerFactory.create(this.constructor.name);
 
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get('ENVIRONMENT');
-
-    const configDB = this.config.getConfig('db');
+    const configDB = this.config.getConfig('Db');
     this.credentials  = configDB.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
