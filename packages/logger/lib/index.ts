@@ -7,6 +7,7 @@ export { ILogger } from './ILogger';
 @Service()
 export class LoggerFactory {
   private config: Config;
+  private readonly CONFIG;
 
   constructor(
     @Inject(type => Config) config: Config
@@ -14,10 +15,10 @@ export class LoggerFactory {
     this.config = config;
 
     // register package config
-    this.config.registerConfig('Logger', __dirname + '/../config');
+    this.CONFIG = this.config.registerConfig('Logger', __dirname + '/../config');
   }
   public create(moduleName) {
     const env: any = Container.get('ENVIRONMENT');
-    return new Logger(moduleName, this.config.getConfig('Logger'), env);
+    return new Logger(moduleName, this.CONFIG, env);
   }
 }

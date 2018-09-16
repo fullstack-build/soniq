@@ -1,15 +1,17 @@
 import { IEnvironment } from './IEnvironment';
 export { IEnvironment };
 export declare class Config {
+    private readonly bootLoader;
     readonly ENVIRONMENT: IEnvironment;
     private configModules;
     private projectConfig;
     private config;
-    constructor(bootLoader: any);
-    registerConfig(moduleName: string, moduleConfigPath: string): any;
+    private readonly myConfig;
+    constructor();
     private requireConfigFiles;
     private applyConfig;
     private setEnvironment;
+    registerConfig(moduleName: string, moduleConfigPath: string): any;
     getConfig(moduleName?: string): any;
     private deepMapHelper;
 }

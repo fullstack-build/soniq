@@ -19,11 +19,11 @@ let LoggerFactory = class LoggerFactory {
     constructor(config) {
         this.config = config;
         // register package config
-        this.config.registerConfig('Logger', __dirname + '/../config');
+        this.CONFIG = this.config.registerConfig('Logger', __dirname + '/../config');
     }
     create(moduleName) {
         const env = di_1.Container.get('ENVIRONMENT');
-        return new Logger_1.Logger(moduleName, this.config.getConfig('Logger'), env);
+        return new Logger_1.Logger(moduleName, this.CONFIG, env);
     }
 };
 LoggerFactory = __decorate([

@@ -57,9 +57,8 @@ let FileStorage = class FileStorage {
         this.config = config;
         this.auth = auth;
         // register package config
-        config.registerConfig('FileStorage', __dirname + '/../config');
+        this.fileStorageConfig = config.registerConfig('FileStorage', __dirname + '/../config');
         this.logger = this.loggerFactory.create(this.constructor.name);
-        this.fileStorageConfig = this.config.getConfig('FileStorage');
         // add migration path
         this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         this.schemaBuilder.extendSchema(schema);

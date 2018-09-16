@@ -62,7 +62,7 @@ export class GraphQl {
     @Inject(type => DbGeneralPool) dbGeneralPool
     ) {
     // register package config
-    config.registerConfig('GraphQl', `${__dirname}/../config`);
+    this.graphQlConfig = config.registerConfig('GraphQl', `${__dirname}/../config`);
 
     this.loggerFactory = loggerFactory;
     this.config = config;
@@ -73,9 +73,6 @@ export class GraphQl {
 
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.ENVIRONMENT = this.config.ENVIRONMENT;
-
-    // read config after boot
-    this.graphQlConfig = this.config.getConfig('GraphQl');
 
     Object.values(operatorsObject).forEach((operator: any) => {
       if (operator.extendSchema != null) {

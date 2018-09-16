@@ -37,8 +37,8 @@ export class Email {
     this.queueFactory = queueFactory;
     this.config = config;
     // register package config
-    this.config.registerConfig('Notifications', __dirname + '/../config');
-    this.CONFIG = this.config.getConfig('Notifications').Email;
+    const notificationsConfig = this.config.registerConfig('Notifications', __dirname + '/../config');
+    this.CONFIG = notificationsConfig.Email;
 
     this.logger = loggerFactory.create(this.constructor.name);
 

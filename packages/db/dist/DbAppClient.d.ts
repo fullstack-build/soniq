@@ -9,6 +9,7 @@ export declare class DbAppClient implements IDb {
     private readonly config;
     private readonly logger;
     private readonly eventEmitter;
+    private readonly CONFIG;
     constructor(bootLoader: any, eventEmitter: any, loggerFactory: any, config: any);
     private boot;
     end(): Promise<void>;

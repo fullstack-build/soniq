@@ -17,22 +17,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 let BootLoader = class BootLoader {
     constructor() {
+        this.IS_BOOTING = false;
+        this.HAS_BOOTED = false;
         this.bootFunctions = [];
         this.bootReadyFunctions = [];
-        this.hasBooted = false;
+    }
+    isBooting() {
+        return this.IS_BOOTING;
+    }
+    hasBooted() {
+        return this.HAS_BOOTED;
     }
     addBootFunction(fn) {
         this.bootFunctions.push(fn);
     }
     onBootReady(fn) {
-        if (this.hasBooted) {
+        if (this.HAS_BOOTED) {
             return fn();
         }
         this.bootReadyFunctions.push(fn);
     }
     getReadyPromise() {
         return new Promise((resolve, reject) => {
-            if (this.hasBooted) {
+            if (this.HAS_BOOTED) {
                 return resolve();
             }
             this.bootReadyFunctions.push(resolve);
@@ -40,12 +47,15 @@ let BootLoader = class BootLoader {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.IS_BOOTING = true;
             for (const fn of this.bootFunctions) {
                 yield fn(this);
             }
             for (const fn of this.bootReadyFunctions) {
                 fn(this);
             }
+            this.IS_BOOTING = false;
+            this.HAS_BOOTED = true;
         });
     }
 };

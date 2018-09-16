@@ -76,10 +76,9 @@ export class SchemaBuilder {
     this.config = config;
 
     // register package config
-    this.config.registerConfig('SchemaBuilder', __dirname + '/../config');
+    this.schemaBuilderConfig = this.config.registerConfig('SchemaBuilder', __dirname + '/../config');
 
     this.logger = this.loggerFactory.create(this.constructor.name);
-    this.schemaBuilderConfig = this.config.getConfig('SchemaBuilder');
     this.ENVIRONMENT = this.config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.boot.bind(this));

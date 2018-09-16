@@ -8,17 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const di_1 = require("@fullstack-one/di");
 const path = require("path");
 const _ = require("lodash");
 const crypto_1 = require("crypto");
+// DI
+const di_1 = require("@fullstack-one/di");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let Config = class Config {
-    constructor(bootLoader) {
+    constructor() {
+        // env
         this.ENVIRONMENT = {
             frameworkVersion: null,
             NODE_ENV: process.env.NODE_ENV,
@@ -39,20 +38,7 @@ let Config = class Config {
         const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
         this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
         // register package config
-        this.registerConfig('Config', __dirname + '/../config');
-    }
-    // load config based on ENV
-    registerConfig(moduleName, moduleConfigPath) {
-        // check if path was already included
-        if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
-            const configModule = {
-                name: moduleName,
-                path: moduleConfigPath
-            };
-            this.configModules.push(configModule);
-            // apply config to global config object
-            return this.applyConfig(moduleName, moduleConfigPath);
-        }
+        this.myConfig = this.registerConfig('Config', __dirname + '/../config');
     }
     requireConfigFiles(moduleConfigPath) {
         // config files
@@ -68,7 +54,7 @@ let Config = class Config {
             process.stderr.write('config.default.loading.error.not.found: ' + mainConfigPath + '\n');
             process.exit();
         }
-        // try to load env config – ignore if not found
+        // try to load env config – ignore if not found
         try {
             config = _.merge(config, require(envConfigPath));
         }
@@ -142,17 +128,39 @@ let Config = class Config {
         // unique instance ID (6 char)
         this.ENVIRONMENT.nodeId = this.ENVIRONMENT.nodeId || crypto_1.randomBytes(20).toString('hex').substr(5, 6);
         // wait until core config is set
-        this.ENVIRONMENT.namespace = this.getConfig('Config').namespace;
+        this.ENVIRONMENT.namespace = this.config.Config.namespace;
         // put config into DI
         di_1.Container.set('ENVIRONMENT', this.ENVIRONMENT);
+    }
+    /* PUBLIC */
+    // register config for module and return this initialized configuration
+    registerConfig(moduleName, moduleConfigPath) {
+        // check if path was already included, otherwise just return result
+        if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
+            const configModule = {
+                name: moduleName,
+                path: moduleConfigPath
+            };
+            this.configModules.push(configModule);
+            // apply config to global config object
+            return this.applyConfig(moduleName, moduleConfigPath);
+        }
+        else {
+            return this.getConfig(moduleName);
+        }
     }
     getConfig(moduleName) {
         const config = di_1.Container.get('CONFIG');
         if (moduleName == null) {
+            // check if config is in its final state (after boot or during boot)
+            if (this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
+                throw Error('Configuration not available before booting.');
+            }
             // return copy instead of a ref
             return Object.assign({}, config);
         }
         else {
+            // module configuraion is always final when available
             // return copy instead of a ref
             return Object.assign({}, config[moduleName]);
         }
@@ -167,9 +175,12 @@ let Config = class Config {
         });
     }
 };
+__decorate([
+    di_1.Inject(type => boot_loader_1.BootLoader),
+    __metadata("design:type", boot_loader_1.BootLoader)
+], Config.prototype, "bootLoader", void 0);
 Config = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __metadata("design:paramtypes", [Object])
+    __metadata("design:paramtypes", [])
 ], Config);
 exports.Config = Config;

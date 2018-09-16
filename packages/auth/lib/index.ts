@@ -65,10 +65,9 @@ export class Auth {
     this.loggerFactory = loggerFactory;
 
     // register package config
-    this.config.registerConfig('Auth', `${__dirname}/../config`);
+    this.authConfig = this.config.registerConfig('Auth', `${__dirname}/../config`);
 
     this.logger = this.loggerFactory.create(this.constructor.name);
-    this.authConfig = this.config.getConfig('Auth');
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
     this.notificationFunction = async (caller: string, user, meta: string) => {

@@ -1,7 +1,10 @@
 export declare class BootLoader {
+    private IS_BOOTING;
+    private HAS_BOOTED;
     private bootFunctions;
     private bootReadyFunctions;
-    private hasBooted;
+    isBooting(): boolean;
+    hasBooted(): boolean;
     addBootFunction(fn: any): void;
     onBootReady(fn: any): any;
     getReadyPromise(): Promise<{}>;

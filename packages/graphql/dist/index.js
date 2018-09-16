@@ -54,7 +54,7 @@ let GraphQl = class GraphQl {
             preMutationCommit: []
         };
         // register package config
-        config.registerConfig('GraphQl', `${__dirname}/../config`);
+        this.graphQlConfig = config.registerConfig('GraphQl', `${__dirname}/../config`);
         this.loggerFactory = loggerFactory;
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;
@@ -63,8 +63,6 @@ let GraphQl = class GraphQl {
         let extendSchema = '';
         this.logger = this.loggerFactory.create(this.constructor.name);
         this.ENVIRONMENT = this.config.ENVIRONMENT;
-        // read config after boot
-        this.graphQlConfig = this.config.getConfig('GraphQl');
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
             if (operator.extendSchema != null) {
                 extendSchema += `${operator.extendSchema}\n`;
