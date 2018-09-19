@@ -80,6 +80,8 @@ export class Auth {
     // add to boot loader
     bootLoader.addBootFunction(this.boot.bind(this));
 
+    // A test change
+
     this.schemaBuilder.extendSchema(schema);
 
     this.schemaBuilder.addExtension(getParser((key, value) => {

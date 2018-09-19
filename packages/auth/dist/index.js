@@ -69,6 +69,7 @@ let Auth = class Auth {
         graphQl.addHook('preMutationCommit', this.preMutationCommitHook.bind(this));
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
+        // A test change
         this.schemaBuilder.extendSchema(schema);
         this.schemaBuilder.addExtension(getParser_1.getParser((key, value) => {
             this.parserMeta[key] = value;
