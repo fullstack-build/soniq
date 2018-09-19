@@ -44,6 +44,10 @@ function buildUpdateView(table, view, context, extensions, config) {
     const localTable = '_local_table_';
     gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
         const gqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinitionTemp));
+        // Remove the NonNullType for all fields.
+        if (gqlFieldDefinition.type.kind === 'NonNullType') {
+            gqlFieldDefinition.type = gqlFieldDefinition.type.type;
+        }
         const directives = parseDirectives_1.parseDirectives(gqlFieldDefinition.directives);
         const fieldName = gqlFieldDefinition.name.value;
         gqlFieldDefinition.kind = 'InputValueDefinition';

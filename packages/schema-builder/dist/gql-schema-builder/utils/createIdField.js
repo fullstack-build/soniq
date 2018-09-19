@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function createIdField(fieldName) {
-    return {
+function createIdField(fieldName, isNonNullType = false) {
+    const field = {
         kind: 'FieldDefinition',
         name: {
             kind: 'Name',
@@ -17,5 +17,12 @@ function createIdField(fieldName) {
         },
         directives: []
     };
+    if (isNonNullType === true) {
+        field.type = {
+            kind: 'NonNullType',
+            type: field.type
+        };
+    }
+    return field;
 }
 exports.createIdField = createIdField;

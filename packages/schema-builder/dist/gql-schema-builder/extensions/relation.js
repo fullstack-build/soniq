@@ -74,11 +74,11 @@ function parseUpdateField(ctx) {
         if (ownRelation.columnName != null) {
             if (foreignRelation != null && foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
                 // In case of ManyToMany it's an array
-                return [utils_1.createIdArrayField(ownRelation.columnName)];
+                return [utils_1.createIdArrayField(ownRelation.columnName, isNonNullType)];
             }
             else {
                 // In case of ManyToOne it is an id
-                return [utils_1.createIdField(ownRelation.columnName)];
+                return [utils_1.createIdField(ownRelation.columnName, isNonNullType)];
             }
         }
         return [];
