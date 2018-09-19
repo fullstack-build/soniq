@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/di": "^0.4.7",
-    "fast-glob": "^1.0.1"
+    "fast-glob": "^2.2.2"
   },
   "devDependencies": {
     "typescript": "^2.8.3"
