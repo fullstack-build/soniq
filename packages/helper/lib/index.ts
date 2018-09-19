@@ -8,10 +8,13 @@ export namespace helper {
 
   export const loadFilesByGlobPattern = async (pattern: string) => {
     try {
-      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+      const files = fastGlob.sync(pattern, {
+        deep: false,
+        onlyFiles: true,
+      });
 
       const readFilesPromises = [];
-      files.map((filePath) => {
+      files.map((filePath: any) => {
         readFilesPromises.push(readFileAsync(filePath, 'utf8'));
       });
 
@@ -23,10 +26,10 @@ export namespace helper {
 
   export const requireFilesByGlobPattern = async (pattern: string) => {
     try {
-      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+      const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
       const requiredFiles = [];
-      files.map((filePath) => {
+      files.map((filePath: any) => {
         let requiredFileContent: any = null;
         try {
           const requiredFile = require(filePath);
@@ -46,10 +49,10 @@ export namespace helper {
 
   export const requireFilesByGlobPatternAsObject = async (pattern: string) => {
     try {
-      const files = await fastGlob.default(pattern, { deep: false, onlyFiles: true });
+      const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
       const requiredFiles = {};
-      files.map((filePath) => {
+      files.map((filePath: any) => {
         let requiredFileContent: any = null;
         try {
           const requiredFile = require(filePath);

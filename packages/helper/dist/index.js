@@ -17,7 +17,10 @@ var helper;
 (function (helper) {
     helper.loadFilesByGlobPattern = (pattern) => __awaiter(this, void 0, void 0, function* () {
         try {
-            const files = yield fastGlob.default(pattern, { deep: false, onlyFiles: true });
+            const files = fastGlob.sync(pattern, {
+                deep: false,
+                onlyFiles: true,
+            });
             const readFilesPromises = [];
             files.map((filePath) => {
                 readFilesPromises.push(readFileAsync(filePath, 'utf8'));
@@ -30,7 +33,7 @@ var helper;
     });
     helper.requireFilesByGlobPattern = (pattern) => __awaiter(this, void 0, void 0, function* () {
         try {
-            const files = yield fastGlob.default(pattern, { deep: false, onlyFiles: true });
+            const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
             const requiredFiles = [];
             files.map((filePath) => {
                 let requiredFileContent = null;
@@ -51,7 +54,7 @@ var helper;
     });
     helper.requireFilesByGlobPatternAsObject = (pattern) => __awaiter(this, void 0, void 0, function* () {
         try {
-            const files = yield fastGlob.default(pattern, { deep: false, onlyFiles: true });
+            const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
             const requiredFiles = {};
             files.map((filePath) => {
                 let requiredFileContent = null;
