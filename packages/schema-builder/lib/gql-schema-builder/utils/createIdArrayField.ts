@@ -1,5 +1,5 @@
-export function createIdArrayField(fieldName) {
-  return {
+export function createIdArrayField(fieldName, isNonNullType: boolean = false) {
+  const field: any = {
     kind: 'FieldDefinition',
     name: {
       kind: 'Name',
@@ -21,4 +21,13 @@ export function createIdArrayField(fieldName) {
     },
     directives: []
   };
+
+  if (isNonNullType === true) {
+      field.type = {
+        kind: 'NonNullType',
+        type: field.type
+      };
+    }
+
+  return field;
 }

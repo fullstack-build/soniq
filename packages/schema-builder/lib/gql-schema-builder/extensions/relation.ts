@@ -88,6 +88,7 @@ export function parseUpdateField(ctx) {
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.relation != null && directives.relation.name != null) {
     const { gqlFieldDefinition, table, context } = ctx;
+
     const { foreignGqlTypeName, isListType, isNonNullType } = getRelationMetasFromDefinition(gqlFieldDefinition);
 
     const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
@@ -95,10 +96,10 @@ export function parseUpdateField(ctx) {
     if (ownRelation.columnName != null) {
       if (foreignRelation != null && foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
         // In case of ManyToMany it's an array
-        return [createIdArrayField(ownRelation.columnName)];
+        return [createIdArrayField(ownRelation.columnName, isNonNullType)];
       } else {
         // In case of ManyToOne it is an id
-        return [createIdField(ownRelation.columnName)];
+        return [createIdField(ownRelation.columnName, isNonNullType)];
       }
     }
     return [];
