@@ -24,6 +24,16 @@ module.exports = {
       retryBackoff: true,
       retryDelay: 1,
       expireIn:   '60 min'
+    },
+    mailgen: {
+      theme: 'default',
+      product: {
+        // Appears in header & footer of e-mails
+        name: 'Mailgen',
+        link: 'https://mailgen.js/'
+        // Optional logo
+        // logo: 'https://mailgen.js/img/logo.png'
+      }
     }
   }
 };

@@ -22,6 +22,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer_1 = require("nodemailer");
 const nodemailer_html_to_text_1 = require("nodemailer-html-to-text");
+const Mailgen = require("mailgen");
 const queue_1 = require("@fullstack-one/queue");
 const di_1 = require("@fullstack-one/di");
 const config_1 = require("@fullstack-one/config");
@@ -37,9 +38,11 @@ let Email = class Email {
         this.queueFactory = queueFactory;
         this.config = config;
         // register package config
-        this.config.registerConfig('Notifications', __dirname + '/../config');
+        const notificationsConfig = this.config.registerConfig('Notifications', __dirname + '/../config');
+        this.CONFIG = notificationsConfig.Email;
         this.logger = loggerFactory.create(this.constructor.name);
-        this.CONFIG = this.config.getConfig('Notifications').Email;
+        // create Mailgen
+        this.mailGenerator = new Mailgen(this.CONFIG.mailgen);
         // add migration path
         schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
         // add to boot loader
@@ -83,33 +86,6 @@ let Email = class Email {
             });
         });
     }
-    sendMessage(to, subject, html, attachments = [], from, jobOptions = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.isReady) {
-                // Message object
-                const message = { from, to, subject, html };
-                try {
-                    const finalJobOptions = Object.assign({}, jobOptions, this.CONFIG.queue // override methode jobOptions if they interfere
-                    );
-                    // create sendmail job in queue
-                    const queue = yield this.queueFactory.getQueue();
-                    const jobId = yield queue.publish(this.queueName, message, finalJobOptions);
-                    this.logger.trace('sendMessage.job.creation.success', jobId);
-                    return jobId;
-                }
-                catch (err) {
-                    this.logger.warn('sendMessage.job.creation.error', err);
-                    throw err;
-                }
-            }
-            else {
-                // retry sending message when transport is ready
-                this.eventEmitter.on('transport.ready', () => __awaiter(this, void 0, void 0, function* () {
-                    return yield this.sendMessage(to, subject, html, attachments, from);
-                }));
-            }
-        });
-    }
     _sendMail(job) {
         return __awaiter(this, void 0, void 0, function* () {
             const message = job.data;
@@ -147,6 +123,42 @@ let Email = class Email {
             this.isReady = true;
             this.eventEmitter.emit('transport.ready');
             this.logger.trace('transport.ready');
+        });
+    }
+    sendMessage(to, subject, html, text = null, attachments = [], from, jobOptions = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.isReady) {
+                // Message object
+                const message = { from, to, subject, html, text };
+                try {
+                    const finalJobOptions = Object.assign({}, jobOptions, this.CONFIG.queue // override method jobOptions if they interfere
+                    );
+                    // create sendmail job in queue
+                    const queue = yield this.queueFactory.getQueue();
+                    const jobId = yield queue.publish(this.queueName, message, finalJobOptions);
+                    this.logger.trace('sendMessage.job.creation.success', jobId);
+                    return jobId;
+                }
+                catch (err) {
+                    this.logger.warn('sendMessage.job.creation.error', err);
+                    throw err;
+                }
+            }
+            else {
+                // retry sending message when transport is ready
+                this.eventEmitter.on('transport.ready', () => __awaiter(this, void 0, void 0, function* () {
+                    return yield this.sendMessage(to, subject, html, text, attachments, from);
+                }));
+            }
+        });
+    }
+    sendTemplateMail(to, subject, template, text = null, attachments = [], from, jobOptions = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Generate an HTML email with the provided contents
+            const emailBody = this.mailGenerator.generate(template);
+            // Generate the plaintext version of the e-mail (for clients that do not support HTML)
+            const emailText = text || this.mailGenerator.generatePlaintext(template);
+            return this.sendMessage(to, subject, emailBody, emailText, attachments, from, jobOptions);
         });
     }
 };

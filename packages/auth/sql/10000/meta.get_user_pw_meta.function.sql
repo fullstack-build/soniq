@@ -19,7 +19,7 @@ BEGIN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
     END IF;
 
-    -- TODO: We may could improve this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_auth_table FROM _meta."Auth" WHERE key = 'auth_table';
     SELECT value INTO v_auth_table_schema FROM _meta."Auth" WHERE key = 'auth_table_schema';
@@ -27,7 +27,7 @@ BEGIN
     SELECT value INTO v_auth_field_password FROM _meta."Auth" WHERE key = 'auth_field_password';
     SELECT value INTO v_auth_field_tenant FROM _meta."Auth" WHERE key = 'auth_field_tenant';
 
-    -- Find the userId and password-metas by username, provider (and when definded tenant)
+    -- Find the userId and password-metas by username, provider (and when defined tenant)
     IF v_auth_field_tenant IS NULL THEN
         v_query := $tok$SELECT %I->'providers'->%L->'meta', id FROM %I.%I WHERE %I = %L$tok$;
         EXECUTE format(v_query, v_auth_field_password, i_provider, v_auth_table_schema, v_auth_table, v_auth_field_username, i_username) INTO v_pw_meta, v_user_id;

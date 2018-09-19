@@ -36,11 +36,10 @@ let Server = class Server {
         this.config = config;
         this.loggerFactory = loggerFactory;
         // register package config
-        config.registerConfig('Server', __dirname + '/../config');
+        this.serverConfig = config.registerConfig('Server', __dirname + '/../config');
         // this.eventEmitter = eventEmitter;
         this.logger = this.loggerFactory.create(this.constructor.name);
-        // get settings from DI container
-        this.serverConfig = this.config.getConfig('Server');
+        // get env from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         this.bootKoa();
         bootLoader.addBootFunction(this.boot.bind(this));

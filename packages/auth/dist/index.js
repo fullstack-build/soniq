@@ -59,9 +59,8 @@ let Auth = class Auth {
         this.schemaBuilder = schemaBuilder;
         this.loggerFactory = loggerFactory;
         // register package config
-        this.config.registerConfig('Auth', `${__dirname}/../config`);
+        this.authConfig = this.config.registerConfig('Auth', `${__dirname}/../config`);
         this.logger = this.loggerFactory.create(this.constructor.name);
-        this.authConfig = this.config.getConfig('Auth');
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
         this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
             throw new Error('No notification function has been defined.');

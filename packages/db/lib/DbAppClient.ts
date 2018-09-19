@@ -26,6 +26,7 @@ export class DbAppClient implements IDb {
   private readonly config: Config;
   private readonly logger: ILogger;
   private readonly eventEmitter: EventEmitter;
+  private readonly CONFIG;
 
   constructor(
     @Inject(type => BootLoader) bootLoader,
@@ -38,7 +39,7 @@ export class DbAppClient implements IDb {
     this.eventEmitter = eventEmitter;
 
     // register package config
-    this.config.registerConfig('Db', __dirname + '/../config');
+    this.CONFIG = this.config.registerConfig('Db', __dirname + '/../config');
 
     // get settings from DI container
     this.ENVIRONMENT = Container.get('ENVIRONMENT');
@@ -51,8 +52,7 @@ export class DbAppClient implements IDb {
 
   private async boot(): Promise<PgClient> {
 
-    const configDB = this.config.getConfig('Db');
-    this.credentials  = configDB.appClient;
+    this.credentials  = this.CONFIG.appClient;
     this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
 
     // create PG pgClient
@@ -73,7 +73,7 @@ export class DbAppClient implements IDb {
     });
 
     // check connected clients every x secons
-    const updateClientListInterval = configDB.updateClientListInterval || 10000;
+    const updateClientListInterval = this.CONFIG.updateClientListInterval || 10000;
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
     try {

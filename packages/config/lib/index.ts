@@ -1,10 +1,12 @@
-import { Inject, Service, Container } from '@fullstack-one/di';
 import * as path from 'path';
 import * as _ from 'lodash';
 import { randomBytes } from 'crypto';
 
-import { IEnvironment } from './IEnvironment';
+// DI
+import { Inject, Service, Container } from '@fullstack-one/di';
 import { BootLoader } from '@fullstack-one/boot-loader';
+
+import { IEnvironment } from './IEnvironment';
 export { IEnvironment };
 
 interface IConfigModule {
@@ -14,14 +16,17 @@ interface IConfigModule {
 
 @Service()
 export class Config {
+  // DI
+  @Inject(type => BootLoader)
+  private readonly bootLoader: BootLoader;
 
+  // env
   public readonly ENVIRONMENT: IEnvironment = {
     frameworkVersion: null,
     NODE_ENV: process.env.NODE_ENV,
     name:       null,
     version:    null,
     path:       null,
-    port:       null,
     namespace:  null,
     // unique instance ID (6 char)
     nodeId:     null
@@ -29,10 +34,10 @@ export class Config {
   private configModules: IConfigModule[] = [];
   private projectConfig: any = {};
   private config: any = {};
+  private readonly myConfig;
 
-  constructor(
-    @Inject(type => BootLoader) bootLoader
-  ) {
+  constructor() {
+
     // start with empty objects in DI
     Container.set('CONFIG', {});
     Container.set('ENVIRONMENT', {});
@@ -40,21 +45,10 @@ export class Config {
     // load project config
     const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
     this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
-  }
 
-  // load config based on ENV
-  public registerConfig(moduleName: string, moduleConfigPath: string): any {
-    // check if path was already included
-    if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
-      const configModule: IConfigModule = {
-        name: moduleName,
-        path: moduleConfigPath
-      };
-      this.configModules.push(configModule);
+    // register package config
+    this.myConfig = this.registerConfig('Config', __dirname + '/../config');
 
-      // apply config to global config object
-      return this.applyConfig(moduleName, moduleConfigPath);
-    }
   }
 
   private requireConfigFiles(moduleConfigPath): any {
@@ -76,7 +70,7 @@ export class Config {
       );
       process.exit();
     }
-    // try to load env config – ignore if not found
+    // try to load env config – ignore if not found
     try {
       config = _.merge(config, require(envConfigPath));
     } catch (err) {
@@ -85,7 +79,7 @@ export class Config {
     return config;
   }
 
-  // apply config to the global config object and return entire config
+  // apply config to the global config object and return config part that was added after application
   private applyConfig(moduleName: string, moduleConfigPath: string): any {
 
     const moduleConfig = this.requireConfigFiles(moduleConfigPath);
@@ -140,7 +134,7 @@ export class Config {
     Container.set('CONFIG', this.config);
     // update ENVIRONMENT
     this.setEnvironment();
-    return this.config;
+    return this.config[moduleName];
   }
 
   // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
@@ -158,18 +152,32 @@ export class Config {
     this.ENVIRONMENT.version          = PROJECT_PACKAGE.version;
     this.ENVIRONMENT.path             = projectPath;
     // unique instance ID (6 char)
-    this.ENVIRONMENT.nodeId           = randomBytes(20).toString('hex').substr(5, 6);
+    this.ENVIRONMENT.nodeId           = this.ENVIRONMENT.nodeId || randomBytes(20).toString('hex').substr(5, 6);
     // wait until core config is set
-    if (this.config.core != null) {
-      this.ENVIRONMENT.namespace      = this.config.core.namespace;
-    }
-    // wait until server config is set
-    if (this.config.server != null) {
-      this.ENVIRONMENT.port           = this.config.server.port;
-    }
+    this.ENVIRONMENT.namespace        = this.config.Config.namespace;
 
     // put config into DI
     Container.set('ENVIRONMENT', this.ENVIRONMENT);
+  }
+
+  /* PUBLIC */
+
+  // register config for module and return this initialized configuration
+  public registerConfig(moduleName: string, moduleConfigPath: string): any {
+    // check if path was already included, otherwise just return result
+    if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
+      const configModule: IConfigModule = {
+        name: moduleName,
+        path: moduleConfigPath
+      };
+      this.configModules.push(configModule);
+
+      // apply config to global config object
+      return this.applyConfig(moduleName, moduleConfigPath);
+    } else {
+      return this.getConfig(moduleName);
+    }
+
   }
 
   public getConfig(moduleName?: string): any {
@@ -177,9 +185,15 @@ export class Config {
     const config = Container.get('CONFIG');
 
     if (moduleName == null) {
+      // check if config is in its final state (after boot or during boot)
+      if (this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
+        throw Error('Configuration not available before booting.');
+      }
+
       // return copy instead of a ref
       return { ... config };
     } else {
+      // module configuraion is always final when available
       // return copy instead of a ref
       return { ... config[moduleName] };
     }

@@ -10,9 +10,9 @@ export class Logger implements ILogger {
 
   // tracer
   // any should avoid: TS2409:Return type of constructor signature must be assignable to the instance type of the class.
-  private tracerLogger: any = null;
+  private readonly tracerLogger: any = null;
   // debug
-  private debugLogger: DebugLogger = null;
+  private readonly debugLogger: DebugLogger = null;
   // LogEntries
   // private _leNode: any = null;
 

@@ -21,8 +21,6 @@ export class FullstackOneCore implements IFullstackOneCore {
     this.config = config;
     this.bootLoader = bootLoader;
 
-    // register package config
-    this.config.registerConfig('Core', __dirname + '/../config');
     this.ENVIRONMENT = this.config.ENVIRONMENT;
 
   }

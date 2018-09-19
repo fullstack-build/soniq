@@ -36,7 +36,7 @@ let DbAppClient = class DbAppClient {
         this.config = config;
         this.eventEmitter = eventEmitter;
         // register package config
-        this.config.registerConfig('Db', __dirname + '/../config');
+        this.CONFIG = this.config.registerConfig('Db', __dirname + '/../config');
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
         // init logger
@@ -46,8 +46,7 @@ let DbAppClient = class DbAppClient {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            const configDB = this.config.getConfig('Db');
-            this.credentials = configDB.appClient;
+            this.credentials = this.CONFIG.appClient;
             this.applicationName = this.credentials.application_name = this.ENVIRONMENT.namespace + '_client_' + this.ENVIRONMENT.nodeId;
             // create PG pgClient
             this.pgClient = new pg_1.Client(this.credentials);
@@ -63,7 +62,7 @@ let DbAppClient = class DbAppClient {
                 process.nextTick(() => { this.updateNodeIdsFromDb(); });
             });
             // check connected clients every x secons
-            const updateClientListInterval = configDB.updateClientListInterval || 10000;
+            const updateClientListInterval = this.CONFIG.updateClientListInterval || 10000;
             setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
             try {
                 this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);

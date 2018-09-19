@@ -26,7 +26,7 @@ DECLARE
     v_user_token_secret TEXT;
     v_bf_iter_count INT;
 BEGIN
-    -- Check if the user is admin. Raise exeption if not.
+    -- Check if the user is admin. Raise exception if not.
 	v_is_admin := _meta.is_admin();
 	IF v_is_admin = FALSE THEN
         RAISE EXCEPTION 'You are not permitted to execute this operation.';
@@ -38,7 +38,7 @@ BEGIN
         RAISE EXCEPTION 'Session expired or token invalid.';
     END IF;
 
-    -- TODO: We may want to rewrite this to one query
+    -- TODO: We may want to rewrite this queries into one query
     -- Get required values from Auth-table
     SELECT value INTO v_user_token_max_age_in_seconds FROM _meta."Auth" WHERE key = 'user_token_max_age_in_seconds';
     SELECT value INTO v_auth_table FROM _meta."Auth" WHERE key = 'auth_table';

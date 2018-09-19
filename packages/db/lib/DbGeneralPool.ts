@@ -23,6 +23,7 @@ export class DbGeneralPool implements IDb  {
   private readonly config: Config;
   private readonly logger: ILogger;
   private readonly eventEmitter: EventEmitter;
+  private readonly CONFIG;
 
   constructor(
     @Inject(type => BootLoader) bootLoader,
@@ -34,7 +35,7 @@ export class DbGeneralPool implements IDb  {
     this.eventEmitter = eventEmitter;
     this.config = config;
 
-    this.config.registerConfig('Db', __dirname + '/../config');
+    this.CONFIG = this.config.registerConfig('Db', __dirname + '/../config');
     this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
@@ -83,8 +84,7 @@ export class DbGeneralPool implements IDb  {
   // calculate number of max conections and adjust pool based on number of connected nodes
   private async gracefullyAdjustPoolSize(): Promise<PgPool> {
 
-    const configDB = this.config.getConfig('Db');
-    const configDbGeneral  = configDB.general;
+    const configDbGeneral  = this.CONFIG.general;
 
     // get known nodes from container, initially assume we are the first one
     let knownNodesCount: number = 1;
