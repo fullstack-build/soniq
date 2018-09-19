@@ -71,6 +71,9 @@ export class Config {
       process.stderr.write(
         'config.default.loading.error.not.found: ' + mainConfigPath + '\n',
       );
+      process.stderr.write(
+        err + '\n',
+      );
       process.exit();
     }
     // try to load env config – ignore if not found
