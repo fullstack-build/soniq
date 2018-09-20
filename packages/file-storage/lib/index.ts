@@ -98,24 +98,15 @@ export class FileStorage {
 
     this.client = new Minio.Client(this.fileStorageConfig.minio);
 
+    // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (It loads internally the bucket region)
+    // This prevents errors when large queries require a lot of signed URL's for the first time after boot.
+    await this.client.presignedGetObject(this.fileStorageConfig.bucket, 'notExistingObject.nothing', 0);
+
     Object.keys(this.verifiers).forEach((key) => {
       // tslint:disable-next-line:variable-name
       const CurrentVerifier = this.verifiers[key];
       this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
     });
-
-    const authRouter = new KoaRouter();
-
-    const app = this.server.getApp();
-
-    authRouter.get('/test', async (ctx) => {
-      ctx.body = 'Hallo';
-    });
-
-    authRouter.use(koaBody());
-
-    app.use(authRouter.routes());
-    app.use(authRouter.allowedMethods());
   }
 
   private async postMutationHook(info, context) {
