@@ -84,7 +84,7 @@ let FileStorage = class FileStorage {
             this.client = new Minio.Client(this.fileStorageConfig.minio);
             // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (It loads internally the bucket region)
             // This prevents errors when large queries require a lot of signed URL's for the first time after boot.
-            yield this.client.presignedGetObject(this.fileStorageConfig.bucket, 'notExistingObject.nothing', 0);
+            yield this.client.presignedGetObject(this.fileStorageConfig.bucket, 'notExistingObject.nothing', 1);
             Object.keys(this.verifiers).forEach((key) => {
                 // tslint:disable-next-line:variable-name
                 const CurrentVerifier = this.verifiers[key];
