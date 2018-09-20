@@ -29,8 +29,6 @@ const graphql_1 = require("@fullstack-one/graphql");
 const auth_1 = require("@fullstack-one/auth");
 const schema_builder_1 = require("@fullstack-one/schema-builder");
 const logger_1 = require("@fullstack-one/logger");
-const KoaRouter = require("koa-router");
-const koaBody = require("koa-bodyparser");
 const Minio = require("minio");
 exports.Minio = Minio;
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
@@ -84,19 +82,14 @@ let FileStorage = class FileStorage {
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             this.client = new Minio.Client(this.fileStorageConfig.minio);
+            // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (It loads internally the bucket region)
+            // This prevents errors when large queries require a lot of signed URL's for the first time after boot.
+            yield this.client.presignedGetObject(this.fileStorageConfig.bucket, 'notExistingObject.nothing', 0);
             Object.keys(this.verifiers).forEach((key) => {
                 // tslint:disable-next-line:variable-name
                 const CurrentVerifier = this.verifiers[key];
                 this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
             });
-            const authRouter = new KoaRouter();
-            const app = this.server.getApp();
-            authRouter.get('/test', (ctx) => __awaiter(this, void 0, void 0, function* () {
-                ctx.body = 'Hallo';
-            }));
-            authRouter.use(koaBody());
-            app.use(authRouter.routes());
-            app.use(authRouter.allowedMethods());
         });
     }
     postMutationHook(info, context) {
