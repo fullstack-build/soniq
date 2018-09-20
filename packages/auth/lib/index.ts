@@ -629,17 +629,9 @@ export class Auth {
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken) {
-    const dbClient = await this.dbGeneralPool.pgPool.connect();
-    // set user for dbClient
-    await this.setUser(dbClient, accessToken);
-    // get user ID from DB Client
-    let userId = null;
-    try {
-      userId = await this.getCurrentUserIdFromClient(dbClient);
-    } catch { /*ignore error, return empty userId */ }
-    // Release pgClient to pool
-    await dbClient.release();
-    return userId;
+    return await this.userTransaction(accessToken, async (dbClient) => {
+      return await this.getCurrentUserIdFromClient(dbClient);
+    });
   }
 
   // return admin transaction
