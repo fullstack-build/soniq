@@ -548,18 +548,9 @@ let Auth = class Auth {
     }
     getCurrentUserIdFromAccessToken(accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const dbClient = yield this.dbGeneralPool.pgPool.connect();
-            // set user for dbClient
-            yield this.setUser(dbClient, accessToken);
-            // get user ID from DB Client
-            let userId = null;
-            try {
-                userId = yield this.getCurrentUserIdFromClient(dbClient);
-            }
-            catch ( /*ignore error, return empty userId */_a) { /*ignore error, return empty userId */ }
-            // Release pgClient to pool
-            yield dbClient.release();
-            return userId;
+            return yield this.userTransaction(accessToken, (dbClient) => __awaiter(this, void 0, void 0, function* () {
+                return yield this.getCurrentUserIdFromClient(dbClient);
+            }));
         });
     }
     // return admin transaction
