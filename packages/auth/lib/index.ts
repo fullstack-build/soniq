@@ -7,7 +7,7 @@ import { Config } from '@fullstack-one/config';
 import { GraphQl } from '@fullstack-one/graphql';
 import { ILogger, LoggerFactory } from '@fullstack-one/logger';
 
-import { createConfig, hashByMeta, newHash, sha256, CryptoFactory } from './crypto';
+import { createConfig, hashByMeta, newHash, sha256 } from './crypto';
 import { signJwt, verifyJwt, getProviderSignature, getAdminSignature } from './signHelper';
 import * as passport from 'koa-passport';
 import { LocalStrategy } from 'passport-local';
@@ -24,20 +24,6 @@ import * as fs from 'fs';
 import { URL } from 'url';
 
 const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
-
-interface IPassword {
-  hash: string;
-  meta: {
-    [key: string]: any;
-  } | null;
-}
-
-interface IAuthentication {
-  providerName: string;
-  username: string;
-  tenant?: string;
-  password: IPassword;
-}
 
 // export
 export * from './signHelper';
@@ -60,7 +46,6 @@ export class Auth {
   private graphQl: GraphQl;
   private schemaBuilder: SchemaBuilder;
   private parserMeta: any = {};
-  private crypter: CryptoFactory;
 
   constructor(
     @Inject(type => DbGeneralPool) dbGeneralPool,
@@ -81,8 +66,6 @@ export class Auth {
 
     // register package config
     this.authConfig = this.config.registerConfig('Auth', `${__dirname}/../config`);
-
-    this.crypter = new CryptoFactory(this.authConfig.secrets.crypt, this.authConfig.cryptAlgorithm);
 
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.sodiumConfig = createConfig(this.authConfig.sodium);
@@ -182,21 +165,7 @@ export class Auth {
             throw new Error('Email or id is missing!');
           }
 
-          const newSalt = 4; // Randomly chosen by a cube
-
-          const authentication: IAuthentication = {
-            username: email,
-            tenant: provider.tenant,
-            providerName: provider.name,
-            password: {
-              hash: sha256(profile.id + newSalt),
-              meta: {
-                salt: newSalt
-              }
-            }
-          }
-
-          const response = this.createAuthFactorCreationToken(true, authentication, {});
+          const response = this.createAuthToken(true, email, provider.name, profile.id, provider.tenant, profile);
 
           cb(null, response);
         } catch (err) {
@@ -253,7 +222,7 @@ export class Auth {
   }
 
   public async setUser(dbClient, accessToken) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     try {
       const values = [payload.userId, payload.userToken, payload.provider, payload.timestamp];
@@ -300,7 +269,7 @@ export class Auth {
       const user = {
         userId: payload.userId,
         payload,
-        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds, this.crypter)
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
       return user;
@@ -317,7 +286,7 @@ export class Auth {
 
     if (authToken != null) {
       try {
-        authTokenPayload = verifyJwt(this.authConfig.secrets.authToken, authToken, this.crypter);
+        authTokenPayload = verifyJwt(this.authConfig.secrets.authToken, authToken);
         provider = authTokenPayload.providerName;
       } catch (err) {
         throw new Error('Failed to verify auth-token.');
@@ -355,7 +324,7 @@ export class Auth {
       const ret = {
         userId: data.userId,
         payload,
-        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds, this.crypter),
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds),
         refreshToken: null
       };
 
@@ -363,7 +332,7 @@ export class Auth {
         const refreshTokenPayload = {
           token: payload.refreshToken
         };
-        ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, payload.userTokenMaxAgeInSeconds, this.crypter);
+        ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, payload.userTokenMaxAgeInSeconds);
       }
 
       await dbClient.query('COMMIT');
@@ -379,8 +348,8 @@ export class Auth {
   }
 
   public async refreshUserToken(accessToken, refreshTokenJwt, clientIdentifier) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
-    const refreshToken = verifyJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenJwt, this.crypter).token;
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
+    const refreshToken = verifyJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenJwt).token;
 
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
@@ -399,7 +368,7 @@ export class Auth {
       const ret = {
         userId: newPayload.userId,
         payload: newPayload,
-        accessToken: signJwt(this.authConfig.secrets.jwt, newPayload, newPayload.userTokenMaxAgeInSeconds, this.crypter),
+        accessToken: signJwt(this.authConfig.secrets.jwt, newPayload, newPayload.userTokenMaxAgeInSeconds),
         refreshToken: null
       };
 
@@ -407,7 +376,7 @@ export class Auth {
         const refreshTokenPayload = {
           token: newPayload.refreshToken
         };
-        ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, newPayload.userTokenMaxAgeInSeconds, this.crypter);
+        ret.refreshToken = signJwt(this.authConfig.secrets.jwtRefreshToken, refreshTokenPayload, newPayload.userTokenMaxAgeInSeconds);
       }
 
       await dbClient.query('COMMIT');
@@ -423,7 +392,7 @@ export class Auth {
   }
 
   public async createSetPasswordValues(accessToken, provider, password, userIdentifier) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
     const uid = userIdentifier || payload.userId;
     const providerSignature = getProviderSignature(this.authConfig.secrets.admin, provider, uid);
     const pwData: any = await newHash(password + providerSignature, this.sodiumConfig);
@@ -486,7 +455,7 @@ export class Auth {
         payload,
         username,
         tenant,
-        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds, this.crypter)
+        accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
       await this.notificationFunction(user, 'FORGOT_PASSWORD', meta);
@@ -504,7 +473,7 @@ export class Auth {
   }
 
   public async removeProvider(accessToken, provider) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
@@ -531,7 +500,7 @@ export class Auth {
   }
 
   public async getTokenMeta(accessToken, tempSecret = false, tempTime = false) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
@@ -568,7 +537,7 @@ export class Auth {
   }
 
   public async invalidateUserToken(accessToken) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
@@ -595,7 +564,7 @@ export class Auth {
   }
 
   public async invalidateAllUserTokens(accessToken) {
-    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken, this.crypter);
+    const payload = verifyJwt(this.authConfig.secrets.jwt, accessToken);
 
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
@@ -770,39 +739,19 @@ export class Auth {
 
   /* DB HELPER END */
 
-  public createAuthFactorProofToken(authentication: IAuthentication, metaData: any) {
-    // A LoginAuthToken never includes Metas for passwords
-    authentication.password.meta = null;
-
-    const payload = {
-      type: 'PROOF',
-      authentication,
-      metaData
-    };
-
-    const response = {
-      payload: {
-        type: 'PROOF'
-      },
-      token: signJwt(this.authConfig.secrets.authToken, payload, this.authConfig.authToken.maxAgeInSeconds, this.crypter)
-    };
-
-    return response;
-  }
-
-  public createAuthFactorCreationToken(privacyAgreementAcceptanceToken, authentication: IAuthentication, metaData: any) {
+  public createAuthToken(privacyAgreementAcceptanceToken, email, providerName, profileId, tenant, profile) {
     this.validatePrivacyAgreementAcceptanceToken(privacyAgreementAcceptanceToken);
     const payload = {
-      type: 'CREATION',
-      authentication,
-      metaData
+      providerName,
+      profileId,
+      email,
+      tenant: tenant || 'default',
+      profile
     };
 
     const response = {
-      payload: {
-        type: 'CREATION'
-      },
-      token: signJwt(this.authConfig.secrets.authToken, payload, this.authConfig.authToken.maxAgeInSeconds, this.crypter)
+      payload,
+      token: signJwt(this.authConfig.secrets.authToken, payload, this.authConfig.authToken.maxAgeInSeconds)
     };
 
     return response;
@@ -988,7 +937,7 @@ export class Auth {
         let tokenPayload;
 
         try {
-          tokenPayload = verifyJwt(this.authConfig.secrets.authToken, args.authToken, this.crypter);
+          tokenPayload = verifyJwt(this.authConfig.secrets.authToken, args.authToken);
         } catch (e) {
           throw new Error('Failed to verify auth-token.');
         }

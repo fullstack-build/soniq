@@ -87,27 +87,3 @@ export function hashByMeta(password, meta) {
     });
   });
 }
-
-export class CryptoFactory {
-  private secret: string;
-  private algorithm: string;
-
-  constructor(secret: string, algorithm: string) {
-    this.secret = secret;
-    this.algorithm = algorithm;
-  }
-
-  public encrypt(text) {
-    const cipher = crypto.createCipher(this.algorithm, this.secret);
-    let crypted = cipher.update(text, 'utf8', 'hex');
-    crypted += cipher.final('hex');
-    return crypted;
-  }
-
-  public decrypt(text) {
-    const decipher = crypto.createDecipher(this.algorithm, this.secret);
-    let decrypted = decipher.update(text, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  }
-}

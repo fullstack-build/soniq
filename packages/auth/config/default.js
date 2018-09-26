@@ -6,8 +6,7 @@ module.exports = {
     cookie:   null,
     jwtRefreshToken: null,
     privacyAgreementAcceptanceToken: null,
-    authToken: null,
-    crypt: null
+    authToken: null
   },
   sodium: {},
   oAuth: {
@@ -48,6 +47,5 @@ module.exports = {
     tokenMaxAgeInSeconds: 86400, // One Day
     versionToAccept: 0,
     queryParameter: 'privacyAgreementAcceptanceToken'
-  },
-  cryptAlgorithm: 'aes-256-ctr'
+  }
 };
