@@ -16,10 +16,16 @@ export function getProviderSignature(adminSecret, provider, userIdentifier) {
   return sha512(payload);
 }
 
-export function signJwt(jwtSecret, payload, expiresIn) {
+export function signJwt(jwtSecret, payload, expiresIn, crypter = null) {
+  if (crypter != null) {
+    return crypter.encrypt(jwt.sign(payload, jwtSecret, { expiresIn }));
+  }
   return jwt.sign(payload, jwtSecret, { expiresIn });
 }
 
-export function verifyJwt(jwtSecret, token) {
+export function verifyJwt(jwtSecret, token, crypter = null) {
+  if (crypter != null) {
+    return jwt.verify(crypter.decrypt(token), jwtSecret);
+  }
   return jwt.verify(token, jwtSecret);
 }
