@@ -3,8 +3,8 @@ import { Service } from '@fullstack-one/di';
 
 @Service()
 export class BootLoader {
-  private IS_BOOTING: boolean = false;
-  private HAS_BOOTED: boolean = false;
+  private IS_BOOTING: boolean = false; // TODO: Dustin Rename
+  private HAS_BOOTED: boolean = false; // TODO: Dustin Rename
 
   private bootFunctions: any = [];
   private bootReadyFunctions: any = [];
