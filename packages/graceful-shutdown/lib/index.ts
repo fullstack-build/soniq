@@ -12,7 +12,7 @@ import * as exitHook from 'async-exit-hook';
 import * as terminus from '@godaddy/terminus';
 
 @Service()
-export class GracefulShutdown {
+export class GracefulShutdown { // TODO @Eugene: Check functionality
 
   private dbAppClient: DbAppClient;
   private dbPoolObj: DbGeneralPool;
