@@ -13,10 +13,6 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 
 @Service()
 export class DbGeneralPool implements IDb {
-  // return public readonly instance of the managed pool
-  get pgPool(): PgPool {
-    return this.managedPool;
-  }
   private applicationName: string;
   private credentials: PgPoolConfig;
   private managedPool: PgPool;
@@ -55,7 +51,13 @@ export class DbGeneralPool implements IDb {
     await this.gracefullyAdjustPoolSize();
   }
 
-  // calculate number of max connections and adjust pool based on number of connected nodes
+  // return public readonly instance of the managed pool
+  get pgPool(): PgPool {
+    // TODO: Evaluate: should we forbid getter and setter to prevent unexpected side effects
+    return this.managedPool;
+  }
+
+  // calculate number of max conections and adjust pool based on number of connected nodes
   private async gracefullyAdjustPoolSize(): Promise<PgPool> {
     const configDbGeneral = this.CONFIG.general;
 
@@ -68,7 +70,7 @@ export class DbGeneralPool implements IDb {
       // ignore error and continue assuming we are the first client
     }
 
-    // reserve one for setup connection
+    // reserve one for DbAppClient connection
     const connectionsPerInstance: number = Math.floor(configDbGeneral.totalMax / knownNodesCount - 1);
 
     // readjust pool only if number of max connections has changed

@@ -1,89 +1,101 @@
-declare function operationValueMapper(value: any): {
-    kind: string;
-    name: {
+declare function operationValueMapper(
+  value: any
+):
+  | {
+      kind: string;
+      name: {
         kind: string;
         value: any;
-    };
-    type?: undefined;
-} | {
-    kind: string;
-    type: {
+      };
+      type?: undefined;
+    }
+  | {
+      kind: string;
+      type: {
         kind: string;
         type: {
+          kind: string;
+          name: {
             kind: string;
-            name: {
-                kind: string;
-                value: string;
-            };
+            value: string;
+          };
         };
+      };
+      name?: undefined;
     };
-    name?: undefined;
-};
-declare function getOperationField(operation: any): {
+declare function getOperationField(
+  operation: any
+): {
+  kind: string;
+  name: {
     kind: string;
-    name: {
-        kind: string;
-        value: any;
-    };
-    type: {
+    value: any;
+  };
+  type:
+    | {
         kind: string;
         name: {
-            kind: string;
-            value: any;
+          kind: string;
+          value: any;
         };
         type?: undefined;
-    } | {
+      }
+    | {
         kind: string;
         type: {
-            kind: string;
-            type: {
-                kind: string;
-                name: {
-                    kind: string;
-                    value: string;
-                };
-            };
-        };
-        name?: undefined;
-    };
-    defaultValue: any;
-    directives: any[];
-};
-declare function getOperatorsDefinition(operatorsObject: any): {
-    kind: string;
-    name: {
-        kind: string;
-        value: string;
-    };
-    directives: any[];
-    fields: {
-        kind: string;
-        name: {
-            kind: string;
-            value: any;
-        };
-        type: {
+          kind: string;
+          type: {
             kind: string;
             name: {
-                kind: string;
-                value: any;
+              kind: string;
+              value: string;
             };
-            type?: undefined;
-        } | {
+          };
+        };
+        name?: undefined;
+      };
+  defaultValue: any;
+  directives: any[];
+};
+declare function getOperatorsDefinition(
+  operatorsObject: any
+): {
+  kind: string;
+  name: {
+    kind: string;
+    value: string;
+  };
+  directives: any[];
+  fields: {
+    kind: string;
+    name: {
+      kind: string;
+      value: any;
+    };
+    type:
+      | {
+          kind: string;
+          name: {
+            kind: string;
+            value: any;
+          };
+          type?: undefined;
+        }
+      | {
+          kind: string;
+          type: {
             kind: string;
             type: {
+              kind: string;
+              name: {
                 kind: string;
-                type: {
-                    kind: string;
-                    name: {
-                        kind: string;
-                        value: string;
-                    };
-                };
+                value: string;
+              };
             };
-            name?: undefined;
+          };
+          name?: undefined;
         };
-        defaultValue: any;
-        directives: any[];
-    }[];
+    defaultValue: any;
+    directives: any[];
+  }[];
 };

@@ -1,37 +1,41 @@
-export declare function getQueryArguments(gqlTypeName: any): ({
-    kind: string;
-    name: {
+export declare function getQueryArguments(
+  gqlTypeName: any
+): (
+  | {
+      kind: string;
+      name: {
         kind: string;
         value: string;
-    };
-    type: {
+      };
+      type: {
         kind: string;
         name: {
-            kind: string;
-            value: string;
+          kind: string;
+          value: string;
         };
-    };
-    defaultValue: any;
-    directives: any[];
-} | {
-    kind: string;
-    name: {
+      };
+      defaultValue: any;
+      directives: any[];
+    }
+  | {
+      kind: string;
+      name: {
         kind: string;
         value: string;
-    };
-    type: {
+      };
+      type: {
         kind: string;
         type: {
+          kind: string;
+          type: {
             kind: string;
-            type: {
-                kind: string;
-                name: {
-                    kind: string;
-                    value: string;
-                };
+            name: {
+              kind: string;
+              value: string;
             };
+          };
         };
-    };
-    defaultValue: any;
-    directives: any[];
-})[];
+      };
+      defaultValue: any;
+      directives: any[];
+    })[];

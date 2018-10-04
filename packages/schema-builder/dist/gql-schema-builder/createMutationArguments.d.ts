@@ -1,19 +1,21 @@
-export declare function createMutationArguments(gqlInputTypeName: any): {
+export declare function createMutationArguments(
+  gqlInputTypeName: any
+): {
+  kind: string;
+  name: {
     kind: string;
-    name: {
-        kind: string;
-        value: string;
-    };
+    value: string;
+  };
+  type: {
+    kind: string;
     type: {
+      kind: string;
+      name: {
         kind: string;
-        type: {
-            kind: string;
-            name: {
-                kind: string;
-                value: any;
-            };
-        };
+        value: any;
+      };
     };
-    defaultValue: any;
-    directives: any[];
+  };
+  defaultValue: any;
+  directives: any[];
 }[];

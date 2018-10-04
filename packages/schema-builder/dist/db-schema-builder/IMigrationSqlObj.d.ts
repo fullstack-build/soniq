@@ -1,56 +1,56 @@
 export interface IAction {
-    ignore: boolean;
-    add: boolean;
-    remove: boolean;
-    rename: boolean;
-    change: boolean;
+  ignore: boolean;
+  add: boolean;
+  remove: boolean;
+  rename: boolean;
+  change: boolean;
 }
 export interface ISqlObj {
-    up: undefined[];
-    down: undefined[];
+  up: undefined[];
+  down: undefined[];
 }
 export interface IMigrationSqlObj {
-    version: number;
-    schemas?: {
+  version: number;
+  schemas?: {
+    [name: string]: {
+      name: string;
+      sql: ISqlObj;
+      tables?: {
         [name: string]: {
-            name: string;
-            sql: ISqlObj;
-            tables?: {
-                [name: string]: {
-                    name: string;
-                    sql: ISqlObj;
-                    columns: {
-                        [name: string]: {
-                            name: string;
-                            sql: ISqlObj;
-                        };
-                    };
-                    constraints?: {
-                        sql: ISqlObj;
-                    };
-                };
+          name: string;
+          sql: ISqlObj;
+          columns: {
+            [name: string]: {
+              name: string;
+              sql: ISqlObj;
             };
-            views?: {
-                [name: string]: {
-                    name: string;
-                    sql: ISqlObj;
-                };
-            };
-        };
-    };
-    enums?: {
-        [name: string]: {
-            name: string;
+          };
+          constraints?: {
             sql: ISqlObj;
+          };
         };
-    };
-    relations?: {
+      };
+      views?: {
         [name: string]: {
-            name: string;
-            sql: ISqlObj;
+          name: string;
+          sql: ISqlObj;
         };
+      };
     };
-    crud?: {
-        sql: ISqlObj;
+  };
+  enums?: {
+    [name: string]: {
+      name: string;
+      sql: ISqlObj;
     };
+  };
+  relations?: {
+    [name: string]: {
+      name: string;
+      sql: ISqlObj;
+    };
+  };
+  crud?: {
+    sql: ISqlObj;
+  };
 }

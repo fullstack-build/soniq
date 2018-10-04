@@ -74,6 +74,7 @@ export class DbAppClient implements IDb {
     // check connected clients every x seconds
     // todo: Eugene: Try to rewrite as trigger
     const updateClientListInterval = this.CONFIG.updateClientListInterval || 10000;
+
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
     try {
@@ -111,6 +112,7 @@ export class DbAppClient implements IDb {
       // check if number of nodes has changed
       let knownNodeIds: string[] = [];
       try {
+        // TODO: Evaluate if its a good idea to push it into container or keep it as a public readonly property of DB
         knownNodeIds = Container.get("knownNodeIds");
       } catch {
         // ignore error

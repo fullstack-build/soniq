@@ -21,12 +21,14 @@ export class MigrationObject {
     function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, pFromObjParent: {} = {}, pToObjParent: {} = {}, pResultParent: {} = {}) {
       // all keys
       const keys = _.union(Object.keys(recursiveFromDbMeta), Object.keys(recursiveToDbMeta));
+      // TODO: Eugene don't use map as a foreach, return values directly and make map create a new array (instead of pushing into key)
       keys.map((key) => {
         if (/* only from */ recursiveToDbMeta[key] == null) {
           // is not object -> copy value
           if (!isObject(recursiveFromDbMeta[key])) {
             // ignore empty
             if (recursiveFromDbMeta[key] != null) {
+              // copy reference to avoid high memory use (was cloned at the beginning already)
               pResult[key] = recursiveFromDbMeta[key];
             }
           } else {
@@ -43,6 +45,7 @@ export class MigrationObject {
             // ignore empty
             if (recursiveToDbMeta[key] != null) {
               // copy value
+              // copy reference to avoid high memory use (was cloned at the beginning already)
               pResult[key] = recursiveToDbMeta[key];
             }
           } else {
@@ -58,6 +61,7 @@ export class MigrationObject {
           if (!isObject(recursiveFromDbMeta[key]) && !isObject(recursiveToDbMeta[key])) {
             // not equal? -> use new value, mark parent as changed / otherwise ignore
             if (recursiveFromDbMeta[key] !== recursiveToDbMeta[key]) {
+              // copy reference to avoid high memory use (was cloned at the beginning already)
               pResult[key] = recursiveToDbMeta[key];
               // parent "change"
               pResult[this.ACTION_KEY] = pResult[this.ACTION_KEY] || {};
@@ -140,6 +144,7 @@ export class MigrationObject {
         }
       });
     }
+    // TODO: Eugene: Evaluate if it makes more sense to move PG specific logic (enum recreation) into next step - getSqlFromMigrationObj
     // iterate enums and adjust enums
     if (pMigrationDbMeta.enums != null) {
       Object.entries(pMigrationDbMeta.enums).map((enumEntry) => {
@@ -150,7 +155,7 @@ export class MigrationObject {
         const enumValuesAction = this.splitActionFromNode(enumValues).action;
 
         // if enum or enum values action "change" => recreate (remove and add) enum type
-        // override with enum values "to" and mark als remove and add
+        // override with enum values "to" and mark as remove and add
         if ((enumAction != null && enumAction.change) || (enumValuesAction != null && enumValuesAction.change)) {
           enumDef.values = this.toDbMeta.enums[enumName].values;
           enumDef[this.ACTION_KEY] = {

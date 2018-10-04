@@ -17,7 +17,7 @@ export class EventEmitter implements IEventEmitter {
 
   private nodeId: string;
   private dbClient: DbAppClient;
-  private namespace: string = "one";
+  private namespace: string = "one"; // TODO: Eugene put in config
 
   // cache during boot
   private listenersCache = {};

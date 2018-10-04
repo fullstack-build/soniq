@@ -15,7 +15,7 @@ const auth: Auth = Container.get(Auth);
 In your config file these fields should be set:
 
 - `auth.secrets.jwt` (min: 32, max: 64, [more is better!])
-- `auth.secrets.admin` (needs to be the same as `admin_token_secret` from `_meta.Auth` table)
+- `auth.secrets.admin` (min: 64, [more is better but costs performance!], needs to be the same as `admin_token_secret` from `_meta.Auth` table)
 - `auth.secrets.provider` 
 - `auth.secrets.cookie` 
 - `auth.secrets.jwtRefreshToken` (should be different to `refresh_token_secret` from `_meta.Auth` table)
@@ -24,7 +24,7 @@ In your config file these fields should be set:
 
 Furthermore you should change the values of these `_meta.Auth` table keys to some cryptographically secure random values:
 
-- `admin_token_secret` (needs to be the same as `auth.secrets.admin` from config)
+- `admin_token_secret` (min: 64, [more is better but costs performance!], needs to be the same as `auth.secrets.admin` from config)
 - `auth_pw_secret` (min: 21, [more is NOT really better])
 - `user_token_secret` (min: 21, [more is NOT really better])
 - `user_token_temp_secret` (min: 21, [more is NOT really better])

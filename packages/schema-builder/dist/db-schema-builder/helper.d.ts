@@ -1,9 +1,12 @@
 /**
  * Helper
  */
-export declare function splitActionFromNode(actionKey: any, node?: {}): {
-    action: any;
-    node: any;
+export declare function splitActionFromNode(
+  actionKey: any,
+  node?: {}
+): {
+  action: any;
+  node: any;
 };
 /**
  * Deep diff between two object, using lodash

@@ -1,3 +1,3 @@
 export interface IFullstackOneCore {
-    boot: () => void;
+  boot: () => void;
 }
