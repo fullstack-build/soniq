@@ -29,7 +29,5 @@
     "@fullstack-one/schema-builder": "^0.4.14",
     "lodash": "^4.17.11"
   },
-  "devDependencies": {
-    "typescript": "^2.8.3"
-  }
+  "devDependencies": {}
 }

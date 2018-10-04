@@ -37,7 +37,5 @@
     "passport-local": "^1.0.0",
     "sodium-native": "^2.1.5"
   },
-  "devDependencies": {
-    "typescript": "^2.8.3"
-  }
+  "devDependencies": {}
 }

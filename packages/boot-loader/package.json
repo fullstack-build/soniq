@@ -22,7 +22,5 @@
   "dependencies": {
     "@fullstack-one/di": "^0.4.13"
   },
-  "devDependencies": {
-    "typescript": "^2.7.2"
-  }
+  "devDependencies": {}
 }

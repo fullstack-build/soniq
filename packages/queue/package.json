@@ -27,7 +27,5 @@
     "@fullstack-one/logger": "^0.4.13",
     "pg-boss": "^3.0.0"
   },
-  "devDependencies": {
-    "typescript": "^2.9.2"
-  }
+  "devDependencies": {}
 }

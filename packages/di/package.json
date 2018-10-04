@@ -23,7 +23,5 @@
     "reflect-metadata": "^0.1.12",
     "typedi": "^0.8.0"
   },
-  "devDependencies": {
-    "typescript": "^2.9.2"
-  }
+  "devDependencies": {}
 }

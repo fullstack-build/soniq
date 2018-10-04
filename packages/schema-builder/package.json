@@ -35,7 +35,5 @@
     "lodash": "^4.17.5",
     "util": "^0.10.3"
   },
-  "devDependencies": {
-    "typescript": "^2.8.3"
-  }
+  "devDependencies": {}
 }

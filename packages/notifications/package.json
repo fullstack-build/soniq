@@ -34,7 +34,6 @@
   },
   "devDependencies": {
     "@types/mailgen": "^2.0.1",
-    "@types/nodemailer": "^4.3.2",
-    "typescript": "^2.8.3"
+    "@types/nodemailer": "^4.3.2"
   }
 }

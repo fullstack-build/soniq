@@ -5,6 +5,6 @@ export declare class FullstackOneCore implements IFullstackOneCore {
   private bootLoader;
   private readonly ENVIRONMENT;
   constructor(bootLoader: any, config: any);
-  private cliArt();
+  private cliArt;
   boot(): Promise<void>;
 }

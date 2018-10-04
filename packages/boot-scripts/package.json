@@ -28,7 +28,5 @@
     "fast-glob": "^2.2.1",
     "koa": "^2.5.0"
   },
-  "devDependencies": {
-    "typescript": "^2.8.3"
-  }
+  "devDependencies": {}
 }

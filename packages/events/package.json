@@ -26,7 +26,5 @@
     "@fullstack-one/di": "^0.4.13",
     "eventemitter2": "^5.0.1"
   },
-  "devDependencies": {
-    "typescript": "^2.9.2"
-  }
+  "devDependencies": {}
 }

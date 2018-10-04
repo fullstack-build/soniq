@@ -36,7 +36,6 @@
     "minio": "^7.0.1"
   },
   "devDependencies": {
-    "@types/minio": "^7.0.0",
-    "typescript": "^2.8.3"
+    "@types/minio": "^7.0.0"
   }
 }

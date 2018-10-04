@@ -6,9 +6,9 @@ export declare class FileName {
   prefix: string;
   uploadName: string;
   constructor(input: string | any);
-  private createFileName(id, type, extension);
-  private generateHelpers();
-  private createPrefix();
-  private createUploadName();
+  private createFileName;
+  private generateHelpers;
+  private createPrefix;
+  private createUploadName;
   createTempName(): string;
 }

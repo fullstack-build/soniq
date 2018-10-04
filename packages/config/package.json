@@ -24,7 +24,5 @@
     "@fullstack-one/di": "^0.4.13",
     "lodash": "^4.17.5"
   },
-  "devDependencies": {
-    "typescript": "^2.8.3"
-  }
+  "devDependencies": {}
 }

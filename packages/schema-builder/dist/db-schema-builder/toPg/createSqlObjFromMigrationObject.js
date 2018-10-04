@@ -14,6 +14,7 @@ class SqlObjFromMigrationObject {
     constructor() {
         this.ACTION_KEY = "$$action$$";
         this.DELETED_PREFIX = "_deleted:";
+        // TODO: Eugene get schemas to ignore from a setting
         this.schemasToIgnore = ["_versions", "_graphql"];
         this.renameInsteadOfDrop = true;
         this.migrationObj = null;
