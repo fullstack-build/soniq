@@ -28,9 +28,12 @@ export class QueueFactory {
     config.registerConfig("Queue", `${__dirname}/../config`);
     // init logger
     this.logger = loggerFactory.create(this.constructor.name);
+
+    // add to boot loader
+    bootLoader.addBootFunction(this.boot.bind(this));
   }
 
-  private async start(): Promise<PgBoss> {
+  private async boot(): Promise<void> {
     let boss;
     const queueConfig = Container.get(Config).getConfig("Queue");
 
@@ -48,9 +51,10 @@ export class QueueFactory {
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = {
-        ...pgCon,
         close: pgCon.release, // Not required
-        executeSql: pgCon.query
+        executeSql: async (...args) => {
+          return pgCon.query.apply(pgCon, args);
+        }
       };
 
       // create a PGBoss instance
@@ -65,15 +69,13 @@ export class QueueFactory {
     } catch (err) {
       this.logger.warn("start.error", err);
     }
-    return this.queue;
   }
 
-  public async getQueue(): Promise<PgBoss> {
-    // create queue if not yet available
-    if (this.queue == null) {
-      await this.start();
+  public getQueue(): PgBoss {
+    if (this.queue != null) {
+      return this.queue;
+    } else {
+      throw new Error("Queue.not.ready");
     }
-
-    return this.queue;
   }
 }

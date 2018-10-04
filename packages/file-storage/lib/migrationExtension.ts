@@ -91,7 +91,7 @@ registerTableMigrationExtension(
 
 // column
 registerColumnMigrationExtension("isFileColumn", (extensionDefinitionWithAction, nodeSqlObj, schemaName, tableName, columnName) => {
-  // create, set ref and keek ref for later
+  // create, set ref and keep ref for later
   const thisSqlObj = (nodeSqlObj.crud = nodeSqlObj.crud || {
     sql: {
       up: [],

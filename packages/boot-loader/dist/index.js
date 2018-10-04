@@ -48,14 +48,21 @@ let BootLoader = class BootLoader {
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             this.IS_BOOTING = true;
-            for (const fn of this.bootFunctions) {
-                yield fn(this);
+            try {
+                for (const fn of this.bootFunctions) {
+                    yield fn(this);
+                }
+                for (const fn of this.bootReadyFunctions) {
+                    fn(this);
+                }
+                this.IS_BOOTING = false;
+                this.HAS_BOOTED = true;
             }
-            for (const fn of this.bootReadyFunctions) {
-                fn(this);
+            catch (err) {
+                process.stderr.write("BootLoader.boot.error.caught\n");
+                process.stderr.write(`${err}`);
+                process.exit(0);
             }
-            this.IS_BOOTING = false;
-            this.HAS_BOOTED = true;
         });
     }
 };

@@ -78,15 +78,20 @@ export class Email {
       }
     }
 
-    // subscribe to sendmail jobs in queue
-    const queue = await this.queueFactory.getQueue();
-    queue
-      .subscribe(this.queueName, this._sendMail.bind(this))
-      .then(() => this.logger.trace("subscribed.job.sendmail.success"))
-      .catch((err) => {
-        this.logger.warn("subscribed.job.sendmail.error", err);
-        throw err;
-      });
+    try {
+      // subscribe to sendmail jobs in queue
+      const queue = await this.queueFactory.getQueue();
+      queue
+        .subscribe(this.queueName, this._sendMail.bind(this))
+        .then(() => this.logger.trace("subscribed.job.sendmail.success"))
+        .catch((err) => {
+          this.logger.warn("subscribed.job.sendmail.error", err);
+          throw err;
+        });
+    } catch (err) {
+      this.logger.warn(err);
+      throw err;
+    }
   }
 
   private async _sendMail(job: any) {

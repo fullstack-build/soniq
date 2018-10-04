@@ -1,10 +1,8 @@
-export declare function createScalar(
-  name: any
-): {
-  kind: string;
-  name: {
+export declare function createScalar(name: any): {
     kind: string;
-    value: any;
-  };
-  directives: any[];
+    name: {
+        kind: string;
+        value: any;
+    };
+    directives: any[];
 };

@@ -35,8 +35,10 @@ let QueueFactory = class QueueFactory {
         config.registerConfig("Queue", `${__dirname}/../config`);
         // init logger
         this.logger = loggerFactory.create(this.constructor.name);
+        // add to boot loader
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
-    start() {
+    boot() {
         return __awaiter(this, void 0, void 0, function* () {
             let boss;
             const queueConfig = di_1.Container.get(config_1.Config).getConfig("Queue");
@@ -52,7 +54,12 @@ let QueueFactory = class QueueFactory {
                 // get new connection from the pool
                 const pgCon = yield this.generalPool.pgPool.connect();
                 // Add `close` and `executeSql` functions for PgBoss to function
-                const pgBossDB = Object.assign({}, pgCon, { close: pgCon.release, executeSql: pgCon.query });
+                const pgBossDB = {
+                    close: pgCon.release,
+                    executeSql: (...args) => __awaiter(this, void 0, void 0, function* () {
+                        return pgCon.query.apply(pgCon, args);
+                    })
+                };
                 // create a PGBoss instance
                 boss = new PgBoss(Object.assign({ db: pgBossDB }, queueConfig));
             }
@@ -65,17 +72,15 @@ let QueueFactory = class QueueFactory {
             catch (err) {
                 this.logger.warn("start.error", err);
             }
-            return this.queue;
         });
     }
     getQueue() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // create queue if not yet available
-            if (this.queue == null) {
-                yield this.start();
-            }
+        if (this.queue != null) {
             return this.queue;
-        });
+        }
+        else {
+            throw new Error("Queue.not.ready");
+        }
     }
 };
 QueueFactory = __decorate([
