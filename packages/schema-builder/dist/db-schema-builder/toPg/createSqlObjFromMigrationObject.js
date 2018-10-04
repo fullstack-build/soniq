@@ -10,7 +10,7 @@ exports.registerTableMigrationExtension = tableMigrationExtension_2.registerTabl
 const columnMigrationExtension_1 = require("./columnMigrationExtension");
 var columnMigrationExtension_2 = require("./columnMigrationExtension");
 exports.registerColumnMigrationExtension = columnMigrationExtension_2.registerColumnMigrationExtension;
-class ASqlObjFromMigrationObject {
+class SqlObjFromMigrationObject {
     constructor() {
         this.ACTION_KEY = "$$action$$";
         this.DELETED_PREFIX = "_deleted:";
@@ -552,10 +552,10 @@ class ASqlObjFromMigrationObject {
         // relation sides
         // iterate all sides of relation
         relationObject.forEach((thisRelation) => {
-            _createSqlRelation(thisRelation);
+            _createSqlRelation.call(this, thisRelation);
         });
         function _createSqlRelation(oneRelation, ignoreColumnsCreation = false) {
-            const { action, node } = this._splitActionFromNode(oneRelation);
+            const { action, node } = this.splitActionFromNode(oneRelation);
             // ignore the 'MANY' side
             if (node.type === "ONE") {
                 // CANNOT BE DONE FOR MIGRATIONS WHERE TABLES MIGHT BE MISSING
@@ -761,4 +761,4 @@ class ASqlObjFromMigrationObject {
         // todo getSqlFromMigrationObj trigger to check consistency and cascading
     }
 }
-exports.ASqlObjFromMigrationObject = ASqlObjFromMigrationObject;
+exports.SqlObjFromMigrationObject = SqlObjFromMigrationObject;

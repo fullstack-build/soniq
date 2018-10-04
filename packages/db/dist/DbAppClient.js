@@ -96,6 +96,7 @@ let DbAppClient = class DbAppClient {
                 // check if number of nodes has changed
                 let knownNodeIds = [];
                 try {
+                    // TODO: Evaluate if its a good idea to push it into container or keep it as a public readonly property of DB
                     knownNodeIds = di_1.Container.get("knownNodeIds");
                 }
                 catch (_a) {

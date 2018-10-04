@@ -40,10 +40,6 @@ let DbGeneralPool = class DbGeneralPool {
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
-    // return public readonly instance of the managed pool
-    get pgPool() {
-        return this.managedPool;
-    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             const env = di_1.Container.get("ENVIRONMENT");
@@ -55,7 +51,12 @@ let DbGeneralPool = class DbGeneralPool {
             yield this.gracefullyAdjustPoolSize();
         });
     }
-    // calculate number of max connections and adjust pool based on number of connected nodes
+    // return public readonly instance of the managed pool
+    get pgPool() {
+        // TODO: Evaluate: should we forbid getter and setter to prevent unexpected side effects
+        return this.managedPool;
+    }
+    // calculate number of max conections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {
         return __awaiter(this, void 0, void 0, function* () {
             const configDbGeneral = this.CONFIG.general;
@@ -68,7 +69,7 @@ let DbGeneralPool = class DbGeneralPool {
             catch (_a) {
                 // ignore error and continue assuming we are the first client
             }
-            // reserve one for setup connection
+            // reserve one for DbAppClient connection
             const connectionsPerInstance = Math.floor(configDbGeneral.totalMax / knownNodesCount - 1);
             // readjust pool only if number of max connections has changed
             if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {

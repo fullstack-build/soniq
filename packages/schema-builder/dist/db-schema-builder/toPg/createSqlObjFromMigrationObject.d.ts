@@ -2,7 +2,7 @@ import { IMigrationSqlObj } from "../IMigrationSqlObj";
 import { IDbMeta, IDbRelation } from "../IDbMeta";
 export { registerTableMigrationExtension } from "./tableMigrationExtension";
 export { registerColumnMigrationExtension } from "./columnMigrationExtension";
-export declare class ASqlObjFromMigrationObject {
+export declare class SqlObjFromMigrationObject {
   private readonly ACTION_KEY;
   private readonly DELETED_PREFIX;
   private schemasToIgnore;

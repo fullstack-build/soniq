@@ -17,8 +17,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
 let BootLoader = class BootLoader {
     constructor() {
-        this.IS_BOOTING = false;
-        this.HAS_BOOTED = false;
+        this.IS_BOOTING = false; // TODO: Dustin Rename
+        this.HAS_BOOTED = false; // TODO: Dustin Rename
         this.bootFunctions = [];
         this.bootReadyFunctions = [];
     }

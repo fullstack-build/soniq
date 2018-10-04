@@ -81,7 +81,7 @@ let GraphQl = class GraphQl {
             const gqlKoaRouter = new KoaRouter();
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-            this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
+            this.addResolvers(yield helper_1.AHelper.requireFilesByGlobPatternAsObject(resolversPattern));
             const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
             const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
             const schema = graphql_tools_1.makeExecutableSchema({

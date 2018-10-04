@@ -27,7 +27,7 @@ const config_1 = require("@fullstack-one/config");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let EventEmitter = class EventEmitter {
     constructor(config, bootLoader) {
-        this.namespace = "one";
+        this.namespace = "one"; // TODO: Eugene put in config
         // cache during boot
         this.listenersCache = {};
         this.emittersCache = {};

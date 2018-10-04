@@ -77,7 +77,7 @@ let SchemaBuilder = class SchemaBuilder {
             try {
                 // load schema
                 const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
-                this.gQlSdl = yield helper_1.helper.loadFilesByGlobPattern(gQlSdlPattern);
+                this.gQlSdl = yield helper_1.AHelper.loadFilesByGlobPattern(gQlSdlPattern);
                 // check if any files were loaded
                 if (this.gQlSdl.length === 0) {
                     this.logger.warn("boot.no.sdl.files.found");
@@ -85,16 +85,16 @@ let SchemaBuilder = class SchemaBuilder {
                 }
                 // Combine all Schemas to a big one and add extensions from other modules
                 const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
-                this.gQlAst = helper_2.graphQl.helper.parseGraphQlSchema(gQlSdlCombined);
+                this.gQlAst = helper_2.AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
                 this.dbMeta = gQlAstToDbMeta_1.parseGQlAstToDbMeta(this.gQlAst);
                 // load permissions and expressions and generate views and put them into schemas
                 // load permissions
                 const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
-                const permissionsArray = yield helper_1.helper.requireFilesByGlobPattern(permissionsPattern);
+                const permissionsArray = yield helper_1.AHelper.requireFilesByGlobPattern(permissionsPattern);
                 this.permissions = [].concat.apply([], permissionsArray);
                 // load expressions
                 const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
-                const expressionsArray = yield helper_1.helper.requireFilesByGlobPattern(expressionsPattern);
+                const expressionsArray = yield helper_1.AHelper.requireFilesByGlobPattern(expressionsPattern);
                 this.expressions = [].concat.apply([], expressionsArray);
                 const dbConfig = this.config.getConfig("Db");
                 const config = {
@@ -113,6 +113,7 @@ let SchemaBuilder = class SchemaBuilder {
                 data.sql.forEach((statement) => sql.push(statement));
                 //  Reverse to get the generated queries/mutations at the beginning
                 data.gqlDocument.definitions.reverse();
+                // For debugging
                 // tslint:disable-next-line:forin
                 for (const i in sql) {
                     // tslint:disable-next-line:no-console
