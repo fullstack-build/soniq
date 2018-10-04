@@ -1,93 +1,98 @@
-export declare function createQuery(name: any, gqlTypeName: any): {
+export declare function createQuery(
+  name: any,
+  gqlTypeName: any
+): {
+  kind: string;
+  name: {
     kind: string;
-    name: {
-        kind: string;
-        value: string;
+    value: string;
+  };
+  interfaces: any[];
+  directives: any[];
+  fields: {
+    kind: string;
+    description: {
+      kind: string;
+      value: string;
+      block: boolean;
     };
-    interfaces: any[];
-    directives: any[];
-    fields: {
-        kind: string;
-        description: {
+    name: {
+      kind: string;
+      value: any;
+    };
+    arguments: (
+      | {
+          kind: string;
+          name: {
             kind: string;
             value: string;
-            block: boolean;
-        };
-        name: {
-            kind: string;
-            value: any;
-        };
-        arguments: ({
+          };
+          type: {
             kind: string;
             name: {
-                kind: string;
-                value: string;
+              kind: string;
+              value: string;
             };
+          };
+          defaultValue: any;
+          directives: any[];
+        }
+      | {
+          kind: string;
+          name: {
+            kind: string;
+            value: string;
+          };
+          type: {
+            kind: string;
             type: {
+              kind: string;
+              type: {
                 kind: string;
                 name: {
-                    kind: string;
-                    value: string;
+                  kind: string;
+                  value: string;
                 };
+              };
             };
-            defaultValue: any;
-            directives: any[];
-        } | {
-            kind: string;
-            name: {
-                kind: string;
-                value: string;
-            };
-            type: {
-                kind: string;
-                type: {
-                    kind: string;
-                    type: {
-                        kind: string;
-                        name: {
-                            kind: string;
-                            value: string;
-                        };
-                    };
-                };
-            };
-            defaultValue: any;
-            directives: any[];
+          };
+          defaultValue: any;
+          directives: any[];
         })[];
+    type: {
+      kind: string;
+      type: {
+        kind: string;
         type: {
-            kind: string;
-            type: {
-                kind: string;
-                type: {
-                    kind: string;
-                    type: {
-                        kind: string;
-                        name: {
-                            kind: string;
-                            value: any;
-                        };
-                    };
-                };
-            };
-        };
-        directives: {
+          kind: string;
+          type: {
             kind: string;
             name: {
-                kind: string;
-                value: string;
+              kind: string;
+              value: any;
             };
-            arguments: {
-                kind: string;
-                name: {
-                    kind: string;
-                    value: string;
-                };
-                value: {
-                    kind: string;
-                    value: string;
-                    block: boolean;
-                };
-            }[];
-        }[];
+          };
+        };
+      };
+    };
+    directives: {
+      kind: string;
+      name: {
+        kind: string;
+        value: string;
+      };
+      arguments: {
+        kind: string;
+        name: {
+          kind: string;
+          value: string;
+        };
+        value: {
+          kind: string;
+          value: string;
+          block: boolean;
+        };
+      }[];
     }[];
+  }[];
 };

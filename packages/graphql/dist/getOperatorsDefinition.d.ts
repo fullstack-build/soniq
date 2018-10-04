@@ -1,38 +1,42 @@
-export declare function getOperatorsDefinition(operatorsObject: any): {
+export declare function getOperatorsDefinition(
+  operatorsObject: any
+): {
+  kind: string;
+  name: {
+    kind: string;
+    value: string;
+  };
+  directives: any[];
+  fields: {
     kind: string;
     name: {
-        kind: string;
-        value: string;
+      kind: string;
+      value: any;
     };
-    directives: any[];
-    fields: {
-        kind: string;
-        name: {
+    type:
+      | {
+          kind: string;
+          name: {
             kind: string;
             value: any;
-        };
-        type: {
-            kind: string;
-            name: {
-                kind: string;
-                value: any;
-            };
-            type?: undefined;
-        } | {
+          };
+          type?: undefined;
+        }
+      | {
+          kind: string;
+          type: {
             kind: string;
             type: {
+              kind: string;
+              name: {
                 kind: string;
-                type: {
-                    kind: string;
-                    name: {
-                        kind: string;
-                        value: string;
-                    };
-                };
+                value: string;
+              };
             };
-            name?: undefined;
+          };
+          name?: undefined;
         };
-        defaultValue: any;
-        directives: any[];
-    }[];
+    defaultValue: any;
+    directives: any[];
+  }[];
 };
