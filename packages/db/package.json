@@ -26,8 +26,7 @@
     "@fullstack-one/events": "^0.4.15",
     "@fullstack-one/logger": "^0.4.15",
     "deepmerge": "^2.0.1",
-    "massive": "^4.7.2",
-    "pg": "^7.4.1"
+    "pg": "^7.5.0"
   },
   "devDependencies": {
     "@types/pg": "^7.4.7"
