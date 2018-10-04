@@ -1,6 +1,6 @@
 {
   "name": "fullstack-one",
-  "version": "0.4.7",
+  "version": "0.4.13",
   "description": "fullstack.one main server package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -24,9 +24,9 @@
     "typescript": "^2.8.3"
   },
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.7",
-    "@fullstack-one/config": "^0.4.7",
-    "@fullstack-one/di": "^0.4.7",
+    "@fullstack-one/boot-loader": "^0.4.13",
+    "@fullstack-one/config": "^0.4.13",
+    "@fullstack-one/di": "^0.4.13",
     "reflect-metadata": "^0.1.12"
   }
 }
