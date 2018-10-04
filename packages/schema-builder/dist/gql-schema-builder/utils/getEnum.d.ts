@@ -1,12 +1,9 @@
-export declare function getEnum(
-  name: any,
-  values: any
-): {
-  kind: string;
-  name: {
+export declare function getEnum(name: any, values: any): {
     kind: string;
-    value: any;
-  };
-  directives: any[];
-  values: any;
+    name: {
+        kind: string;
+        value: any;
+    };
+    directives: any[];
+    values: any;
 };

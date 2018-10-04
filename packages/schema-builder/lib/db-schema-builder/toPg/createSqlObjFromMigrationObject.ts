@@ -14,6 +14,7 @@ export { registerColumnMigrationExtension } from "./columnMigrationExtension";
 export class SqlObjFromMigrationObject {
   private readonly ACTION_KEY: string = "$$action$$";
   private readonly DELETED_PREFIX: string = "_deleted:";
+  // TODO: Eugene get schemas to ignore from a setting
   private schemasToIgnore: any = ["_versions", "_graphql"];
   private renameInsteadOfDrop: boolean = true;
   private migrationObj: IDbMeta = null;
