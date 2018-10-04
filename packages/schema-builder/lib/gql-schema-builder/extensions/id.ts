@@ -1,11 +1,10 @@
-
 export function parseUpdateField(ctx) {
   const { gqlFieldDefinition, view, fieldName } = ctx;
 
-  if (fieldName === 'id' && view.fields.indexOf(fieldName) >= 0) {
-    if (gqlFieldDefinition.type.kind !== 'NonNullType') {
+  if (fieldName === "id" && view.fields.indexOf(fieldName) >= 0) {
+    if (gqlFieldDefinition.type.kind !== "NonNullType") {
       gqlFieldDefinition.type = {
-        kind: 'NonNullType',
+        kind: "NonNullType",
         type: gqlFieldDefinition.type
       };
     }
@@ -17,8 +16,8 @@ export function parseUpdateField(ctx) {
 export function parseCreateField(ctx) {
   const { gqlFieldDefinition, view, fieldName } = ctx;
 
-  if (fieldName === 'id' && view.fields.indexOf(fieldName) >= 0) {
-    if (gqlFieldDefinition.type.kind === 'NonNullType') {
+  if (fieldName === "id" && view.fields.indexOf(fieldName) >= 0) {
+    if (gqlFieldDefinition.type.kind === "NonNullType") {
       gqlFieldDefinition.type = gqlFieldDefinition.type.type;
     }
     return [gqlFieldDefinition];

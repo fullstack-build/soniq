@@ -1,9 +1,8 @@
-import { IDbMeta } from '../../IDbMeta';
+import { IDbMeta } from "../../IDbMeta";
 
 const triggerParser = [];
 
-export function registerTriggerParser(
-  callback: (trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => void): void {
+export function registerTriggerParser(callback: (trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => void): void {
   triggerParser.push(callback);
 }
 

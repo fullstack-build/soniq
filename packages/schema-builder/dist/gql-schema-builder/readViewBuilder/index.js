@@ -12,11 +12,11 @@ function buildReadQuery(table, readExpressions, context, extensions, config) {
     let viewCreated = false;
     const { meta, authViewSql, publicViewSql, gqlDefinition } = createView_1.buildReadView(table, readExpressions, context, extensions, config);
     if (authViewSql != null) {
-        authViewSql.forEach(q => sql.push(q));
+        authViewSql.forEach((q) => sql.push(q));
         viewCreated = true;
     }
     if (publicViewSql != null) {
-        publicViewSql.forEach(q => sql.push(q));
+        publicViewSql.forEach((q) => sql.push(q));
         viewCreated = true;
     }
     if (viewCreated === true && gqlDefinition != null) {
@@ -26,7 +26,7 @@ function buildReadQuery(table, readExpressions, context, extensions, config) {
     const nativeFieldNames = Object.values(meta.fields)
         .filter((field) => field.nativeFieldName != null && field.isVirtual !== true)
         .map((field) => field.nativeFieldName);
-    getFilterDefinitions_1.getFilterDefinitions(nativeFieldNames, orderByEnumName, whereFilterName).forEach(d => gqlDefinitions.push(d));
+    getFilterDefinitions_1.getFilterDefinitions(nativeFieldNames, orderByEnumName, whereFilterName).forEach((d) => gqlDefinitions.push(d));
     return {
         gqlDefinitions,
         meta,

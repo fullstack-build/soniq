@@ -17,6 +17,9 @@ const di_1 = require("@fullstack-one/di");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
 let Config = class Config {
     constructor() {
+        this.configModules = [];
+        this.projectConfig = {};
+        this.config = {};
         // env
         this.ENVIRONMENT = {
             frameworkVersion: null,
@@ -28,17 +31,14 @@ let Config = class Config {
             // unique instance ID (6 char)
             nodeId: null
         };
-        this.configModules = [];
-        this.projectConfig = {};
-        this.config = {};
         // start with empty objects in DI
-        di_1.Container.set('CONFIG', {});
-        di_1.Container.set('ENVIRONMENT', {});
+        di_1.Container.set("CONFIG", {});
+        di_1.Container.set("ENVIRONMENT", {});
         // load project config
-        const projectConfigFolderPath = path.dirname(require.main.filename) + '/config';
+        const projectConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
         this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
         // register package config
-        this.myConfig = this.registerConfig('Config', __dirname + '/../config');
+        this.myConfig = this.registerConfig("Config", `${__dirname}/../config`);
     }
     requireConfigFiles(moduleConfigPath) {
         // config files
@@ -51,8 +51,8 @@ let Config = class Config {
             config = require(mainConfigPath);
         }
         catch (err) {
-            process.stderr.write('config.default.loading.error.not.found: ' + mainConfigPath + '\n');
-            process.stderr.write(err + '\n');
+            process.stderr.write(`config.default.loading.error.not.found: ${mainConfigPath} \n`);
+            process.stderr.write(`${err} \n`);
             process.exit();
         }
         // try to load env config – ignore if not found
@@ -74,20 +74,17 @@ let Config = class Config {
         // copy and override config with ENVs (dot = nested object separator)
         Object.keys(process.env).map((envName) => {
             // parse 'true' and 'false' to booleans
-            const envValue = (process.env[envName].toLocaleLowerCase() === 'true') ? true :
-                (process.env[envName].toLocaleLowerCase() === 'false') ? false :
-                    process.env[envName];
+            const envValue = process.env[envName].toLocaleLowerCase() === "true"
+                ? true
+                : process.env[envName].toLocaleLowerCase() === "false"
+                    ? false
+                    : process.env[envName];
             // if name includes a dot it means its a nested object
-            if (envName.includes('.')) {
-                const envNameAsArray = envName.split('.');
+            if (envName.includes(".")) {
+                const envNameAsArray = envName.split(".");
                 envNameAsArray.reduce((obj, key, index) => {
                     // assign value in last iteration round
-                    if (index + 1 < envNameAsArray.length) {
-                        obj[key] = obj[key] || {};
-                    }
-                    else {
-                        obj[key] = envValue;
-                    }
+                    obj[key] = index + 1 < envNameAsArray.length ? obj[key] || {} : envValue;
                     return obj[key];
                 }, this.config);
             }
@@ -99,7 +96,7 @@ let Config = class Config {
         let foundMissingConfig = false;
         this.deepMapHelper(this.config, (key, val, nestedPath) => {
             if (val == null) {
-                process.stderr.write(`config.not.set: ${nestedPath}` + '\n');
+                process.stderr.write(`config.not.set: ${nestedPath} \n`);
                 foundMissingConfig = true;
             }
         });
@@ -108,7 +105,7 @@ let Config = class Config {
             process.exit();
         }
         // put config into DI
-        di_1.Container.set('CONFIG', this.config);
+        di_1.Container.set("CONFIG", this.config);
         // update ENVIRONMENT
         this.setEnvironment();
         return this.config[moduleName];
@@ -117,9 +114,9 @@ let Config = class Config {
     setEnvironment() {
         // load project package.js
         const projectPath = path.dirname(require.main.filename);
-        const PROJECT_PACKAGE = require(projectPath + '/package.json');
+        const PROJECT_PACKAGE = require(`${projectPath}/package.json`);
         // each package in the mono repo has the same version
-        const MODULE_PACKAGE = require('../package.json');
+        const MODULE_PACKAGE = require("../package.json");
         // update ENV
         this.ENVIRONMENT.frameworkVersion = MODULE_PACKAGE.version;
         this.ENVIRONMENT.NODE_ENV = process.env.NODE_ENV;
@@ -127,17 +124,30 @@ let Config = class Config {
         this.ENVIRONMENT.version = PROJECT_PACKAGE.version;
         this.ENVIRONMENT.path = projectPath;
         // unique instance ID (6 char)
-        this.ENVIRONMENT.nodeId = this.ENVIRONMENT.nodeId || crypto_1.randomBytes(20).toString('hex').substr(5, 6);
+        this.ENVIRONMENT.nodeId =
+            this.ENVIRONMENT.nodeId ||
+                crypto_1.randomBytes(20)
+                    .toString("hex")
+                    .substr(5, 6);
         // wait until core config is set
         this.ENVIRONMENT.namespace = this.config.Config.namespace;
         // put config into DI
-        di_1.Container.set('ENVIRONMENT', this.ENVIRONMENT);
+        di_1.Container.set("ENVIRONMENT", this.ENVIRONMENT);
+    }
+    /* HELPER */
+    deepMapHelper(obj, callback, nestedPath = "") {
+        Object.entries(obj).map((entry) => {
+            const newPath = `${nestedPath}${entry[0]}.`;
+            typeof entry[1] === "object" && entry[1] != null
+                ? this.deepMapHelper(entry[1], callback, newPath)
+                : callback(entry[0], entry[1], newPath.slice(0, -1)); // remove last dot on last round
+        });
     }
     /* PUBLIC */
     // register config for module and return this initialized configuration
     registerConfig(moduleName, moduleConfigPath) {
         // check if path was already included, otherwise just return result
-        if (this.configModules.find(configModule => configModule.name === moduleName) == null) {
+        if (this.configModules.find((configModule) => configModule.name === moduleName) == null) {
             const configModule = {
                 name: moduleName,
                 path: moduleConfigPath
@@ -151,11 +161,11 @@ let Config = class Config {
         }
     }
     getConfig(moduleName) {
-        const config = di_1.Container.get('CONFIG');
+        const config = di_1.Container.get("CONFIG");
         if (moduleName == null) {
             // check if config is in its final state (after boot or during boot)
             if (this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
-                throw Error('Configuration not available before booting.');
+                throw Error("Configuration not available before booting.");
             }
             // return copy instead of a ref
             return Object.assign({}, config);
@@ -166,18 +176,9 @@ let Config = class Config {
             return Object.assign({}, config[moduleName]);
         }
     }
-    /* HELPER */
-    deepMapHelper(obj, callback, nestedPath = '') {
-        Object.entries(obj).map((entry) => {
-            const newPath = nestedPath + entry[0] + '.';
-            (typeof entry[1] === 'object' && entry[1] != null) ?
-                this.deepMapHelper(entry[1], callback, newPath) :
-                callback(entry[0], entry[1], newPath.slice(0, -1)); // remove last dot on last round
-        });
-    }
 };
 __decorate([
-    di_1.Inject(type => boot_loader_1.BootLoader),
+    di_1.Inject((type) => boot_loader_1.BootLoader),
     __metadata("design:type", boot_loader_1.BootLoader)
 ], Config.prototype, "bootLoader", void 0);
 Config = __decorate([

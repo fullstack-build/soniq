@@ -7,14 +7,14 @@ function getOperations(gqlDocument) {
     const mutations = [];
     const fields = [];
     Object.values(gqlDocument.definitions).forEach((node) => {
-        if (node.kind === 'ObjectTypeExtension') {
+        if (node.kind === "ObjectTypeExtension") {
             const type = node.name.value;
             Object.values(node.fields).forEach((field) => {
                 const fieldName = field.name.value;
                 const directives = parseDirectives(field.directives);
                 if (directives.custom != null && directives.custom.resolver != null) {
                     const params = directives.custom.params || {};
-                    if (type === 'Query') {
+                    if (type === "Query") {
                         queries.push({
                             name: fieldName,
                             type,
@@ -22,7 +22,7 @@ function getOperations(gqlDocument) {
                             params
                         });
                     }
-                    if (type === 'Mutation') {
+                    if (type === "Mutation") {
                         mutations.push({
                             name: fieldName,
                             type,
@@ -33,7 +33,7 @@ function getOperations(gqlDocument) {
                 }
             });
         }
-        if (node.kind === 'ObjectTypeDefinition') {
+        if (node.kind === "ObjectTypeDefinition") {
             const gqlTypeName = node.name.value;
             Object.values(node.fields).forEach((field) => {
                 const fieldName = field.name.value;
@@ -42,7 +42,7 @@ function getOperations(gqlDocument) {
                     const params = directives.custom.params || {};
                     fields.push({
                         name: fieldName,
-                        type: 'FIELD',
+                        type: "FIELD",
                         gqlTypeName,
                         fieldName,
                         resolver: directives.custom.resolver,

@@ -1,8 +1,7 @@
+import { getJsonObjectBuilderExpression } from "../utils";
+import { _ } from "lodash";
 
-import { getJsonObjectBuilderExpression } from '../utils';
-import { _ } from 'lodash';
-
-const JSON_SPLIT = '.';
+const JSON_SPLIT = ".";
 
 function createJsonSubset(expressions, columnExpression) {
   let publicSql = null;
@@ -15,23 +14,26 @@ function createJsonSubset(expressions, columnExpression) {
   };
 
   // Generate public condition out of array of expressions
-  const publicCondition = expressions.filter((expressionObject) => {
-    // If any expression is just true, the hole field is public
-    if (expressionObject.sql.toLowerCase() === 'true') {
-      hasPublicTrueExpression = true;
-    }
+  const publicCondition = expressions
+    .filter((expressionObject) => {
+      // If any expression is just true, the hole field is public
+      if (expressionObject.sql.toLowerCase() === "true") {
+        hasPublicTrueExpression = true;
+      }
 
-    return expressionObject.requiresAuth !== true;
-  }).map(getName).join(' OR ');
+      return expressionObject.requiresAuth !== true;
+    })
+    .map(getName)
+    .join(" OR ");
 
   // Generate condition out of array of expressions
-  const authCondition = expressions.map(getName).join(' OR ');
+  const authCondition = expressions.map(getName).join(" OR ");
 
   // If one expression is just true we don't need CASE (for public fields)
   if (hasPublicTrueExpression === true) {
     publicSql = `${columnExpression}`;
   } else {
-    if (publicCondition !== '') {
+    if (publicCondition !== "") {
       publicSql = `CASE WHEN ${publicCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
     }
     authSql = `CASE WHEN ${authCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
@@ -44,7 +46,7 @@ function createJsonSubset(expressions, columnExpression) {
 
 function getJsonMerge(jsonFields) {
   if (jsonFields.length < 1) {
-    return 'jsonb_build_object()';
+    return "jsonb_build_object()";
   }
   if (jsonFields.length < 2) {
     return jsonFields.pop();
@@ -64,7 +66,7 @@ export function parseReadField(ctx) {
 
   // Find all fields for this json defined in permission
   const jsonFieldKeys = Object.keys(readExpressions).filter((key) => {
-    return key.split('.')[0] === fieldName;
+    return key.split(".")[0] === fieldName;
   });
 
   // If nothing found it no one can view it
@@ -92,10 +94,7 @@ export function parseReadField(ctx) {
 
   Object.values(sameExpressionSets).forEach((expressionSet: any) => {
     const jsonExpression = getJsonObjectBuilderExpression(expressionSet.matchObject, fieldName, localTable);
-    const {
-      publicSql,
-      authSql
-    } = createJsonSubset(expressionSet.permissionExpressions, jsonExpression);
+    const { publicSql, authSql } = createJsonSubset(expressionSet.permissionExpressions, jsonExpression);
     if (publicSql != null) {
       publicJsonSubsets.push(publicSql);
       if (authSql == null) {
@@ -118,13 +117,15 @@ export function parseReadField(ctx) {
     authFieldSql = `${getJsonMerge(authJsonSubsets)} AS "${fieldName}"`;
   }
 
-  return [{
+  return [
+    {
       gqlFieldName: fieldName,
       nativeFieldName: fieldName,
       publicFieldSql,
       authFieldSql,
       gqlFieldDefinition
-    }];
+    }
+  ];
 }
 
 export function parseUpdateField(ctx) {
@@ -142,7 +143,7 @@ export function parseCreateField(ctx) {
 }
 
 function renameNamedTypeToInput(gqlType) {
-  if (gqlType.kind === 'NamedType') {
+  if (gqlType.kind === "NamedType") {
     gqlType.name.value = `${gqlType.name.value}Input`;
   } else {
     gqlType.type = renameNamedTypeToInput(gqlType.type);

@@ -40,14 +40,14 @@ let GracefulShutdown = class GracefulShutdown {
     }
     boot() {
         // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
         terminus(di_1.Container.get(server_1.Server).getServer(), {
             // healtcheck options
             healthChecks: {
                 // for now we only resolve a promise to make sure the server runs
-                '/_health/liveness': () => Promise.resolve(),
+                "/_health/liveness": () => Promise.resolve(),
                 // make sure we are ready to answer requests
-                '/_health/readiness': () => di_1.Container.get(boot_loader_1.BootLoader).getReadyPromise()
+                "/_health/readiness": () => di_1.Container.get(boot_loader_1.BootLoader).getReadyPromise()
             },
             // cleanup options
             timeout: 1000,
@@ -55,21 +55,21 @@ let GracefulShutdown = class GracefulShutdown {
         });
         // release resources here before node exits
         exitHook((callback) => __awaiter(this, void 0, void 0, function* () {
-            this.logger.info('exiting');
-            this.logger.info('starting cleanup');
-            this.emit('exiting', this.ENVIRONMENT.nodeId);
+            this.logger.info("exiting");
+            this.logger.info("starting cleanup");
+            this.emit("exiting", this.ENVIRONMENT.nodeId);
             try {
                 // close DB connections - has to by synchronous - no await
                 // try to exit as many as possible
                 yield this.disconnectDB();
-                this.logger.info('shutting down');
-                this.emit('down', this.ENVIRONMENT.nodeId);
+                this.logger.info("shutting down");
+                this.emit("down", this.ENVIRONMENT.nodeId);
                 // end exitHook
                 return callback();
             }
             catch (err) {
-                this.logger.warn('Error occurred during clean up attempt', err);
-                this.emit('server.sigterm.error', this.ENVIRONMENT.nodeId, err);
+                this.logger.warn("Error occurred during clean up attempt", err);
+                this.emit("server.sigterm.error", this.ENVIRONMENT.nodeId, err);
                 throw err;
             }
         }));
@@ -78,10 +78,7 @@ let GracefulShutdown = class GracefulShutdown {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // end setup pgClient and pool
-                yield Promise.all([
-                    this.dbAppClient.end(),
-                    this.dbPoolObj.end()
-                ]);
+                yield Promise.all([this.dbAppClient.end(), this.dbPoolObj.end()]);
                 return true;
             }
             catch (err) {
@@ -102,12 +99,12 @@ let GracefulShutdown = class GracefulShutdown {
 };
 GracefulShutdown = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => events_1.EventEmitter)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => db_1.DbAppClient)),
-    __param(4, di_1.Inject(type => db_1.DbGeneralPool)),
-    __param(5, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject((type) => events_1.EventEmitter)),
+    __param(1, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(2, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(3, di_1.Inject((type) => db_1.DbAppClient)),
+    __param(4, di_1.Inject((type) => db_1.DbGeneralPool)),
+    __param(5, di_1.Inject((type) => config_1.Config)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], GracefulShutdown);
 exports.GracefulShutdown = GracefulShutdown;

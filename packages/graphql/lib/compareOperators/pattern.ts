@@ -1,6 +1,6 @@
 const like = {
-  name: 'like',
-  value: 'String',
+  name: "like",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text LIKE ${value}`;
@@ -8,8 +8,8 @@ const like = {
 };
 
 const notLike = {
-  name: 'notLike',
-  value: 'String',
+  name: "notLike",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text NOT LIKE ${value}`;
@@ -17,8 +17,8 @@ const notLike = {
 };
 
 const iLike = {
-  name: 'iLike',
-  value: 'String',
+  name: "iLike",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text ILIKE ${value}`;
@@ -26,8 +26,8 @@ const iLike = {
 };
 
 const notILike = {
-  name: 'notILike',
-  value: 'String',
+  name: "notILike",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text NOT ILIKE ${value}`;
@@ -35,8 +35,8 @@ const notILike = {
 };
 
 const similarTo = {
-  name: 'similarTo',
-  value: 'String',
+  name: "similarTo",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text SIMILAR TO ${value}`;
@@ -44,8 +44,8 @@ const similarTo = {
 };
 
 const notSimilarTo = {
-  name: 'notSimilarTo',
-  value: 'String',
+  name: "notSimilarTo",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text NOT SIMILAR TO ${value}`;
@@ -53,8 +53,8 @@ const notSimilarTo = {
 };
 
 const posixMatchCaseSensitive = {
-  name: 'posixMatchCaseSensitive',
-  value: 'String',
+  name: "posixMatchCaseSensitive",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text ~ ${value}`;
@@ -62,8 +62,8 @@ const posixMatchCaseSensitive = {
 };
 
 const posixMatchCaseInsensitive = {
-  name: 'posixMatchCaseInsensitive',
-  value: 'String',
+  name: "posixMatchCaseInsensitive",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text ~* ${value}`;
@@ -71,8 +71,8 @@ const posixMatchCaseInsensitive = {
 };
 
 const posixNoMatchCaseSensitive = {
-  name: 'posixNoMatchCaseSensitive',
-  value: 'String',
+  name: "posixNoMatchCaseSensitive",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text !~ ${value}`;
@@ -80,13 +80,21 @@ const posixNoMatchCaseSensitive = {
 };
 
 const posixNoMatchCaseInsensitive = {
-  name: 'posixNoMatchCaseInsensitive',
-  value: 'String',
+  name: "posixNoMatchCaseInsensitive",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field}::text !~* ${value}`;
   }
 };
 
-export { like, notLike, similarTo, notSimilarTo, posixMatchCaseSensitive,
-posixMatchCaseInsensitive, posixNoMatchCaseSensitive, posixNoMatchCaseInsensitive };
+export {
+  like,
+  notLike,
+  similarTo,
+  notSimilarTo,
+  posixMatchCaseSensitive,
+  posixMatchCaseInsensitive,
+  posixNoMatchCaseSensitive,
+  posixNoMatchCaseInsensitive
+};

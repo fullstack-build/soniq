@@ -1,11 +1,11 @@
-import * as DebugLogger from 'debug-logger';
+import * as DebugLogger from "debug-logger";
 // import * as LE from 'le_node';
-import * as Tracer from 'tracer';
-import { ILogger } from './ILogger';
-import { ILogObject } from './ILogObject';
+import * as Tracer from "tracer";
+import { ILogger } from "./ILogger";
+import { ILogObject } from "./ILogObject";
 
 export class Logger implements ILogger {
-  private LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
+  private LEVELS = ["trace", "debug", "info", "warn", "error"];
   private loggerName: string;
 
   // tracer
@@ -19,8 +19,7 @@ export class Logger implements ILogger {
   // logger config
   private projectEnvString: string;
 
-  constructor(moduleName: string = 'root', loggerConfig: any, env: any) {
-
+  constructor(moduleName: string = "root", loggerConfig: any, env: any) {
     this.loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
     this.projectEnvString = `${env.name}/V.${env.version}/ENV:${env.NODE_ENV}/I:${env.nodeId}`;
 
@@ -31,7 +30,7 @@ export class Logger implements ILogger {
       // set log levels
       methods: this.LEVELS,
       // override tracer transport with logToDebug
-      transport: this.logToDebug.bind(this),
+      transport: this.logToDebug.bind(this)
     };
     this.tracerLogger = Tracer.colorConsole(tracerConfig);
 
@@ -47,30 +46,6 @@ export class Logger implements ILogger {
     */
     // overriding class with tracer API
     return this.tracerLogger;
-  }
-
-  /**
-   * Empty functions for code completion
-   * implementation is within tracer
-   */
-  public trace(...args: any[]) {
-    // no function
-  }
-
-  public debug(...args: any[]) {
-    // no function
-  }
-
-  public info(...args: any[]) {
-    // no function
-  }
-
-  public warn(...args: any[]) {
-    // no function
-  }
-
-  public error(...args: any[]) {
-    // no function
   }
 
   /**
@@ -101,5 +76,29 @@ export class Logger implements ILogger {
     // log remotely to logentries
     this._leNode[pLogObject.title](logEntry);
     */
+  }
+
+  /**
+   * Empty functions for code completion
+   * implementation is within tracer
+   */
+  public trace(...args: any[]) {
+    // no function
+  }
+
+  public debug(...args: any[]) {
+    // no function
+  }
+
+  public info(...args: any[]) {
+    // no function
+  }
+
+  public warn(...args: any[]) {
+    // no function
+  }
+
+  public error(...args: any[]) {
+    // no function
   }
 }

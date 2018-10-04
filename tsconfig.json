@@ -1,17 +1,21 @@
 {
-    "version": "2.9",
-    "compileOnSave": false,
-    "compilerOptions": {
-        "lib": ["es2017"],
-        "target": "es6",
-        "module": "commonjs",
-        "types": ["node"],
-        "moduleResolution": "node",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": false
-    },
-    "exclude": [
-        "node_modules"
-    ]
+  "version": "3.0",
+  "compileOnSave": false,
+  "compilerOptions": {
+    "lib": [
+      "es2017"
+    ],
+    "target": "es6",
+    "module": "commonjs",
+    "types": [
+      "node"
+    ],
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": false
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

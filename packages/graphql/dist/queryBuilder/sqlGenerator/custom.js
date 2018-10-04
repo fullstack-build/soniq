@@ -27,7 +27,7 @@ function generateCustomSql(match, customs, getParam, getField) {
                 context.value = getParam(value);
             }
         }
-        const requiresArray = compareOperators_1.operatorsObject[operatorName].value[0] === '[';
+        const requiresArray = compareOperators_1.operatorsObject[operatorName].value[0] === "[";
         if (requiresArray === true && context.values == null) {
             throw new Error(`Operator '${operatorName}' requires an array of values.`);
         }
@@ -37,38 +37,40 @@ function generateCustomSql(match, customs, getParam, getField) {
         return compareOperators_1.operatorsObject[operatorName].getSql(context);
     }
     function createOperators(fieldName, field) {
-        return Object.keys(field).map((operatorName) => {
+        return Object.keys(field)
+            .map((operatorName) => {
             const value = field[operatorName];
             return createOperator(operatorName, fieldName, value);
-        }).join(' AND ');
+        })
+            .join(" AND ");
     }
     function createAndList(list) {
-        return list.map(createFilter).join(' AND ');
+        return list.map(createFilter).join(" AND ");
     }
     function createOrList(list) {
-        return list.map(createFilter).join(' OR ');
+        return list.map(createFilter).join(" OR ");
     }
     function createFilter(filter) {
         const sqlList = [];
         Object.keys(filter).forEach((fieldName) => {
             const field = filter[fieldName];
-            if (fieldName === 'AND') {
+            if (fieldName === "AND") {
                 return sqlList.push(`(${createAndList(field)})`);
             }
-            if (fieldName === 'OR') {
+            if (fieldName === "OR") {
                 return sqlList.push(`(${createOrList(field)})`);
             }
             sqlList.push(`(${createOperators(fieldName, field)})`);
         });
-        return sqlList.join(' AND ');
+        return sqlList.join(" AND ");
     }
-    let sql = '';
+    let sql = "";
     if (customs.where != null) {
         if (match === true) {
-            sql += ' AND ';
+            sql += " AND ";
         }
         else {
-            sql += ' WHERE ';
+            sql += " WHERE ";
         }
         sql += `(${createFilter(customs.where)})`;
     }
@@ -78,15 +80,15 @@ function generateCustomSql(match, customs, getParam, getField) {
             orderBy = [orderBy];
         }
         const orders = orderBy.map((option) => {
-            const splitted = option.split('_');
+            const splitted = option.split("_");
             const order = splitted.pop();
-            const fieldName = splitted.join('_');
-            if (order !== 'ASC' && order !== 'DESC') {
+            const fieldName = splitted.join("_");
+            if (order !== "ASC" && order !== "DESC") {
                 throw new Error(`OrderBy has an invalid value '${option}'.`);
             }
             return `${getField(fieldName)} ${order}`;
         });
-        sql += ` ORDER BY ${orders.join(', ')}`;
+        sql += ` ORDER BY ${orders.join(", ")}`;
     }
     if (customs.limit != null) {
         sql += ` LIMIT ${getParam(parseInt(customs.limit, 10))}`;

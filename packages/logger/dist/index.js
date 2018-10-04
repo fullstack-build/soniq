@@ -19,16 +19,16 @@ let LoggerFactory = class LoggerFactory {
     constructor(config) {
         this.config = config;
         // register package config
-        this.CONFIG = this.config.registerConfig('Logger', __dirname + '/../config');
+        this.CONFIG = this.config.registerConfig("Logger", `${__dirname}/../config`);
     }
     create(moduleName) {
-        const env = di_1.Container.get('ENVIRONMENT');
+        const env = di_1.Container.get("ENVIRONMENT");
         return new Logger_1.Logger(moduleName, this.CONFIG, env);
     }
 };
 LoggerFactory = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject((type) => config_1.Config)),
     __metadata("design:paramtypes", [config_1.Config])
 ], LoggerFactory);
 exports.LoggerFactory = LoggerFactory;

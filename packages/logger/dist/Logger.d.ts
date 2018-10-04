@@ -1,4 +1,4 @@
-import { ILogger } from './ILogger';
+import { ILogger } from "./ILogger";
 export declare class Logger implements ILogger {
     private LEVELS;
     private loggerName;
@@ -6,6 +6,10 @@ export declare class Logger implements ILogger {
     private readonly debugLogger;
     private projectEnvString;
     constructor(moduleName: string, loggerConfig: any, env: any);
+    /**
+     *  PRIVATE METHODS
+     */
+    private logToDebug(pLogObject);
     /**
      * Empty functions for code completion
      * implementation is within tracer
@@ -15,8 +19,4 @@ export declare class Logger implements ILogger {
     info(...args: any[]): void;
     warn(...args: any[]): void;
     error(...args: any[]): void;
-    /**
-     *  PRIVATE METHODS
-     */
-    private logToDebug(pLogObject);
 }

@@ -1,35 +1,34 @@
-
 function operationValueMapper(value) {
-  if (value[0] !== '[') {
+  if (value[0] !== "[") {
     return {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
+        kind: "Name",
         value
       }
     };
   } else {
     return {
-      kind: 'ListType',
+      kind: "ListType",
       type: {
-        kind: 'NonNullType',
+        kind: "NonNullType",
         type: {
-          kind: 'NamedType',
+          kind: "NamedType",
           name: {
-            kind: 'Name',
-            value: 'String',
-          },
-        },
-      },
+            kind: "Name",
+            value: "String"
+          }
+        }
+      }
     };
   }
 }
 
 function getOperationField(operation) {
   const def = {
-    kind: 'InputValueDefinition',
+    kind: "InputValueDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: operation.name
     },
     type: operationValueMapper(operation.value),
@@ -42,10 +41,10 @@ function getOperationField(operation) {
 
 function getOperatorsDefinition(operatorsObject) {
   return {
-    kind: 'InputObjectTypeDefinition',
+    kind: "InputObjectTypeDefinition",
     name: {
-      kind: 'Name',
-      value: 'Operators'
+      kind: "Name",
+      value: "Operators"
     },
     directives: [],
     fields: Object.values(operatorsObject).map(getOperationField)

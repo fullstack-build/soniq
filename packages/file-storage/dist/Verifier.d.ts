@@ -1,5 +1,5 @@
-import { Client } from 'minio';
-import { FileName } from './FileName';
+import { Client } from "minio";
+import { FileName } from "./FileName";
 export interface IBucketObject {
     objectName: string;
     info: string;

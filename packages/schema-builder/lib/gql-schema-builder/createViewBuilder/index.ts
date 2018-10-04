@@ -1,8 +1,7 @@
+import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { parseDirectives } from "../utils/parseDirectives";
 
-import { CreateExpressions, orderExpressions } from '../createExpressions';
-import { parseDirectives } from '../utils/parseDirectives';
-
-import { createView } from './helpers';
+import { createView } from "./helpers";
 
 export function buildCreateView(table, view, context, extensions, config) {
   // Get some data from table
@@ -17,10 +16,10 @@ export function buildCreateView(table, view, context, extensions, config) {
     name: mutationName,
     viewSchemaName: config.schemaName,
     viewName: mutationName,
-    type: 'CREATE',
+    type: "CREATE",
     requiresAuth: false,
     gqlTypeName,
-    gqlReturnTypeName: returnOnlyId === true ? 'ID' : gqlTypeName,
+    gqlReturnTypeName: returnOnlyId === true ? "ID" : gqlTypeName,
     extensions: {},
     gqlInputTypeName
   };
@@ -29,16 +28,16 @@ export function buildCreateView(table, view, context, extensions, config) {
   const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
   newGqlTypeDefinition.fields = [];
   newGqlTypeDefinition.name.value = gqlInputTypeName;
-  newGqlTypeDefinition.kind = 'InputObjectTypeDefinition';
+  newGqlTypeDefinition.kind = "InputObjectTypeDefinition";
 
   if (returnOnlyId === true) {
     newGqlTypeDefinition.type = {
-      kind: 'NonNullType',
+      kind: "NonNullType",
       type: {
-        kind: 'NamedType',
+        kind: "NamedType",
         name: {
-          kind: 'Name',
-          value: 'ID',
+          kind: "Name",
+          value: "ID"
         }
       }
     };
@@ -47,13 +46,13 @@ export function buildCreateView(table, view, context, extensions, config) {
   // List of field-select sql statements
   const fieldsSql = [];
 
-  const localTable = '_local_table_';
+  const localTable = "_local_table_";
 
   gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
     const gqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinitionTemp));
     const directives = parseDirectives(gqlFieldDefinition.directives);
     const fieldName = gqlFieldDefinition.name.value;
-    gqlFieldDefinition.kind = 'InputValueDefinition';
+    gqlFieldDefinition.kind = "InputValueDefinition";
 
     const ctx = {
       view,

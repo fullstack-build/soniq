@@ -13,65 +13,74 @@ const fs_1 = require("fs");
 const util_1 = require("util");
 const readFileAsync = util_1.promisify(fs_1.readFile);
 const writeFileAsync = util_1.promisify(fs_1.writeFile);
-var helper;
-(function (helper) {
-    helper.loadFilesByGlobPattern = (pattern) => __awaiter(this, void 0, void 0, function* () {
-        try {
-            const files = fastGlob.sync(pattern, {
-                deep: false,
-                onlyFiles: true,
-            });
-            const readFilesPromises = [];
-            files.map((filePath) => {
-                readFilesPromises.push(readFileAsync(filePath, 'utf8'));
-            });
-            return yield Promise.all(readFilesPromises);
-        }
-        catch (err) {
-            throw err;
-        }
-    });
-    helper.requireFilesByGlobPattern = (pattern) => __awaiter(this, void 0, void 0, function* () {
-        try {
-            const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
-            const requiredFiles = [];
-            files.map((filePath) => {
-                let requiredFileContent = null;
-                try {
-                    const requiredFile = require(filePath);
-                    requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
-                }
-                catch (err) {
-                    throw err;
-                }
-                requiredFiles.push(requiredFileContent);
-            });
-            return requiredFiles;
-        }
-        catch (err) {
-            throw err;
-        }
-    });
-    helper.requireFilesByGlobPatternAsObject = (pattern) => __awaiter(this, void 0, void 0, function* () {
-        try {
-            const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
-            const requiredFiles = {};
-            files.map((filePath) => {
-                let requiredFileContent = null;
-                try {
-                    const requiredFile = require(filePath);
-                    const name = filePath.split('/').pop().split('.ts')[0];
-                    requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
-                    requiredFiles[name] = requiredFileContent;
-                }
-                catch (err) {
-                    throw err;
-                }
-            });
-            return requiredFiles;
-        }
-        catch (err) {
-            throw err;
-        }
-    });
-})(helper = exports.helper || (exports.helper = {}));
+class AHelper {
+    static loadFilesByGlobPattern(pattern) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const files = fastGlob.sync(pattern, {
+                    deep: false,
+                    onlyFiles: true
+                });
+                const readFilesPromises = [];
+                files.map((filePath) => {
+                    readFilesPromises.push(readFileAsync(filePath, "utf8"));
+                });
+                return yield Promise.all(readFilesPromises);
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    static requireFilesByGlobPattern(pattern) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+                const requiredFiles = [];
+                files.map((filePath) => {
+                    let requiredFileContent = null;
+                    try {
+                        const requiredFile = require(filePath);
+                        requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
+                    }
+                    catch (err) {
+                        throw err;
+                    }
+                    requiredFiles.push(requiredFileContent);
+                });
+                return requiredFiles;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    static requireFilesByGlobPatternAsObject(pattern) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const files = yield fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+                const requiredFiles = {};
+                files.map((filePath) => {
+                    let requiredFileContent = null;
+                    try {
+                        const requiredFile = require(filePath);
+                        const name = filePath
+                            .split("/")
+                            .pop()
+                            .split(".ts")[0];
+                        requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
+                        requiredFiles[name] = requiredFileContent;
+                    }
+                    catch (err) {
+                        throw err;
+                    }
+                });
+                return requiredFiles;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+}
+exports.AHelper = AHelper;

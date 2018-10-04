@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import * as http from 'http';
+import * as http from "http";
 export declare class Server {
     private serverConfig;
     private server;
@@ -10,9 +10,9 @@ export declare class Server {
     private ENVIRONMENT;
     constructor(loggerFactory: any, config: any, bootLoader: any);
     private boot;
-    getApp(): any;
-    getServer(): http.Server;
     private bootKoa;
     private emit;
     private on;
+    getApp(): any;
+    getServer(): http.Server;
 }

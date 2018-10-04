@@ -31,13 +31,13 @@ function difference(obj, base, ignoreValue = false) {
             // ignore different string, number and boolean values
             if (!!ignoreValue) {
                 // ignoring done by replacing old value with new value
-                if (typeof thisValue === 'string' || typeof thisValue === 'number' || typeof thisValue === 'boolean') {
+                if (typeof thisValue === "string" || typeof thisValue === "number" || typeof thisValue === "boolean") {
                     thisValue = pBase[key];
                 }
             }
             // deep equal
             if (!_.isEqual(thisValue, pBase[key])) {
-                result[key] = (util_1.isObject(thisValue) && util_1.isObject(pBase[key])) ? changes(thisValue, pBase[key]) : thisValue;
+                result[key] = util_1.isObject(thisValue) && util_1.isObject(pBase[key]) ? changes(thisValue, pBase[key]) : thisValue;
             }
         });
     }
@@ -55,15 +55,15 @@ function addToLastNode(obj, addKey, addValue) {
     function nested(pObj) {
         return _.transform(pObj, (result, value, key) => {
             // check if object has children
-            const hasChildren = (Object.values(pObj).find((thisVal) => {
+            const hasChildren = Object.values(pObj).find((thisVal) => {
                 return util_1.isObject(thisVal);
-            }) != null);
+            }) != null;
             // add to last node
             if (!hasChildren) {
                 result[addKey] = addValue;
             }
             // recursion
-            result[key] = (util_1.isObject(value)) ? nested(value) : value;
+            result[key] = util_1.isObject(value) ? nested(value) : value;
         });
     }
     return nested(obj);
@@ -82,7 +82,7 @@ function addToEveryNode(obj, addKey, addValue) {
             // add to very "object" node
             result[addKey] = addValue;
             // recursion
-            result[key] = (util_1.isObject(value)) ? nested(value) : value;
+            result[key] = util_1.isObject(value) ? nested(value) : value;
         });
     }
     return nested(obj);
@@ -102,7 +102,7 @@ function removeFromEveryNode(obj, removeKey) {
                 delete value[removeKey];
             }
             // recursion
-            result[key] = (util_1.isObject(value)) ? nested(value) : value;
+            result[key] = util_1.isObject(value) ? nested(value) : value;
         });
     }
     return nested(obj);
@@ -120,7 +120,7 @@ function cleanObject(obj) {
             if (value === undefined) {
                 delete obj[key];
             }
-            if (typeof value === 'object' && !(value instanceof Date)) {
+            if (typeof value === "object" && !(value instanceof Date)) {
                 cleanObject(obj[key]);
                 if (value === null) {
                     continue;

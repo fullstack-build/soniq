@@ -4,21 +4,21 @@ const index_1 = require("../../index");
 // GQl AST
 // add directive parser
 // createdAt
-index_1.registerDirectiveParser('createdat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'customType';
-    dbMetaNode.customType = 'timestamp';
+index_1.registerDirectiveParser("createdat", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    dbMetaNode.type = "customType";
+    dbMetaNode.customType = "timestamp";
     dbMetaNode.defaultValue = {
         isExpression: true,
-        value: 'now()'
+        value: "now()"
     };
 });
 // updatedAt
-index_1.registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    dbMetaNode.type = 'customType';
-    dbMetaNode.customType = 'timestamp';
+index_1.registerDirectiveParser("updatedat", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    dbMetaNode.type = "customType";
+    dbMetaNode.customType = "timestamp";
     dbMetaNode.defaultValue = {
         isExpression: true,
-        value: 'now()',
+        value: "now()"
     };
     dbMetaNode.extensions.triggerUpdatedAt = {
         isActive: true
@@ -28,9 +28,9 @@ index_1.registerDirectiveParser('updatedat', (gQlDirectiveNode, dbMetaNode, refD
 index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     // keep reference to current table
     const currentTable = dbMeta.schemas[schemaName].tables[tableName];
-    if (trigger.trigger_name.includes('table_trigger_updatedat')) {
+    if (trigger.trigger_name.includes("table_trigger_updatedat")) {
         // updatedAt trigger for column
-        const regex = /triggerupdateorcreate\('(\w*)'\)/gmi;
+        const regex = /triggerupdateorcreate\('(\w*)'\)/gim;
         const match = regex.exec(trigger.action_statement);
         const columnName = match[1]; // first group from regex
         // only if column exists (trigger could be there without column)
@@ -42,8 +42,8 @@ index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     }
 });
 // Migration SQL
-index_1.registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableName, columnName) => {
-    const ACTION_KEY = '$$action$$';
+index_1.registerColumnMigrationExtension("triggerUpdatedAt", (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableName, columnName) => {
+    const ACTION_KEY = "$$action$$";
     function _splitActionFromNode(node = {}) {
         return index_1.splitActionFromNode(ACTION_KEY, node);
     }
@@ -51,7 +51,7 @@ index_1.registerColumnMigrationExtension('triggerUpdatedAt', (extensionDefinitio
     const triggerUpdatedAtActionObject = _splitActionFromNode(extensionDefinitionWithAction);
     const triggerUpdatedAtAction = triggerUpdatedAtActionObject.action;
     const triggerUpdatedAtDef = triggerUpdatedAtActionObject.node;
-    const triggerName = 'table_trigger_updatedat';
+    const triggerName = "table_trigger_updatedat";
     // drop trigger for remove and before add (in case it's already there)
     if (triggerUpdatedAtAction.remove || triggerUpdatedAtAction.add || triggerUpdatedAtAction.change) {
         nodeSqlObj.up.push(`DROP TRIGGER IF EXISTS "${triggerName}" ON ${tableNameWithSchema} CASCADE;`);

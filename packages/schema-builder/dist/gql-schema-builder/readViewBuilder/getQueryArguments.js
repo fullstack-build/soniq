@@ -2,16 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function getLimitArgument() {
     return {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-            kind: 'Name',
-            value: 'limit'
+            kind: "Name",
+            value: "limit"
         },
         type: {
-            kind: 'NamedType',
+            kind: "NamedType",
             name: {
-                kind: 'Name',
-                value: 'Int'
+                kind: "Name",
+                value: "Int"
             }
         },
         defaultValue: null,
@@ -20,16 +20,16 @@ function getLimitArgument() {
 }
 function getOffsetArgument() {
     return {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-            kind: 'Name',
-            value: 'offset'
+            kind: "Name",
+            value: "offset"
         },
         type: {
-            kind: 'NamedType',
+            kind: "NamedType",
             name: {
-                kind: 'Name',
-                value: 'Int'
+                kind: "Name",
+                value: "Int"
             }
         },
         defaultValue: null,
@@ -38,15 +38,15 @@ function getOffsetArgument() {
 }
 function getWhereArgument(gqlTypeName) {
     return {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-            kind: 'Name',
-            value: 'where'
+            kind: "Name",
+            value: "where"
         },
         type: {
-            kind: 'NamedType',
+            kind: "NamedType",
             name: {
-                kind: 'Name',
+                kind: "Name",
                 value: `${gqlTypeName}Filter`
             }
         },
@@ -56,20 +56,20 @@ function getWhereArgument(gqlTypeName) {
 }
 function getOrderByArgument(gqlTypeName) {
     return {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-            kind: 'Name',
-            value: 'orderBy'
+            kind: "Name",
+            value: "orderBy"
         },
         type: {
-            kind: 'ListType',
+            kind: "ListType",
             type: {
-                kind: 'NonNullType',
+                kind: "NonNullType",
                 type: {
-                    kind: 'NamedType',
+                    kind: "NamedType",
                     name: {
-                        kind: 'Name',
-                        value: `${gqlTypeName}OrderBy`,
+                        kind: "Name",
+                        value: `${gqlTypeName}OrderBy`
                     }
                 }
             }
@@ -79,11 +79,6 @@ function getOrderByArgument(gqlTypeName) {
     };
 }
 function getQueryArguments(gqlTypeName) {
-    return [
-        getWhereArgument(gqlTypeName),
-        getOrderByArgument(gqlTypeName),
-        getLimitArgument(),
-        getOffsetArgument()
-    ];
+    return [getWhereArgument(gqlTypeName), getOrderByArgument(gqlTypeName), getLimitArgument(), getOffsetArgument()];
 }
 exports.getQueryArguments = getQueryArguments;

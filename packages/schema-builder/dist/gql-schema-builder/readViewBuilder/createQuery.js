@@ -3,36 +3,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const getQueryArguments_1 = require("./getQueryArguments");
 function createQuery(name, gqlTypeName) {
     return {
-        kind: 'ObjectTypeExtension',
+        kind: "ObjectTypeExtension",
         name: {
-            kind: 'Name',
-            value: 'Query'
+            kind: "Name",
+            value: "Query"
         },
         interfaces: [],
         directives: [],
         fields: [
             {
-                kind: 'FieldDefinition',
+                kind: "FieldDefinition",
                 description: {
-                    kind: 'StringValue',
+                    kind: "StringValue",
                     value: `Returns an array of ${name}.`,
                     block: true
                 },
                 name: {
-                    kind: 'Name',
+                    kind: "Name",
                     value: name
                 },
                 arguments: getQueryArguments_1.getQueryArguments(gqlTypeName),
                 type: {
-                    kind: 'NonNullType',
+                    kind: "NonNullType",
                     type: {
-                        kind: 'ListType',
+                        kind: "ListType",
                         type: {
-                            kind: 'NonNullType',
+                            kind: "NonNullType",
                             type: {
-                                kind: 'NamedType',
+                                kind: "NamedType",
                                 name: {
-                                    kind: 'Name',
+                                    kind: "Name",
                                     value: gqlTypeName
                                 }
                             }
@@ -41,21 +41,21 @@ function createQuery(name, gqlTypeName) {
                 },
                 directives: [
                     {
-                        kind: 'Directive',
+                        kind: "Directive",
                         name: {
-                            kind: 'Name',
-                            value: 'custom'
+                            kind: "Name",
+                            value: "custom"
                         },
                         arguments: [
                             {
-                                kind: 'Argument',
+                                kind: "Argument",
                                 name: {
-                                    kind: 'Name',
-                                    value: 'resolver'
+                                    kind: "Name",
+                                    value: "resolver"
                                 },
                                 value: {
-                                    kind: 'StringValue',
-                                    value: '@fullstack-one/graphql/queryResolver',
+                                    kind: "StringValue",
+                                    value: "@fullstack-one/graphql/queryResolver",
                                     block: false
                                 }
                             }

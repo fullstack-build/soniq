@@ -1,7 +1,6 @@
+import lodash from "lodash";
 
-import lodash from 'lodash';
-
-export default function () {
+export default function() {
   lodash.map([]);
   return true;
 }

@@ -1,15 +1,12 @@
-
-import { utils } from '@fullstack-one/schema-builder';
+import { utils } from "@fullstack-one/schema-builder";
 
 const { createArrayField, getEnum } = utils;
 
-const typesEnumName = 'FILE_TYPES';
+const typesEnumName = "FILE_TYPES";
 
-import {
-  _
-} from 'lodash';
+import { _ } from "lodash";
 
-const resolverName = '@fullstack-one/file-storage/readFiles';
+const resolverName = "@fullstack-one/file-storage/readFiles";
 
 export function getParser() {
   const parser: any = {};
@@ -21,12 +18,12 @@ export function getParser() {
     const { gqlFieldDefinition, view, fieldName, directives } = ctx;
 
     if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
-      const gqlArrayFieldDefinition: any = createArrayField(fieldName, 'String');
-      const types = directives.files.types || ['DEFAULT'];
+      const gqlArrayFieldDefinition: any = createArrayField(fieldName, "String");
+      const types = directives.files.types || ["DEFAULT"];
 
       gqlArrayFieldDefinition.description = {
-        kind: 'StringValue',
-        value: `List of FileNames. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+        kind: "StringValue",
+        value: `List of FileNames. Allowed types: [${types.map((type) => `"${type}"`).join(", ")}]`,
         block: true
       };
       return [gqlArrayFieldDefinition];
@@ -46,9 +43,9 @@ export function getParser() {
       const { defaultFieldCreator, localTable } = ctx;
 
       const params = directives.files.params || {};
-      const types = directives.files.types || ['DEFAULT'];
+      const types = directives.files.types || ["DEFAULT"];
 
-      const regex = '^[_a-zA-Z][_a-zA-Z0-9]{3,30}$';
+      const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
       const regexp = new RegExp(regex);
 
       types.forEach((type) => {
@@ -61,33 +58,34 @@ export function getParser() {
 
       const columnExpression = `"${localTable}"."${fieldName}"`;
 
-      const {
-        publicFieldSql,
-        authFieldSql,
-        gqlFieldDefinition
-      } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
+      const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(
+        readExpressions[fieldName],
+        JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)),
+        columnExpression,
+        fieldName
+      );
 
       gqlFieldDefinition.description = {
-        kind: 'StringValue',
-        value: `List of Files. Allowed types: [${types.map(type => `"${type}"`).join(', ')}]`,
+        kind: "StringValue",
+        value: `List of Files. Allowed types: [${types.map((type) => `"${type}"`).join(", ")}]`,
         block: true
       };
 
       gqlFieldDefinition.directives.push({
-        kind: 'Directive',
+        kind: "Directive",
         name: {
-          kind: 'Name',
-          value: 'custom'
+          kind: "Name",
+          value: "custom"
         },
         arguments: [
           {
-            kind: 'Argument',
+            kind: "Argument",
             name: {
-              kind: 'Name',
-              value: 'resolver'
+              kind: "Name",
+              value: "resolver"
             },
             value: {
-              kind: 'StringValue',
+              kind: "StringValue",
               value: resolverName,
               block: false
             }
@@ -95,14 +93,16 @@ export function getParser() {
         ]
       });
 
-      return [{
-        gqlFieldName: fieldName,
-        nativeFieldName: fieldName,
-        publicFieldSql,
-        authFieldSql,
-        gqlFieldDefinition,
-        isVirtual: true
-      }];
+      return [
+        {
+          gqlFieldName: fieldName,
+          nativeFieldName: fieldName,
+          publicFieldSql,
+          authFieldSql,
+          gqlFieldDefinition,
+          isVirtual: true
+        }
+      ];
     }
     return null;
   };

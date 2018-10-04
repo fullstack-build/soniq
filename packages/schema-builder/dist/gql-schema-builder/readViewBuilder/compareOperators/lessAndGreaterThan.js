@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const greaterThan = {
-    name: 'greaterThan',
-    value: 'String',
+    name: "greaterThan",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} > ${value}`;
@@ -10,8 +10,8 @@ const greaterThan = {
 };
 exports.greaterThan = greaterThan;
 const greaterThanOrEqual = {
-    name: 'greaterThanOrEqual',
-    value: 'String',
+    name: "greaterThanOrEqual",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} >= ${value}`;
@@ -19,8 +19,8 @@ const greaterThanOrEqual = {
 };
 exports.greaterThanOrEqual = greaterThanOrEqual;
 const lessThan = {
-    name: 'lessThan',
-    value: 'String',
+    name: "lessThan",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} < ${value}`;
@@ -28,8 +28,8 @@ const lessThan = {
 };
 exports.lessThan = lessThan;
 const lessThanOrEqual = {
-    name: 'lessThanOrEqual',
-    value: 'String',
+    name: "lessThanOrEqual",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} <= ${value}`;

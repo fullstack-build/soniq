@@ -1,13 +1,12 @@
-import { IDbMeta } from '../IDbMeta';
-export { registerQueryParser } from './queryParser';
-export { registerTriggerParser } from './triggerParser';
+import { IDbMeta } from "../IDbMeta";
+export { registerQueryParser } from "./queryParser";
+export { registerTriggerParser } from "./triggerParser";
 export declare class PgToDbMeta {
     private readonly DELETED_PREFIX;
     private readonly KNOWN_TYPES;
     private dbAppClient;
     private readonly dbMeta;
     constructor(dbAppClient?: any);
-    getPgDbMeta(): Promise<IDbMeta>;
     private iterateAndAddSchemas;
     private iterateEnumTypes;
     private iterateAndAddTables;
@@ -18,4 +17,5 @@ export declare class PgToDbMeta {
     private iterateAndAddTriggers;
     private relationBuilderHelper;
     private manyToManyRelationBuilderHelper;
+    getPgDbMeta(): Promise<IDbMeta>;
 }

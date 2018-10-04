@@ -1,4 +1,4 @@
-CREATE TYPE _meta.culture AS ENUM (
+CREATE TYPE _meta.locale AS ENUM (
 'af-ZA',
 'sq-AL',
 'ar-DZ',

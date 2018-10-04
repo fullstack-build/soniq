@@ -28,7 +28,7 @@ function buildReadView(table, readExpressions, context, extensions, config) {
     // The hole view creation. Will be an array
     let publicViewSql = null;
     let authViewSql = null;
-    const localTable = '_local_table_';
+    const localTable = "_local_table_";
     // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
     const expressionCreator = new createExpressions_1.CreateExpressions(context.expressions, localTable);
     const defaultFieldCreator = new defaultFieldCreator_1.CreateDefaultField(expressionCreator);
@@ -45,7 +45,8 @@ function buildReadView(table, readExpressions, context, extensions, config) {
             fieldName,
             localTable,
             context,
-            getQueryArguments: getQueryArguments_1.getQueryArguments,
+            getQueryArguments: // TODO: Dustin: contect should have a parentContext or permissionContext
+            getQueryArguments_1.getQueryArguments,
             table
         };
         extensions.some((parser) => {
@@ -59,7 +60,7 @@ function buildReadView(table, readExpressions, context, extensions, config) {
                         const fieldData = {
                             gqlFieldName: result.gqlFieldName,
                             nativeFieldName: result.nativeFieldName,
-                            isVirtual: result.isVirtual === true ? true : false,
+                            isVirtual: result.isVirtual === true,
                             meta: result.meta
                         };
                         if (result.publicFieldSql != null) {

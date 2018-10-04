@@ -35,13 +35,13 @@ let AutoMigrate = class AutoMigrate {
         // init logger
         this.logger = loggerFactory.create(this.constructor.name);
         // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: Check config automigrate = true?
-            return yield this.runMigration();
+            return this.runMigration();
         });
     }
     getDbMeta() {
@@ -50,38 +50,38 @@ let AutoMigrate = class AutoMigrate {
     }
     getMigrationSql() {
         return __awaiter(this, void 0, void 0, function* () {
-            const configDB = this.config.getConfig('db');
+            const configDB = this.config.getConfig("db");
             try {
                 const fromDbMeta = yield this.schemaBuilder.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
                 return this.schemaBuilder.getDbSchemaBuilder().getMigrationSqlStatements(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
-                this.logger.warn('getMigrationSql.error', err);
+                this.logger.warn("getMigrationSql.error", err);
             }
         });
     }
     runMigration() {
         return __awaiter(this, void 0, void 0, function* () {
-            const configDB = this.config.getConfig('db');
+            const configDB = this.config.getConfig("db");
             try {
                 const fromDbMeta = yield this.schemaBuilder.getPgDbMeta();
                 const toDbMeta = this.getDbMeta();
                 return yield this.schemaBuilder.getDbSchemaBuilder().migrate(fromDbMeta, toDbMeta, configDB.renameInsteadOfDrop);
             }
             catch (err) {
-                this.logger.warn('runMigration.error', err);
+                this.logger.warn("runMigration.error", err);
             }
         });
     }
 };
 AutoMigrate = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
-    __param(4, di_1.Inject(type => db_1.DbAppClient)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(2, di_1.Inject((type) => config_1.Config)),
+    __param(3, di_1.Inject((type) => schema_builder_1.SchemaBuilder)),
+    __param(4, di_1.Inject((type) => db_1.DbAppClient)),
     __metadata("design:paramtypes", [logger_1.LoggerFactory,
         boot_loader_1.BootLoader,
         config_1.Config,

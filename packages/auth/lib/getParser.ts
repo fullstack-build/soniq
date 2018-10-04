@@ -1,16 +1,15 @@
-
 function getAuthTokenArgument() {
   return {
-    kind: 'InputValueDefinition',
+    kind: "InputValueDefinition",
     name: {
-      kind: 'Name',
-      value: 'authToken'
+      kind: "Name",
+      value: "authToken"
     },
     type: {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
-        value: 'String'
+        kind: "Name",
+        value: "String"
       }
     },
     defaultValue: null,
@@ -20,16 +19,16 @@ function getAuthTokenArgument() {
 
 function getPrivacyAgreementAcceptanceTokenArgument() {
   return {
-    kind: 'InputValueDefinition',
+    kind: "InputValueDefinition",
     name: {
-      kind: 'Name',
-      value: 'privacyAgreementAcceptanceToken'
+      kind: "Name",
+      value: "privacyAgreementAcceptanceToken"
     },
     type: {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
-        value: 'String'
+        kind: "Name",
+        value: "String"
       }
     },
     defaultValue: null,
@@ -39,16 +38,16 @@ function getPrivacyAgreementAcceptanceTokenArgument() {
 
 function getMetaArgument() {
   return {
-    kind: 'InputValueDefinition',
+    kind: "InputValueDefinition",
     name: {
-      kind: 'Name',
-      value: 'meta'
+      kind: "Name",
+      value: "meta"
     },
     type: {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
-        value: 'String'
+        kind: "Name",
+        value: "String"
       }
     },
     defaultValue: null,
@@ -63,41 +62,37 @@ export function getParser(setParserMeta, getParserMeta) {
     const { fieldName, directives, table } = ctx;
 
     if (directives.privacyAgreementAcceptedVersion != null) {
-      setParserMeta('privacyAgreementAcceptedVersion', fieldName);
+      setParserMeta("privacyAgreementAcceptedVersion", fieldName);
     }
     if (directives.privacyAgreementAcceptedAtInUTC != null) {
-      setParserMeta('privacyAgreementAcceptedAtInUTC', fieldName);
+      setParserMeta("privacyAgreementAcceptedAtInUTC", fieldName);
     }
     if (directives.username != null) {
-      setParserMeta('username', fieldName);
+      setParserMeta("username", fieldName);
     }
     if (directives.tenant != null) {
-      setParserMeta('tenant', fieldName);
+      setParserMeta("tenant", fieldName);
     }
     if (directives.password != null) {
-      setParserMeta('password', fieldName);
+      setParserMeta("password", fieldName);
     }
     if (directives.password != null || directives.tenant != null || directives.username != null) {
-      setParserMeta('authTableName', table.tableName);
-      setParserMeta('authSchemaName', table.schemaName);
-      setParserMeta('authGqlTypeName', table.gqlTypeName);
+      setParserMeta("authTableName", table.tableName);
+      setParserMeta("authSchemaName", table.schemaName);
+      setParserMeta("authGqlTypeName", table.gqlTypeName);
     }
 
     return null;
   };
 
   parser.modifyMutation = (mutation) => {
-    if (mutation.type === 'CREATE' && mutation.gqlTypeName === getParserMeta('authGqlTypeName')) {
-      mutation.gqlReturnTypeName = 'ID';
-      mutation.extensions.auth = 'REGISTER_USER_MUTATION';
+    if (mutation.type === "CREATE" && mutation.gqlTypeName === getParserMeta("authGqlTypeName")) {
+      mutation.gqlReturnTypeName = "ID";
+      mutation.extensions.auth = "REGISTER_USER_MUTATION";
 
       return {
         mutation,
-        extendArguments: [
-          getAuthTokenArgument(),
-          getPrivacyAgreementAcceptanceTokenArgument(),
-          getMetaArgument()
-        ]
+        extendArguments: [getAuthTokenArgument(), getPrivacyAgreementAcceptanceTokenArgument(), getMetaArgument()]
       };
     }
 

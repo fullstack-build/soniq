@@ -1,4 +1,3 @@
-
 export function createGrants(config, dbMeta) {
   const sql = [];
   sql.push(`REVOKE ALL PRIVILEGES ON DATABASE "${config.databaseName}" FROM "${config.userName}";`);

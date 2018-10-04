@@ -1,4 +1,3 @@
-
 export function parseReadField(ctx) {
   const { fieldName, readExpressions, directives } = ctx;
 
@@ -6,22 +5,25 @@ export function parseReadField(ctx) {
   if (readExpressions[fieldName] != null && directives.custom != null) {
     const { defaultFieldCreator } = ctx;
 
-    const columnExpression = 'NULL::text';
+    const columnExpression = "NULL::text";
 
-    const {
-      publicFieldSql,
-      authFieldSql,
-      gqlFieldDefinition
-    } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
+    const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(
+      readExpressions[fieldName],
+      JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)),
+      columnExpression,
+      fieldName
+    );
 
-    return [{
+    return [
+      {
         gqlFieldName: fieldName,
         nativeFieldName: fieldName,
         publicFieldSql,
         authFieldSql,
         gqlFieldDefinition,
         isVirtual: true
-      }];
+      }
+    ];
   }
   return null;
 }

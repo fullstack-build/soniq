@@ -1,2 +1,2 @@
-import 'reflect-metadata';
-export * from 'typedi';
+import "reflect-metadata";
+export * from "typedi";

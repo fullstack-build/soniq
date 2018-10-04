@@ -6,11 +6,4 @@ const customParser = require("./custom");
 const relationParser = require("./relation");
 const defaultParser = require("./default");
 const id = require("./id");
-exports.extensions = [
-    id,
-    jsonParser,
-    computedParser,
-    customParser,
-    relationParser,
-    defaultParser
-];
+exports.extensions = [id, jsonParser, computedParser, customParser, relationParser, defaultParser];

@@ -1,62 +1,62 @@
-
 export function createSchemaBasics() {
   const definitions = [];
 
   definitions.push({
-    kind: 'SchemaDefinition',
+    kind: "SchemaDefinition",
     directives: [],
-    operationTypes: [{
-        kind: 'OperationTypeDefinition',
-        operation: 'query',
+    operationTypes: [
+      {
+        kind: "OperationTypeDefinition",
+        operation: "query",
         type: {
-          kind: 'NamedType',
+          kind: "NamedType",
           name: {
-            kind: 'Name',
-            value: 'Query',
-          },
-        },
+            kind: "Name",
+            value: "Query"
+          }
+        }
       },
       {
-        kind: 'OperationTypeDefinition',
-        operation: 'mutation',
+        kind: "OperationTypeDefinition",
+        operation: "mutation",
         type: {
-          kind: 'NamedType',
+          kind: "NamedType",
           name: {
-            kind: 'Name',
-            value: 'Mutation',
-          },
-        },
+            kind: "Name",
+            value: "Mutation"
+          }
+        }
       }
-    ],
+    ]
   });
 
   definitions.push({
-    kind: 'ObjectTypeDefinition',
+    kind: "ObjectTypeDefinition",
     name: {
-      kind: 'Name',
-      value: 'Query',
+      kind: "Name",
+      value: "Query"
     },
     interfaces: [],
     directives: [],
-    fields: [],
+    fields: []
   });
 
   definitions.push({
-    kind: 'ObjectTypeDefinition',
+    kind: "ObjectTypeDefinition",
     name: {
-      kind: 'Name',
-      value: 'Mutation',
+      kind: "Name",
+      value: "Mutation"
     },
     interfaces: [],
     directives: [],
-    fields: [],
+    fields: []
   });
 
   definitions.push({
-    kind: 'ScalarTypeDefinition',
+    kind: "ScalarTypeDefinition",
     name: {
-      kind: 'Name',
-      value: 'JSON',
+      kind: "Name",
+      value: "JSON"
     },
     directives: []
   });

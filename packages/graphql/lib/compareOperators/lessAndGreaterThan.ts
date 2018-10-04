@@ -1,6 +1,6 @@
 const greaterThan = {
-  name: 'greaterThan',
-  value: 'String',
+  name: "greaterThan",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} > ${value}`;
@@ -8,8 +8,8 @@ const greaterThan = {
 };
 
 const greaterThanOrEqual = {
-  name: 'greaterThanOrEqual',
-  value: 'String',
+  name: "greaterThanOrEqual",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} >= ${value}`;
@@ -17,8 +17,8 @@ const greaterThanOrEqual = {
 };
 
 const lessThan = {
-  name: 'lessThan',
-  value: 'String',
+  name: "lessThan",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} < ${value}`;
@@ -26,8 +26,8 @@ const lessThan = {
 };
 
 const lessThanOrEqual = {
-  name: 'lessThanOrEqual',
-  value: 'String',
+  name: "lessThanOrEqual",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} <= ${value}`;

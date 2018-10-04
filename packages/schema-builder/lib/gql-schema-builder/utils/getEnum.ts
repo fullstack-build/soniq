@@ -1,20 +1,19 @@
-
 function getEnumValue(value) {
   return {
-        kind: 'EnumValueDefinition',
-        name: {
-          kind: 'Name',
-          value
-        },
-        directives: []
-      };
+    kind: "EnumValueDefinition",
+    name: {
+      kind: "Name",
+      value
+    },
+    directives: []
+  };
 }
 
 function getEnumDefinition(name, values) {
   return {
-    kind: 'EnumTypeDefinition',
+    kind: "EnumTypeDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: name
     },
     directives: [],
@@ -23,6 +22,5 @@ function getEnumDefinition(name, values) {
 }
 
 export function getEnum(name, values) {
-
   return getEnumDefinition(name, values);
 }

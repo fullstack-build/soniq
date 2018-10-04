@@ -1,5 +1,4 @@
-
-import { Service } from '@fullstack-one/di';
+import { Service } from "@fullstack-one/di";
 
 @Service()
 export class BootLoader {

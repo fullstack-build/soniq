@@ -1,6 +1,6 @@
 const equal = {
-  name: 'equals',
-  value: 'String',
+  name: "equals",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} = ${value}`;
@@ -8,8 +8,8 @@ const equal = {
 };
 
 const notEqual = {
-  name: 'equalsNot',
-  value: 'String',
+  name: "equalsNot",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} <> ${value}`;
@@ -17,8 +17,8 @@ const notEqual = {
 };
 
 const isDistinctFrom = {
-  name: 'isDistinctFrom',
-  value: 'String',
+  name: "isDistinctFrom",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} IS DISTINCT FROM ${value}`;
@@ -26,8 +26,8 @@ const isDistinctFrom = {
 };
 
 const isNotDistinctFrom = {
-  name: 'isNotDistinctFrom',
-  value: 'String',
+  name: "isNotDistinctFrom",
+  value: "String",
   getSql: (context) => {
     const { field, value } = context;
     return `${field} IS NOT DISTINCT FROM ${value}`;

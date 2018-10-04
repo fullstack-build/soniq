@@ -29,11 +29,11 @@ const logger_1 = require("@fullstack-one/logger");
 const auth_1 = require("@fullstack-one/auth");
 const fbHelper_1 = require("./fbHelper");
 const fs = require("fs");
-const schema = fs.readFileSync(require.resolve('../schema.gql'), 'utf-8');
+const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 let AuthFbToken = class AuthFbToken {
     constructor(auth, bootLoader, schemaBuilder, config, graphQl, loggerFactory) {
         // register package config
-        this.authFbTokenConfig = config.registerConfig('AuthFbToken', __dirname + '/../config');
+        this.authFbTokenConfig = config.registerConfig("AuthFbToken", `${__dirname}/../config`);
         // DI
         this.loggerFactory = loggerFactory;
         this.auth = auth;
@@ -52,28 +52,28 @@ let AuthFbToken = class AuthFbToken {
     }
     getResolvers() {
         return {
-            '@fullstack-one/auth-fb-token/createAuthTokenFromFacebookToken': (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
+            "@fullstack-one/auth-fb-token/createAuthTokenFromFacebookToken": (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 // If the privacy token is not valid, this function will throw an error and we will not proceed any data.
                 this.auth.validatePrivacyAgreementAcceptanceToken(args.privacyAgreementAcceptanceToken);
                 // Get the facebook profile information.
                 const profile = yield this.fbHelper.getProfile(args.token);
                 const email = profile.email;
-                const providerName = 'facebookToken';
+                const providerName = "facebookToken";
                 const profileId = profile.id;
                 // Create an auth-token for login and registration
-                return yield this.auth.createAuthToken(args.privacyAgreementAcceptanceToken, email, providerName, profileId, args.tenant || 'default', profile);
+                return this.auth.createAuthToken(args.privacyAgreementAcceptanceToken, email, providerName, profileId, args.tenant || "default", profile);
             })
         };
     }
 };
 AuthFbToken = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => auth_1.Auth)),
-    __param(1, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(2, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
-    __param(3, di_1.Inject(type => config_1.Config)),
-    __param(4, di_1.Inject(type => graphql_1.GraphQl)),
-    __param(5, di_1.Inject(type => logger_1.LoggerFactory)),
+    __param(0, di_1.Inject((type) => auth_1.Auth)),
+    __param(1, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(2, di_1.Inject((type) => schema_builder_1.SchemaBuilder)),
+    __param(3, di_1.Inject((type) => config_1.Config)),
+    __param(4, di_1.Inject((type) => graphql_1.GraphQl)),
+    __param(5, di_1.Inject((type) => logger_1.LoggerFactory)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object, logger_1.LoggerFactory])
 ], AuthFbToken);
 exports.AuthFbToken = AuthFbToken;

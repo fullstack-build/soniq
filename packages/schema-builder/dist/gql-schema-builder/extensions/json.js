@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
 const lodash_1 = require("lodash");
-const JSON_SPLIT = '.';
+const JSON_SPLIT = ".";
 function createJsonSubset(expressions, columnExpression) {
     let publicSql = null;
     let authSql = null;
@@ -11,21 +11,24 @@ function createJsonSubset(expressions, columnExpression) {
         return `"${expressionObject.name}"."${expressionObject.name}"`;
     };
     // Generate public condition out of array of expressions
-    const publicCondition = expressions.filter((expressionObject) => {
+    const publicCondition = expressions
+        .filter((expressionObject) => {
         // If any expression is just true, the hole field is public
-        if (expressionObject.sql.toLowerCase() === 'true') {
+        if (expressionObject.sql.toLowerCase() === "true") {
             hasPublicTrueExpression = true;
         }
         return expressionObject.requiresAuth !== true;
-    }).map(getName).join(' OR ');
+    })
+        .map(getName)
+        .join(" OR ");
     // Generate condition out of array of expressions
-    const authCondition = expressions.map(getName).join(' OR ');
+    const authCondition = expressions.map(getName).join(" OR ");
     // If one expression is just true we don't need CASE (for public fields)
     if (hasPublicTrueExpression === true) {
         publicSql = `${columnExpression}`;
     }
     else {
-        if (publicCondition !== '') {
+        if (publicCondition !== "") {
             publicSql = `CASE WHEN ${publicCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
         }
         authSql = `CASE WHEN ${authCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
@@ -37,7 +40,7 @@ function createJsonSubset(expressions, columnExpression) {
 }
 function getJsonMerge(jsonFields) {
     if (jsonFields.length < 1) {
-        return 'jsonb_build_object()';
+        return "jsonb_build_object()";
     }
     if (jsonFields.length < 2) {
         return jsonFields.pop();
@@ -53,7 +56,7 @@ function parseReadField(ctx) {
     }
     // Find all fields for this json defined in permission
     const jsonFieldKeys = Object.keys(readExpressions).filter((key) => {
-        return key.split('.')[0] === fieldName;
+        return key.split(".")[0] === fieldName;
     });
     // If nothing found it no one can view it
     if (jsonFieldKeys.length < 1) {
@@ -95,13 +98,15 @@ function parseReadField(ctx) {
     if (authJsonSubsets.length > 0) {
         authFieldSql = `${getJsonMerge(authJsonSubsets)} AS "${fieldName}"`;
     }
-    return [{
+    return [
+        {
             gqlFieldName: fieldName,
             nativeFieldName: fieldName,
             publicFieldSql,
             authFieldSql,
             gqlFieldDefinition
-        }];
+        }
+    ];
 }
 exports.parseReadField = parseReadField;
 function parseUpdateField(ctx) {
@@ -118,7 +123,7 @@ function parseCreateField(ctx) {
 }
 exports.parseCreateField = parseCreateField;
 function renameNamedTypeToInput(gqlType) {
-    if (gqlType.kind === 'NamedType') {
+    if (gqlType.kind === "NamedType") {
         gqlType.name.value = `${gqlType.name.value}Input`;
     }
     else {

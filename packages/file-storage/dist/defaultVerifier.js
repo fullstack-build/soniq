@@ -20,18 +20,20 @@ class DefaultVerifier extends Verifier_1.Verifier {
                 yield this.client.copyObject(this.bucket, fName.name, `/${this.bucket}/${verifyFileName}`, copyConditions);
             }
             catch (e) {
-                if (e.message.toLowerCase().indexOf('not found') >= 0) {
-                    throw new Error('Please upload a file before verifying.');
+                if (e.message.toLowerCase().indexOf("not found") >= 0) {
+                    throw new Error("Please upload a file before verifying.");
                 }
                 throw e;
             }
         });
     }
     getObjectNames(fName) {
-        return [{
+        return [
+            {
                 objectName: fName.name,
-                info: 'default'
-            }];
+                info: "default"
+            }
+        ];
     }
 }
 exports.DefaultVerifier = DefaultVerifier;

@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 function setDefaultValueForColumn(gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
-    const isExpression = (_.get(gQlSchemaNode, 'arguments[0].name.value').toLocaleLowerCase() === 'expression');
-    const defaultValue = _.get(gQlSchemaNode, 'arguments[0].value.value');
+    const isExpression = _.get(gQlSchemaNode, "arguments[0].name.value").toLocaleLowerCase() === "expression";
+    const defaultValue = _.get(gQlSchemaNode, "arguments[0].value.value");
     // add default object to column
     refDbMetaCurrentTableColumn.defaultValue = {
         isExpression,
@@ -14,10 +14,10 @@ exports.setDefaultValueForColumn = setDefaultValueForColumn;
 function createConstraint(constraintName, constraintType, options, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
     // add new constraint if name was set
     if (constraintName != null) {
-        const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
+        const constraint = (refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
             type: constraintType,
-            options,
-        };
+            options
+        });
         // link constraint to field
         if (refDbMetaCurrentTableColumn != null) {
             // add columns field if not available
@@ -36,7 +36,7 @@ exports.createConstraint = createConstraint;
 function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable) {
     // find the right directive
     const relationDirective = gQlDirectiveNode.directives.find((directive) => {
-        return (directive.name.value === 'relation');
+        return directive.name.value === "relation";
     });
     // create empty relation
     const emptyRelation = {
@@ -65,72 +65,70 @@ function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMet
     let referencedExposedName = null;
     let referencedSchemaName = null;
     let referencedTableName = null;
-    const referencedColumnName = 'id'; // fk convention: always points to id
+    const referencedColumnName = "id"; // fk convention: always points to id
     // iterate arguments, choose what to do onUpdate and onDelete
     relationDirective.arguments.map((argument) => {
         const argumentName = argument.name.value;
         const argumentValue = argument.value.value;
         switch (argumentName) {
-            case 'name':
+            case "name":
                 relationName = argument.value.value;
                 break;
-            case 'onUpdate':
+            case "onUpdate":
                 switch (argumentValue.toLocaleLowerCase()) {
-                    case 'restrict':
-                        relationOnUpdate = 'RESTRICT';
+                    case "restrict":
+                        relationOnUpdate = "RESTRICT";
                         break;
-                    case 'cascade':
-                        relationOnUpdate = 'CASCADE';
+                    case "cascade":
+                        relationOnUpdate = "CASCADE";
                         break;
-                    case 'set null':
-                        relationOnUpdate = 'SET NULL';
+                    case "set null":
+                        relationOnUpdate = "SET NULL";
                         break;
-                    case 'set default':
-                        relationOnUpdate = 'SET DEFAULT';
+                    case "set default":
+                        relationOnUpdate = "SET DEFAULT";
                         break;
                 }
                 break;
-            case 'onDelete':
+            case "onDelete":
                 switch (argumentValue.toLocaleLowerCase()) {
-                    case 'restrict':
-                        relationOnDelete = 'RESTRICT';
+                    case "restrict":
+                        relationOnDelete = "RESTRICT";
                         break;
-                    case 'cascade':
-                        relationOnDelete = 'CASCADE';
+                    case "cascade":
+                        relationOnDelete = "CASCADE";
                         break;
-                    case 'set null':
-                        relationOnDelete = 'SET NULL';
+                    case "set null":
+                        relationOnDelete = "SET NULL";
                         break;
-                    case 'set default':
-                        relationOnDelete = 'SET DEFAULT';
+                    case "set default":
+                        relationOnDelete = "SET DEFAULT";
                         break;
                 }
                 break;
         }
         ((node) => {
-            if (node.type.kind === 'NamedType') {
-                relationType = 'ONE';
-                referencedExposedName = _.get(gQlDirectiveNode, 'type.name.value');
+            if (node.type.kind === "NamedType") {
+                relationType = "ONE";
+                referencedExposedName = _.get(gQlDirectiveNode, "type.name.value");
             }
-            else if (node.type.kind === 'NonNullType' &&
-                node.type.type.kind === 'NamedType') {
-                relationType = 'ONE';
-                referencedExposedName = _.get(gQlDirectiveNode, 'type.type.name.value');
+            else if (node.type.kind === "NonNullType" && node.type.type.kind === "NamedType") {
+                relationType = "ONE";
+                referencedExposedName = _.get(gQlDirectiveNode, "type.type.name.value");
             }
-            else if (node.type.kind === 'NonNullType' &&
-                node.type.type.kind === 'ListType' &&
-                node.type.type.type.kind === 'NonNullType' &&
-                node.type.type.type.type.kind === 'NamedType') {
-                relationType = 'MANY';
-                referencedExposedName = _.get(gQlDirectiveNode, 'type.type.type.type.name.value');
+            else if (node.type.kind === "NonNullType" &&
+                node.type.type.kind === "ListType" &&
+                node.type.type.type.kind === "NonNullType" &&
+                node.type.type.type.type.kind === "NamedType") {
+                relationType = "MANY";
+                referencedExposedName = _.get(gQlDirectiveNode, "type.type.type.type.name.value");
             }
         })(gQlDirectiveNode);
     });
     // check if relation table exists
-    if (refDbMeta.schemas[relationSchemaName].tables[relationTableName] == null ||
-        refDbMeta.exposedNames[referencedExposedName] == null) {
+    if (refDbMeta.schemas[relationSchemaName].tables[relationTableName] == null || refDbMeta.exposedNames[referencedExposedName] == null) {
         // not found, display error
-        process.stderr.write('GraphQL.parser.error.unknown.relation.table: ' + relationName + ':' + referencedExposedName + '\n');
+        process.stderr.write(`GraphQL.parser.error.unknown.relation.table: ${relationName}.${referencedExposedName}\n`);
     }
     else {
         // get actual referenced table
@@ -139,16 +137,16 @@ function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMet
         const thisRelationName = `${relationSchemaName}.${relationTableName}`;
         const referencedRelationName = `${referencedSchemaName}.${referencedTableName}`;
         // get or add new relations and keep reference for later
-        const relations = refDbMeta.relations[relationName] = refDbMeta.relations[relationName] || {
+        const relations = (refDbMeta.relations[relationName] = refDbMeta.relations[relationName] || {
             [thisRelationName]: _.cloneDeep(emptyRelation),
             [referencedRelationName]: _.cloneDeep(emptyRelation)
-        };
+        });
         const thisRelation = relations[thisRelationName];
         const otherRelation = relations[referencedRelationName];
         // check if empty => more then one relation in GraphQl Error, maybe same name for different relations
         if (thisRelation == null || otherRelation == null) {
-            process.stderr.write('GraphQL.parser.error.relation.too.many: ' + relationName +
-                ' Make sure to use unique relation names for different relations and use the same name on both sides of the relation. \n');
+            process.stderr.write(`GraphQL.parser.error.relation.too.many: ${relationName}
+        Make sure to use unique relation names for different relations and use the same name on both sides of the relation.`);
             return;
         }
         // fill current relation
@@ -156,35 +154,35 @@ function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMet
         thisRelation.type = relationType;
         thisRelation.schemaName = relationSchemaName;
         thisRelation.tableName = relationTableName;
-        thisRelation.columnName = (relationType === 'ONE') ? _referencingColumnNameHelper(virtualColumnName) : thisRelation.columnName;
+        thisRelation.columnName = relationType === "ONE" ? _referencingColumnNameHelper(virtualColumnName) : thisRelation.columnName;
         thisRelation.virtualColumnName = virtualColumnName;
         thisRelation.onUpdate = relationOnUpdate;
         thisRelation.onDelete = relationOnDelete;
         // thisRelation.description        = null;
         thisRelation.reference.schemaName = referencedSchemaName;
         thisRelation.reference.tableName = referencedTableName;
-        thisRelation.reference.columnName = (relationType === 'MANY') ? null : referencedColumnName;
+        thisRelation.reference.columnName = relationType === "MANY" ? null : referencedColumnName;
         // "invent" other side of relation if still empty
         // if other part of relation exists in GraphQL, it will get overridden with the actual data
         if (otherRelation.type == null) {
             // assume other side of relation is the opposite
-            const referencedType = (relationType === 'ONE') ? 'MANY' : 'ONE';
+            const referencedType = relationType === "ONE" ? "MANY" : "ONE";
             otherRelation.name = relationName;
             otherRelation.type = referencedType;
             otherRelation.schemaName = referencedSchemaName;
             otherRelation.tableName = referencedTableName;
-            otherRelation.columnName = (referencedType === 'ONE') ? _referencingColumnNameHelper(virtualColumnName) : otherRelation.columnName;
+            otherRelation.columnName = referencedType === "ONE" ? _referencingColumnNameHelper(virtualColumnName) : otherRelation.columnName;
             // "invent" virtual column name by making plural (maybe a library later for real plurals)
-            otherRelation.virtualColumnName = relationTableName.toLowerCase() + 's';
+            otherRelation.virtualColumnName = `${relationTableName.toLowerCase()}s`;
             // otherRelation.onUpdate           = null; // can't be "invented"
             // otherRelation.onDelete           = null; // can't be "invented"
             // otherRelation.description        = null;
             otherRelation.reference.schemaName = relationSchemaName;
             otherRelation.reference.tableName = relationTableName;
-            otherRelation.reference.columnName = (referencedType === 'MANY') ? null : otherRelation.reference.columnName || 'id'; // fallback is 'id'
+            otherRelation.reference.columnName = referencedType === "MANY" ? null : otherRelation.reference.columnName || "id"; // fallback is 'id'
         }
         // adjust for MANY:MANY
-        if (thisRelation.type === 'MANY' && otherRelation.type === 'MANY') {
+        if (thisRelation.type === "MANY" && otherRelation.type === "MANY") {
             thisRelation.reference.columnName = referencedColumnName;
             thisRelation.columnName = _referencingColumnNameHelper(thisRelation.virtualColumnName, true);
             otherRelation.reference.columnName = referencedColumnName;
@@ -193,15 +191,15 @@ function relationBuilderHelper(gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMet
     }
     // fk column naming convention: {name}_{foreignTableName}_{foreignFieldName}
     function _referencingColumnNameHelper(pVirtualColumnName, pIsArray = false) {
-        return (!pIsArray) ? `${pVirtualColumnName}Id` : `${pVirtualColumnName}IdsArray`;
+        return !pIsArray ? `${pVirtualColumnName}Id` : `${pVirtualColumnName}IdsArray`;
     }
 }
 exports.relationBuilderHelper = relationBuilderHelper;
 function addMigration(gQlDirectiveNode, dbMetaNode, refDbMeta) {
     const oldNameArgument = gQlDirectiveNode.arguments.find((argument) => {
-        return (argument.name.value.toLowerCase() === 'from');
+        return argument.name.value.toLowerCase() === "from";
     });
-    const oldName = (oldNameArgument != null) ? oldNameArgument.value.value : null;
+    const oldName = oldNameArgument != null ? oldNameArgument.value.value : null;
     const newName = dbMetaNode.name;
     // add oldName to dbMeta node
     if (dbMetaNode != null && oldName != null) {
@@ -210,9 +208,9 @@ function addMigration(gQlDirectiveNode, dbMetaNode, refDbMeta) {
     // check if node has schemaName (= table), if so, check for oldSchemaName
     if (dbMetaNode.schemaName != null) {
         const oldSchemaNameArgument = gQlDirectiveNode.arguments.find((argument) => {
-            return (argument.name.value.toLowerCase() === 'fromschema');
+            return argument.name.value.toLowerCase() === "fromschema";
         });
-        const oldSchemaName = (oldSchemaNameArgument != null) ? oldSchemaNameArgument.value.value : null;
+        const oldSchemaName = oldSchemaNameArgument != null ? oldSchemaNameArgument.value.value : null;
         // add oldSchemaName to dbMeta node
         if (dbMetaNode != null && oldSchemaName != null) {
             dbMetaNode.oldSchemaName = oldSchemaName;

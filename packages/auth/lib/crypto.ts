@@ -1,16 +1,22 @@
 // tslint:disable-next-line:import-name
 // import sodium from 'sodium-native';
 // tslint:disable-next-line:no-var-requires
-const sodium = require('sodium-native');
+const sodium = require("sodium-native");
 
 // tslint:disable-next-line:no-var-requires
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 export function sha256(input) {
-  return crypto.createHash('sha256').update(input).digest('hex');
+  return crypto
+    .createHash("sha256")
+    .update(input)
+    .digest("hex");
 }
 export function sha512(input) {
-  return crypto.createHash('sha512').update(input).digest('hex');
+  return crypto
+    .createHash("sha512")
+    .update(input)
+    .digest("hex");
 }
 
 export function createConfig(config) {
@@ -33,7 +39,6 @@ export function createConfig(config) {
 
 export function newHash(password, config) {
   return new Promise((resolve, reject) => {
-
     const passwordBuffer = Buffer.from(password);
 
     const hashBuffer = Buffer.allocUnsafe(config.hashBytes);
@@ -43,7 +48,7 @@ export function newHash(password, config) {
     sodium.randombytes_buf(saltBuffer);
 
     const meta = {
-      salt: saltBuffer.toString('hex'),
+      salt: saltBuffer.toString("hex"),
       hashBytes: config.hashBytes,
       opslimit: config.opslimit,
       memlimit: config.memlimit,
@@ -55,7 +60,7 @@ export function newHash(password, config) {
         return reject(err);
       }
 
-      const hash = hashBuffer.toString('hex');
+      const hash = hashBuffer.toString("hex");
 
       resolve({
         hash,
@@ -71,14 +76,14 @@ export function hashByMeta(password, meta) {
 
     const hashBuffer = Buffer.allocUnsafe(meta.hashBytes);
 
-    const saltBuffer = Buffer.from(meta.salt, 'hex');
+    const saltBuffer = Buffer.from(meta.salt, "hex");
 
     sodium.crypto_pwhash_async(hashBuffer, passwordBuffer, saltBuffer, meta.opslimit, meta.memlimit, meta.algorithm, (err) => {
       if (err != null) {
         return reject(err);
       }
 
-      const hash = hashBuffer.toString('hex');
+      const hash = hashBuffer.toString("hex");
 
       resolve({
         hash,

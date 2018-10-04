@@ -23,8 +23,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pg_1 = require("pg");
 exports.PgPool = pg_1.Pool;
 // stop pg from parsing dates and timestamps without timezone
-pg_1.types.setTypeParser(1114, str => str);
-pg_1.types.setTypeParser(1082, str => str);
+pg_1.types.setTypeParser(1114, (str) => str);
+pg_1.types.setTypeParser(1082, (str) => str);
 const di_1 = require("@fullstack-one/di");
 const events_1 = require("@fullstack-one/events");
 const logger_1 = require("@fullstack-one/logger");
@@ -35,57 +35,41 @@ let DbGeneralPool = class DbGeneralPool {
         // DI
         this.eventEmitter = eventEmitter;
         this.config = config;
-        this.CONFIG = this.config.registerConfig('Db', __dirname + '/../config');
+        this.CONFIG = this.config.registerConfig("Db", `${__dirname}/../config`);
         this.logger = loggerFactory.create(this.constructor.name);
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
-    }
-    boot() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const env = di_1.Container.get('ENVIRONMENT');
-            this.applicationName = env.namespace + '_pool_' + env.nodeId;
-            this.eventEmitter.on('connected.nodes.changed', (nodeId) => { this.gracefullyAdjustPoolSize(); });
-            // calculate pool size and create pool
-            yield this.gracefullyAdjustPoolSize();
-        });
-    }
-    end() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.logger.trace('Postgres pool ending initiated');
-            this.eventEmitter.emit('db.application.pool.end.start', this.applicationName);
-            try {
-                const poolEndResult = yield this.managedPool.end();
-                this.logger.trace('Postgres pool ended successfully');
-                // can only be caught locally (=> db connection ended)
-                this.eventEmitter.emit('db.application.pool.end.success', this.applicationName);
-                return poolEndResult;
-            }
-            catch (err) {
-                this.logger.warn('Postgres pool ended with an error', err);
-                this.eventEmitter.emit('db.application.pool.end.error', this.applicationName, err);
-                throw err;
-            }
-        });
     }
     // return public readonly instance of the managed pool
     get pgPool() {
         return this.managedPool;
     }
-    // calculate number of max conections and adjust pool based on number of connected nodes
+    boot() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const env = di_1.Container.get("ENVIRONMENT");
+            this.applicationName = `${env.namespace}_pool_${env.nodeId}`;
+            this.eventEmitter.on("connected.nodes.changed", (nodeId) => {
+                this.gracefullyAdjustPoolSize();
+            });
+            // calculate pool size and create pool
+            yield this.gracefullyAdjustPoolSize();
+        });
+    }
+    // calculate number of max connections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {
         return __awaiter(this, void 0, void 0, function* () {
             const configDbGeneral = this.CONFIG.general;
             // get known nodes from container, initially assume we are the first one
             let knownNodesCount = 1;
             try {
-                const knownNodes = di_1.Container.get('knownNodeIds');
+                const knownNodes = di_1.Container.get("knownNodeIds");
                 knownNodesCount = knownNodes.length;
             }
             catch (_a) {
                 // ignore error and continue assuming we are the first client
             }
             // reserve one for setup connection
-            const connectionsPerInstance = Math.floor((configDbGeneral.totalMax / knownNodesCount) - 1);
+            const connectionsPerInstance = Math.floor(configDbGeneral.totalMax / knownNodesCount - 1);
             // readjust pool only if number of max connections has changed
             if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
                 // gracefully end previous pool if already available
@@ -99,9 +83,9 @@ let DbGeneralPool = class DbGeneralPool {
                 // create managed pool with calculated pool size
                 this.managedPool = new pg_1.Pool(this.credentials);
                 this.logger.debug(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);
-                this.eventEmitter.emit('db.general.pool.created', this.applicationName);
+                this.eventEmitter.emit("db.general.pool.created", this.applicationName);
                 // init first connection (ignore promise, connection only for "pre-heating" purposes)
-                return yield this.initConnect();
+                return this.initConnect();
             }
         });
     }
@@ -109,31 +93,49 @@ let DbGeneralPool = class DbGeneralPool {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // emit event
-                this.eventEmitter.emit('db.application.pgClient.connect.start', this.applicationName);
+                this.eventEmitter.emit("db.application.pgClient.connect.start", this.applicationName);
                 // create first connection to test the pool
                 const poolClient = yield this.managedPool.connect();
-                this.logger.trace('Postgres pool initial connection created');
-                this.eventEmitter.emit('db.application.pool.connect.success', this.applicationName);
+                this.logger.trace("Postgres pool initial connection created");
+                this.eventEmitter.emit("db.application.pool.connect.success", this.applicationName);
                 // release initial connection
                 yield poolClient.release();
-                this.logger.trace('Postgres pool initial connection released');
-                this.eventEmitter.emit('db.application.pool.connect.released', this.applicationName);
+                this.logger.trace("Postgres pool initial connection released");
+                this.eventEmitter.emit("db.application.pool.connect.released", this.applicationName);
             }
             catch (err) {
-                this.logger.warn('Postgres pool connection creation error', err);
-                this.eventEmitter.emit('db.application.pool.connect.error', this.applicationName, err);
+                this.logger.warn("Postgres pool connection creation error", err);
+                this.eventEmitter.emit("db.application.pool.connect.error", this.applicationName, err);
                 throw err;
             }
             return this.pgPool;
         });
     }
+    end() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logger.trace("Postgres pool ending initiated");
+            this.eventEmitter.emit("db.application.pool.end.start", this.applicationName);
+            try {
+                const poolEndResult = yield this.managedPool.end();
+                this.logger.trace("Postgres pool ended successfully");
+                // can only be caught locally (=> db connection ended)
+                this.eventEmitter.emit("db.application.pool.end.success", this.applicationName);
+                return poolEndResult;
+            }
+            catch (err) {
+                this.logger.warn("Postgres pool ended with an error", err);
+                this.eventEmitter.emit("db.application.pool.end.error", this.applicationName, err);
+                throw err;
+            }
+        });
+    }
 };
 DbGeneralPool = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(1, di_1.Inject(type => events_1.EventEmitter)),
-    __param(2, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(3, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject((type) => events_1.EventEmitter)),
+    __param(2, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(3, di_1.Inject((type) => config_1.Config)),
     __metadata("design:paramtypes", [Object, Object, Object, Object])
 ], DbGeneralPool);
 exports.DbGeneralPool = DbGeneralPool;

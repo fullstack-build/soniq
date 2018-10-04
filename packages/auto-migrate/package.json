@@ -26,7 +26,8 @@
     "@fullstack-one/di": "^0.4.7",
     "@fullstack-one/events": "^0.4.7",
     "@fullstack-one/logger": "^0.4.7",
-    "@fullstack-one/schema-builder": "^0.4.8"
+    "@fullstack-one/schema-builder": "^0.4.8",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "typescript": "^2.8.3"

@@ -6,6 +6,6 @@ function registerTableMigrationExtension(extensionNameInLowerCase, fn) {
 }
 exports.registerTableMigrationExtension = registerTableMigrationExtension;
 function getTableMigrationExtension(extensionName) {
-    return (extensionName != null) ? tableMigrationExtensions[extensionName] : tableMigrationExtensions;
+    return extensionName != null ? tableMigrationExtensions[extensionName] : tableMigrationExtensions;
 }
 exports.getTableMigrationExtension = getTableMigrationExtension;

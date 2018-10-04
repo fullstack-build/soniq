@@ -14,30 +14,18 @@ class CreateExpressions {
         this.tableName = tableName;
         this.total = total;
     }
-    getExpressionsObject() {
-        return this.expressionsObject;
-    }
-    parseExpressionInput(expressions) {
-        return this.fixExpressionType(expressions).map((expression) => {
-            return this.getExpressionObject(expression.name, expression.params || {}, true);
-        });
-    }
-    getExpressionObject(name, params, isRoot) {
-        const expressionName = this.getExpression(name, params, isRoot);
-        return this.expressionsObject[expressionName];
-    }
     // Allow String/Array/Object as input and transfer it to an array of objects
     fixExpressionType(expression) {
         const expressions = [];
         if (Array.isArray(expression) === true) {
             expression.forEach((innerExpression) => {
-                this.fixExpressionType(innerExpression).forEach(e => expressions.push(e));
+                this.fixExpressionType(innerExpression).forEach((e) => expressions.push(e));
             });
         }
-        else if (typeof expression === 'string') {
+        else if (typeof expression === "string") {
             expressions.push({ name: expression });
         }
-        else if (typeof expression === 'object' && expression.name != null) {
+        else if (typeof expression === "object" && expression.name != null) {
             expressions.push(expression);
         }
         return expressions;
@@ -48,7 +36,7 @@ class CreateExpressions {
         }
         const expression = this.expressionsByName[name];
         let expressionName = name;
-        if (params != null && typeof params === 'object' && Object.keys(params).length > 0) {
+        if (params != null && typeof params === "object" && Object.keys(params).length > 0) {
             if (expression.getNameWithParams == null) {
                 throw new Error(`You are using expression '${name}' with params. However, this expression has not defined 'getNameWithParams(params)'.`);
             }
@@ -72,6 +60,7 @@ class CreateExpressions {
                         this.expressionsObject[expressionName].dependentExpresssions.push(tempExpressionName);
                     }
                     if (this.total === true) {
+                        //  TODO: Consider renaming total to a clearer name
                         return `(${this.expressionsObject[tempExpressionName].sql})`;
                     }
                     else {
@@ -85,17 +74,29 @@ class CreateExpressions {
                 name: expressionName,
                 sql: null,
                 requiresLateral: false,
-                requiresAuth: expression.requiresAuth === true ? true : false,
+                requiresAuth: expression.requiresAuth === true,
                 dependentExpresssions: [],
                 order: 0,
                 isRoot
             };
             this.expressionsObject[expressionName].sql = expression.generate(expressionContext, params);
-            if (this.expressionsObject[expressionName].sql.toLowerCase() === 'true' && this.expressionsObject[expressionName].requiresAuth === true) {
-                throw new Error(`A expression which requires auth cannot return 'TRUE' as SQL. Look at '${name}'.`);
+            if (this.expressionsObject[expressionName].sql.toLowerCase() === "true" && this.expressionsObject[expressionName].requiresAuth === true) {
+                throw new Error(`A expression which requires auth cannot return 'TRUE' as SQL. Found in '${name}'.`);
             }
         }
         return expressionName;
+    }
+    getExpressionsObject() {
+        return this.expressionsObject;
+    }
+    parseExpressionInput(expressions) {
+        return this.fixExpressionType(expressions).map((expression) => {
+            return this.getExpressionObject(expression.name, expression.params || {}, true);
+        });
+    }
+    getExpressionObject(name, params, isRoot) {
+        const expressionName = this.getExpression(name, params, isRoot);
+        return this.expressionsObject[expressionName];
     }
 }
 exports.CreateExpressions = CreateExpressions;

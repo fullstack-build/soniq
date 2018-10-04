@@ -1,9 +1,9 @@
 export function createScalar(name) {
   return {
-    kind: 'ScalarTypeDefinition',
+    kind: "ScalarTypeDefinition",
     name: {
-      kind: 'Name',
-      value: name,
+      kind: "Name",
+      value: name
     },
     directives: []
   };

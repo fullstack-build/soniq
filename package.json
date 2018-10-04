@@ -9,7 +9,7 @@
   "main": "packages/server/main",
   "scripts": {
     "start": "echo \"Error: no start specified\" && exit 1",
-    "tslint": "tslint --project '.' --fix",
+    "tslint": "tslint-config-prettier-check ./tslint.json && prettier --write '**/*.ts' && tslint --project '.' --fix",
     "test": "mocha -r ts-node/register test/*.ts",
     "lerna": "lerna bootstrap && lerna link --force-local",
     "link": "sh scripts/dev.sh",
@@ -43,15 +43,26 @@
     "@types/node": "^8.10.21",
     "git-hooks": "^1.1.10",
     "lerna": "^2.11.0",
+    "prettier": "^1.14.3",
     "ts-node-dev": "^1.0.0-pre.26",
     "tslint": "^5.11.0",
-    "tslint-config-airbnb": "^5.9.2"
+    "tslint-config-airbnb": "^5.9.2",
+    "tslint-config-prettier": "^1.15.0"
   },
   "dependencies": {
-    "npm": "^6.4.1",
     "ts-node": "^3.3.0",
     "tslint-config-airbnb-base": "^0.1.0",
     "tsutils": "^2.28.0",
     "typescript": "^2.9.2"
+  },
+  "prettier": {
+    "printWidth": 150,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "none",
+    "bracketSpacing": true,
+    "arrowParens": "always"
   }
 }

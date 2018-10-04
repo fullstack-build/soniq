@@ -2,24 +2,24 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function createArrayField(fieldName, type) {
     return {
-        kind: 'FieldDefinition',
+        kind: "FieldDefinition",
         name: {
-            kind: 'Name',
+            kind: "Name",
             value: fieldName
         },
         arguments: [],
         type: {
-            kind: 'ListType',
+            kind: "ListType",
             type: {
-                kind: 'NonNullType',
+                kind: "NonNullType",
                 type: {
-                    kind: 'NamedType',
+                    kind: "NamedType",
                     name: {
-                        kind: 'Name',
-                        value: type,
-                    },
-                },
-            },
+                        kind: "Name",
+                        value: type
+                    }
+                }
+            }
         },
         directives: []
     };
