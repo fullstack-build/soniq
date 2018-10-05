@@ -13,7 +13,7 @@ import * as Minio from "minio";
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 import { getParser } from "./parser";
 import { Verifier, IBucketObject } from "./Verifier";
-import { DefaultVerifier } from "./DefaultVerifier";
+import { DefaultVerifier } from "./defaultVerifier";
 import { FileName } from "./FileName";
 
 export { DefaultVerifier, Verifier, Minio, IBucketObject, FileName };

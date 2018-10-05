@@ -35,8 +35,8 @@ exports.Minio = Minio;
 const parser_1 = require("./parser");
 const Verifier_1 = require("./Verifier");
 exports.Verifier = Verifier_1.Verifier;
-const DefaultVerifier_1 = require("./DefaultVerifier");
-exports.DefaultVerifier = DefaultVerifier_1.DefaultVerifier;
+const defaultVerifier_1 = require("./defaultVerifier");
+exports.DefaultVerifier = defaultVerifier_1.DefaultVerifier;
 const FileName_1 = require("./FileName");
 exports.FileName = FileName_1.FileName;
 const fs = require("fs");
@@ -63,7 +63,7 @@ let FileStorage = class FileStorage {
         this.schemaBuilder.addExtension(parser_1.getParser());
         this.graphQl.addResolvers(this.getResolvers());
         this.graphQl.addHook("postMutation", this.postMutationHook.bind(this));
-        this.addVerifier("DEFAULT", DefaultVerifier_1.DefaultVerifier);
+        this.addVerifier("DEFAULT", defaultVerifier_1.DefaultVerifier);
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {

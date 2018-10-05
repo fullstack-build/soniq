@@ -1,7 +1,7 @@
 import { LoggerFactory } from "@fullstack-one/logger";
 import * as Minio from "minio";
 import { Verifier, IBucketObject } from "./Verifier";
-import { DefaultVerifier } from "./DefaultVerifier";
+import { DefaultVerifier } from "./defaultVerifier";
 import { FileName } from "./FileName";
 export { DefaultVerifier, Verifier, Minio, IBucketObject, FileName };
 import "./migrationExtension";
