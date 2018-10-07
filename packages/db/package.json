@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/db",
-  "version": "0.4.17",
+  "version": "0.4.19",
   "description": "fullstack.one db connector package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -21,10 +21,10 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.4.17",
-    "@fullstack-one/config": "^0.4.17",
+    "@fullstack-one/config": "^0.4.19",
     "@fullstack-one/di": "^0.4.17",
-    "@fullstack-one/events": "^0.4.17",
-    "@fullstack-one/logger": "^0.4.17",
+    "@fullstack-one/events": "^0.4.19",
+    "@fullstack-one/logger": "^0.4.19",
     "deepmerge": "^2.0.1",
     "pg": "^7.5.0"
   },
