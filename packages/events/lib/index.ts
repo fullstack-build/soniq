@@ -13,11 +13,13 @@ export interface IEventEmitter {
 @Service()
 export class EventEmitter implements IEventEmitter {
   private config: Config;
+  private readonly CONFIG;
   private eventEmitter: EventEmitter2;
 
+  private readonly THIS_NODE_ID_PLACEHOLDER = "THIS_NODE";
   private nodeId: string;
   private dbClient: DbAppClient;
-  private namespace: string = "one"; // TODO: Eugene put in config
+  private readonly namespace: string = "one";
 
   // cache during boot
   private listenersCache = {};
@@ -27,24 +29,16 @@ export class EventEmitter implements IEventEmitter {
     this.config = config;
 
     // register package config
-    this.config.registerConfig("Events", `${__dirname}/../config`);
+    this.CONFIG = this.config.registerConfig("Events", `${__dirname}/../config`);
+    this.namespace = this.CONFIG.namespace;
 
-    // finish initialization after ready event => out because ready never gets called due to resolving circular deps
-    // this.on(`${this.namespace}.ready`,() => this.finishInitialisation());
     bootLoader.onBootReady(this.boot.bind(this));
   }
 
   private async boot() {
     const env: IEnvironment = Container.get("ENVIRONMENT");
     this.nodeId = env.nodeId;
-    this.namespace = this.config.getConfig("Core").namespace;
-    this.eventEmitter = new EventEmitter2({
-      wildcard: true,
-      delimiter: ".",
-      newListener: false,
-      maxListeners: 100,
-      verboseMemoryLeak: true
-    });
+    this.eventEmitter = new EventEmitter2(this.CONFIG.eventEmitter);
 
     this.dbClient = Container.get(DbAppClient);
     await this.finishInitialisation();
@@ -54,7 +48,7 @@ export class EventEmitter implements IEventEmitter {
       const eventName = listenerEntry[0];
       const eventListeners = listenerEntry[1];
       Object.values(eventListeners).forEach((listener) => {
-        this.on(eventName, listener);
+        this._on(eventName, listener);
       });
     });
     this.listenersCache = {};
@@ -64,29 +58,13 @@ export class EventEmitter implements IEventEmitter {
       const eventName = emitterEntry[0];
       const eventEmitters = emitterEntry[1];
       Object.values(eventEmitters).forEach((emitter) => {
-        this.emit(eventName, emitter.instanceId, ...emitter.args);
+        this._emit(eventName, emitter.nodeId, ...emitter.args);
       });
     });
     this.emittersCache = {};
   }
 
   /* private methods */
-  private _emit(eventName: string, instanceId: string, ...args: any[]): void {
-    // emit only when emitter is ready
-    if (this.eventEmitter != null) {
-      const eventNameWithInstanceId = `${instanceId}.${eventName}`;
-      this.eventEmitter.emit(eventNameWithInstanceId, instanceId, ...args);
-    } else {
-      // cache events fired during booting
-      const thisEventEmitter = (this.emittersCache[eventName] = this.emittersCache[eventName] || []);
-      const eventEmitted = {
-        instanceId,
-        args
-      };
-      thisEventEmitter.push(eventEmitted);
-    }
-  }
-
   private async finishInitialisation() {
     try {
       // catch events from other nodes
@@ -98,10 +76,44 @@ export class EventEmitter implements IEventEmitter {
     }
   }
 
+  private receiveEventFromPg(msg) {
+    // from our namespace
+    if (msg.name === "notification" && msg.channel === this.namespace) {
+      const event = JSON.parse(msg.payload);
+      // fire on this node if not from same node
+      if (event.nodeId !== this.nodeId) {
+        const params = [event.name, event.nodeId, ...Object.values(event.args)];
+        this._emit.apply(this, params);
+      }
+    }
+  }
+
+  private _emit(eventName: string, nodeId: string, ...args: any[]): void {
+    // emit only when emitter is ready
+    if (this.eventEmitter != null) {
+      // in case nodeId was not available when registering, replace with the actual ID now
+      const finalEventName = eventName.replace(this.THIS_NODE_ID_PLACEHOLDER, this.nodeId);
+      const finalNode = nodeId || this.nodeId;
+      this.eventEmitter.emit(finalEventName, finalNode, ...args);
+      // synchronize own events to other nodes
+      if (this.nodeId === finalNode) {
+        this.sendEventToPg(finalEventName, this.nodeId, ...args);
+      }
+    } else {
+      // cache events fired during booting
+      const thisEventEmitter = (this.emittersCache[eventName] = this.emittersCache[eventName] || []);
+      const eventEmitted = {
+        nodeId,
+        args
+      };
+      thisEventEmitter.push(eventEmitted);
+    }
+  }
+
   private sendEventToPg(eventName: string, ...args: any[]) {
     const event = {
       name: eventName,
-      instanceId: this.nodeId,
+      nodeId: this.nodeId,
       args: {
         ...args
       }
@@ -113,31 +125,11 @@ export class EventEmitter implements IEventEmitter {
     }
   }
 
-  private receiveEventFromPg(msg) {
-    // from our namespace
-    if (msg.name === "notification" && msg.channel === this.namespace) {
-      const event = JSON.parse(msg.payload);
-
-      // fire on this node if not from same node
-      if (event.instanceId !== this.nodeId) {
-        const params = [event.name, event.instanceId, ...Object.values(event.args)];
-        this._emit.apply(this, params);
-      }
-    }
-  }
-
-  public emit(eventName: string, ...args: any[]): void {
-    // emit on this node
-    this._emit(eventName, this.nodeId, ...args);
-
-    // synchronize to other nodes
-    this.sendEventToPg(eventName, this.nodeId, ...args);
-  }
-
-  public on(eventName: string, listener: (...args: any[]) => void) {
+  private _on(eventName: string, listener: (...args: any[]) => void) {
     if (this.eventEmitter != null) {
-      const eventNameForThisInstanceOnly = `${this.nodeId}.${eventName}`;
-      this.eventEmitter.on(eventNameForThisInstanceOnly, listener);
+      // in case nodeId was not available when registering, replace with the actual ID now
+      const finalEventName = eventName.replace(this.THIS_NODE_ID_PLACEHOLDER, this.nodeId);
+      this.eventEmitter.on(finalEventName, listener);
     } else {
       // cache listeners during booting
       const thisEventListener = (this.listenersCache[eventName] = this.listenersCache[eventName] || []);
@@ -145,8 +137,20 @@ export class EventEmitter implements IEventEmitter {
     }
   }
 
+  public emit(eventName: string, ...args: any[]): void {
+    const eventNameWithInstanceId = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+    // emit on this node
+    this._emit(eventNameWithInstanceId, this.nodeId, ...args);
+  }
+
+  public on(eventName: string, listener: (...args: any[]) => void) {
+    // of nodeID not available, set THIS_NODE and replace later
+    const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+    this._on(eventNameForThisInstanceOnly, listener);
+  }
+
   public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
-    this.on(eventNameForAnyInstance, listener);
+    this._on(eventNameForAnyInstance, listener);
   }
 }

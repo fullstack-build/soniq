@@ -2,8 +2,9 @@ import { IDb } from "./IDb";
 import { Client as PgClient } from "pg";
 export { PgClient };
 export declare class DbAppClient implements IDb {
+    private applicationNamePrefix;
     private applicationName;
-    private credentials;
+    private readonly credentials;
     private readonly ENVIRONMENT;
     private readonly config;
     private readonly logger;

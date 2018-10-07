@@ -103,22 +103,22 @@ export class DbGeneralPool implements IDb {
   private async initConnect(): Promise<PgPool> {
     try {
       // emit event
-      this.eventEmitter.emit("db.application.pgClient.connect.start", this.applicationName);
+      this.eventEmitter.emit("db.general.pool.client.connect.start", this.applicationName);
 
       // create first connection to test the pool
       const poolClient = await this.managedPool.connect();
 
       this.logger.trace("Postgres pool initial connection created");
-      this.eventEmitter.emit("db.application.pool.connect.success", this.applicationName);
+      this.eventEmitter.emit("db.application.pool.client.connect.success", this.applicationName);
 
       // release initial connection
       await poolClient.release();
 
       this.logger.trace("Postgres pool initial connection released");
-      this.eventEmitter.emit("db.application.pool.connect.released", this.applicationName);
+      this.eventEmitter.emit("db.application.pool.client.connect.released", this.applicationName);
     } catch (err) {
       this.logger.warn("Postgres pool connection creation error", err);
-      this.eventEmitter.emit("db.application.pool.connect.error", this.applicationName, err);
+      this.eventEmitter.emit("db.application.pool.client.connect.error", this.applicationName, err);
 
       throw err;
     }

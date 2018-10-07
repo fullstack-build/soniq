@@ -112,6 +112,9 @@ let Config = class Config {
     }
     // set ENVIRONMENT values and wait for packages to fill out placeholder when loaded (core & server)
     setEnvironment() {
+        if (((this.config || {}).Config || {}).namespace == null) {
+            throw new Error("Config.namespace.not.set");
+        }
         // load project package.js
         const projectPath = path.dirname(require.main.filename);
         const PROJECT_PACKAGE = require(`${projectPath}/package.json`);

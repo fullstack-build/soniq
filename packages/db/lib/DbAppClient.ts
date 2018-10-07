@@ -13,10 +13,10 @@ export { PgClient };
 
 @Service()
 export class DbAppClient implements IDb {
+  private applicationNamePrefix: string;
   private applicationName: string;
-  // todo application_name not available in pg.ClientConfig <- check and add it there
   // private credentials: PgClientConfig;
-  private credentials: any;
+  private readonly credentials: any;
 
   // DI
   private readonly ENVIRONMENT: IEnvironment;
@@ -38,6 +38,7 @@ export class DbAppClient implements IDb {
 
     // register package config
     this.CONFIG = this.config.registerConfig("Db", `${__dirname}/../config`);
+    this.credentials = this.CONFIG.appClient;
 
     // get settings from DI container
     this.ENVIRONMENT = Container.get("ENVIRONMENT");
@@ -49,14 +50,17 @@ export class DbAppClient implements IDb {
   }
 
   private async boot(): Promise<PgClient> {
-    this.credentials = this.CONFIG.appClient;
-    this.applicationName = this.credentials.application_name = `${this.ENVIRONMENT.namespace}_client_${this.ENVIRONMENT.nodeId}`;
+    this.applicationNamePrefix = `${this.ENVIRONMENT.namespace}_client_`;
+    this.applicationName = this.CONFIG.application_name = `${this.applicationNamePrefix}${this.ENVIRONMENT.nodeId}`;
 
-    // create PG pgClient
-    this.pgClient = new PgClient(this.credentials);
+    // create PG pgClient / add application name
+    this.pgClient = new PgClient({
+      ...this.credentials,
+      application_name: this.applicationName
+    });
 
     this.logger.debug("Postgres setup pgClient created");
-    this.eventEmitter.emit("db.application.pgClient.created", this.applicationName);
+    this.eventEmitter.emit("db.application.client.created", this.applicationName);
 
     // collect known nodes
     this.eventEmitter.onAnyInstance("db.application.client.connect.success", (nodeId) => {
@@ -71,23 +75,31 @@ export class DbAppClient implements IDb {
       });
     });
 
-    // check connected clients every x seconds
-    // todo: Eugene: Try to rewrite as trigger
-    const updateClientListInterval = this.CONFIG.updateClientListInterval || 10000;
+    // fall back to graceful shutdown exiting, in case the event 'db.application.client.end.start' wasn't caught
+    this.eventEmitter.onAnyInstance(`${this.ENVIRONMENT.namespace}.exiting`, (nodeId) => {
+      // wait one tick until it actually finishes
+      process.nextTick(() => {
+        this.updateNodeIdsFromDb();
+      });
+    });
 
+    // check connected clients every x seconds / backup in case we missed one
+    const updateClientListInterval = this.CONFIG.updateClientListInterval || 10000;
     setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
 
     try {
-      this.eventEmitter.emit("db.application.pgClient.connect.start", this.applicationName);
+      this.eventEmitter.emit("db.application.client.connect.start", this.applicationName);
 
       // getSqlFromMigrationObj connection
       await this.pgClient.connect();
 
       this.logger.trace("Postgres setup connection created");
-      this.eventEmitter.emit("db.application.pgClient.connect.success", this.applicationName);
+      this.eventEmitter.emit("db.application.client.connect.success", this.applicationName);
+      // update list of known nodes // this will ad our own ID into the list
+      await this.updateNodeIdsFromDb();
     } catch (err) {
       this.logger.warn("Postgres setup connection creation error", err);
-      this.eventEmitter.emit("db.application.pgClient.connect.error", this.applicationName, err);
+      this.eventEmitter.emit("db.application.client.connect.error", this.applicationName, err);
 
       throw err;
     }
@@ -98,15 +110,14 @@ export class DbAppClient implements IDb {
   private async updateNodeIdsFromDb(): Promise<void> {
     try {
       const dbName = this.credentials.database;
-      const applicationNamePrefix = `${this.ENVIRONMENT.namespace}_client_`;
       const dbNodes = await this.pgClient.query(
-        `SELECT * FROM pg_stat_activity WHERE datname = '${dbName}' AND application_name LIKE '${applicationNamePrefix}%';`
+        `SELECT * FROM pg_stat_activity WHERE datname = '${dbName}' AND application_name LIKE '${this.applicationNamePrefix}%';`
       );
 
       // collect all connected node IDs
       const nodeIds: [string] = dbNodes.rows.map((row) => {
         // remove prefix from node name and keep only node ID
-        return row.application_name.replace(applicationNamePrefix, "");
+        return row.application_name.replace(this.applicationNamePrefix, "");
       }) as [string];
 
       // check if number of nodes has changed
@@ -133,19 +144,19 @@ export class DbAppClient implements IDb {
 
   public async end(): Promise<void> {
     this.logger.trace("Postgres connection ending initiated");
-    this.eventEmitter.emit("db.application.pgClient.end.start", this.applicationName);
+    this.eventEmitter.emit("db.application.client.end.start", this.applicationName);
 
     try {
       const clientEndResult = await this.pgClient.end();
 
       this.logger.trace("Postgres connection ended successfully");
       // can only be caught locally (=> db connection ended)
-      this.eventEmitter.emit("db.application.pgClient.end.success", this.applicationName);
+      this.eventEmitter.emit("db.application.client.end.success", this.applicationName);
 
       return clientEndResult;
     } catch (err) {
       this.logger.warn("Postgres connection ended with an error", err);
-      this.eventEmitter.emit("db.application.pgClient.end.error", this.applicationName, err);
+      this.eventEmitter.emit("db.application.client.end.error", this.applicationName, err);
 
       throw err;
     }
