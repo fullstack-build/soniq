@@ -16,7 +16,7 @@ import { SqlObjFromMigrationObject } from "./toPg/createSqlObjFromMigrationObjec
 export class DbSchemaBuilder {
   private fromDbMeta: IDbMeta;
   private toDbMeta: IDbMeta;
-  private migrationObject: IDbMeta;
+  private migrationObject: MigrationObject;
   private dbAppClient: DbAppClient;
   private initSqlPaths = [`${__dirname}/../..`];
   private dbConfig;
@@ -200,12 +200,11 @@ export class DbSchemaBuilder {
     this.toDbMeta = _.cloneDeep(toDbMeta);
 
     // create migration object with actions based on two DbMeta objects
-    const migrationObject = new MigrationObject();
-    this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
+    this.migrationObject = new MigrationObject(this.fromDbMeta, this.toDbMeta);
 
     // return SQL statements
-    const sqlObjFromMigrationObject = new SqlObjFromMigrationObject();
-    return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
+    const sqlObjFromMigrationObject = new SqlObjFromMigrationObject(this.migrationObject, renameInsteadOfDrop);
+    return sqlObjFromMigrationObject.sqlStatements;
   }
 
   public getViewsSql() {

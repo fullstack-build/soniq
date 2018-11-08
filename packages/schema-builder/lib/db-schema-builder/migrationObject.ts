@@ -7,10 +7,32 @@ import { IAction } from "./IMigrationSqlObj";
 import { IDbMeta } from "./IDbMeta";
 
 export class MigrationObject {
-  private readonly ACTION_KEY: string = "$$action$$";
-  private fromDbMeta: IDbMeta = null;
-  private toDbMeta: IDbMeta = null;
-  private migrationObj: IDbMeta = null;
+  public readonly ACTION_KEY: string = "$$action$$";
+  public readonly fromDbMeta: IDbMeta = null;
+  public readonly toDbMeta: IDbMeta = null;
+  public readonly migrationObj: IDbMeta = null;
+
+  constructor(fromDbMeta: IDbMeta, toDbMeta: IDbMeta) {
+    // check if this.toDbMeta is empty -> Parsing error
+    if (Object.keys(fromDbMeta).length == null || Object.keys(toDbMeta).length === 0) {
+      throw new Error("Migration Error: Provided migration final state is empty.");
+    }
+
+    // crete copy of objects
+    // new
+    this.fromDbMeta = _.cloneDeep(fromDbMeta);
+    // remove views and exposed names
+    delete this.fromDbMeta.exposedNames;
+
+    // old
+    this.toDbMeta = _.cloneDeep(toDbMeta);
+    // remove views and exposed names
+    delete this.toDbMeta.exposedNames;
+    // remove graphql // todo
+    delete this.toDbMeta.schemas._graphql;
+
+    this.migrationObj = this.diffAndAddActions(this.fromDbMeta, this.toDbMeta);
+  }
 
   private splitActionFromNode(node: {} = {}): { action: IAction; node: any } {
     return helper.splitActionFromNode(this.ACTION_KEY, node);
@@ -34,7 +56,7 @@ export class MigrationObject {
           } else {
             // nested object
             // mark node as "remove" continue recursively
-            pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
+            pResult[key] = pResult[key] || {}; // create node if not available
             pResult[key][this.ACTION_KEY] = pResult[key][this.ACTION_KEY] || {};
             pResult[key][this.ACTION_KEY].remove = true;
             iterateAndMark.call(this, recursiveFromDbMeta[key], {}, pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
@@ -51,7 +73,7 @@ export class MigrationObject {
           } else {
             // nested object
             // mark node as "add" continue recursively
-            pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
+            pResult[key] = pResult[key] || {}; // create node if not available
             pResult[key][this.ACTION_KEY] = pResult[key][this.ACTION_KEY] || {};
             pResult[key][this.ACTION_KEY].add = true;
             iterateAndMark.call(this, {}, recursiveToDbMeta[key], pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
@@ -75,7 +97,7 @@ export class MigrationObject {
           } else {
             // nested object or array
 
-            // getSqlFromMigrationObj empty node
+            // create empty node
             pResult[key] = pResult[key] || {};
             // compare old and new (first level) and mark as changed if not equal
             const nodeDiff = helper.difference(
@@ -277,7 +299,7 @@ export class MigrationObject {
               const fromConstraintDefinition = this.splitActionFromNode(fromConstraintEntry[1]).node;
               const fromConstraintDefinitionClean = helper.removeFromEveryNode(fromConstraintDefinition, this.ACTION_KEY);
 
-              // getSqlFromMigrationObj to constraint name
+              // create to constraint name
               const toConstraintName = fromConstraintName.replace(renameObj.oldName, renameObj.name);
               // clean constraint definition
               const toConstraintDefinition = this.splitActionFromNode(toConstraints[toConstraintName]).node;
@@ -285,7 +307,7 @@ export class MigrationObject {
 
               // rename if both constraints are similar
               if (deepEqual(toConstraintDefinitionClean, fromConstraintDefinitionClean)) {
-                // getSqlFromMigrationObj rename constraint
+                // create rename constraint
                 toConstraints[toConstraintName] = {
                   [this.ACTION_KEY]: {
                     rename: true
@@ -356,27 +378,5 @@ export class MigrationObject {
     }
 
     return pMigrationDbMeta;
-  }
-
-  public createFromTwoDbMetaObjects(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta {
-    // check if this.toDbMeta is empty -> Parsing error
-    if (pToDbMeta == null || Object.keys(pFromDbMeta).length === 0) {
-      throw new Error("Migration Error: Provided migration final state is empty.");
-    }
-
-    // crete copy of objects
-    // new
-    this.fromDbMeta = _.cloneDeep(pFromDbMeta);
-    // remove views and exposed names
-    delete this.fromDbMeta.exposedNames;
-
-    // old
-    this.toDbMeta = _.cloneDeep(pToDbMeta);
-    // remove views and exposed names
-    delete this.toDbMeta.exposedNames;
-    // remove graphql // todo
-    delete this.toDbMeta.schemas._graphql;
-
-    return (this.migrationObj = this.diffAndAddActions(this.fromDbMeta, this.toDbMeta));
   }
 }
