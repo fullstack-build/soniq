@@ -1,11 +1,11 @@
 import { IDbMeta } from "./IDbMeta";
 export declare class MigrationObject {
-    private readonly ACTION_KEY;
-    private fromDbMeta;
-    private toDbMeta;
-    private migrationObj;
+    readonly ACTION_KEY: string;
+    readonly fromDbMeta: IDbMeta;
+    readonly toDbMeta: IDbMeta;
+    readonly migrationObj: IDbMeta;
+    constructor(fromDbMeta: IDbMeta, toDbMeta: IDbMeta);
     private splitActionFromNode;
     private diffAndAddActions;
     private adjustDeltaDbMeta;
-    createFromTwoDbMetaObjects(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta;
 }

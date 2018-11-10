@@ -35,6 +35,8 @@ let PgToDbMeta = class PgToDbMeta {
     constructor(dbAppClient) {
         this.DELETED_PREFIX = "_deleted:";
         this.KNOWN_TYPES = ["uuid", "varchar", "int4", "float8", "bool", "json", "jsonb", "relation"];
+        // TODO: Eugene get schemas to ignore from a setting
+        this.IGNORE_SCHEMAS = ["_graphql", "_versions", "pgboss"];
         this.dbMeta = {
             version: 1.0,
             schemas: {},
@@ -61,8 +63,8 @@ let PgToDbMeta = class PgToDbMeta {
                 for (const rowTemp of Object.values(rows)) {
                     const row = rowTemp;
                     const schemaName = row.schema_name;
-                    // ignore deleted schemas
-                    if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
+                    // ignore deleted schemas and the ones that should be ignored
+                    if (schemaName.indexOf(this.DELETED_PREFIX) !== 0 && this.IGNORE_SCHEMAS.includes(schemaName) === false) {
                         // add schema objects for each schema
                         this.dbMeta.schemas[schemaName] = {
                             name: schemaName,
@@ -165,6 +167,8 @@ let PgToDbMeta = class PgToDbMeta {
                 for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
                     // add constraints to table
                     yield this.iterateAndAddConstraints(schemaName, tableName);
+                    // add indexes to table
+                    yield this.iterateAndAddIndexes(schemaName, tableName);
                 }
                 // iterate and add triggers
                 for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
@@ -239,7 +243,7 @@ let PgToDbMeta = class PgToDbMeta {
                     }
                     // add NOT NULLABLE constraint
                     if (column.is_nullable === "NO") {
-                        this.addConstraint("NOT NULL", { column_name: column.column_name }, currentTable);
+                        this.addConstraint("NOT NULL", "", column.column_name, currentTable);
                     }
                     // custom type
                     if (column.data_type === "USER-DEFINED") {
@@ -319,25 +323,57 @@ let PgToDbMeta = class PgToDbMeta {
                 }
                 else {
                     // other constraints
-                    this.addConstraint(constraint.constraint_type, constraint, currentTable);
+                    this.addConstraint(constraint.constraint_type, constraint.constraint_name, constraint.column_name, currentTable);
                 }
             });
         });
     }
-    addConstraint(constraintType, constraintRow, refDbMetaCurrentTable) {
-        let constraintName = constraintRow.constraint_name;
-        const columnName = constraintRow.column_name;
+    iterateAndAddIndexes(schemaName, tableName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // keep reference to current table
+            const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
+            // iterate indexes
+            const { rows } = yield this.dbAppClient.pgClient.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [
+                schemaName,
+                tableName
+            ]);
+            Object.values(rows).forEach((index) => {
+                // check if index is a known constraint – ignore them
+                const constraint = currentTable.constraints[index.indexname];
+                if (constraint == null) {
+                    // if it a unique index
+                    if (index.indexdef.toUpperCase().includes("CREATE UNIQUE INDEX")) {
+                        // does this constraint have a condition?
+                        const conditionArray = index.indexdef.match(/\((.*)\).*WHERE\s\((.*)\)/);
+                        if (conditionArray != null) {
+                            const columnNames = (conditionArray[1] || "").split(",").map((columName) => columName.replace(/\W/g, ""));
+                            const condition = conditionArray[2];
+                            columnNames.forEach((columnName) => {
+                                // create constraints
+                                this.addConstraint("UNIQUE", index.indexname, columnName, currentTable, condition);
+                            });
+                        }
+                        else {
+                            process.stderr.write(`PgToDbMeta.table.index.error: Other indexes than unique constraints are not supported yet ${index.indexname}\n`);
+                        }
+                    }
+                }
+            });
+        });
+    }
+    addConstraint(constraintType, constraintName, columnName, refDbMetaCurrentTable, condition) {
+        let finalConstraintName = constraintName;
         // ignore constraint if no column name is set
         if (columnName == null) {
             return;
         }
         // add constraint name for not_nullable
         if (constraintType === "NOT NULL") {
-            constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
+            finalConstraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
         }
         // add new constraint if name was set
-        if (constraintName != null) {
-            const constraint = (refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
+        if (finalConstraintName != null) {
+            const constraint = (refDbMetaCurrentTable.constraints[finalConstraintName] = refDbMetaCurrentTable.constraints[finalConstraintName] || {
                 type: constraintType,
                 options: {},
                 columns: []
@@ -346,12 +382,22 @@ let PgToDbMeta = class PgToDbMeta {
             if (constraint.columns.indexOf(columnName) === -1) {
                 constraint.columns.push(columnName);
             }
+            // sort columns to make sure they are always in the same order on both sides (GQl and PG)
+            constraint.columns.sort();
+            // add optional condition
+            if (condition != null) {
+                const options = {
+                    condition
+                };
+                const constraintOptions = constraint.options || {};
+                constraint.options = deepmerge(constraintOptions, options);
+            }
         }
         // add constraint name to field
         const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
         if (currentColumnRef != null) {
             currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
-            currentColumnRef.constraintNames.push(constraintName);
+            currentColumnRef.constraintNames.push(finalConstraintName);
             // keep them sorted for better comparison of objects
             currentColumnRef.constraintNames.sort();
         }

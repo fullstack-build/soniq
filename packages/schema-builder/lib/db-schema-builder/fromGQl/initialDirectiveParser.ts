@@ -27,13 +27,24 @@ registerDirectiveParser("custom", (gQlDirectiveNode, dbMetaNode, refDbMeta, refD
 // add unique constraint
 registerDirectiveParser("unique", (gQlDirectiveASTNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
   let constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_key`;
-  // named unique constraint - override
-  if (gQlDirectiveASTNode.arguments[0] != null && gQlDirectiveASTNode.arguments[0].name.value === "name") {
-    const namedConstraintName = gQlDirectiveASTNode.arguments[0].value.value;
-    constraintName = `${refDbMetaCurrentTable.name}_${namedConstraintName}_key`;
-  }
+  let options = {};
+  // iterate arguments
+  Object.values(gQlDirectiveASTNode.arguments).forEach((argument: any) => {
+    switch (argument.name.value) {
+      case "name":
+        // named unique constraint - override
+        const namedConstraintName = argument.value.value;
+        constraintName = `${refDbMetaCurrentTable.name}_${namedConstraintName}_key`;
+        break;
+      case "condition":
+        options = {
+          condition: argument.value.value
+        };
+        break;
+    }
+  });
 
-  createConstraint(constraintName, "UNIQUE", {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
+  createConstraint(constraintName, "UNIQUE", options, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 });
 // native PG check constraint
 registerDirectiveParser("check", (gQlDirectiveASTNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {

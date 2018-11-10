@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const _ = require("lodash");
 const helper = require("../helper");
 // EXTENSIONS
 // table
@@ -11,14 +12,26 @@ const columnMigrationExtension_1 = require("./columnMigrationExtension");
 var columnMigrationExtension_2 = require("./columnMigrationExtension");
 exports.registerColumnMigrationExtension = columnMigrationExtension_2.registerColumnMigrationExtension;
 class SqlObjFromMigrationObject {
-    constructor() {
-        this.ACTION_KEY = "$$action$$";
+    constructor(migrationObject, isRenameInsteadOfDrop = true) {
         this.DELETED_PREFIX = "_deleted:";
         // TODO: Eugene get schemas to ignore from a setting
-        this.schemasToIgnore = ["_versions", "_graphql"];
-        this.renameInsteadOfDrop = true;
-        this.migrationObj = null;
+        this.schemasToIgnore = ["_versions", "_graphql", "pgboss"];
+        this.isRenameInsteadOfDrop = true;
+        this.fromDbMeta = null;
         this.toDbMeta = null;
+        this.migrationObj = null;
+        this.sqlStatements = [];
+        this.ACTION_KEY = migrationObject.ACTION_KEY;
+        this.migrationObj = migrationObject.migrationObj;
+        this.fromDbMeta = migrationObject.fromDbMeta;
+        // save final state for comparison
+        this.toDbMeta = migrationObject.toDbMeta;
+        this.isRenameInsteadOfDrop = isRenameInsteadOfDrop;
+        // check if pMigrationObj is empty -> Parsing error
+        if (this.migrationObj == null || Object.keys(this.migrationObj).length === 0) {
+            throw new Error("Migration Error: Provided migration object state is empty.");
+        }
+        this.sqlStatements = this.sqlMigrationObjToSqlStatements(this.createSqlObjFromMigrationDbMeta());
     }
     splitActionFromNode(node = {}) {
         return helper.splitActionFromNode(this.ACTION_KEY, node);
@@ -26,7 +39,7 @@ class SqlObjFromMigrationObject {
     // iterate sqlMigrationObj in a certain order in order to create SQL statement in the correct order
     sqlMigrationObjToSqlStatements(sqlMigrationObj) {
         const sqlStatements = [];
-        // getSqlFromMigrationObj, drop and recreate enums
+        // create, drop and recreate enums
         if (sqlMigrationObj.enums != null) {
             Object.values(sqlMigrationObj.enums).forEach((enumSqlObj) => {
                 // add down statements first (enum change or rename)
@@ -35,7 +48,7 @@ class SqlObjFromMigrationObject {
                 _addStatemensArrayToSqlStatements(enumSqlObj.sql.up);
             });
         }
-        // getSqlFromMigrationObj tables
+        // create tables
         if (sqlMigrationObj.schemas != null) {
             Object.values(sqlMigrationObj.schemas).forEach((schemaSqlObj) => {
                 // drop all updatable views
@@ -45,8 +58,8 @@ class SqlObjFromMigrationObject {
                         _addStatemensArrayToSqlStatements(viewSqlObj.sql.down);
                     });
                 }
-                // no need to getSqlFromMigrationObj schemas, they will be generated with tables
-                // getSqlFromMigrationObj tables
+                // no need to create schemas, they will be generated with tables
+                // create tables
                 if (schemaSqlObj.tables != null) {
                     Object.values(schemaSqlObj.tables).forEach((tableSqlObj) => {
                         // add table up statements
@@ -63,7 +76,7 @@ class SqlObjFromMigrationObject {
                             // add down statements reversed order
                             _addStatemensArrayToSqlStatements(tableSqlObj.constraints.sql.down.reverse());
                         }
-                        // getSqlFromMigrationObj columns
+                        // create columns
                         if (tableSqlObj.columns != null) {
                             Object.values(tableSqlObj.columns).forEach((columnSqlObj) => {
                                 // add up statements
@@ -72,7 +85,7 @@ class SqlObjFromMigrationObject {
                                 _addStatemensArrayToSqlStatements(columnSqlObj.sql.down.reverse());
                             });
                         }
-                        // getSqlFromMigrationObj constraints
+                        // create constraints
                         if (tableSqlObj.constraints != null) {
                             // add up statements
                             _addStatemensArrayToSqlStatements(tableSqlObj.constraints.sql.up);
@@ -90,7 +103,7 @@ class SqlObjFromMigrationObject {
                 }
             });
         }
-        // getSqlFromMigrationObj relations
+        // create relations
         if (sqlMigrationObj.relations != null) {
             Object.values(sqlMigrationObj.relations).forEach((relationSqlObj) => {
                 // add up statements
@@ -131,17 +144,6 @@ class SqlObjFromMigrationObject {
             }
         };
     }
-    getSqlFromMigrationObj(pMigrationObj, pToDbMeta, pRenameInsteadOfDrop = true) {
-        this.renameInsteadOfDrop = pRenameInsteadOfDrop;
-        // check if pMigrationObj is empty -> Parsing error
-        if (pMigrationObj == null || Object.keys(pMigrationObj).length === 0) {
-            throw new Error("Migration Error: Provided migration object state is empty.");
-        }
-        this.migrationObj = pMigrationObj;
-        // save final state for comparison
-        this.toDbMeta = pToDbMeta;
-        return this.sqlMigrationObjToSqlStatements(this.createSqlObjFromMigrationDbMeta());
-    }
     createSqlObjFromMigrationDbMeta() {
         const sqlMigrationObj = {
             version: 1.0,
@@ -165,7 +167,7 @@ class SqlObjFromMigrationObject {
                 }
             }
         };
-        // getSqlFromMigrationObj enum types first
+        // create enum types first
         if (this.migrationObj.enums != null) {
             const enums = this.splitActionFromNode(this.migrationObj.enums).node;
             Object.entries(enums).map((enumTypeArray) => {
@@ -207,7 +209,7 @@ class SqlObjFromMigrationObject {
                     if (relationDefinition[0].type === "ONE" && relationDefinition[1] != null && relationDefinition[1].type === "ONE") {
                         process.stdout.write(`migration.relation.type.hint: ${relationDefinition[0].name}: ${relationDefinition[0].tableName}:${relationDefinition[1].tableName} => ONE:ONE\n Try to avoid using one to one relations.\nConsider combining both entities into one, using JSON type instead or pointing only in one direction.\n`);
                     }
-                    // getSqlFromMigrationObj one:many / one:one relation
+                    // create one:many / one:one relation
                     this.createRelation(sqlMigrationObj, relationDefinition[0].name, relationDefinition);
                 }
             });
@@ -216,7 +218,7 @@ class SqlObjFromMigrationObject {
         return sqlMigrationObj;
     }
     createSqlForEnumObject(sqlMigrationObj, enumTypeName, enumTypeValue) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.enums[enumTypeName] = sqlMigrationObj.enums[enumTypeName] || this.createEmptySqlObj(enumTypeName));
         const thisSql = thisSqlObj.sql;
         // node
@@ -243,7 +245,7 @@ class SqlObjFromMigrationObject {
         }
     }
     createSqlFromSchemaObject(sqlMigrationObj, schemaName, schemDefinition) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.schemas[schemaName] = sqlMigrationObj.schemas[schemaName] || this.createEmptySqlObj(schemaName));
         // add tables to schema
         thisSqlObj.tables = thisSqlObj.tables || {};
@@ -253,23 +255,23 @@ class SqlObjFromMigrationObject {
         // node
         const { action, node } = this.splitActionFromNode(schemDefinition);
         if (action.add) {
-            // don't getSqlFromMigrationObj schema, it will be created automatically with table creation
+            // don't create schema, it will be created automatically with table creation
             // thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
         }
         else if (action.remove) {
             // drop or rename schema
-            if (!this.renameInsteadOfDrop) {
+            if (!this.isRenameInsteadOfDrop) {
                 thisSql.down.push(`DROP SCHEMA IF EXISTS "${schemaName}";`);
             }
             else {
-                // getSqlFromMigrationObj rename instead
+                // create rename instead
                 thisSql.down.push(`ALTER SCHEMA "${schemaName}" RENAME TO "${this.DELETED_PREFIX}${schemaName}";`);
             }
         }
     }
     // http://www.postgresqltutorial.com/postgresql-alter-table/
     createSqlFromTableObject(sqlMigrationObj, schemaName, tableName, tableDefinition) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.schemas[schemaName].tables[tableName] =
             sqlMigrationObj.schemas[schemaName].tables[tableName] || this.createEmptySqlObj(tableName));
         const thisSqlViewObj = (sqlMigrationObj.schemas[schemaName].views[tableName] =
@@ -293,18 +295,18 @@ class SqlObjFromMigrationObject {
         // only if table needs to be created
         if (tableDefinition.name != null) {
             if (action.add) {
-                // getSqlFromMigrationObj table statement
+                // create table statement
                 thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${schemaName}";`);
                 thisSql.up.push(`CREATE TABLE IF NOT EXISTS ${tableNameWithSchemaUp}();`);
             }
             else if (action.remove) {
-                // getSqlFromMigrationObj or rename table
-                if (!this.renameInsteadOfDrop) {
+                // create or rename table
+                if (!this.isRenameInsteadOfDrop) {
                     // drop table
                     thisSql.down.push(`DROP TABLE IF EXISTS ${tableNameWithSchemaDown};`);
                 }
                 else {
-                    // getSqlFromMigrationObj rename instead, ignore if already renamed
+                    // create rename instead, ignore if already renamed
                     if (tableDefinition.name.indexOf(this.DELETED_PREFIX) !== 0) {
                         thisSql.down.push(`ALTER TABLE ${tableNameWithSchemaDown} RENAME TO "${this.DELETED_PREFIX}${node.name}";`);
                     }
@@ -316,7 +318,7 @@ class SqlObjFromMigrationObject {
             else if (action.rename) {
                 // move to other schema in down, so that it happens BEFORE old schema gets removed and table gets renamed
                 if (node.oldSchemaName != null && node.schemaName != null && node.oldSchemaName !== node.schemaName) {
-                    // getSqlFromMigrationObj schema first if not available yet
+                    // create schema first if not available yet
                     thisSql.up.push(`CREATE SCHEMA IF NOT EXISTS "${node.schemaName}";`);
                     thisSql.up.push(`ALTER TABLE "${node.oldSchemaName}"."${node.oldName}" SET SCHEMA "${node.schemaName}";`);
                 }
@@ -379,7 +381,7 @@ class SqlObjFromMigrationObject {
         }
     }
     createSqlFromColumnObject(sqlMigrationObj, schemaName, tableName, columnName, columnDefinition) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.schemas[schemaName].tables[tableName].columns[columnName] =
             sqlMigrationObj.schemas[schemaName].tables[tableName].columns[columnName] || this.createEmptySqlObj(columnName));
         const thisSql = thisSqlObj.sql;
@@ -402,16 +404,16 @@ class SqlObjFromMigrationObject {
                 type = `${node.customType}`;
             }
             if (action.add && node.name != null) {
-                // getSqlFromMigrationObj column statement
+                // create column statement
                 thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD COLUMN IF NOT EXISTS "${node.name}" varchar;`);
             }
             else if (action.remove) {
                 // drop or rename
-                if (!this.renameInsteadOfDrop) {
+                if (!this.isRenameInsteadOfDrop) {
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP COLUMN IF EXISTS "${node.name}" CASCADE;`);
                 }
                 else {
-                    // getSqlFromMigrationObj rename instead
+                    // create rename instead
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} RENAME COLUMN "${node.name}" TO "${this.DELETED_PREFIX}${node.name}";`);
                 }
             }
@@ -464,21 +466,23 @@ class SqlObjFromMigrationObject {
         }
     }
     createSqlFromConstraintObject(sqlMigrationObj, schemaName, tableName, constraintName, constraintObject) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         // up
         const thisSqlObj = (sqlMigrationObj.schemas[schemaName].tables[tableName].constraints =
             sqlMigrationObj.schemas[schemaName].tables[tableName].constraints || this.createEmptySqlObj());
         const thisSql = thisSqlObj.sql;
         // node
         const { action, node } = this.splitActionFromNode(constraintObject);
+        const fromNode = _.get(this.fromDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
+        const toNode = _.get(this.toDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
         const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
-        const columnsObj = this.splitActionFromNode(node.columns).node;
-        const columnNamesAsStr = node.columns != null
-            ? Object.values(columnsObj)
+        const columnNamesAsStr = toNode.columns != null
+            ? Object.values(toNode.columns)
                 .map((columnName) => `"${columnName}"`)
                 .join(",")
             : null;
-        switch (node.type) {
+        const nodeType = node.type || toNode.type || fromNode.type;
+        switch (nodeType) {
             case "NOT NULL":
                 if (columnNamesAsStr != null) {
                     if (action.add) {
@@ -517,19 +521,49 @@ class SqlObjFromMigrationObject {
                 }
                 break;
             case "UNIQUE":
+                /*
+                 * The preferred way to add a unique constraint to a table is ALTER TABLE ... ADD CONSTRAINT. The use of indexes to enforce unique constraints could be considered an implementation detail that should not be accessed directly. One should, however, be aware that there's no need to manually create indexes on unique columns; doing so would just duplicate the automatically-created index.
+                 * https://www.postgresql.org/docs/9.0/indexes-unique.html
+                 * */
+                const uniqueSql = {
+                    up: [],
+                    down: []
+                };
                 if (action.add) {
                     // make sure column names for constraint are set
                     if (columnNamesAsStr != null) {
-                        thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`);
+                        uniqueSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`);
                     }
                 }
                 else if (action.remove) {
-                    thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
+                    uniqueSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
                 }
                 // rename constraint
                 if (action.rename && node.oldName != null) {
-                    thisSql.up.push(`ALTER INDEX "${schemaName}"."${node.oldName}" RENAME TO "${constraintName}";`);
+                    uniqueSql.up.push(`ALTER INDEX "${schemaName}"."${node.oldName}" RENAME TO "${constraintName}";`);
                 }
+                // check for conditions (as long as constraint wasn't removed)
+                if (!action.remove && node.options != null) {
+                    const optionsObj = this.splitActionFromNode(node.options);
+                    if (optionsObj.node.condition != null) {
+                        // in case an index or constraint was created already, drop it and recreate as a partial index
+                        uniqueSql.up = [];
+                        uniqueSql.down = [];
+                        // drop old one
+                        if (optionsObj.action.remove || optionsObj.action.change) {
+                            // needs to be in this order, to make sure a constraint is removed first
+                            uniqueSql.down.push(`DROP INDEX IF EXISTS "${constraintName}";`);
+                            uniqueSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
+                        }
+                        // create new one
+                        if (optionsObj.action.add || optionsObj.action.change) {
+                            uniqueSql.up.push(`CREATE UNIQUE INDEX "${constraintName}" ON ${tableNameWithSchema}(${columnNamesAsStr}) WHERE (${optionsObj.node.condition});`);
+                        }
+                    }
+                }
+                // push unique sql into final sql
+                thisSql.down = thisSql.down.concat(uniqueSql.down);
+                thisSql.up = thisSql.up.concat(uniqueSql.up);
                 break;
             case "CHECK":
                 if (action.add) {
@@ -547,7 +581,7 @@ class SqlObjFromMigrationObject {
         }
     }
     createRelation(sqlMigrationObj, relationName, relationObject) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.relations[relationName] = sqlMigrationObj.relations[relationName] || this.createEmptySqlObj(relationName));
         const thisSql = thisSqlObj.sql;
         // relation sides
@@ -581,7 +615,7 @@ class SqlObjFromMigrationObject {
                 }*/
                 const tableName = `"${node.schemaName}"."${node.tableName}"`;
                 const fullRelationToNode = this.toDbMeta.relations[node.name];
-                // getSqlFromMigrationObj column for FK // convention: uuid
+                // create column for FK // convention: uuid
                 if (!ignoreColumnsCreation) {
                     if (action.add) {
                         // does not have to be extra created -> will be created IF NOT EXISTS with the relation itself
@@ -589,7 +623,7 @@ class SqlObjFromMigrationObject {
                     else if (action.remove) {
                         // in case of FK recreation, no need to remove column (removeConstraintOnly = true)
                         // drop or rename column
-                        if (!this.renameInsteadOfDrop) {
+                        if (!this.isRenameInsteadOfDrop) {
                             thisSql.down.push(`ALTER TABLE ${tableName} DROP COLUMN IF EXISTS "${node.columnName}" CASCADE;`);
                         }
                         else {
@@ -622,7 +656,7 @@ class SqlObjFromMigrationObject {
                 else if (action.remove) {
                     thisSql.down.push(`ALTER TABLE ${tableName} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
                     // drop or rename column
-                    if (!this.renameInsteadOfDrop) {
+                    if (!this.isRenameInsteadOfDrop) {
                         thisSql.down.push(`COMMENT ON CONSTRAINT "${constraintName}" ON ${tableName} IS NULL;`);
                     }
                 }
@@ -661,7 +695,7 @@ class SqlObjFromMigrationObject {
         }
     }
     createSqlManyToManyRelation(sqlMigrationObj, relationName, relationObject) {
-        // getSqlFromMigrationObj sql object if it doesn't exist
+        // create sql object if it doesn't exist
         const thisSqlObj = (sqlMigrationObj.relations[relationName] = sqlMigrationObj.schemas[relationName] || this.createEmptySqlObj(relationName));
         const thisSql = thisSqlObj.sql;
         // relation sides
@@ -714,19 +748,19 @@ class SqlObjFromMigrationObject {
         // relation 1
         const tableName1 = `"${nodeRelation1.schemaName}"."${nodeRelation1.tableName}"`;
         if (actionRelation1.add) {
-            // getSqlFromMigrationObj fk column 1
+            // create fk column 1
             thisSql.up.push(`ALTER TABLE ${tableName1} ADD COLUMN IF NOT EXISTS "${nodeRelation1.columnName}" uuid[];`);
         }
         else if (actionRelation1.remove) {
             // drop or rename column
-            if (!this.renameInsteadOfDrop) {
+            if (!this.isRenameInsteadOfDrop) {
                 // remove fk column 1
                 thisSql.down.push(`ALTER TABLE ${tableName1} DROP COLUMN IF EXISTS "${nodeRelation1.columnName}" CASCADE;`);
                 // remove meta information
                 thisSql.down.push(`COMMENT ON COLUMN ${tableName1}."${nodeRelation1.columnName}" IS NULL;`);
             }
             else {
-                // getSqlFromMigrationObj rename instead
+                // create rename instead
                 thisSql.down.push(`ALTER TABLE ${tableName1} RENAME COLUMN "${nodeRelation1.columnName}" TO "${this.DELETED_PREFIX}${nodeRelation1.columnName}";`);
             }
         }
@@ -738,19 +772,19 @@ class SqlObjFromMigrationObject {
         // relation2
         const tableName2 = `"${nodeRelation2.schemaName}"."${nodeRelation2.tableName}"`;
         if (actionRelation2.add) {
-            // getSqlFromMigrationObj fk column 2
+            // create fk column 2
             thisSql.up.push(`ALTER TABLE ${tableName2} ADD COLUMN IF NOT EXISTS "${nodeRelation2.columnName}" uuid[];`);
         }
         else if (actionRelation2.remove) {
             // drop or rename column
-            if (!this.renameInsteadOfDrop) {
+            if (!this.isRenameInsteadOfDrop) {
                 // remove fk column 2
                 thisSql.down.push(`ALTER TABLE ${tableName2} DROP COLUMN IF EXISTS "${nodeRelation2.columnName}" CASCADE;`);
                 // remove meta information
                 thisSql.down.push(`COMMENT ON COLUMN ${tableName2}."${nodeRelation2.columnName}" IS NULL;`);
             }
             else {
-                // getSqlFromMigrationObj rename instead
+                // create rename instead
                 thisSql.down.push(`ALTER TABLE ${tableName2} RENAME COLUMN "${nodeRelation2.columnName}" TO "${this.DELETED_PREFIX}${nodeRelation2.columnName}";`);
             }
         }
@@ -759,7 +793,7 @@ class SqlObjFromMigrationObject {
             // add comment with meta information
             thisSql.up.push(`COMMENT ON COLUMN ${tableName2}."${nodeRelation2.columnName}" IS '${JSON.stringify(nodeRelation2Clean)}';`);
         }
-        // todo getSqlFromMigrationObj trigger to check consistency and cascading
+        // todo create trigger to check consistency and cascading
     }
 }
 exports.SqlObjFromMigrationObject = SqlObjFromMigrationObject;

@@ -1,18 +1,21 @@
 import { IMigrationSqlObj } from "../IMigrationSqlObj";
-import { IDbMeta, IDbRelation } from "../IDbMeta";
+import { IDbRelation } from "../IDbMeta";
+import { MigrationObject } from "../migrationObject";
 export { registerTableMigrationExtension } from "./tableMigrationExtension";
 export { registerColumnMigrationExtension } from "./columnMigrationExtension";
 export declare class SqlObjFromMigrationObject {
     private readonly ACTION_KEY;
     private readonly DELETED_PREFIX;
-    private schemasToIgnore;
-    private renameInsteadOfDrop;
-    private migrationObj;
-    private toDbMeta;
+    private readonly schemasToIgnore;
+    private readonly isRenameInsteadOfDrop;
+    private readonly fromDbMeta;
+    private readonly toDbMeta;
+    private readonly migrationObj;
+    readonly sqlStatements: string[];
+    constructor(migrationObject: MigrationObject, isRenameInsteadOfDrop?: boolean);
     private splitActionFromNode;
     private sqlMigrationObjToSqlStatements;
     private createEmptySqlObj;
-    getSqlFromMigrationObj(pMigrationObj: IDbMeta, pToDbMeta: IDbMeta, pRenameInsteadOfDrop?: boolean): string[];
     createSqlObjFromMigrationDbMeta(): IMigrationSqlObj;
     createSqlForEnumObject(sqlMigrationObj: any, enumTypeName: any, enumTypeValue: any): void;
     createSqlFromSchemaObject(sqlMigrationObj: any, schemaName: string, schemDefinition: any): void;

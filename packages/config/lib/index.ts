@@ -90,8 +90,8 @@ export class Config {
         process.env[envName].toLocaleLowerCase() === "true"
           ? true
           : process.env[envName].toLocaleLowerCase() === "false"
-            ? false
-            : process.env[envName];
+          ? false
+          : process.env[envName];
 
       // if name includes a dot it means its a nested object
       if (envName.includes(".")) {

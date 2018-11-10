@@ -195,7 +195,6 @@ export class DbSchemaBuilder {
     // crete copy of objects
     // new
     this.fromDbMeta = _.cloneDeep(fromDbMeta);
-
     // old
     this.toDbMeta = _.cloneDeep(toDbMeta);
 

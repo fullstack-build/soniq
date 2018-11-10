@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import * as helper from "../helper";
 import { IMigrationSqlObj, IAction } from "../IMigrationSqlObj";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
@@ -16,7 +18,7 @@ export class SqlObjFromMigrationObject {
   private readonly ACTION_KEY: string;
   private readonly DELETED_PREFIX: string = "_deleted:";
   // TODO: Eugene get schemas to ignore from a setting
-  private readonly schemasToIgnore: any = ["_versions", "_graphql"];
+  private readonly schemasToIgnore: any = ["_versions", "_graphql", "pgboss"];
   private readonly isRenameInsteadOfDrop: boolean = true;
   private readonly fromDbMeta: IDbMeta = null;
   private readonly toDbMeta: IDbMeta = null;
@@ -532,18 +534,20 @@ export class SqlObjFromMigrationObject {
 
     // node
     const { action, node } = this.splitActionFromNode(constraintObject);
+    const fromNode = _.get(this.fromDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
+    const toNode = _.get(this.toDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
 
     const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
 
-    const columnsObj = this.splitActionFromNode(node.columns).node;
     const columnNamesAsStr =
-      node.columns != null
-        ? Object.values(columnsObj)
+      toNode.columns != null
+        ? Object.values(toNode.columns)
             .map((columnName) => `"${columnName}"`)
             .join(",")
         : null;
 
-    switch (node.type) {
+    const nodeType = node.type || toNode.type || fromNode.type;
+    switch (nodeType) {
       case "NOT NULL":
         if (columnNamesAsStr != null) {
           if (action.add) {
@@ -582,21 +586,56 @@ export class SqlObjFromMigrationObject {
         }
         break;
       case "UNIQUE":
+        /*
+         * The preferred way to add a unique constraint to a table is ALTER TABLE ... ADD CONSTRAINT. The use of indexes to enforce unique constraints could be considered an implementation detail that should not be accessed directly. One should, however, be aware that there's no need to manually create indexes on unique columns; doing so would just duplicate the automatically-created index.
+         * https://www.postgresql.org/docs/9.0/indexes-unique.html
+         * */
+        const uniqueSql = {
+          up: [],
+          down: []
+        };
+
         if (action.add) {
           // make sure column names for constraint are set
           if (columnNamesAsStr != null) {
-            thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`);
-            //thisSql.up.push(`CREATE UNIQUE INDEX "${constraintName}" ON ${tableNameWithSchema}(${columnNamesAsStr})`);
-            //CREATE UNIQUE INDEX "DistributionChannelInStore_storeId_idx" ON "public"."DistributionChannelInStore"("storeId") WHERE "isDefault" = true;
+            uniqueSql.up.push(`ALTER TABLE ${tableNameWithSchema} ADD CONSTRAINT "${constraintName}" UNIQUE (${columnNamesAsStr});`);
           }
         } else if (action.remove) {
-          thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
+          uniqueSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
         }
 
         // rename constraint
         if (action.rename && node.oldName != null) {
-          thisSql.up.push(`ALTER INDEX "${schemaName}"."${node.oldName}" RENAME TO "${constraintName}";`);
+          uniqueSql.up.push(`ALTER INDEX "${schemaName}"."${node.oldName}" RENAME TO "${constraintName}";`);
         }
+
+        // check for conditions (as long as constraint wasn't removed)
+        if (!action.remove && node.options != null) {
+          const optionsObj = this.splitActionFromNode(node.options);
+
+          if (optionsObj.node.condition != null) {
+            // in case an index or constraint was created already, drop it and recreate as a partial index
+            uniqueSql.up = [];
+            uniqueSql.down = [];
+            // drop old one
+            if (optionsObj.action.remove || optionsObj.action.change) {
+              // needs to be in this order, to make sure a constraint is removed first
+              uniqueSql.down.push(`DROP INDEX IF EXISTS "${constraintName}";`);
+              uniqueSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
+            }
+            // create new one
+            if (optionsObj.action.add || optionsObj.action.change) {
+              uniqueSql.up.push(
+                `CREATE UNIQUE INDEX "${constraintName}" ON ${tableNameWithSchema}(${columnNamesAsStr}) WHERE (${optionsObj.node.condition});`
+              );
+            }
+          }
+        }
+
+        // push unique sql into final sql
+        thisSql.down = thisSql.down.concat(uniqueSql.down);
+        thisSql.up = thisSql.up.concat(uniqueSql.up);
+
         break;
       case "CHECK":
         if (action.add) {

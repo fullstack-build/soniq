@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
+const deepmerge = require("deepmerge");
 function setDefaultValueForColumn(gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
     const isExpression = _.get(gQlSchemaNode, "arguments[0].name.value").toLocaleLowerCase() === "expression";
     const defaultValue = _.get(gQlSchemaNode, "arguments[0].value.value");
@@ -15,15 +16,19 @@ function createConstraint(constraintName, constraintType, options, refDbMeta, re
     // add new constraint if name was set
     if (constraintName != null) {
         const constraint = (refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
-            type: constraintType,
-            options
+            type: constraintType
         });
+        // merge options wth the existing one
+        const constraintOptions = constraint.options || {};
+        constraint.options = deepmerge(constraintOptions, options);
         // link constraint to field
         if (refDbMetaCurrentTableColumn != null) {
             // add columns field if not available
             constraint.columns = constraint.columns || [];
             // add column name to constraint
             constraint.columns.push(refDbMetaCurrentTableColumn.name);
+            // sort columns to make sure they are always in the same order on both sides (GQl and PG)
+            constraint.columns.sort();
             // add constraint to field
             refDbMetaCurrentTableColumn.constraintNames = refDbMetaCurrentTableColumn.constraintNames || [];
             refDbMetaCurrentTableColumn.constraintNames.push(constraintName);

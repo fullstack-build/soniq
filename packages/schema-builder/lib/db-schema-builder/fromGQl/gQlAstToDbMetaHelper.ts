@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import { IDbMeta, IDbRelation } from "../IDbMeta";
+import * as deepmerge from "deepmerge";
 
 export function setDefaultValueForColumn(gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
   const isExpression = _.get(gQlSchemaNode, "arguments[0].name.value").toLocaleLowerCase() === "expression";
@@ -22,9 +23,12 @@ export function createConstraint(
   // add new constraint if name was set
   if (constraintName != null) {
     const constraint = (refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
-      type: constraintType,
-      options
+      type: constraintType
     });
+
+    // merge options wth the existing one
+    const constraintOptions = constraint.options || {};
+    constraint.options = deepmerge(constraintOptions, options);
 
     // link constraint to field
     if (refDbMetaCurrentTableColumn != null) {
@@ -33,6 +37,9 @@ export function createConstraint(
 
       // add column name to constraint
       constraint.columns.push(refDbMetaCurrentTableColumn.name);
+
+      // sort columns to make sure they are always in the same order on both sides (GQl and PG)
+      constraint.columns.sort();
 
       // add constraint to field
       refDbMetaCurrentTableColumn.constraintNames = refDbMetaCurrentTableColumn.constraintNames || [];

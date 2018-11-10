@@ -28,8 +28,6 @@ export class MigrationObject {
     this.toDbMeta = _.cloneDeep(toDbMeta);
     // remove views and exposed names
     delete this.toDbMeta.exposedNames;
-    // remove graphql // todo
-    delete this.toDbMeta.schemas._graphql;
 
     this.migrationObj = this.diffAndAddActions(this.fromDbMeta, this.toDbMeta);
   }
@@ -38,13 +36,16 @@ export class MigrationObject {
     return helper.splitActionFromNode(this.ACTION_KEY, node);
   }
 
-  private diffAndAddActions(pFromDbMeta: IDbMeta, pToDbMeta: IDbMeta): IDbMeta {
-    return iterateAndMark.call(this, pFromDbMeta, pToDbMeta, {});
-    function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, pFromObjParent: {} = {}, pToObjParent: {} = {}, pResultParent: {} = {}) {
+  private diffAndAddActions(fromDbMeta: IDbMeta, toDbMeta: IDbMeta): IDbMeta {
+    return iterateAndMark.call(this, fromDbMeta, toDbMeta, {});
+    function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, fromObjParent: any = {}, toObjParent: any = {}, resultParent: any = {}) {
       // all keys
       const keys = _.union(Object.keys(recursiveFromDbMeta), Object.keys(recursiveToDbMeta));
-      // TODO: Eugene don't use map as a foreach, return values directly and make map create a new array (instead of pushing into key)
-      keys.map((key) => {
+      keys.forEach((key) => {
+        if (key === this.ACTION_KEY) {
+          return;
+        }
+
         if (/* only from */ recursiveToDbMeta[key] == null) {
           // is not object -> copy value
           if (!isObject(recursiveFromDbMeta[key])) {
@@ -87,7 +88,6 @@ export class MigrationObject {
               pResult[key] = recursiveToDbMeta[key];
               // parent "change"
               pResult[this.ACTION_KEY] = pResult[this.ACTION_KEY] || {};
-              pResult[this.ACTION_KEY].change = true;
             } else {
               // ignore equal values, but keep name
               if (key === "name") {

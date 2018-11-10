@@ -5,22 +5,38 @@ const _ = require("lodash");
 const deepEqual = require("deep-equal");
 const helper = require("./helper");
 class MigrationObject {
-    constructor() {
+    constructor(fromDbMeta, toDbMeta) {
         this.ACTION_KEY = "$$action$$";
         this.fromDbMeta = null;
         this.toDbMeta = null;
         this.migrationObj = null;
+        // check if this.toDbMeta is empty -> Parsing error
+        if (Object.keys(fromDbMeta).length == null || Object.keys(toDbMeta).length === 0) {
+            throw new Error("Migration Error: Provided migration final state is empty.");
+        }
+        // crete copy of objects
+        // new
+        this.fromDbMeta = _.cloneDeep(fromDbMeta);
+        // remove views and exposed names
+        delete this.fromDbMeta.exposedNames;
+        // old
+        this.toDbMeta = _.cloneDeep(toDbMeta);
+        // remove views and exposed names
+        delete this.toDbMeta.exposedNames;
+        this.migrationObj = this.diffAndAddActions(this.fromDbMeta, this.toDbMeta);
     }
     splitActionFromNode(node = {}) {
         return helper.splitActionFromNode(this.ACTION_KEY, node);
     }
-    diffAndAddActions(pFromDbMeta, pToDbMeta) {
-        return iterateAndMark.call(this, pFromDbMeta, pToDbMeta, {});
-        function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, pFromObjParent = {}, pToObjParent = {}, pResultParent = {}) {
+    diffAndAddActions(fromDbMeta, toDbMeta) {
+        return iterateAndMark.call(this, fromDbMeta, toDbMeta, {});
+        function iterateAndMark(recursiveFromDbMeta, recursiveToDbMeta, pResult, fromObjParent = {}, toObjParent = {}, resultParent = {}) {
             // all keys
             const keys = _.union(Object.keys(recursiveFromDbMeta), Object.keys(recursiveToDbMeta));
-            // TODO: Eugene don't use map as a foreach, return values directly and make map create a new array (instead of pushing into key)
-            keys.map((key) => {
+            keys.forEach((key) => {
+                if (key === this.ACTION_KEY) {
+                    return;
+                }
                 if ( /* only from */recursiveToDbMeta[key] == null) {
                     // is not object -> copy value
                     if (!util_1.isObject(recursiveFromDbMeta[key])) {
@@ -33,7 +49,7 @@ class MigrationObject {
                     else {
                         // nested object
                         // mark node as "remove" continue recursively
-                        pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
+                        pResult[key] = pResult[key] || {}; // create node if not available
                         pResult[key][this.ACTION_KEY] = pResult[key][this.ACTION_KEY] || {};
                         pResult[key][this.ACTION_KEY].remove = true;
                         iterateAndMark.call(this, recursiveFromDbMeta[key], {}, pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
@@ -52,7 +68,7 @@ class MigrationObject {
                     else {
                         // nested object
                         // mark node as "add" continue recursively
-                        pResult[key] = pResult[key] || {}; // getSqlFromMigrationObj node if not available
+                        pResult[key] = pResult[key] || {}; // create node if not available
                         pResult[key][this.ACTION_KEY] = pResult[key][this.ACTION_KEY] || {};
                         pResult[key][this.ACTION_KEY].add = true;
                         iterateAndMark.call(this, {}, recursiveToDbMeta[key], pResult[key], recursiveFromDbMeta, recursiveToDbMeta, pResult);
@@ -67,7 +83,6 @@ class MigrationObject {
                             pResult[key] = recursiveToDbMeta[key];
                             // parent "change"
                             pResult[this.ACTION_KEY] = pResult[this.ACTION_KEY] || {};
-                            pResult[this.ACTION_KEY].change = true;
                         }
                         else {
                             // ignore equal values, but keep name
@@ -78,7 +93,7 @@ class MigrationObject {
                     }
                     else {
                         // nested object or array
-                        // getSqlFromMigrationObj empty node
+                        // create empty node
                         pResult[key] = pResult[key] || {};
                         // compare old and new (first level) and mark as changed if not equal
                         const nodeDiff = helper.difference(helper.getPropertiesWithoutNested(recursiveToDbMeta[key], ["oldName", "oldSchemaName"]), helper.getPropertiesWithoutNested(recursiveFromDbMeta[key], ["oldName", "oldSchemaName"]));
@@ -244,14 +259,14 @@ class MigrationObject {
                             // clean constraint definition
                             const fromConstraintDefinition = this.splitActionFromNode(fromConstraintEntry[1]).node;
                             const fromConstraintDefinitionClean = helper.removeFromEveryNode(fromConstraintDefinition, this.ACTION_KEY);
-                            // getSqlFromMigrationObj to constraint name
+                            // create to constraint name
                             const toConstraintName = fromConstraintName.replace(renameObj.oldName, renameObj.name);
                             // clean constraint definition
                             const toConstraintDefinition = this.splitActionFromNode(toConstraints[toConstraintName]).node;
                             const toConstraintDefinitionClean = helper.removeFromEveryNode(toConstraintDefinition, this.ACTION_KEY);
                             // rename if both constraints are similar
                             if (deepEqual(toConstraintDefinitionClean, fromConstraintDefinitionClean)) {
-                                // getSqlFromMigrationObj rename constraint
+                                // create rename constraint
                                 toConstraints[toConstraintName] = {
                                     [this.ACTION_KEY]: {
                                         rename: true
@@ -314,24 +329,6 @@ class MigrationObject {
             }
         }
         return pMigrationDbMeta;
-    }
-    createFromTwoDbMetaObjects(pFromDbMeta, pToDbMeta) {
-        // check if this.toDbMeta is empty -> Parsing error
-        if (pToDbMeta == null || Object.keys(pFromDbMeta).length === 0) {
-            throw new Error("Migration Error: Provided migration final state is empty.");
-        }
-        // crete copy of objects
-        // new
-        this.fromDbMeta = _.cloneDeep(pFromDbMeta);
-        // remove views and exposed names
-        delete this.fromDbMeta.exposedNames;
-        // old
-        this.toDbMeta = _.cloneDeep(pToDbMeta);
-        // remove views and exposed names
-        delete this.toDbMeta.exposedNames;
-        // remove graphql // todo
-        delete this.toDbMeta.schemas._graphql;
-        return (this.migrationObj = this.diffAndAddActions(this.fromDbMeta, this.toDbMeta));
     }
 }
 exports.MigrationObject = MigrationObject;

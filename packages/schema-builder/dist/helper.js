@@ -23,7 +23,7 @@ class AGraphQlHelper {
     }
     static writeTableObjectIntoMigrationsFolder(migrationsPath, tableObject, migrationId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // getSqlFromMigrationObj name for migration
+            // create name for migration
             const timestampMigration = `${migrationsPath}${migrationId || new Date().getTime()}.json`;
             try {
                 return yield writeFileAsync(timestampMigration, JSON.stringify(tableObject, null, 2), "utf8");

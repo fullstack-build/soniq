@@ -186,11 +186,10 @@ let DbSchemaBuilder = class DbSchemaBuilder {
         // old
         this.toDbMeta = _.cloneDeep(toDbMeta);
         // create migration object with actions based on two DbMeta objects
-        const migrationObject = new migrationObject_1.MigrationObject();
-        this.migrationObject = migrationObject.createFromTwoDbMetaObjects(this.fromDbMeta, this.toDbMeta);
+        this.migrationObject = new migrationObject_1.MigrationObject(this.fromDbMeta, this.toDbMeta);
         // return SQL statements
-        const sqlObjFromMigrationObject = new createSqlObjFromMigrationObject_1.SqlObjFromMigrationObject();
-        return sqlObjFromMigrationObject.getSqlFromMigrationObj(this.migrationObject, this.toDbMeta, renameInsteadOfDrop);
+        const sqlObjFromMigrationObject = new createSqlObjFromMigrationObject_1.SqlObjFromMigrationObject(this.migrationObject, renameInsteadOfDrop);
+        return sqlObjFromMigrationObject.sqlStatements;
     }
     getViewsSql() {
         return this.permissionSqlStatements;

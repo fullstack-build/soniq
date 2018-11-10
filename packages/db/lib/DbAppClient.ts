@@ -90,7 +90,7 @@ export class DbAppClient implements IDb {
     try {
       this.eventEmitter.emit("db.application.client.connect.start", this.applicationName);
 
-      // getSqlFromMigrationObj connection
+      // create connection
       await this.pgClient.connect();
 
       this.logger.trace("Postgres setup connection created");

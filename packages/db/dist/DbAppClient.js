@@ -76,7 +76,7 @@ let DbAppClient = class DbAppClient {
             setInterval(this.updateNodeIdsFromDb.bind(this), updateClientListInterval);
             try {
                 this.eventEmitter.emit("db.application.client.connect.start", this.applicationName);
-                // getSqlFromMigrationObj connection
+                // create connection
                 yield this.pgClient.connect();
                 this.logger.trace("Postgres setup connection created");
                 this.eventEmitter.emit("db.application.client.connect.success", this.applicationName);

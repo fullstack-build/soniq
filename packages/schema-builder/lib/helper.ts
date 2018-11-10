@@ -23,7 +23,7 @@ export abstract class AGraphQlHelper {
   };
 
   public static async writeTableObjectIntoMigrationsFolder(migrationsPath: string, tableObject: IDbMeta, migrationId?: number) {
-    // getSqlFromMigrationObj name for migration
+    // create name for migration
     const timestampMigration = `${migrationsPath}${migrationId || new Date().getTime()}.json`;
 
     try {
