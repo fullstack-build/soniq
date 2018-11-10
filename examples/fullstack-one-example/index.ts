@@ -16,6 +16,7 @@ import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth } from "@fullstack-one/auth";
 import { AuthFbToken } from "@fullstack-one/auth-fb-token";
 import { Email } from "@fullstack-one/notifications";
+import { EventEmitter } from "@fullstack-one/events";
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
@@ -25,6 +26,7 @@ const $fs: FileStorage = Container.get(FileStorage);
 const $auth: Auth = Container.get(Auth);
 const authfbtoken: AuthFbToken = Container.get(AuthFbToken);
 const $email: Email = Container.get(Email);
+const $events: EventEmitter = Container.get(EventEmitter);
 
 $auth.setNotificationFunction(async (user, caller, meta) => {
   console.log("> NOTIFY!", user.userId, caller, meta);
@@ -46,4 +48,26 @@ $auth.setNotificationFunction(async (user, caller, meta) => {
   await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", [], "user@fullstack.one", {
     singletonKey: "welcome:user@fullstack.one"
   });
+
+  // event example - multiple
+  // register
+  $events.on("testEvent1", (nodeId, ...args) => {
+    console.log(`(on) testEvent1 cought on instance '${nodeId}' with payload`, args);
+  });
+
+  // fire three times
+  $events.emit("testEvent1", 1);
+  $events.emit("testEvent1", 2);
+  $events.emit("testEvent1", 3);
+
+  // event example - once (on any instance)
+  // register
+  $events.onceAnyInstance("testEvent2", (nodeId, ...args) => {
+    console.log(`(once) testEvent2 cought on instance '${nodeId}' with payload`, args);
+  });
+
+  // fire three times
+  $events.emit("testEvent2", 1);
+  $events.emit("testEvent2", 2);
+  $events.emit("testEvent2", 3);
 })();

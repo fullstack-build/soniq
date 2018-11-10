@@ -46,11 +46,9 @@ let EventEmitter = class EventEmitter {
             this.dbClient = di_1.Container.get(db_1.DbAppClient);
             yield this.finishInitialisation();
             // set listeners that were cached during booting, clean cache afterwards
-            Object.entries(this.listenersCache).forEach((listenerEntry) => {
-                const eventName = listenerEntry[0];
-                const eventListeners = listenerEntry[1];
+            Object.values(this.listenersCache).forEach((eventListeners) => {
                 Object.values(eventListeners).forEach((listener) => {
-                    this._on(eventName, listener);
+                    this._on(listener.eventName, listener.options, listener.callback);
                 });
             });
             this.listenersCache = {};
@@ -122,15 +120,26 @@ let EventEmitter = class EventEmitter {
             this.dbClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
         }
     }
-    _on(eventName, listener) {
+    _on(eventName, options, callback) {
         if (this.eventEmitter != null) {
             // in case nodeId was not available when registering, replace with the actual ID now
             const finalEventName = eventName.replace(this.THIS_NODE_ID_PLACEHOLDER, this.nodeId);
-            this.eventEmitter.on(finalEventName, listener);
+            // register listener on or once?
+            if (options == null || options.once !== true) {
+                this.eventEmitter.on(finalEventName, callback);
+            }
+            else {
+                this.eventEmitter.once(finalEventName, callback);
+            }
         }
         else {
             // cache listeners during booting
             const thisEventListener = (this.listenersCache[eventName] = this.listenersCache[eventName] || []);
+            const listener = {
+                eventName,
+                options,
+                callback
+            };
             thisEventListener.push(listener);
         }
     }
@@ -139,14 +148,27 @@ let EventEmitter = class EventEmitter {
         // emit on this node
         this._emit(eventNameWithInstanceId, this.nodeId, ...args);
     }
-    on(eventName, listener) {
+    on(eventName, callback) {
         // of nodeID not available, set THIS_NODE and replace later
         const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
-        this._on(eventNameForThisInstanceOnly, listener);
+        this._on(eventNameForThisInstanceOnly, null, callback);
     }
-    onAnyInstance(eventName, listener) {
+    once(eventName, callback) {
+        // of nodeID not available, set THIS_NODE and replace later
+        const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+        this._on(eventNameForThisInstanceOnly, { once: true }, callback);
+    }
+    /*
+     *   ON ANY INSTANCE
+     *   Will also listen to the events fired on other parallel running nodes
+     * */
+    onAnyInstance(eventName, callback) {
         const eventNameForAnyInstance = `*.${eventName}`;
-        this._on(eventNameForAnyInstance, listener);
+        this._on(eventNameForAnyInstance, null, callback);
+    }
+    onceAnyInstance(eventName, callback) {
+        const eventNameForAnyInstance = `*.${eventName}`;
+        this._on(eventNameForAnyInstance, { once: true }, callback);
     }
 };
 EventEmitter = __decorate([

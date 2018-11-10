@@ -21,6 +21,8 @@ export declare class EventEmitter implements IEventEmitter {
     private sendEventToPg;
     private _on;
     emit(eventName: string, ...args: any[]): void;
-    on(eventName: string, listener: (...args: any[]) => void): void;
-    onAnyInstance(eventName: string, listener: (...args: any[]) => void): void;
+    on(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    once(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    onAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    onceAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
 }

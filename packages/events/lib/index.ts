@@ -10,6 +10,29 @@ export interface IEventEmitter {
   onAnyInstance: (eventName: string, listener: (...args: any[]) => void) => void;
 }
 
+interface IEventEmitterOptions {
+  once?: boolean;
+}
+
+interface IEventEmitterListener {
+  eventName: string;
+  options: IEventEmitterOptions | null;
+  callback?: (nodeId: string, ...args: any[]) => void;
+}
+
+interface IEventEmitterListenersCache {
+  [eventName: string]: IEventEmitterListener[];
+}
+
+interface IEventEmitterEventEmitted {
+  nodeId: string;
+  args: any;
+}
+
+interface IEventEmitterEventEmittedCache {
+  [eventName: string]: IEventEmitterEventEmitted[];
+}
+
 @Service()
 export class EventEmitter implements IEventEmitter {
   private config: Config;
@@ -22,8 +45,8 @@ export class EventEmitter implements IEventEmitter {
   private readonly namespace: string = "one";
 
   // cache during boot
-  private listenersCache = {};
-  private emittersCache = {};
+  private listenersCache: IEventEmitterListenersCache = {};
+  private emittersCache: IEventEmitterEventEmittedCache = {};
 
   constructor(@Inject((type) => Config) config, @Inject((type) => BootLoader) bootLoader) {
     this.config = config;
@@ -44,11 +67,9 @@ export class EventEmitter implements IEventEmitter {
     await this.finishInitialisation();
 
     // set listeners that were cached during booting, clean cache afterwards
-    Object.entries(this.listenersCache).forEach((listenerEntry) => {
-      const eventName = listenerEntry[0];
-      const eventListeners = listenerEntry[1];
-      Object.values(eventListeners).forEach((listener) => {
-        this._on(eventName, listener);
+    Object.values(this.listenersCache).forEach((eventListeners) => {
+      Object.values(eventListeners).forEach((listener: IEventEmitterListener) => {
+        this._on(listener.eventName, listener.options, listener.callback);
       });
     });
     this.listenersCache = {};
@@ -102,7 +123,7 @@ export class EventEmitter implements IEventEmitter {
     } else {
       // cache events fired during booting
       const thisEventEmitter = (this.emittersCache[eventName] = this.emittersCache[eventName] || []);
-      const eventEmitted = {
+      const eventEmitted: IEventEmitterEventEmitted = {
         nodeId,
         args
       };
@@ -125,14 +146,24 @@ export class EventEmitter implements IEventEmitter {
     }
   }
 
-  private _on(eventName: string, listener: (...args: any[]) => void) {
+  private _on(eventName: string, options: IEventEmitterOptions | null, callback: (...args: any[]) => void) {
     if (this.eventEmitter != null) {
       // in case nodeId was not available when registering, replace with the actual ID now
       const finalEventName = eventName.replace(this.THIS_NODE_ID_PLACEHOLDER, this.nodeId);
-      this.eventEmitter.on(finalEventName, listener);
+      // register listener on or once?
+      if (options == null || options.once !== true) {
+        this.eventEmitter.on(finalEventName, callback);
+      } else {
+        this.eventEmitter.once(finalEventName, callback);
+      }
     } else {
       // cache listeners during booting
       const thisEventListener = (this.listenersCache[eventName] = this.listenersCache[eventName] || []);
+      const listener: IEventEmitterListener = {
+        eventName,
+        options,
+        callback
+      };
       thisEventListener.push(listener);
     }
   }
@@ -143,14 +174,29 @@ export class EventEmitter implements IEventEmitter {
     this._emit(eventNameWithInstanceId, this.nodeId, ...args);
   }
 
-  public on(eventName: string, listener: (...args: any[]) => void) {
+  public on(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
     // of nodeID not available, set THIS_NODE and replace later
     const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
-    this._on(eventNameForThisInstanceOnly, listener);
+    this._on(eventNameForThisInstanceOnly, null, callback);
   }
 
-  public onAnyInstance(eventName: string, listener: (...args: any[]) => void) {
+  public once(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
+    // of nodeID not available, set THIS_NODE and replace later
+    const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+    this._on(eventNameForThisInstanceOnly, { once: true }, callback);
+  }
+
+  /*
+   *   ON ANY INSTANCE
+   *   Will also listen to the events fired on other parallel running nodes
+   * */
+  public onAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
-    this._on(eventNameForAnyInstance, listener);
+    this._on(eventNameForAnyInstance, null, callback);
+  }
+
+  public onceAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
+    const eventNameForAnyInstance = `*.${eventName}`;
+    this._on(eventNameForAnyInstance, { once: true }, callback);
   }
 }
