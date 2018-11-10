@@ -12,6 +12,7 @@
     "tslint": "tslint-config-prettier-check ./tslint.json && prettier --write '**/*.ts' && tslint --project '.' --fix",
     "test": "mocha -r ts-node/register test/*.ts",
     "lerna": "lerna bootstrap && lerna link --force-local",
+    "lerna-publish": "lerna publish",
     "link": "sh scripts/dev.sh",
     "build": "npm run cleanDistFolders && sh scripts/buildall.sh",
     "cleanNodeModules": "sh scripts/cleanNodeModules.sh",

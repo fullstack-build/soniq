@@ -540,8 +540,8 @@ export class SqlObjFromMigrationObject {
     const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
 
     const columnNamesAsStr =
-      toNode.columns != null
-        ? Object.values(toNode.columns)
+      node.columns != null
+        ? Object.values(this.splitActionFromNode(node.columns).node)
             .map((columnName) => `"${columnName}"`)
             .join(",")
         : null;

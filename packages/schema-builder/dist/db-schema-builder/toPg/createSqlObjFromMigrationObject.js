@@ -476,8 +476,8 @@ class SqlObjFromMigrationObject {
         const fromNode = _.get(this.fromDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
         const toNode = _.get(this.toDbMeta, `schemas.${schemaName}.tables.${tableName}.constraints.${constraintName}`);
         const tableNameWithSchema = `"${schemaName}"."${tableName}"`;
-        const columnNamesAsStr = toNode.columns != null
-            ? Object.values(toNode.columns)
+        const columnNamesAsStr = node.columns != null
+            ? Object.values(this.splitActionFromNode(node.columns).node)
                 .map((columnName) => `"${columnName}"`)
                 .join(",")
             : null;
