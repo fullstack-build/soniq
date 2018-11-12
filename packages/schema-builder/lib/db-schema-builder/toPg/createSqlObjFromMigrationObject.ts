@@ -618,7 +618,7 @@ export class SqlObjFromMigrationObject {
             uniqueSql.up = [];
             uniqueSql.down = [];
             // drop old one
-            if (optionsObj.action.remove || optionsObj.action.change) {
+            if (optionsObj.action.add || optionsObj.action.remove || optionsObj.action.change) {
               // needs to be in this order, to make sure a constraint is removed first
               uniqueSql.down.push(`DROP INDEX IF EXISTS "${constraintName}";`);
               uniqueSql.down.push(`ALTER TABLE ${tableNameWithSchema} DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
