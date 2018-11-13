@@ -421,6 +421,102 @@ export class Auth {
     }
   }
 
+  private createPrivacyAgreementAcceptanceToken(acceptedVersion) {
+    if (acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
+      throw new Error(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
+    }
+
+    const acceptedAtInUTC = new Date().toISOString();
+
+    const payload = {
+      acceptedVersion,
+      acceptedAtInUTC
+    };
+
+    const token = signJwt(
+      this.authConfig.secrets.privacyAgreementAcceptanceToken,
+      payload,
+      this.authConfig.privacyAgreementAcceptance.tokenMaxAgeInSeconds
+    );
+
+    return {
+      token,
+      acceptedVersion,
+      acceptedAtInUTC
+    };
+  }
+
+  private isPrivacyAgreementCheckActive() {
+    return this.parserMeta.privacyAgreementAcceptedAtInUTC != null && this.parserMeta.privacyAgreementAcceptedVersion != null;
+  }
+
+  private getResolvers() {
+    return {
+      "@fullstack-one/auth/login": async (obj, args, context, info, params) => {
+        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+        const lData = await this.login(args.username, args.tenant || "default", args.password, args.authToken, clientIdentifier);
+        if (context.ctx.securityContext.isBrowser === true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
+          return {
+            userId: lData.userId,
+            refreshToken: lData.refreshToken || null,
+            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
+          };
+        } else {
+          return {...lData, 
+            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000};
+        }
+      },
+      "@fullstack-one/auth/forgotPassword": async (obj, args, context, info, params) => {
+        return this.forgotPassword(args.username, args.tenant || "default", args.meta || null);
+      },
+      "@fullstack-one/auth/setPassword": async (obj, args, context, info, params) => {
+        const accessToken = args.accessToken || context.accessToken;
+        return this.setPassword(accessToken, "local", args.password, null);
+      },
+      "@fullstack-one/auth/getTokenMeta": async (obj, args, context, info, params) => {
+        const accessToken = args.accessToken || context.accessToken;
+        const tempToken = args.tempToken || false;
+        const tempTokenExpiration = args.tempTokenExpiration || false;
+        const tokenMeta = await this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+        if (tokenMeta.isValid !== true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        }
+        return tokenMeta;
+      },
+      "@fullstack-one/auth/invalidateUserToken": async (obj, args, context, info, params) => {
+        const accessToken = context.accessToken;
+        context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        return this.invalidateUserToken(accessToken);
+      },
+      "@fullstack-one/auth/invalidateAllUserTokens": async (obj, args, context, info, params) => {
+        const accessToken = context.accessToken;
+        context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        return this.invalidateAllUserTokens(accessToken);
+      },
+      "@fullstack-one/auth/refreshUserToken": async (obj, args, context, info, params) => {
+        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+        const accessToken = context.accessToken;
+        const lData = await this.refreshUserToken(accessToken, args.refreshToken, clientIdentifier);
+
+        if (context.ctx.securityContext.isBrowser === true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
+          return {
+            userId: lData.userId,
+            refreshToken: lData.refreshToken || null,
+            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
+          };
+        } else {
+          return {...lData, 
+            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000};
+        }
+      },
+      "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken": async (obj, args, context, info, params) => {
+        return this.createPrivacyAgreementAcceptanceToken(args.acceptedVersion);
+      }
+    };
+  }
+
   public setNotificationFunction(notificationFunction) {
     if (notificationFunction == null || typeof notificationFunction !== "function") {
       throw new Error("The notification function needs to be an async function.");
@@ -980,100 +1076,5 @@ export class Auth {
         );
       }
     }
-  }
-
-  private createPrivacyAgreementAcceptanceToken(acceptedVersion) {
-    if (acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-      throw new Error(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
-    }
-
-    const acceptedAtInUTC = new Date().toISOString();
-
-    const payload = {
-      acceptedVersion,
-      acceptedAtInUTC
-    };
-
-    const token = signJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, payload,
-    this.authConfig.privacyAgreementAcceptance.tokenMaxAgeInSeconds);
-
-    return {
-      token,
-      acceptedVersion,
-      acceptedAtInUTC
-    };
-  }
-
-  private isPrivacyAgreementCheckActive() {
-    return this.parserMeta.privacyAgreementAcceptedAtInUTC != null && this.parserMeta.privacyAgreementAcceptedVersion != null;
-  }
-
-  private getResolvers() {
-    return {
-      '@fullstack-one/auth/login': async (obj, args, context, info, params) => {
-        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
-        const lData = await this.login(args.username, args.tenant || 'default', args.password, args.authToken, clientIdentifier);
-        if (context.ctx.securityContext.isBrowser === true) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
-          return {
-            userId: lData.userId,
-            refreshToken: lData.refreshToken || null,
-            sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
-          };
-        } else {
-          return Object.assign({}, lData, {
-            sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
-          });
-        }
-      },
-      '@fullstack-one/auth/forgotPassword': async (obj, args, context, info, params) => {
-        return await this.forgotPassword(args.username, args.tenant || 'default', args.meta || null);
-      },
-      '@fullstack-one/auth/setPassword': async (obj, args, context, info, params) => {
-        const accessToken = args.accessToken || context.accessToken;
-        return await this.setPassword(accessToken, 'local', args.password, null);
-      },
-      '@fullstack-one/auth/getTokenMeta': async (obj, args, context, info, params) => {
-        const accessToken = args.accessToken || context.accessToken;
-        const tempToken = args.tempToken || false;
-        const tempTokenExpiration = args.tempTokenExpiration || false;
-        const tokenMeta = await this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
-        if (tokenMeta.isValid !== true) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, null);
-        }
-        return tokenMeta;
-      },
-      '@fullstack-one/auth/invalidateUserToken': async (obj, args, context, info, params) => {
-        const accessToken = context.accessToken;
-        context.ctx.cookies.set(this.authConfig.cookie.name, null);
-        return await this.invalidateUserToken(accessToken);
-      },
-      '@fullstack-one/auth/invalidateAllUserTokens': async (obj, args, context, info, params) => {
-        const accessToken = context.accessToken;
-        context.ctx.cookies.set(this.authConfig.cookie.name, null);
-        return await this.invalidateAllUserTokens(accessToken);
-      },
-      '@fullstack-one/auth/refreshUserToken': async (obj, args, context, info, params) => {
-        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
-        const accessToken = context.accessToken;
-        const lData = await this.refreshUserToken(accessToken, args.refreshToken, clientIdentifier);
-
-        if (context.ctx.securityContext.isBrowser === true) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, lData.accessToken, this.authConfig.cookie);
-          return {
-            userId: lData.userId,
-            refreshToken: lData.refreshToken || null,
-            sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
-          };
-        } else {
-          return Object.assign({}, lData, {
-            sessionExpirationTimestamp: lData.payload.timestamp + (lData.payload.userTokenMaxAgeInSeconds * 1000)
-          });
-        }
-      },
-      '@fullstack-one/auth/createPrivacyAgreementAcceptanceToken': async (obj, args, context, info, params) => {
-        return this.createPrivacyAgreementAcceptanceToken(args.acceptedVersion);
-      }
-    };
   }
 }
