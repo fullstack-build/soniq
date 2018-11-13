@@ -9,7 +9,7 @@ export declare class Logger implements ILogger {
     /**
      *  PRIVATE METHODS
      */
-    private logToDebug;
+    private logToDebug(pLogObject);
     /**
      * Empty functions for code completion
      * implementation is within tracer
