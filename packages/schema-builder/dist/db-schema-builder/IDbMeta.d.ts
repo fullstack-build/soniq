@@ -20,11 +20,11 @@ export interface IDbMeta {
                             name: string;
                             oldName?: string;
                             description?: string;
-                            type: 'computed' | 'customResolver' | 'varchar' | 'int4' | 'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
+                            type: "computed" | "customResolver" | "varchar" | "int4" | "float8" | "bool" | "uuid" | "jsonb" | "relation" | "enum" | "customType";
                             customType?: string;
                             defaultValue?: {
                                 isExpression: boolean;
-                                value: 'string';
+                                value: "string";
                             };
                             relationName?: string;
                             constraintNames?: string[];
@@ -36,7 +36,7 @@ export interface IDbMeta {
                     constraints?: {
                         [name: string]: {
                             name: string;
-                            type: 'PRIMARY KEY' | 'NOT NULL' | 'UNIQUE' | 'CHECK';
+                            type: "PRIMARY KEY" | "NOT NULL" | "UNIQUE" | "CHECK";
                             columns?: [string];
                             options?: [any];
                         };
@@ -77,9 +77,9 @@ export interface IDbRelation {
     tableName: string;
     columnName?: string;
     virtualColumnName: string;
-    type: 'ONE' | 'MANY';
-    onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
-    onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
+    type: "ONE" | "MANY";
+    onUpdate?: "RESTRICT" | "CASCADE" | "SET NULL" | "SET DEFAULT";
+    onDelete?: "RESTRICT" | "CASCADE" | "SET NULL" | "SET DEFAULT";
     description?: string;
     reference?: {
         schemaName: string;

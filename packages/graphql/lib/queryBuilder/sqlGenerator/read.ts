@@ -1,6 +1,6 @@
-import { parseResolveInfo } from 'graphql-parse-resolve-info';
-import { _ } from 'lodash';
-import { generateCustomSql } from './custom';
+import { parseResolveInfo } from "graphql-parse-resolve-info";
+import { _ } from "lodash";
+import { generateCustomSql } from "./custom";
 
 export class QueryBuilder {
   private resolverMeta: any;
@@ -15,36 +15,15 @@ export class QueryBuilder {
     this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
   }
 
-  public build(obj, args, context, info, isAuthenticated, match = null) {
-    // Use PostGraphile parser to get nested query object
-    const query = parseResolveInfo(info);
-
-    const costTree = {};
-
-    // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
-    const {
-      sql,
-      counter,
-      values,
-      authRequired
-    } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
-
-    const maxDepth = this.calculateMaxDepth(costTree[query.name]);
-
-    const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
-
-    return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
-  }
-
   private calculateMaxDepth(costTree) {
     let depth = 0;
 
-    if (costTree.__meta.type === 'aggregation') {
-      depth++;
+    if (costTree.__meta.type === "aggregation") {
+      depth += 1;
     }
 
     Object.keys(costTree).forEach((key) => {
-      if (key !== '__meta') {
+      if (key !== "__meta") {
         depth += this.calculateMaxDepth(costTree[key]);
       }
     });
@@ -73,7 +52,7 @@ export class QueryBuilder {
     // Get the tableName from the nested query object
     const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
 
-    // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
+    // Get gQlType (Includes information about the views/views/columns/fields of the current table)
     const gqlTypeMeta = this.resolverMeta.query[gqlTypeName];
     const gqlTypePermissionMeta = this.resolverMeta.permissionMeta[gqlTypeName] || {};
 
@@ -88,7 +67,7 @@ export class QueryBuilder {
 
     // Get requested fields
     const fields = query.fieldsByTypeName[gqlTypeName];
-    let counter = c;
+    let counter = c; // TODO: Dustin: change counter
 
     // Generate local alias names for each table (e.g. "_local_12_")
     const localName = this.getLocalName(counter);
@@ -98,7 +77,7 @@ export class QueryBuilder {
     const fieldSelect = [];
 
     // The expression to get the current entity-id for matching with relations
-    const idExpression = this.getFieldExpression('id', localName);
+    const idExpression = this.getFieldExpression("id", localName);
 
     let authRequired: any = false;
     let authRequiredHere: any = false;
@@ -117,7 +96,6 @@ export class QueryBuilder {
         }
       }
       if (fieldMeta.meta != null && fieldMeta.meta.relationName != null) {
-
         // If the field is a relation we need to resolve it with a subquery
         if (fieldMeta.meta.isListType === false) {
           // A ONE relation has a certain fieldIdExpression like "ownerUserId"
@@ -151,17 +129,16 @@ export class QueryBuilder {
           // Add the new subquery into fields select of the current query
           fieldSelect.push(ret.sql);
         }
-
       } else {
         // If the field is not a relation nor _viewnames it can simply be combined from all views to one field with alias
         fieldSelect.push(`${this.getFieldExpression(field.name, localName)} "${field.name}"`);
       }
     });
 
-    // Translate a unsecure user-input value to a parameter like $1, $2, ... and adds the value to query-values
+    // Translate a unsecured user-input value to a parameter like $1, $2, ... and adds the value to query-values
     const getParam = (value) => {
       values.push(value);
-      return '$' + values.length;
+      return `$${values.length}`;
     };
 
     // A field can be a COALESCE of view-columns. Thus we need to get the correct expression.
@@ -202,14 +179,14 @@ export class QueryBuilder {
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
 
     // Combine the field select expressions with the from expression to one SQL query
-    let sql = `SELECT ${fieldSelect.join(', ')} FROM ${fromExpression}`;
+    let sql = `SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`;
 
     // When the query needs to match a field add a WHERE clause
     // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
     if (match != null) {
       const exp = this.getFieldExpression(match.foreignFieldName, localName);
 
-      if (match.type !== 'ARRAY') {
+      if (match.type !== "ARRAY") {
         sql += ` WHERE ${exp} = ${match.fieldExpression}`;
       } else {
         sql += ` WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`;
@@ -243,24 +220,24 @@ export class QueryBuilder {
 
     // Match will filter for the correct results (e.g. "Post.owner_User_id = User.id")
     const match = {
-      type: 'SIMPLE',
+      type: "SIMPLE",
       fieldExpression: matchIdExpression,
-      foreignFieldName: 'id'
+      foreignFieldName: "id"
     };
 
-    if (ownRelation.type === 'ONE') {
+    if (ownRelation.type === "ONE") {
       // If this is the ONE part/column/field of the relation we need to match by its id
-      match.foreignFieldName = 'id';
+      match.foreignFieldName = "id";
 
       // A ONE relation will respond a single object
       return this.rowToJson(c, query, values, isAuthenticated, match, costTree);
     } else {
       // check if this is a many to many relation
-      if (foreignRelation.type === 'MANY') {
+      if (foreignRelation.type === "MANY") {
         const arrayMatch = {
-          type: 'ARRAY',
+          type: "ARRAY",
           fieldExpression: this.getFieldExpression(ownRelation.columnName, localName),
-          foreignFieldName: 'id'
+          foreignFieldName: "id"
         };
 
         return this.jsonAgg(c, query, values, isAuthenticated, arrayMatch, costTree);
@@ -270,7 +247,6 @@ export class QueryBuilder {
 
         // A MANY relation will respond an array of objects
         return this.jsonAgg(c, query, values, isAuthenticated, match, costTree);
-
       }
     }
   }
@@ -285,7 +261,7 @@ export class QueryBuilder {
 
     costTree[query.name] = {
       __meta: {
-        type: 'row'
+        type: "row"
       }
     };
 
@@ -320,7 +296,7 @@ export class QueryBuilder {
 
     costTree[query.name] = {
       __meta: {
-        type: 'aggregation'
+        type: "aggregation"
       }
     };
 
@@ -344,5 +320,21 @@ export class QueryBuilder {
       values,
       authRequired
     };
+  }
+
+  public build(obj, args, context, info, isAuthenticated, match = null) {
+    // Use PostGraphile parser to get nested query object
+    const query = parseResolveInfo(info);
+
+    const costTree = {};
+
+    // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
+    const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
+
+    const maxDepth = this.calculateMaxDepth(costTree[query.name]);
+
+    const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
+
+    return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
   }
 }

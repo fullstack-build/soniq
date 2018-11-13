@@ -1,11 +1,10 @@
+import * as equal from "./equal";
+import * as lessAndGreaterThan from "./lessAndGreaterThan";
+import * as boolean from "./boolean";
+import * as inOperators from "./in";
+import * as pattern from "./pattern";
 
-import * as equal from './equal';
-import * as lessAndGreaterThan from './lessAndGreaterThan';
-import * as boolean from './boolean';
-import * as inOperators from './in';
-import * as pattern from './pattern';
-
-const operators = Object.assign({}, equal, lessAndGreaterThan, boolean, inOperators, pattern);
+const operators = { ...equal, ...lessAndGreaterThan, ...boolean, ...inOperators, ...pattern };
 
 const operatorsObject: any = {};
 

@@ -66,37 +66,37 @@ let SchemaBuilder = class SchemaBuilder {
         this.pgToDbMeta = pgToDbMeta;
         this.config = config;
         // register package config
-        this.schemaBuilderConfig = this.config.registerConfig('SchemaBuilder', __dirname + '/../config');
+        this.schemaBuilderConfig = this.config.registerConfig("SchemaBuilder", `${__dirname}/../config`);
         this.logger = this.loggerFactory.create(this.constructor.name);
         this.ENVIRONMENT = this.config.ENVIRONMENT;
         bootLoader.addBootFunction(this.boot.bind(this));
-        this.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
+        this.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 // load schema
                 const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
-                this.gQlSdl = yield helper_1.helper.loadFilesByGlobPattern(gQlSdlPattern);
+                this.gQlSdl = yield helper_1.AHelper.loadFilesByGlobPattern(gQlSdlPattern);
                 // check if any files were loaded
                 if (this.gQlSdl.length === 0) {
-                    this.logger.warn('boot.no.sdl.files.found');
+                    this.logger.warn("boot.no.sdl.files.found");
                     return;
                 }
                 // Combine all Schemas to a big one and add extensions from other modules
-                const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join('\n');
-                this.gQlAst = helper_2.graphQl.helper.parseGraphQlSchema(gQlSdlCombined);
+                const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
+                this.gQlAst = helper_2.AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
                 this.dbMeta = gQlAstToDbMeta_1.parseGQlAstToDbMeta(this.gQlAst);
                 // load permissions and expressions and generate views and put them into schemas
                 // load permissions
                 const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
-                const permissionsArray = yield helper_1.helper.requireFilesByGlobPattern(permissionsPattern);
+                const permissionsArray = yield helper_1.AHelper.requireFilesByGlobPattern(permissionsPattern);
                 this.permissions = [].concat.apply([], permissionsArray);
                 // load expressions
                 const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
-                const expressionsArray = yield helper_1.helper.requireFilesByGlobPattern(expressionsPattern);
+                const expressionsArray = yield helper_1.AHelper.requireFilesByGlobPattern(expressionsPattern);
                 this.expressions = [].concat.apply([], expressionsArray);
-                const dbConfig = this.config.getConfig('Db');
+                const dbConfig = this.config.getConfig("Db");
                 const config = {
                     schemaName: dbConfig.viewSchemaName,
                     userName: dbConfig.general.user,
@@ -110,8 +110,10 @@ let SchemaBuilder = class SchemaBuilder {
                 const extensions = this.extensions;
                 const sql = createGrants_1.createGrants(config, this.dbMeta);
                 const data = parsePermissions_1.parsePermissions(this.permissions, context, extensions, config);
-                data.sql.forEach(statement => sql.push(statement));
+                data.sql.forEach((statement) => sql.push(statement));
+                //  Reverse to get the generated queries/mutations at the beginning
                 data.gqlDocument.definitions.reverse();
+                // For debugging
                 // tslint:disable-next-line:forin
                 for (const i in sql) {
                     // tslint:disable-next-line:no-console
@@ -123,7 +125,7 @@ let SchemaBuilder = class SchemaBuilder {
                 return this.dbMeta;
             }
             catch (err) {
-                this.logger.warn('boot.error', err);
+                this.logger.warn("boot.error", err);
                 throw err;
             }
         });
@@ -133,7 +135,7 @@ let SchemaBuilder = class SchemaBuilder {
     }
     getPgDbMeta() {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.pgToDbMeta.getPgDbMeta();
+            return this.pgToDbMeta.getPgDbMeta();
         });
     }
     addExtension(extension) {
@@ -166,11 +168,11 @@ let SchemaBuilder = class SchemaBuilder {
 };
 SchemaBuilder = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => config_1.Config)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => db_schema_builder_1.DbSchemaBuilder)),
-    __param(4, di_1.Inject(type => pgToDbMeta_1.PgToDbMeta)),
+    __param(0, di_1.Inject((type) => config_1.Config)),
+    __param(1, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(2, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(3, di_1.Inject((type) => db_schema_builder_1.DbSchemaBuilder)),
+    __param(4, di_1.Inject((type) => pgToDbMeta_1.PgToDbMeta)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], SchemaBuilder);
 exports.SchemaBuilder = SchemaBuilder;

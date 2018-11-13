@@ -9,23 +9,13 @@ class QueryBuilder {
         this.costLimit = costLimit;
         this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
     }
-    build(obj, args, context, info, isAuthenticated, match = null) {
-        // Use PostGraphile parser to get nested query object
-        const query = graphql_parse_resolve_info_1.parseResolveInfo(info);
-        const costTree = {};
-        // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
-        const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
-        const maxDepth = this.calculateMaxDepth(costTree[query.name]);
-        const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
-        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
-    }
     calculateMaxDepth(costTree) {
         let depth = 0;
-        if (costTree.__meta.type === 'aggregation') {
-            depth++;
+        if (costTree.__meta.type === "aggregation") {
+            depth += 1;
         }
         Object.keys(costTree).forEach((key) => {
-            if (key !== '__meta') {
+            if (key !== "__meta") {
                 depth += this.calculateMaxDepth(costTree[key]);
             }
         });
@@ -48,7 +38,7 @@ class QueryBuilder {
     resolveTable(c, query, values, isAuthenticated, match, isAggregation, costTree) {
         // Get the tableName from the nested query object
         const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
-        // Get gQlType (Includes informations about the views/views/columns/fields of the current table)
+        // Get gQlType (Includes information about the views/views/columns/fields of the current table)
         const gqlTypeMeta = this.resolverMeta.query[gqlTypeName];
         const gqlTypePermissionMeta = this.resolverMeta.permissionMeta[gqlTypeName] || {};
         costTree.__meta.tableName = gqlTypeMeta.tableName;
@@ -59,14 +49,14 @@ class QueryBuilder {
         }
         // Get requested fields
         const fields = query.fieldsByTypeName[gqlTypeName];
-        let counter = c;
+        let counter = c; // TODO: Dustin: change counter
         // Generate local alias names for each table (e.g. "_local_12_")
         const localName = this.getLocalName(counter);
         counter += 1;
         // A list of SELECT field expressions
         const fieldSelect = [];
         // The expression to get the current entity-id for matching with relations
-        const idExpression = this.getFieldExpression('id', localName);
+        const idExpression = this.getFieldExpression("id", localName);
         let authRequired = false;
         let authRequiredHere = false;
         // Walk through all requested fields to generate the selected fields and their expressions
@@ -116,10 +106,10 @@ class QueryBuilder {
                 fieldSelect.push(`${this.getFieldExpression(field.name, localName)} "${field.name}"`);
             }
         });
-        // Translate a unsecure user-input value to a parameter like $1, $2, ... and adds the value to query-values
+        // Translate a unsecured user-input value to a parameter like $1, $2, ... and adds the value to query-values
         const getParam = (value) => {
             values.push(value);
-            return '$' + values.length;
+            return `$${values.length}`;
         };
         // A field can be a COALESCE of view-columns. Thus we need to get the correct expression.
         const getField = (name) => {
@@ -152,12 +142,12 @@ class QueryBuilder {
         // Get the view combination (Join of Views)
         const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
         // Combine the field select expressions with the from expression to one SQL query
-        let sql = `SELECT ${fieldSelect.join(', ')} FROM ${fromExpression}`;
+        let sql = `SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`;
         // When the query needs to match a field add a WHERE clause
         // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
         if (match != null) {
             const exp = this.getFieldExpression(match.foreignFieldName, localName);
-            if (match.type !== 'ARRAY') {
+            if (match.type !== "ARRAY") {
                 sql += ` WHERE ${exp} = ${match.fieldExpression}`;
             }
             else {
@@ -184,23 +174,23 @@ class QueryBuilder {
         const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
         // Match will filter for the correct results (e.g. "Post.owner_User_id = User.id")
         const match = {
-            type: 'SIMPLE',
+            type: "SIMPLE",
             fieldExpression: matchIdExpression,
-            foreignFieldName: 'id'
+            foreignFieldName: "id"
         };
-        if (ownRelation.type === 'ONE') {
+        if (ownRelation.type === "ONE") {
             // If this is the ONE part/column/field of the relation we need to match by its id
-            match.foreignFieldName = 'id';
+            match.foreignFieldName = "id";
             // A ONE relation will respond a single object
             return this.rowToJson(c, query, values, isAuthenticated, match, costTree);
         }
         else {
             // check if this is a many to many relation
-            if (foreignRelation.type === 'MANY') {
+            if (foreignRelation.type === "MANY") {
                 const arrayMatch = {
-                    type: 'ARRAY',
+                    type: "ARRAY",
                     fieldExpression: this.getFieldExpression(ownRelation.columnName, localName),
-                    foreignFieldName: 'id'
+                    foreignFieldName: "id"
                 };
                 return this.jsonAgg(c, query, values, isAuthenticated, arrayMatch, costTree);
             }
@@ -221,7 +211,7 @@ class QueryBuilder {
         counter += 1;
         costTree[query.name] = {
             __meta: {
-                type: 'row'
+                type: "row"
             }
         };
         // Get SELECT query for current Table (Join of Views)
@@ -250,7 +240,7 @@ class QueryBuilder {
         counter += 1;
         costTree[query.name] = {
             __meta: {
-                type: 'aggregation'
+                type: "aggregation"
             }
         };
         // Get SELECT query for current Table (Join of Views)
@@ -270,6 +260,16 @@ class QueryBuilder {
             values,
             authRequired
         };
+    }
+    build(obj, args, context, info, isAuthenticated, match = null) {
+        // Use PostGraphile parser to get nested query object
+        const query = graphql_parse_resolve_info_1.parseResolveInfo(info);
+        const costTree = {};
+        // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
+        const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
+        const maxDepth = this.calculateMaxDepth(costTree[query.name]);
+        const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
+        return { sql: `SELECT ${sql};`, values, query, authRequired, potentialHighCost, costTree, maxDepth };
     }
 }
 exports.QueryBuilder = QueryBuilder;

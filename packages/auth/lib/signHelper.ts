@@ -1,6 +1,5 @@
-
-import { sha256, sha512 } from './crypto';
-import * as jwt from 'jsonwebtoken';
+import { sha256, sha512 } from "./crypto";
+import * as jwt from "jsonwebtoken";
 
 export function getAdminSignature(adminSecret) {
   const ts = Date.now().toString();

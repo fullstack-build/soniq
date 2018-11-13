@@ -9,16 +9,16 @@ function buildUpdateView(table, view, context, extensions, config) {
     const sql = [];
     const mutationName = `${table.gqlTypeName}_UPDATE_${view.name}`.toUpperCase();
     const gqlInputTypeName = mutationName;
-    const returnOnlyId = view.returnOnlyId === true ? true : false;
+    const returnOnlyId = view.returnOnlyId === true;
     // Initialize meta object. Required for querybuilder
     const meta = {
         name: mutationName,
         viewSchemaName: config.schemaName,
         viewName: mutationName,
-        type: 'UPDATE',
+        type: "UPDATE",
         requiresAuth: false,
         gqlTypeName,
-        gqlReturnTypeName: returnOnlyId === true ? 'ID' : gqlTypeName,
+        gqlReturnTypeName: returnOnlyId === true ? "ID" : gqlTypeName,
         extensions: {},
         gqlInputTypeName
     };
@@ -26,31 +26,31 @@ function buildUpdateView(table, view, context, extensions, config) {
     const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
     newGqlTypeDefinition.fields = [];
     newGqlTypeDefinition.name.value = gqlInputTypeName;
-    newGqlTypeDefinition.kind = 'InputObjectTypeDefinition';
+    newGqlTypeDefinition.kind = "InputObjectTypeDefinition";
     if (returnOnlyId === true) {
         newGqlTypeDefinition.type = {
-            kind: 'NonNullType',
+            kind: "NonNullType",
             type: {
-                kind: 'NamedType',
+                kind: "NamedType",
                 name: {
-                    kind: 'Name',
-                    value: 'ID',
+                    kind: "Name",
+                    value: "ID"
                 }
             }
         };
     }
     // List of field-select sql statements
     const fieldsSql = [];
-    const localTable = '_local_table_';
+    const localTable = "_local_table_";
     gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
         const gqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinitionTemp));
         // Remove the NonNullType for all fields.
-        if (gqlFieldDefinition.type.kind === 'NonNullType') {
+        if (gqlFieldDefinition.type.kind === "NonNullType") {
             gqlFieldDefinition.type = gqlFieldDefinition.type.type;
         }
         const directives = parseDirectives_1.parseDirectives(gqlFieldDefinition.directives);
         const fieldName = gqlFieldDefinition.name.value;
-        gqlFieldDefinition.kind = 'InputValueDefinition';
+        gqlFieldDefinition.kind = "InputValueDefinition";
         const ctx = {
             view,
             gqlFieldDefinition,
@@ -84,7 +84,7 @@ function buildUpdateView(table, view, context, extensions, config) {
     });
     const viewSql = helpers_1.createView(table, config, mutationName, fieldsSql, expressions);
     if (meta.requiresAuth !== true) {
-        throw new Error('Due to security reasons it is not allowed to create UPDATE permissions ' +
+        throw new Error("Due to security reasons it is not allowed to create UPDATE permissions " +
             `without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
     }
     return {

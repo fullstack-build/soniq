@@ -6,9 +6,11 @@ function buildJsonObject(obj, fieldExpression, prePath) {
         const field = obj[key];
         values.push(`'${key}'`);
         if (field === true) {
-            const p = prePath.map((prePathName) => {
+            const p = prePath
+                .map((prePathName) => {
                 return ` -> '${prePathName}'`;
-            }).join('');
+            })
+                .join("");
             values.push(`${fieldExpression}${p} -> '${key}'`);
         }
         else {
@@ -17,7 +19,7 @@ function buildJsonObject(obj, fieldExpression, prePath) {
             values.push(buildJsonObject(field, fieldExpression, nextPrePath));
         }
     });
-    return `jsonb_build_object(${values.join(', ')})`;
+    return `jsonb_build_object(${values.join(", ")})`;
 }
 function getJsonObjectBuilderExpression(matchObject, fieldName, tableName) {
     const fieldExpression = `COALESCE("${tableName}"."${fieldName}", jsonb_build_object())`;

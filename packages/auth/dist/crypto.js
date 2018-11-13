@@ -3,15 +3,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // tslint:disable-next-line:import-name
 // import sodium from 'sodium-native';
 // tslint:disable-next-line:no-var-requires
-const sodium = require('sodium-native');
+const sodium = require("sodium-native");
 // tslint:disable-next-line:no-var-requires
-const crypto = require('crypto');
+const crypto = require("crypto");
 function sha256(input) {
-    return crypto.createHash('sha256').update(input).digest('hex');
+    return crypto
+        .createHash("sha256")
+        .update(input)
+        .digest("hex");
 }
 exports.sha256 = sha256;
 function sha512(input) {
-    return crypto.createHash('sha512').update(input).digest('hex');
+    return crypto
+        .createHash("sha512")
+        .update(input)
+        .digest("hex");
 }
 exports.sha512 = sha512;
 function createConfig(config) {
@@ -37,7 +43,7 @@ function newHash(password, config) {
         const saltBuffer = Buffer.allocUnsafe(config.saltBytes);
         sodium.randombytes_buf(saltBuffer);
         const meta = {
-            salt: saltBuffer.toString('hex'),
+            salt: saltBuffer.toString("hex"),
             hashBytes: config.hashBytes,
             opslimit: config.opslimit,
             memlimit: config.memlimit,
@@ -47,7 +53,7 @@ function newHash(password, config) {
             if (err != null) {
                 return reject(err);
             }
-            const hash = hashBuffer.toString('hex');
+            const hash = hashBuffer.toString("hex");
             resolve({
                 hash,
                 meta
@@ -60,12 +66,12 @@ function hashByMeta(password, meta) {
     return new Promise((resolve, reject) => {
         const passwordBuffer = Buffer.from(password);
         const hashBuffer = Buffer.allocUnsafe(meta.hashBytes);
-        const saltBuffer = Buffer.from(meta.salt, 'hex');
+        const saltBuffer = Buffer.from(meta.salt, "hex");
         sodium.crypto_pwhash_async(hashBuffer, passwordBuffer, saltBuffer, meta.opslimit, meta.memlimit, meta.algorithm, (err) => {
             if (err != null) {
                 return reject(err);
             }
-            const hash = hashBuffer.toString('hex');
+            const hash = hashBuffer.toString("hex");
             resolve({
                 hash,
                 meta

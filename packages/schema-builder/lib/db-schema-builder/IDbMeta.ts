@@ -16,36 +16,35 @@ export interface IDbMeta {
             [name: string]: any;
           };
           columns: {
-            [name: string]:
-              {
-                name: string;
-                oldName?: string;
-                description?: string;
-                type: 'computed' | 'customResolver' | 'varchar' | 'int4' |'float8' | 'bool' | 'uuid' | 'jsonb' | 'relation' | 'enum' | 'customType';
-                customType?: string;
-                defaultValue?: {
-                  isExpression: boolean;
-                  value: 'string';
-                };
-                relationName?: string;
-                constraintNames?: string[];
-                extensions?: {
-                  [name: string]: any;
-                };
-              }
+            [name: string]: {
+              name: string;
+              oldName?: string;
+              description?: string;
+              type: "computed" | "customResolver" | "varchar" | "int4" | "float8" | "bool" | "uuid" | "jsonb" | "relation" | "enum" | "customType";
+              customType?: string;
+              defaultValue?: {
+                isExpression: boolean;
+                value: "string";
+              };
+              relationName?: string;
+              constraintNames?: string[];
+              extensions?: {
+                [name: string]: any;
+              };
+            };
           };
           constraints?: {
             [name: string]: {
               name: string;
-              type: 'PRIMARY KEY' | 'NOT NULL' | 'UNIQUE' | 'CHECK';
+              type: "PRIMARY KEY" | "NOT NULL" | "UNIQUE" | "CHECK";
               columns?: [string];
               options?: [any];
-            }
+            };
           };
         };
       };
       views?: any;
-    }
+    };
   };
   enums?: {
     [name: string]: {
@@ -56,8 +55,8 @@ export interface IDbMeta {
           schemaName: string;
           tableName: string;
           columnName: string;
-        }
-      }
+        };
+      };
     };
   };
   relations?: {
@@ -69,7 +68,7 @@ export interface IDbMeta {
     [name: string]: {
       schemaName: string;
       tableName: string;
-    }
+    };
   };
 }
 
@@ -79,9 +78,9 @@ export interface IDbRelation {
   tableName: string;
   columnName?: string; // if exists (1:m has only on 1 side)
   virtualColumnName: string;
-  type: 'ONE' | 'MANY';
-  onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
-  onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
+  type: "ONE" | "MANY";
+  onUpdate?: "RESTRICT" | "CASCADE" | "SET NULL" | "SET DEFAULT";
+  onDelete?: "RESTRICT" | "CASCADE" | "SET NULL" | "SET DEFAULT";
   // Name of the association
   description?: string;
   // joins to

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const equal = {
-    name: 'equals',
-    value: 'String',
+    name: "equals",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} = ${value}`;
@@ -10,8 +10,8 @@ const equal = {
 };
 exports.equal = equal;
 const notEqual = {
-    name: 'equalsNot',
-    value: 'String',
+    name: "equalsNot",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} <> ${value}`;
@@ -19,8 +19,8 @@ const notEqual = {
 };
 exports.notEqual = notEqual;
 const isDistinctFrom = {
-    name: 'isDistinctFrom',
-    value: 'String',
+    name: "isDistinctFrom",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} IS DISTINCT FROM ${value}`;
@@ -28,8 +28,8 @@ const isDistinctFrom = {
 };
 exports.isDistinctFrom = isDistinctFrom;
 const isNotDistinctFrom = {
-    name: 'isNotDistinctFrom',
-    value: 'String',
+    name: "isNotDistinctFrom",
+    value: "String",
     getSql: (context) => {
         const { field, value } = context;
         return `${field} IS NOT DISTINCT FROM ${value}`;

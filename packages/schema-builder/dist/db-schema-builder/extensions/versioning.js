@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = require("../../index");
 // GQl AST
 // add directive parser
-index_1.registerDirectiveParser('versioning', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+index_1.registerDirectiveParser("versioning", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     dbMetaNode.extensions.versioning = {
         isActive: true
     };
@@ -12,7 +12,7 @@ index_1.registerDirectiveParser('versioning', (gQlDirectiveNode, dbMetaNode, ref
 index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     // keep reference to current table
     const currentTable = dbMeta.schemas[schemaName].tables[tableName];
-    if (trigger.trigger_name.includes('table_trigger_create_versions')) {
+    if (trigger.trigger_name.includes("table_trigger_create_versions")) {
         // versioning active for table
         currentTable.extensions.versioning = {
             isActive: true
@@ -20,8 +20,8 @@ index_1.registerTriggerParser((trigger, dbMeta, schemaName, tableName) => {
     }
 });
 // Migration SQL
-index_1.registerTableMigrationExtension('versioning', (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableNameDown, tableNameUp) => {
-    const ACTION_KEY = '$$action$$';
+index_1.registerTableMigrationExtension("versioning", (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableNameDown, tableNameUp) => {
+    const ACTION_KEY = "$$action$$";
     function _splitActionFromNode(node = {}) {
         return index_1.splitActionFromNode(ACTION_KEY, node);
     }

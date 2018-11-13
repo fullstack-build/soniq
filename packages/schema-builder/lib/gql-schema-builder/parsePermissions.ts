@@ -1,8 +1,7 @@
-
-import { parsePermission } from './parsePermission';
-import { extensions as defaultExtensions } from './extensions';
-import { createSchemaBasics } from './createSchemaBasics';
-import { createMutation } from './createMutation';
+import { parsePermission } from "./parsePermission";
+import { extensions as defaultExtensions } from "./extensions";
+import { createSchemaBasics } from "./createSchemaBasics";
+import { createMutation } from "./createMutation";
 
 export function parsePermissions(permissions, context, extensions, config) {
   const meta = {
@@ -11,25 +10,27 @@ export function parsePermissions(permissions, context, extensions, config) {
     permissionMeta: {}
   };
 
-  createSchemaBasics().forEach(d => context.gqlDocument.definitions.push(d));
+  // TODO: Dustin: evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
+  createSchemaBasics().forEach((d) => context.gqlDocument.definitions.push(d));
 
   const sql = [];
-
+  // TODO: Dustin: same story... evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
   const currentExtensions = extensions.slice().concat(defaultExtensions.slice());
 
   permissions.forEach((permission) => {
     const result = parsePermission(permission, context, currentExtensions, config);
-    meta.query = Object.assign(meta.query, result.meta.query);
-    meta.mutation = Object.assign(meta.mutation, result.meta.mutation);
-    meta.permissionMeta = Object.assign(meta.permissionMeta, result.meta.permissionMeta);
+    meta.query = { ...meta.query, ...result.meta.query };
+    meta.mutation = { ...meta.mutation, ...result.meta.mutation };
+    meta.permissionMeta = { ...meta.permissionMeta, ...result.meta.permissionMeta };
 
-    result.sql.forEach(q => sql.push(q));
+    result.sql.forEach((q) => sql.push(q));
 
     context.gqlDocument = result.gqlDocument;
   });
 
   const modifiedMutation = {};
 
+  // Loop over mutations to modify them by extensions (e.g. add input arguments)
   Object.values(meta.mutation).forEach((mutation: any) => {
     const extendArguments = [];
     let myMutation = mutation;
@@ -55,6 +56,7 @@ export function parsePermissions(permissions, context, extensions, config) {
 
   meta.mutation = modifiedMutation;
 
+  // Loop over extensions to add definitions
   currentExtensions.forEach((parser: any) => {
     if (parser.extendDefinitions != null) {
       const definitions = parser.extendDefinitions(context.gqlDocument, meta, sql);

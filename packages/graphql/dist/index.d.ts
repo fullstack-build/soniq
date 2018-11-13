@@ -1,4 +1,4 @@
-import * as apolloServer from 'apollo-server-koa';
+import * as apolloServer from "apollo-server-koa";
 export { apolloServer };
 export declare class GraphQl {
     private graphQlConfig;

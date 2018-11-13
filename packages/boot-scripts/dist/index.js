@@ -28,7 +28,7 @@ let BootScripts = class BootScripts {
     constructor(loggerFactory, bootLoader) {
         this.logger = loggerFactory.create(this.constructor.name);
         // get settings from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     // execute all boot scripts in the boot folder
@@ -37,7 +37,7 @@ let BootScripts = class BootScripts {
             // get all boot files sync
             const files = fastGlob.sync(`${this.ENVIRONMENT.path}/boot/*.{ts,js}`, {
                 deep: true,
-                onlyFiles: true,
+                onlyFiles: true
             });
             // sort files
             files.sort();
@@ -46,13 +46,11 @@ let BootScripts = class BootScripts {
                 // include all boot files sync
                 const bootScript = require(file);
                 try {
-                    bootScript.default != null
-                        ? yield bootScript.default(this)
-                        : yield bootScript(this);
-                    this.logger.trace('boot script successful', file);
+                    bootScript.default != null ? yield bootScript.default(this) : yield bootScript(this);
+                    this.logger.trace("boot script successful", file);
                 }
                 catch (err) {
-                    this.logger.warn('boot script error', file, err);
+                    this.logger.warn("boot script error", file, err);
                 }
             }
         });
@@ -60,8 +58,7 @@ let BootScripts = class BootScripts {
 };
 BootScripts = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(tpye => boot_loader_1.BootLoader)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)), __param(1, di_1.Inject((tpye) => boot_loader_1.BootLoader)),
     __metadata("design:paramtypes", [Object, Object])
 ], BootScripts);
 exports.BootScripts = BootScripts;

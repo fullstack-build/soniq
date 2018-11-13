@@ -1,7 +1,7 @@
-import { Config } from '@fullstack-one/config';
-import { LoggerFactory } from '@fullstack-one/logger';
-import { DbAppClient } from '@fullstack-one/db';
-import { IDbMeta } from './IDbMeta';
+import { Config } from "@fullstack-one/config";
+import { LoggerFactory } from "@fullstack-one/logger";
+import { DbAppClient } from "@fullstack-one/db";
+import { IDbMeta } from "./IDbMeta";
 export declare class DbSchemaBuilder {
     private fromDbMeta;
     private toDbMeta;

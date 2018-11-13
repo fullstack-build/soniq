@@ -36,11 +36,11 @@ let Server = class Server {
         this.config = config;
         this.loggerFactory = loggerFactory;
         // register package config
-        this.serverConfig = config.registerConfig('Server', __dirname + '/../config');
+        this.serverConfig = config.registerConfig("Server", `${__dirname}/../config`);
         // this.eventEmitter = eventEmitter;
         this.logger = this.loggerFactory.create(this.constructor.name);
         // get env from DI container
-        this.ENVIRONMENT = di_1.Container.get('ENVIRONMENT');
+        this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
         this.bootKoa();
         bootLoader.addBootFunction(this.boot.bind(this));
     }
@@ -50,21 +50,15 @@ let Server = class Server {
                 // start KOA on PORT
                 this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
                 // emit event
-                this.emit('server.up', this.serverConfig.port);
+                this.emit("server.up", this.serverConfig.port);
                 // success log
-                this.logger.info('Server listening on port', this.serverConfig.port);
+                this.logger.info("Server listening on port", this.serverConfig.port);
             }
             catch (e) {
                 // tslint:disable-next-line:no-console
                 console.error(e);
             }
         });
-    }
-    getApp() {
-        return this.app;
-    }
-    getServer() {
-        return this.server;
     }
     bootKoa() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -87,12 +81,18 @@ let Server = class Server {
         const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
         // this.eventEmitter.on(eventNamespaceName, listener);
     }
+    getApp() {
+        return this.app;
+    }
+    getServer() {
+        return this.server;
+    }
 };
 Server = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => config_1.Config)),
-    __param(2, di_1.Inject(tpye => boot_loader_1.BootLoader)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject((type) => config_1.Config)),
+    __param(2, di_1.Inject((tpye) => boot_loader_1.BootLoader)),
     __metadata("design:paramtypes", [Object, Object, Object])
 ], Server);
 exports.Server = Server;

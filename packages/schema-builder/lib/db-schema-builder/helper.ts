@@ -1,11 +1,11 @@
-import { isObject } from 'util';
-import * as _ from 'lodash';
+import { isObject } from "util";
+import * as _ from "lodash";
 
 /**
  * Helper
  */
 
-export function splitActionFromNode(actionKey, node: {} = {}): {action: any, node: any} {
+export function splitActionFromNode(actionKey, node: {} = {}): { action: any; node: any } {
   // clone first level of object (to avoid manipulating the actual action on the object)
   const nodeClone = { ...node };
   const action = nodeClone[actionKey] || {};
@@ -32,13 +32,13 @@ export function difference(obj: {}, base: {}, ignoreValue: boolean = false) {
       // ignore different string, number and boolean values
       if (!!ignoreValue) {
         // ignoring done by replacing old value with new value
-        if (typeof thisValue === 'string' || typeof thisValue === 'number' || typeof thisValue === 'boolean') {
+        if (typeof thisValue === "string" || typeof thisValue === "number" || typeof thisValue === "boolean") {
           thisValue = pBase[key];
         }
       }
       // deep equal
       if (!_.isEqual(thisValue, pBase[key])) {
-        result[key] = (isObject(thisValue) && isObject(pBase[key])) ? changes(thisValue, pBase[key]) : thisValue;
+        result[key] = isObject(thisValue) && isObject(pBase[key]) ? changes(thisValue, pBase[key]) : thisValue;
       }
     });
   }
@@ -56,15 +56,16 @@ export function addToLastNode(obj: {}, addKey: string, addValue: any) {
   function nested(pObj) {
     return _.transform(pObj, (result, value, key) => {
       // check if object has children
-      const hasChildren = (Object.values(pObj).find((thisVal) => {
-        return isObject(thisVal);
-      }) != null);
+      const hasChildren =
+        Object.values(pObj).find((thisVal) => {
+          return isObject(thisVal);
+        }) != null;
       // add to last node
       if (!hasChildren) {
         result[addKey] = addValue;
       }
       // recursion
-      result[key] = (isObject(value)) ? nested(value) : value;
+      result[key] = isObject(value) ? nested(value) : value;
     });
   }
   return nested(obj);
@@ -83,7 +84,7 @@ export function addToEveryNode(obj: {}, addKey: string, addValue: any) {
       // add to very "object" node
       result[addKey] = addValue;
       // recursion
-      result[key] = (isObject(value)) ? nested(value) : value;
+      result[key] = isObject(value) ? nested(value) : value;
     });
   }
   return nested(obj);
@@ -103,7 +104,7 @@ export function removeFromEveryNode(obj: {}, removeKey: string) {
         delete value[removeKey];
       }
       // recursion
-      result[key] = (isObject(value)) ? nested(value) : value;
+      result[key] = isObject(value) ? nested(value) : value;
     });
   }
   return nested(obj);
@@ -123,7 +124,7 @@ export function cleanObject(obj: {}) {
         delete obj[key];
       }
 
-      if (typeof value === 'object' && !(value instanceof Date)) {
+      if (typeof value === "object" && !(value instanceof Date)) {
         cleanObject(obj[key]);
 
         if (value === null) {

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const schema_builder_1 = require("@fullstack-one/schema-builder");
 // helper
-const ACTION_KEY = '$$action$$';
+const ACTION_KEY = "$$action$$";
 function _splitActionFromNode(node = {}) {
     return schema_builder_1.splitActionFromNode(ACTION_KEY, node);
 }
@@ -18,104 +18,103 @@ function _splitActionFromNode(node = {}) {
 // add directive parser
 function setDirectiveParser(registerDirectiveParser) {
     // Auth directives
-    registerDirectiveParser('auth', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    registerDirectiveParser("auth", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
         const directiveKind = gQlDirectiveNode.name.value;
         setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
     });
-    registerDirectiveParser('tenant', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    registerDirectiveParser("tenant", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
         const directiveKind = gQlDirectiveNode.name.value;
         setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
     });
-    registerDirectiveParser('username', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    registerDirectiveParser("username", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
         const directiveKind = gQlDirectiveNode.name.value;
         setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
     });
-    registerDirectiveParser('password', (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    registerDirectiveParser("password", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
         const directiveKind = gQlDirectiveNode.name.value;
         setAuthValueForColumn(directiveKind, gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
     });
     function setAuthValueForColumn(directiveKind, gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
         const directiveKindLowerCase = directiveKind.toLowerCase();
-        let pathToDirective = '';
+        let pathToDirective = "";
         if (refDbMetaCurrentTable != null && refDbMetaCurrentTable.name) {
             pathToDirective = refDbMetaCurrentTable.name;
         }
         if (refDbMetaCurrentTableColumn != null && refDbMetaCurrentTableColumn.name) {
-            pathToDirective += '.' + refDbMetaCurrentTableColumn.name;
+            pathToDirective += `.${refDbMetaCurrentTableColumn.name}`;
         }
-        if (directiveKindLowerCase === 'auth') {
+        if (directiveKindLowerCase === "auth") {
             // check if other tables were marked already
             // collect all tables from all schemas
             const allTables = Object.values(refDbMeta.schemas).reduce((result, schema) => [...result, ...Object.values(schema.tables)], []);
-            const markedAuthTables = allTables.filter(table => table.extensions.isAuth);
+            const markedAuthTables = allTables.filter((table) => table.extensions.isAuth);
             if (markedAuthTables.length === 0) {
                 // set table to auth
                 refDbMetaCurrentTable.extensions.isAuth = true;
             }
-            else { // other table was marked already
-                process.stderr.write('GraphQL.parser.error.table.auth.multiple.tables: ' +
-                    pathToDirective + '.' + directiveKind + '\n');
+            else {
+                // other table was marked already
+                process.stderr.write(`GraphQL.parser.error.table.auth.multiple.tables: ${pathToDirective}.${directiveKind}\n`);
             }
         }
-        else { // mark field
+        else {
+            // mark field
             // only possible on tables that were marked as auth
             if (refDbMetaCurrentTable.extensions.isAuth) {
                 // only one attribute per field is possible
                 if (dbMetaNode.extensions.auth == null) {
                     // add marked different types
                     switch (directiveKindLowerCase) {
-                        case 'tenant':
+                        case "tenant":
                             // check if other columns were already marked same marker
-                            const columnMarkedTenant = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isTenant));
+                            const columnMarkedTenant = Object.values(refDbMetaCurrentTable.columns).filter((column) => column.extensions.auth && column.extensions.auth.isTenant);
                             if (columnMarkedTenant.length === 0) {
                                 dbMetaNode.extensions.auth = {
                                     isTenant: true
                                 };
                             }
-                            else { // multiple columns marked with same marker
-                                process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
-                                    pathToDirective + '.' + directiveKind + '\n');
+                            else {
+                                // multiple columns marked with same marker
+                                process.stderr.write(`GraphQL.parser.error.table.auth.multiple.columns: ${pathToDirective}.${directiveKind}\n`);
                             }
                             break;
-                        case 'username':
+                        case "username":
                             // check if other columns were already marked same marker
-                            const columnMarkedUsername = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isUsername));
+                            const columnMarkedUsername = Object.values(refDbMetaCurrentTable.columns).filter((column) => column.extensions.auth && column.extensions.auth.isUsername);
                             if (columnMarkedUsername.length === 0) {
                                 dbMetaNode.extensions.auth = {
                                     isUsername: true
                                 };
                             }
-                            else { // multiple columns marked with same marker
-                                process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
-                                    pathToDirective + '.' + directiveKind + '\n');
+                            else {
+                                // multiple columns marked with same marker
+                                process.stderr.write(`GraphQL.parser.error.table.auth.multiple.columns: ${pathToDirective}.${directiveKind}\n`);
                             }
                             break;
-                        case 'password':
+                        case "password":
                             // check if other columns were already marked same marker
-                            const columnMarkedPassword = Object.values(refDbMetaCurrentTable.columns).filter((column) => (column.extensions.auth && column.extensions.auth.isPassword));
+                            const columnMarkedPassword = Object.values(refDbMetaCurrentTable.columns).filter((column) => column.extensions.auth && column.extensions.auth.isPassword);
                             if (columnMarkedPassword.length === 0) {
                                 // mark as password
                                 dbMetaNode.extensions.auth = {
                                     isPassword: true
                                 };
                                 // set type to json
-                                dbMetaNode.type = 'jsonb';
+                                dbMetaNode.type = "jsonb";
                             }
-                            else { // multiple columns marked with same marker
-                                process.stderr.write('GraphQL.parser.error.table.auth.multiple.columns: ' +
-                                    pathToDirective + '.' + directiveKind + '\n');
+                            else {
+                                // multiple columns marked with same marker
+                                process.stderr.write(`GraphQL.parser.error.table.auth.multiple.columns: ${pathToDirective}.${directiveKind}\n`);
                             }
                             break;
                     }
                 }
                 else {
-                    process.stderr.write('GraphQL.parser.error.table.auth.multiple.properties: ' +
-                        pathToDirective + '.' + directiveKind + '\n');
+                    process.stderr.write(`GraphQL.parser.error.table.auth.multiple.properties: ${pathToDirective}.${directiveKind}\n`);
                 }
             }
             else {
-                process.stderr.write('GraphQL.parser.error.table.auth.missing: ' +
-                    pathToDirective + '.' + directiveKind + '\n');
+                process.stderr.write(`GraphQL.parser.error.table.auth.missing: ${pathToDirective}.${directiveKind}\n`);
             }
         }
     }
@@ -126,7 +125,10 @@ schema_builder_1.registerQueryParser((dbClient, dbMeta) => __awaiter(this, void 
     try {
         const { rows } = yield dbClient.pgClient.query(`SELECT * FROM _meta."Auth" WHERE key IN
         ('auth_table_schema', 'auth_table', 'auth_field_username', 'auth_field_password', 'auth_field_tenant');`);
-        const authObj = rows.reduce((result, row) => { result[row.key] = row.value; return result; }, {});
+        const authObj = rows.reduce((result, row) => {
+            result[row.key] = row.value;
+            return result;
+        }, {});
         // get relevant table
         const thisTable = dbMeta.schemas[authObj.auth_table_schema].tables[authObj.auth_table];
         // mark table as auth
@@ -156,7 +158,7 @@ schema_builder_1.registerQueryParser((dbClient, dbMeta) => __awaiter(this, void 
 }));
 // Migration SQL
 // column
-schema_builder_1.registerColumnMigrationExtension('auth', (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableName, columnName) => {
+schema_builder_1.registerColumnMigrationExtension("auth", (extensionDefinitionWithAction, sqlMigrationObj, nodeSqlObj, schemaName, tableName, columnName) => {
     // create CRUD section, set ref and keep ref for later
     const thisSqlObj = (sqlMigrationObj.crud = sqlMigrationObj.crud || {
         sql: {

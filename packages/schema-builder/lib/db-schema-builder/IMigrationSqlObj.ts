@@ -1,4 +1,3 @@
-
 export interface IAction {
   ignore: boolean;
   add: boolean;
@@ -24,22 +23,22 @@ export interface IMigrationSqlObj {
           sql: ISqlObj;
           columns: {
             [name: string]: {
-                name: string;
-                sql: ISqlObj;
-              }
+              name: string;
+              sql: ISqlObj;
+            };
           };
           constraints?: {
             sql: ISqlObj;
           };
         };
-      },
+      };
       views?: {
         [name: string]: {
-            name: string;
-            sql: ISqlObj;
-          }
-      }
-    }
+          name: string;
+          sql: ISqlObj;
+        };
+      };
+    };
   };
   enums?: {
     [name: string]: {

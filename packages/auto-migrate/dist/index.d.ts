@@ -1,8 +1,8 @@
-import { Config } from '@fullstack-one/config';
-import { SchemaBuilder, IDbMeta } from '@fullstack-one/schema-builder';
-import { LoggerFactory } from '@fullstack-one/logger';
-import { BootLoader } from '@fullstack-one/boot-loader';
-import { DbAppClient } from '@fullstack-one/db';
+import { Config } from "@fullstack-one/config";
+import { SchemaBuilder, IDbMeta } from "@fullstack-one/schema-builder";
+import { LoggerFactory } from "@fullstack-one/logger";
+import { BootLoader } from "@fullstack-one/boot-loader";
+import { DbAppClient } from "@fullstack-one/db";
 export declare class AutoMigrate {
     private ENVIRONMENT;
     private logger;

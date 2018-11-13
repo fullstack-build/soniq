@@ -1,4 +1,3 @@
-
 const template = `
 <!DOCTYPE html>
 <html lang="en">
@@ -33,5 +32,5 @@ export default (message, origins) => {
     origins
   };
 
-  return template.replace('<%=data%>', JSON.stringify(data));
+  return template.replace("<%=data%>", JSON.stringify(data));
 };

@@ -1,12 +1,11 @@
+import { parseDirectives } from "../utils/parseDirectives";
+import { getQueryArguments } from "./getQueryArguments";
 
-import { parseDirectives } from '../utils/parseDirectives';
-import { getQueryArguments } from './getQueryArguments';
+import { createGqlField, createView } from "./helpers";
 
-import { createGqlField, createView } from './helpers';
+import { CreateExpressions, orderExpressions } from "../createExpressions";
 
-import { CreateExpressions, orderExpressions } from '../createExpressions';
-
-import { CreateDefaultField } from './defaultFieldCreator';
+import { CreateDefaultField } from "./defaultFieldCreator";
 
 export function buildReadView(table, readExpressions, context, extensions, config) {
   // Get some data from table
@@ -36,7 +35,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
   let publicViewSql = null;
   let authViewSql = null;
 
-  const localTable = '_local_table_';
+  const localTable = "_local_table_";
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
   const expressionCreator = new CreateExpressions(context.expressions, localTable);
@@ -55,7 +54,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
       defaultFieldCreator,
       fieldName,
       localTable,
-      context,
+      context, // TODO: Dustin: contect should have a parentContext or permissionContext
       getQueryArguments,
       table
     };
@@ -71,7 +70,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
             const fieldData = {
               gqlFieldName: result.gqlFieldName,
               nativeFieldName: result.nativeFieldName,
-              isVirtual: result.isVirtual === true ? true : false,
+              isVirtual: result.isVirtual === true,
               meta: result.meta
             };
             if (result.publicFieldSql != null) {

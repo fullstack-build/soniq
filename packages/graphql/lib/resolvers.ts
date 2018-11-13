@@ -1,5 +1,4 @@
-
-import * as gQlTypeJson from 'graphql-type-json';
+import * as gQlTypeJson from "graphql-type-json";
 
 export function getResolvers(operations, resolversObject, hooks, dbGeneralPool, logger) {
   const queryResolvers = {};
@@ -37,8 +36,10 @@ export function getResolvers(operations, resolversObject, hooks, dbGeneralPool, 
   // Add  field resolvers to resolvers object
   Object.values(operations.fields).forEach((operation: any) => {
     if (resolversObject[operation.resolver] == null) {
-      throw new Error(`The resolver "${operation.resolver}" is not defined.` +
-      ` You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`);
+      throw new Error(
+        `The resolver "${operation.resolver}" is not defined.` +
+          ` You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`
+      );
     }
 
     if (resolvers[operation.gqlTypeName] == null) {

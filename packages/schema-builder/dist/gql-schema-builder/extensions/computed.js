@@ -8,13 +8,15 @@ function parseReadField(ctx) {
         const computedExpression = expressionCreator.getExpressionObject(directives.computed.expression, directives.computed.params);
         const columnExpression = `"${computedExpression.name}"."${computedExpression.name}"`;
         const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
-        return [{
+        return [
+            {
                 gqlFieldName: fieldName,
                 nativeFieldName: fieldName,
                 publicFieldSql,
                 authFieldSql,
                 gqlFieldDefinition
-            }];
+            }
+        ];
     }
     return null;
 }

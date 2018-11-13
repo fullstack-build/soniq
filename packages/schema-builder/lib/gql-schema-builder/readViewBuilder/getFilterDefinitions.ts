@@ -1,15 +1,15 @@
 function getFieldArgument(fieldName) {
   return {
-    kind: 'InputValueDefinition',
+    kind: "InputValueDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: fieldName
     },
     type: {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
-        value: 'Operators'
+        kind: "Name",
+        value: "Operators"
       }
     },
     defaultValue: null,
@@ -19,27 +19,28 @@ function getFieldArgument(fieldName) {
 
 function getWhereType(name, fieldNames) {
   const def: any = {
-    kind: 'InputObjectTypeDefinition',
+    kind: "InputObjectTypeDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: name
     },
     directives: [],
-    fields: [{
-        kind: 'InputValueDefinition',
+    fields: [
+      {
+        kind: "InputValueDefinition",
         name: {
-          kind: 'Name',
-          value: 'OR'
+          kind: "Name",
+          value: "OR"
         },
         type: {
-          kind: 'ListType',
+          kind: "ListType",
           type: {
-            kind: 'NonNullType',
+            kind: "NonNullType",
             type: {
-              kind: 'NamedType',
+              kind: "NamedType",
               name: {
-                kind: 'Name',
-                value: name,
+                kind: "Name",
+                value: name
               }
             }
           }
@@ -48,20 +49,20 @@ function getWhereType(name, fieldNames) {
         directives: []
       },
       {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-          kind: 'Name',
-          value: 'AND'
+          kind: "Name",
+          value: "AND"
         },
         type: {
-          kind: 'ListType',
+          kind: "ListType",
           type: {
-            kind: 'NonNullType',
+            kind: "NonNullType",
             type: {
-              kind: 'NamedType',
+              kind: "NamedType",
               name: {
-                kind: 'Name',
-                value: name,
+                kind: "Name",
+                value: name
               }
             }
           }
@@ -81,9 +82,9 @@ function getWhereType(name, fieldNames) {
 
 function getEnumValueDefinition(option) {
   return {
-    kind: 'EnumValueDefinition',
+    kind: "EnumValueDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: option
     },
     directives: []
@@ -97,9 +98,9 @@ function getOrderByEnum(name, fields) {
     options.push(`${fieldName}_DESC`);
   });
   return {
-    kind: 'EnumTypeDefinition',
+    kind: "EnumTypeDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: name
     },
     directives: [],

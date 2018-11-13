@@ -1,33 +1,33 @@
 export function createIdArrayField(fieldName, isNonNullType: boolean = false) {
   const field: any = {
-    kind: 'FieldDefinition',
+    kind: "FieldDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: fieldName
     },
     arguments: [],
     type: {
-      kind: 'ListType',
+      kind: "ListType",
       type: {
-        kind: 'NonNullType',
+        kind: "NonNullType",
         type: {
-          kind: 'NamedType',
+          kind: "NamedType",
           name: {
-            kind: 'Name',
-            value: 'ID',
-          },
-        },
-      },
+            kind: "Name",
+            value: "ID"
+          }
+        }
+      }
     },
     directives: []
   };
 
-  if (isNonNullType === true) {
-      field.type = {
-        kind: 'NonNullType',
-        type: field.type
-      };
-    }
+  if (isNonNullType === true) {
+    field.type = {
+      kind: "NonNullType",
+      type: field.type
+    };
+  }
 
   return field;
 }

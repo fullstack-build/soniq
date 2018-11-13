@@ -5,23 +5,23 @@ function getArgumentsValue(node) {
     Object.values(node.arguments).forEach((field) => {
         const type = field.value.kind;
         let value = field.value.value;
-        if (type === 'IntValue') {
+        if (type === "IntValue") {
             obj[field.name.value] = parseInt(value, 10);
         }
-        if (type === 'FloatValue') {
+        if (type === "FloatValue") {
             obj[field.name.value] = parseFloat(value);
         }
-        if (type === 'StringValue') {
+        if (type === "StringValue") {
             obj[field.name.value] = value.toString();
         }
-        if (type === 'BooleanValue') {
-            obj[field.name.value] = value === 'true';
+        if (type === "BooleanValue") {
+            obj[field.name.value] = value === "true";
         }
-        if (type === 'ObjectValue') {
+        if (type === "ObjectValue") {
             value = field.value;
             obj[field.name.value] = getObjectValue(value);
         }
-        if (type === 'ListValue') {
+        if (type === "ListValue") {
             value = field.value;
             obj[field.name.value] = getListValues(value);
         }
@@ -33,23 +33,23 @@ function getObjectValue(node) {
     Object.values(node.fields).forEach((field) => {
         const type = field.value.kind;
         let value = field.value.value;
-        if (type === 'IntValue') {
+        if (type === "IntValue") {
             obj[field.name.value] = parseInt(value, 10);
         }
-        if (type === 'FloatValue') {
+        if (type === "FloatValue") {
             obj[field.name.value] = parseFloat(value);
         }
-        if (type === 'StringValue') {
+        if (type === "StringValue") {
             obj[field.name.value] = value.toString();
         }
-        if (type === 'BooleanValue') {
-            obj[field.name.value] = value === 'true';
+        if (type === "BooleanValue") {
+            obj[field.name.value] = value === "true";
         }
-        if (type === 'ObjectValue') {
+        if (type === "ObjectValue") {
             value = field.value;
             obj[field.name.value] = getObjectValue(value);
         }
-        if (type === 'ListValue') {
+        if (type === "ListValue") {
             value = field.value;
             obj[field.name.value] = getListValues(value);
         }
@@ -61,22 +61,22 @@ function getListValues(node) {
     Object.values(node.values).forEach((field) => {
         const type = field.kind;
         const value = field.value;
-        if (type === 'IntValue') {
+        if (type === "IntValue") {
             arr.push(parseInt(value, 10));
         }
-        if (type === 'FloatValue') {
+        if (type === "FloatValue") {
             arr.push(parseFloat(value));
         }
-        if (type === 'StringValue') {
+        if (type === "StringValue") {
             arr.push(value.toString());
         }
-        if (type === 'BooleanValue') {
-            arr.push(value === 'true');
+        if (type === "BooleanValue") {
+            arr.push(value === "true");
         }
-        if (type === 'ObjectValue') {
+        if (type === "ObjectValue") {
             arr.push(getObjectValue(field));
         }
-        if (type === 'ListValue') {
+        if (type === "ListValue") {
             arr.push(getListValues(field));
         }
     });

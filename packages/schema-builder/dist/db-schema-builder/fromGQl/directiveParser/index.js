@@ -9,6 +9,6 @@ function registerDirectiveParser(directiveNameInLowerCase, fn) {
 exports.registerDirectiveParser = registerDirectiveParser;
 // return currently registered parser
 function getDirectiveParser(directiveName) {
-    return (directiveName != null) ? directiveParser[directiveName] : directiveParser;
+    return directiveName != null ? directiveParser[directiveName] : directiveParser;
 }
 exports.getDirectiveParser = getDirectiveParser;

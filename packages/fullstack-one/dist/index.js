@@ -33,6 +33,12 @@ let FullstackOneCore = class FullstackOneCore {
         this.bootLoader = bootLoader;
         this.ENVIRONMENT = this.config.ENVIRONMENT;
     }
+    // draw CLI art
+    cliArt() {
+        process.stdout.write(`  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤\n  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n`);
+        process.stdout.write(`${JSON.stringify(this.ENVIRONMENT, null, 2)}\n`);
+        process.stdout.write("____________________________________\n");
+    }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.bootLoader.boot();
@@ -40,18 +46,10 @@ let FullstackOneCore = class FullstackOneCore {
             return;
         });
     }
-    // draw CLI art
-    cliArt() {
-        process.stdout.write('  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n' +
-            '  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤ \n' +
-            '  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n');
-        process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2) + '\n');
-        process.stdout.write('____________________________________\n');
-    }
 };
 FullstackOneCore = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)), __param(1, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject((type) => boot_loader_1.BootLoader)), __param(1, di_1.Inject((type) => config_1.Config)),
     __metadata("design:paramtypes", [Object, Object])
 ], FullstackOneCore);
 exports.FullstackOneCore = FullstackOneCore;

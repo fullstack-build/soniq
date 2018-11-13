@@ -1,17 +1,18 @@
-import { IDb } from './IDb';
-import { Client as PgClient } from 'pg';
+import { IDb } from "./IDb";
+import { Client as PgClient } from "pg";
 export { PgClient };
 export declare class DbAppClient implements IDb {
-    pgClient: PgClient;
+    private applicationNamePrefix;
     private applicationName;
-    private credentials;
+    private readonly credentials;
     private readonly ENVIRONMENT;
     private readonly config;
     private readonly logger;
     private readonly eventEmitter;
     private readonly CONFIG;
+    pgClient: PgClient;
     constructor(bootLoader: any, eventEmitter: any, loggerFactory: any, config: any);
     private boot;
-    end(): Promise<void>;
     private updateNodeIdsFromDb;
+    end(): Promise<void>;
 }

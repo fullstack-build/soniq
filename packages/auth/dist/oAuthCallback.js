@@ -32,5 +32,5 @@ exports.default = (message, origins) => {
         message,
         origins
     };
-    return template.replace('<%=data%>', JSON.stringify(data));
+    return template.replace("<%=data%>", JSON.stringify(data));
 };

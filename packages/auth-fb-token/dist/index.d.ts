@@ -1,4 +1,4 @@
-import { LoggerFactory } from '@fullstack-one/logger';
+import { LoggerFactory } from "@fullstack-one/logger";
 export declare class AuthFbToken {
     private authFbTokenConfig;
     private loggerFactory;

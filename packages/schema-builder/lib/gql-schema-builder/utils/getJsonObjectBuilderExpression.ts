@@ -1,4 +1,3 @@
-
 function buildJsonObject(obj, fieldExpression, prePath) {
   const values = [];
 
@@ -8,9 +7,11 @@ function buildJsonObject(obj, fieldExpression, prePath) {
     values.push(`'${key}'`);
 
     if (field === true) {
-      const p = prePath.map((prePathName) => {
-        return ` -> '${prePathName}'`;
-      }).join('');
+      const p = prePath
+        .map((prePathName) => {
+          return ` -> '${prePathName}'`;
+        })
+        .join("");
 
       values.push(`${fieldExpression}${p} -> '${key}'`);
     } else {
@@ -22,7 +23,7 @@ function buildJsonObject(obj, fieldExpression, prePath) {
     }
   });
 
-  return `jsonb_build_object(${values.join(', ')})`;
+  return `jsonb_build_object(${values.join(", ")})`;
 }
 
 export function getJsonObjectBuilderExpression(matchObject, fieldName, tableName) {

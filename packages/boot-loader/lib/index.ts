@@ -1,5 +1,4 @@
-
-import { Service } from '@fullstack-one/di';
+import { Service } from "@fullstack-one/di";
 
 @Service()
 export class BootLoader {
@@ -39,13 +38,19 @@ export class BootLoader {
 
   public async boot() {
     this.IS_BOOTING = true;
-    for (const fn of this.bootFunctions) {
-      await fn(this);
+    try {
+      for (const fn of this.bootFunctions) {
+        await fn(this);
+      }
+      for (const fn of this.bootReadyFunctions) {
+        fn(this);
+      }
+      this.IS_BOOTING = false;
+      this.HAS_BOOTED = true;
+    } catch (err) {
+      process.stderr.write("BootLoader.boot.error.caught\n");
+      process.stderr.write(`${err}`);
+      process.exit(0);
     }
-    for (const fn of this.bootReadyFunctions) {
-      fn(this);
-    }
-    this.IS_BOOTING = false;
-    this.HAS_BOOTED = true;
   }
 }

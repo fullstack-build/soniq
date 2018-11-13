@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.4.8",
+  "version": "0.4.22",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,14 +20,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.7",
-    "@fullstack-one/config": "^0.4.7",
-    "@fullstack-one/db": "^0.4.7",
-    "@fullstack-one/di": "^0.4.7",
-    "@fullstack-one/helper": "^0.4.8",
-    "@fullstack-one/logger": "^0.4.7",
-    "@fullstack-one/schema-builder": "^0.4.8",
-    "@fullstack-one/server": "^0.4.7",
+    "@fullstack-one/boot-loader": "^0.4.20",
+    "@fullstack-one/config": "^0.4.20",
+    "@fullstack-one/db": "^0.4.20",
+    "@fullstack-one/di": "^0.4.20",
+    "@fullstack-one/helper": "^0.4.20",
+    "@fullstack-one/logger": "^0.4.20",
+    "@fullstack-one/schema-builder": "^0.4.22",
+    "@fullstack-one/server": "^0.4.20",
     "apollo-cache-inmemory": "^1.2.9",
     "apollo-client": "^2.4.1",
     "apollo-link-schema": "^1.1.0",
@@ -41,7 +41,6 @@
     "lodash": "^4.17.10"
   },
   "devDependencies": {
-    "@types/graphql": "^0.13.1",
-    "typescript": "^2.8.3"
+    "@types/graphql": "^0.13.1"
   }
 }

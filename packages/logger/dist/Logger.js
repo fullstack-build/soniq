@@ -4,8 +4,8 @@ const DebugLogger = require("debug-logger");
 // import * as LE from 'le_node';
 const Tracer = require("tracer");
 class Logger {
-    constructor(moduleName = 'root', loggerConfig, env) {
-        this.LEVELS = ['trace', 'debug', 'info', 'warn', 'error'];
+    constructor(moduleName = "root", loggerConfig, env) {
+        this.LEVELS = ["trace", "debug", "info", "warn", "error"];
         // tracer
         // any should avoid: TS2409:Return type of constructor signature must be assignable to the instance type of the class.
         this.tracerLogger = null;
@@ -20,7 +20,7 @@ class Logger {
             // set log levels
             methods: this.LEVELS,
             // override tracer transport with logToDebug
-            transport: this.logToDebug.bind(this),
+            transport: this.logToDebug.bind(this)
         };
         this.tracerLogger = Tracer.colorConsole(tracerConfig);
         // setup debug
@@ -34,25 +34,6 @@ class Logger {
         */
         // overriding class with tracer API
         return this.tracerLogger;
-    }
-    /**
-     * Empty functions for code completion
-     * implementation is within tracer
-     */
-    trace(...args) {
-        // no function
-    }
-    debug(...args) {
-        // no function
-    }
-    info(...args) {
-        // no function
-    }
-    warn(...args) {
-        // no function
-    }
-    error(...args) {
-        // no function
     }
     /**
      *  PRIVATE METHODS
@@ -80,6 +61,25 @@ class Logger {
         // log remotely to logentries
         this._leNode[pLogObject.title](logEntry);
         */
+    }
+    /**
+     * Empty functions for code completion
+     * implementation is within tracer
+     */
+    trace(...args) {
+        // no function
+    }
+    debug(...args) {
+        // no function
+    }
+    info(...args) {
+        // no function
+    }
+    warn(...args) {
+        // no function
+    }
+    error(...args) {
+        // no function
     }
 }
 exports.Logger = Logger;

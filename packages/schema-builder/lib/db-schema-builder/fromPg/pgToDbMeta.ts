@@ -1,22 +1,23 @@
-import * as deepmerge from 'deepmerge';
+import * as deepmerge from "deepmerge";
 
-import { Service, Inject } from '@fullstack-one/di';
-import { IDbMeta, IDbRelation } from '../IDbMeta';
-import { DbAppClient } from '@fullstack-one/db';
+import { Service, Inject } from "@fullstack-one/di";
+import { IDbMeta, IDbRelation } from "../IDbMeta";
+import { DbAppClient } from "@fullstack-one/db";
 
 // extended parser
-import { getQueryParser } from './queryParser';
-export { registerQueryParser } from './queryParser';
+import { getQueryParser } from "./queryParser";
+export { registerQueryParser } from "./queryParser";
 
-import { getTriggerParser } from './triggerParser';
-export { registerTriggerParser } from './triggerParser';
+import { getTriggerParser } from "./triggerParser";
+export { registerTriggerParser } from "./triggerParser";
 
 // https://www.alberton.info/postgresql_meta_info.html
 @Service()
 export class PgToDbMeta {
-
-  private readonly DELETED_PREFIX = '_deleted:';
-  private readonly KNOWN_TYPES    = ['uuid', 'varchar', 'int4', 'float8', 'bool', 'json', 'jsonb', 'relation'];
+  private readonly DELETED_PREFIX = "_deleted:";
+  private readonly KNOWN_TYPES = ["uuid", "varchar", "int4", "float8", "bool", "json", "jsonb", "relation"];
+  // TODO: Eugene get schemas to ignore from a setting
+  private readonly IGNORE_SCHEMAS = ["_graphql", "_versions", "pgboss"];
 
   private dbAppClient: DbAppClient;
 
@@ -27,35 +28,12 @@ export class PgToDbMeta {
     relations: {}
   };
 
-  constructor(@Inject(type => DbAppClient) dbAppClient?) {
+  constructor(@Inject((type) => DbAppClient) dbAppClient?) {
     this.dbAppClient = dbAppClient;
-  }
-
-  public async getPgDbMeta(): Promise<IDbMeta> {
-    try {
-      // start with schemas
-      await this.iterateAndAddSchemas();
-
-      // run extensions parser
-      if (getQueryParser() != null) {
-        const parserPromises = [];
-        Object.values(getQueryParser()).forEach(async (parser: (dbClient: DbAppClient, dbMeta: IDbMeta) => void) => {
-          parserPromises.push(parser(this.dbAppClient, this.dbMeta));
-        });
-        // await all parsers to finish their jobs
-        await Promise.all(parserPromises);
-      }
-
-      // return copy instead of ref
-      return deepmerge({}, this.dbMeta);
-    } catch (err) {
-      throw err;
-    }
   }
 
   // PRIVATE METHODS
   private async iterateAndAddSchemas(): Promise<void> {
-
     try {
       const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
@@ -74,8 +52,8 @@ export class PgToDbMeta {
         const row: any = rowTemp;
         const schemaName = row.schema_name;
 
-        // ignore deleted schemas
-        if (schemaName.indexOf(this.DELETED_PREFIX) !== 0) {
+        // ignore deleted schemas and the ones that should be ignored
+        if (schemaName.indexOf(this.DELETED_PREFIX) !== 0 && this.IGNORE_SCHEMAS.includes(schemaName) === false) {
           // add schema objects for each schema
           this.dbMeta.schemas[schemaName] = {
             name: schemaName,
@@ -89,16 +67,14 @@ export class PgToDbMeta {
           await this.iterateAndAddTables(schemaName);
         }
       }
-
     } catch (err) {
       throw err;
     }
-
   }
 
   private async iterateEnumTypes(schemaName): Promise<void> {
     // iterate ENUM Types with columns its used in
-    const { rows } =  await this.dbAppClient.pgClient.query(
+    const { rows } = await this.dbAppClient.pgClient.query(
       `SELECT
                           n.nspname as enum_schema,
                           t.typname as enum_name,
@@ -122,7 +98,9 @@ export class PgToDbMeta {
                         WHERE
                           n.nspname = $1
                         GROUP BY
-                          n.nspname, t.typname, c.table_schema, c.table_name, c.column_name, v.table_name;`, [schemaName]);
+                          n.nspname, t.typname, c.table_schema, c.table_name, c.column_name, v.table_name;`,
+      [schemaName]
+    );
 
     // iterate all tables
     for (const rowTemp of Object.values(rows)) {
@@ -130,11 +108,11 @@ export class PgToDbMeta {
       const enumName = row.enum_name;
 
       // reuse existing enum (for multiple columns using same enum)
-      const thisEnums = this.dbMeta.enums[enumName] = this.dbMeta.enums[enumName] || {
+      const thisEnums = (this.dbMeta.enums[enumName] = this.dbMeta.enums[enumName] || {
         name: enumName,
         values: row.enum_values,
         columns: {}
-      };
+      });
       // not for view
       if (!row.is_view) {
         // add column to enum if used
@@ -142,7 +120,7 @@ export class PgToDbMeta {
           const enumColumnName = `${row.used_schema}.${row.used_table}.${row.used_column}`;
           thisEnums.columns[enumColumnName] = {
             schemaName: row.used_schema,
-            tableName:  row.used_table,
+            tableName: row.used_table,
             columnName: row.used_column
           };
         }
@@ -151,7 +129,6 @@ export class PgToDbMeta {
   }
 
   private async iterateAndAddTables(schemaName): Promise<void> {
-
     try {
       const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
@@ -175,7 +152,6 @@ export class PgToDbMeta {
           columns: {},
           extensions: {}
         };
-
       }
 
       // iterate tables and add columns - relates on tables existing
@@ -188,6 +164,8 @@ export class PgToDbMeta {
       for (const tableName of Object.keys(this.dbMeta.schemas[schemaName].tables)) {
         // add constraints to table
         await this.iterateAndAddConstraints(schemaName, tableName);
+        // add indexes to table
+        await this.iterateAndAddIndexes(schemaName, tableName);
       }
 
       // iterate and add triggers
@@ -195,20 +173,16 @@ export class PgToDbMeta {
         // add triggers to table
         await this.iterateAndAddTriggers(schemaName, tableName);
       }
-
     } catch (err) {
       throw err;
     }
-
   }
 
   private async iterateAndAddColumns(schemaName, tableName): Promise<void> {
-
     // keep reference to current table
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     try {
-
       const { rows } = await this.dbAppClient.pgClient.query(
         `SELECT
         c.column_name AS column_name,
@@ -229,7 +203,8 @@ export class PgToDbMeta {
         AND
         table_name = $2
       ORDER BY
-        ordinal_position ASC;`, [schemaName, tableName]
+        ordinal_position ASC;`,
+        [schemaName, tableName]
       );
 
       // iterate all columns
@@ -241,7 +216,7 @@ export class PgToDbMeta {
         let customType;
         if (!this.KNOWN_TYPES.includes(type)) {
           customType = type;
-          type = 'customType';
+          type = "customType";
         }
 
         // add new column and keep reference for later
@@ -263,8 +238,8 @@ export class PgToDbMeta {
 
         // default value
         if (column.column_default !== null) {
-          const isExpression = (column.column_default.indexOf('::') === -1);
-          const value = (isExpression) ? column.column_default : column.column_default.split('::')[0].replace(/'/g, '');
+          const isExpression = column.column_default.indexOf("::") === -1;
+          const value = isExpression ? column.column_default : column.column_default.split("::")[0].replace(/'/g, "");
           newColumn.defaultValue = {
             isExpression,
             value
@@ -272,46 +247,45 @@ export class PgToDbMeta {
         }
 
         // add NOT NULLABLE constraint
-        if (column.is_nullable === 'NO') {
-          this.addConstraint('NOT NULL', { column_name: column.column_name }, currentTable);
+        if (column.is_nullable === "NO") {
+          this.addConstraint("NOT NULL", "", column.column_name, currentTable);
         }
 
         // custom type
-        if (column.data_type === 'USER-DEFINED') {
+        if (column.data_type === "USER-DEFINED") {
           // check if it is a known enum
-          newColumn.type = (this.dbMeta.enums[newColumn.customType] != null) ? 'enum' : 'customType';
-        } else if (column.data_type === 'ARRAY' && column.udt_name === '_uuid') { // Array of _uuid is most certainly an n:m relation
+          newColumn.type = this.dbMeta.enums[newColumn.customType] != null ? "enum" : "customType";
+        } else if (column.data_type === "ARRAY" && column.udt_name === "_uuid") {
+          // Array of _uuid is most certainly an n:m relation
 
           // set column type to uuid[]
-          newColumn.type = 'uuid[]';
-          delete  newColumn.customType;
+          newColumn.type = "uuid[]";
+          delete newColumn.customType;
 
           // many to many arrays should have JSON description - check for that
           try {
             const mtmRelationPayload = JSON.parse(column.comment);
 
             // check if referenced table exists
-            if (mtmRelationPayload.reference != null &&
+            if (
+              mtmRelationPayload.reference != null &&
               mtmRelationPayload.reference.tableName != null &&
-              this.dbMeta.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null) {
+              this.dbMeta.schemas[mtmRelationPayload.reference.schemaName].tables[mtmRelationPayload.reference.tableName] != null
+            ) {
               // add one side m:n
               this.manyToManyRelationBuilderHelper(column, schemaName, tableName, mtmRelationPayload);
             }
           } catch (err) {
-            process.stderr.write(
-              'PgToDbMeta.error.mtmrelation.payload.parsing.error: ' + err + '\n',
-            );
+            process.stderr.write(`PgToDbMeta.error.mtmrelation.payload.parsing.error: ${err}\n`);
           }
         }
       }
-
     } catch (err) {
       throw err;
     }
   }
 
   private async iterateAndAddConstraints(schemaName, tableName): Promise<void> {
-
     // keep reference to current table
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
@@ -345,49 +319,91 @@ export class PgToDbMeta {
         AND rc.unique_constraint_name = ccu.constraint_name
   LEFT JOIN pg_catalog.pg_constraint pgc
        ON pgc.conname = tc.constraint_name
-      WHERE tc.table_schema = $1 AND tc.table_name = $2;`, [schemaName, tableName]
+      WHERE tc.table_schema = $1 AND tc.table_name = $2;`,
+      [schemaName, tableName]
     );
 
     // other constraints
     Object.values(rows).forEach((constraint: any) => {
-      if (constraint.constraint_type === 'FOREIGN KEY') { // relations
+      if (constraint.constraint_type === "FOREIGN KEY") {
+        // relations
         this.relationBuilderHelper(constraint);
-      } else if (constraint.constraint_type === 'CHECK') { // checks
+      } else if (constraint.constraint_type === "CHECK") {
+        // checks
         this.addCheck(constraint, currentTable);
-      } else { // other constraints
-        this.addConstraint(constraint.constraint_type, constraint, currentTable);
+      } else {
+        // other constraints
+        this.addConstraint(constraint.constraint_type, constraint.constraint_name, constraint.column_name, currentTable);
       }
-
     });
-
   }
 
-  private addConstraint(constraintType,
-                        constraintRow,
-                        refDbMetaCurrentTable): void {
+  private async iterateAndAddIndexes(schemaName, tableName): Promise<void> {
+    // keep reference to current table
+    const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
-    let constraintName  = constraintRow.constraint_name;
-    const columnName = constraintRow.column_name;
+    // iterate indexes
+    const { rows } = await this.dbAppClient.pgClient.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [
+      schemaName,
+      tableName
+    ]);
+
+    Object.values(rows).forEach((index: any) => {
+      // check if index is a known constraint – ignore them
+      const constraint = currentTable.constraints[index.indexname];
+      if (constraint == null) {
+        // if it a unique index
+        if (index.indexdef.toUpperCase().includes("CREATE UNIQUE INDEX")) {
+          // does this constraint have a condition?
+          const conditionArray = index.indexdef.match(/\((.*)\).*WHERE\s\((.*)\)/);
+          if (conditionArray != null) {
+            const columnNames = (conditionArray[1] || "").split(",").map((columName) => columName.replace(/\W/g, ""));
+            const condition = conditionArray[2];
+            columnNames.forEach((columnName) => {
+              // create constraints
+              this.addConstraint("UNIQUE", index.indexname, columnName, currentTable, condition);
+            });
+          } else {
+            process.stderr.write(`PgToDbMeta.table.index.error: Other indexes than unique constraints are not supported yet ${index.indexname}\n`);
+          }
+        }
+      }
+    });
+  }
+
+  private addConstraint(constraintType: string, constraintName: string, columnName: string, refDbMetaCurrentTable: any, condition?: string): void {
+    let finalConstraintName = constraintName;
     // ignore constraint if no column name is set
     if (columnName == null) {
       return;
     }
 
     // add constraint name for not_nullable
-    if (constraintType === 'NOT NULL') {
-      constraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
+    if (constraintType === "NOT NULL") {
+      finalConstraintName = `${refDbMetaCurrentTable.name}_${columnName}_not_null`;
     }
 
     // add new constraint if name was set
-    if (constraintName != null) {
-      const constraint = refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
+    if (finalConstraintName != null) {
+      const constraint = (refDbMetaCurrentTable.constraints[finalConstraintName] = refDbMetaCurrentTable.constraints[finalConstraintName] || {
         type: constraintType,
         options: {},
         columns: []
-      };
+      });
       // add column name to constraint - once
       if (constraint.columns.indexOf(columnName) === -1) {
         constraint.columns.push(columnName);
+      }
+      // sort columns to make sure they are always in the same order on both sides (GQl and PG)
+      constraint.columns.sort();
+
+      // add optional condition
+      if (condition != null) {
+        const options = {
+          condition
+        };
+        const constraintOptions = constraint.options || {};
+        constraint.options = deepmerge(constraintOptions, options);
       }
     }
 
@@ -395,7 +411,7 @@ export class PgToDbMeta {
     const currentColumnRef = refDbMetaCurrentTable.columns[columnName];
     if (currentColumnRef != null) {
       currentColumnRef.constraintNames = currentColumnRef.constraintNames || [];
-      currentColumnRef.constraintNames.push(constraintName);
+      currentColumnRef.constraintNames.push(finalConstraintName);
       // keep them sorted for better comparison of objects
       currentColumnRef.constraintNames.sort();
     }
@@ -412,12 +428,11 @@ export class PgToDbMeta {
     // add new constraint if name was set
     if (constraintName != null) {
       refDbMetaCurrentTable.constraints[constraintName] = refDbMetaCurrentTable.constraints[constraintName] || {
-        type: 'CHECK',
+        type: "CHECK",
         options: {
           param1: checkCode
         }
       };
-
     }
 
     // add constraint name to field
@@ -426,7 +441,6 @@ export class PgToDbMeta {
   }
 
   private async iterateAndAddTriggers(schemaName, tableName): Promise<void> {
-
     // keep reference to current table
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
@@ -441,7 +455,8 @@ export class PgToDbMeta {
                  WHERE
                      event_object_schema = $1
                      AND
-                     event_object_table = $2;`, [schemaName, tableName]
+                     event_object_table = $2;`,
+      [schemaName, tableName]
     );
 
     // TRIGGER EXTENSIONS
@@ -451,38 +466,33 @@ export class PgToDbMeta {
         triggerParser(trigger, this.dbMeta, schemaName, tableName);
       });
     });
-
   }
 
   private relationBuilderHelper(constraint) {
-
     let relationPayloadOne: any = {};
     let relationPayloadMany: any = {};
     try {
       const relationPayload = Object.values(JSON.parse(constraint.comment));
       relationPayloadOne = relationPayload.find((relation: any) => {
-        return (relation.type === 'ONE');
+        return relation.type === "ONE";
       });
       relationPayloadMany = relationPayload.find((relation: any) => {
-        return (relation.type === 'MANY');
+        return relation.type === "MANY";
       });
-
     } catch (err) {
       // ignore empty payload -> fallback in code below
-      process.stderr.write(
-        'PgToDbMeta.error.relation.payload.parsing.error: ' + err + '\n',
-      );
+      process.stderr.write(`PgToDbMeta.error.relation.payload.parsing.error: ${err}\n`);
     }
 
-    const constraintName = relationPayloadOne.name || relationPayloadMany.name || constraint.constraint_name.replace('fk_', '');
+    const constraintName = relationPayloadOne.name || relationPayloadMany.name || constraint.constraint_name.replace("fk_", "");
 
-    const onUpdate = (constraint.on_update !== 'NO ACTION') ? constraint.on_update : null;
-    const onDelete = (constraint.on_delete !== 'NO ACTION') ? constraint.on_delete : null;
+    const onUpdate = constraint.on_update !== "NO ACTION" ? constraint.on_update : null;
+    const onDelete = constraint.on_delete !== "NO ACTION" ? constraint.on_delete : null;
 
     // add relation: one
     const relationOne: IDbRelation = {
       name: constraintName,
-      type: 'ONE',
+      type: "ONE",
       schemaName: constraint.schema_name,
       tableName: constraint.table_name,
       columnName: constraint.column_name,
@@ -502,7 +512,7 @@ export class PgToDbMeta {
     // add relation: many
     const relationMany: IDbRelation = {
       name: constraintName,
-      type: 'MANY',
+      type: "MANY",
       schemaName: constraint.references_schema_name,
       tableName: constraint.references_table_name,
       columnName: null,
@@ -528,17 +538,15 @@ export class PgToDbMeta {
       [relationOneName]: relationOne,
       [relationManyName]: relationMany
     };
-
   }
 
   private manyToManyRelationBuilderHelper(columnDescribingRelation, schemaName, tableName, mtmPayload) {
-
     const relationName = mtmPayload.name;
 
     // add relation: one
     const newRelation: IDbRelation = {
       name: relationName,
-      type: 'MANY',
+      type: "MANY",
       schemaName,
       tableName,
       columnName: columnDescribingRelation.column_name,
@@ -561,7 +569,27 @@ export class PgToDbMeta {
     // add relation object if not available
     this.dbMeta.relations[mtmPayload.name] = this.dbMeta.relations[mtmPayload.name] || {};
     this.dbMeta.relations[mtmPayload.name][relationSideName] = newRelation;
-
   }
 
+  public async getPgDbMeta(): Promise<IDbMeta> {
+    try {
+      // start with schemas
+      await this.iterateAndAddSchemas();
+
+      // run extensions parser
+      if (getQueryParser() != null) {
+        const parserPromises = [];
+        Object.values(getQueryParser()).forEach(async (parser: (dbClient: DbAppClient, dbMeta: IDbMeta) => void) => {
+          parserPromises.push(parser(this.dbAppClient, this.dbMeta));
+        });
+        // await all parsers to finish their jobs
+        await Promise.all(parserPromises);
+      }
+
+      // return copy instead of ref
+      return deepmerge({}, this.dbMeta);
+    } catch (err) {
+      throw err;
+    }
+  }
 }

@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function getEnumValue(value) {
     return {
-        kind: 'EnumValueDefinition',
+        kind: "EnumValueDefinition",
         name: {
-            kind: 'Name',
+            kind: "Name",
             value
         },
         directives: []
@@ -12,9 +12,9 @@ function getEnumValue(value) {
 }
 function getEnumDefinition(name, values) {
     return {
-        kind: 'EnumTypeDefinition',
+        kind: "EnumTypeDefinition",
         name: {
-            kind: 'Name',
+            kind: "Name",
             value: name
         },
         directives: [],

@@ -1,4 +1,3 @@
-
 export function parseReadField(ctx) {
   const { fieldName, readExpressions } = ctx;
 
@@ -8,19 +7,22 @@ export function parseReadField(ctx) {
 
     const columnExpression = `"${localTable}"."${fieldName}"`;
 
-    const {
-      publicFieldSql,
-      authFieldSql,
-      gqlFieldDefinition
-    } = defaultFieldCreator.create(readExpressions[fieldName], JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)), columnExpression, fieldName);
+    const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(
+      readExpressions[fieldName],
+      JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)),
+      columnExpression,
+      fieldName
+    );
 
-    return [{
+    return [
+      {
         gqlFieldName: fieldName,
         nativeFieldName: fieldName,
         publicFieldSql,
         authFieldSql,
         gqlFieldDefinition
-      }];
+      }
+    ];
   }
   return null;
 }

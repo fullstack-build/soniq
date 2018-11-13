@@ -1,6 +1,5 @@
 export function getRelationMetasFromDefinition(field) {
-
-  if (field.type.kind === 'NamedType') {
+  if (field.type.kind === "NamedType") {
     return {
       foreignGqlTypeName: field.type.name.value,
       isNonNullType: false,
@@ -8,7 +7,7 @@ export function getRelationMetasFromDefinition(field) {
     };
   }
 
-  if (field.type.kind === 'NonNullType' && field.type.type.kind === 'NamedType') {
+  if (field.type.kind === "NonNullType" && field.type.type.kind === "NamedType") {
     return {
       foreignGqlTypeName: field.type.type.name.value,
       isNonNullType: true,
@@ -16,9 +15,7 @@ export function getRelationMetasFromDefinition(field) {
     };
   }
 
-  if (field.type.kind === 'ListType' &&
-    field.type.type.kind === 'NonNullType' &&
-    field.type.type.type.kind === 'NamedType') {
+  if (field.type.kind === "ListType" && field.type.type.kind === "NonNullType" && field.type.type.type.kind === "NamedType") {
     return {
       foreignGqlTypeName: field.type.type.type.name.value,
       isNonNullType: false,
@@ -26,10 +23,12 @@ export function getRelationMetasFromDefinition(field) {
     };
   }
 
-  if (field.type.kind === 'NonNullType' &&
-    field.type.type.kind === 'ListType' &&
-    field.type.type.type.kind === 'NonNullType' &&
-    field.type.type.type.type.kind === 'NamedType') {
+  if (
+    field.type.kind === "NonNullType" &&
+    field.type.type.kind === "ListType" &&
+    field.type.type.type.kind === "NonNullType" &&
+    field.type.type.type.type.kind === "NamedType"
+  ) {
     return {
       foreignGqlTypeName: field.type.type.type.type.name.value,
       isNonNullType: true,
@@ -37,5 +36,5 @@ export function getRelationMetasFromDefinition(field) {
     };
   }
 
-  throw new Error('Invalid relation for field: ' + JSON.stringify(field, null, 2));
+  throw new Error(`Invalid relation for field: ${JSON.stringify(field, null, 2)}`);
 }

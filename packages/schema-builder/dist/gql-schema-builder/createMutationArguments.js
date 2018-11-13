@@ -2,17 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function getInputArgument(gqlInputTypeName) {
     return {
-        kind: 'InputValueDefinition',
+        kind: "InputValueDefinition",
         name: {
-            kind: 'Name',
-            value: 'input'
+            kind: "Name",
+            value: "input"
         },
         type: {
-            kind: 'NonNullType',
+            kind: "NonNullType",
             type: {
-                kind: 'NamedType',
+                kind: "NamedType",
                 name: {
-                    kind: 'Name',
+                    kind: "Name",
                     value: gqlInputTypeName
                 }
             }
@@ -22,8 +22,6 @@ function getInputArgument(gqlInputTypeName) {
     };
 }
 function createMutationArguments(gqlInputTypeName) {
-    return [
-        getInputArgument(gqlInputTypeName)
-    ];
+    return [getInputArgument(gqlInputTypeName)];
 }
 exports.createMutationArguments = createMutationArguments;

@@ -1,8 +1,7 @@
+import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { parseDirectives } from "../utils/parseDirectives";
 
-import { CreateExpressions, orderExpressions } from '../createExpressions';
-import { parseDirectives } from '../utils/parseDirectives';
-
-import { createView } from './helpers';
+import { createView } from "./helpers";
 
 export function buildDeleteView(table, expressionsInput, context, extensions, config) {
   // Get some data from table
@@ -16,10 +15,10 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
     name: mutationName,
     viewSchemaName: config.schemaName,
     viewName: mutationName,
-    type: 'DELETE',
+    type: "DELETE",
     requiresAuth: false,
     gqlTypeName,
-    gqlReturnTypeName: 'ID',
+    gqlReturnTypeName: "ID",
     extensions: {},
     gqlInputTypeName
   };
@@ -28,18 +27,18 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
   const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
   newGqlTypeDefinition.fields = [
     {
-      kind: 'InputValueDefinition',
+      kind: "InputValueDefinition",
       name: {
-        kind: 'Name',
-        value: 'id'
+        kind: "Name",
+        value: "id"
       },
       type: {
-        kind: 'NonNullType',
+        kind: "NonNullType",
         type: {
-          kind: 'NamedType',
+          kind: "NamedType",
           name: {
-            kind: 'Name',
-            value: 'ID',
+            kind: "Name",
+            value: "ID"
           }
         }
       },
@@ -48,9 +47,9 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
     }
   ];
   newGqlTypeDefinition.name.value = gqlInputTypeName;
-  newGqlTypeDefinition.kind = 'InputObjectTypeDefinition';
+  newGqlTypeDefinition.kind = "InputObjectTypeDefinition";
 
-  const localTable = '_local_table_';
+  const localTable = "_local_table_";
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
   const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
@@ -68,8 +67,9 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
   const viewSql = createView(table, config, mutationName, expressions);
 
   if (meta.requiresAuth !== true) {
-    throw new Error('Due to security reasons it is not allowed to create DELETE permissions ' +
-    `without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
+    throw new Error(
+      `Due to security reasons it is not allowed to create DELETE permissions without auth expressions. Look at the permission for type '${gqlTypeName}'.`
+    );
   }
 
   return {

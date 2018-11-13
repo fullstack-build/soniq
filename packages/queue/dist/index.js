@@ -32,65 +32,63 @@ let QueueFactory = class QueueFactory {
         // set DI dependencies
         this.generalPool = generalPool;
         // register package config
-        config.registerConfig('Queue', __dirname + '/../config');
+        config.registerConfig("Queue", `${__dirname}/../config`);
         // init logger
         this.logger = loggerFactory.create(this.constructor.name);
+        // add to boot loader
+        bootLoader.addBootFunction(this.boot.bind(this));
     }
-    getQueue() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // create queue if not yet available
-            if (this.queue == null) {
-                yield this.start();
-            }
-            return this.queue;
-        });
-    }
-    start() {
+    boot() {
         return __awaiter(this, void 0, void 0, function* () {
             let boss;
-            const queueConfig = di_1.Container.get(config_1.Config).getConfig('Queue');
+            const queueConfig = di_1.Container.get(config_1.Config).getConfig("Queue");
             // create new connection if set in config, otherwise use one from the pool
-            if (queueConfig != null &&
-                queueConfig.host &&
-                queueConfig.database &&
-                queueConfig.user &&
-                queueConfig.password) {
+            if (queueConfig != null && queueConfig.host && queueConfig.database && queueConfig.user && queueConfig.password) {
                 // create a PGBoss instance
                 boss = new PgBoss(queueConfig);
             }
             else {
                 if (this.generalPool.pgPool == null) {
-                    throw Error('DB.generalPool not ready');
+                    throw Error("DB.generalPool not ready");
                 }
                 // get new connection from the pool
                 const pgCon = yield this.generalPool.pgPool.connect();
                 // Add `close` and `executeSql` functions for PgBoss to function
-                const pgBossDB = Object.assign(pgCon, {
+                const pgBossDB = {
                     close: pgCon.release,
-                    executeSql: pgCon.query
-                });
+                    executeSql: (...args) => __awaiter(this, void 0, void 0, function* () {
+                        return pgCon.query.apply(pgCon, args);
+                    })
+                };
                 // create a PGBoss instance
                 boss = new PgBoss(Object.assign({ db: pgBossDB }, queueConfig));
             }
             // log errors to warn
-            boss.on('error', this.logger.warn);
+            boss.on("error", this.logger.warn);
             // try to start PgBoss
             try {
                 this.queue = yield boss.start();
             }
             catch (err) {
-                this.logger.warn('start.error', err);
+                this.logger.warn("start.error", err);
             }
-            return this.queue;
         });
+    }
+    getQueue() {
+        if (this.queue != null) {
+            return this.queue;
+        }
+        else {
+            throw new Error("Queue.not.ready");
+        }
     }
 };
 QueueFactory = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(1, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(2, di_1.Inject(type => db_1.DbGeneralPool)),
-    __param(3, di_1.Inject(type => config_1.Config)),
+    __param(0, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(1, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(2, di_1.Inject((type) => db_1.DbGeneralPool)),
+    __param(3, di_1.Inject((type) => config_1.Config)),
     __metadata("design:paramtypes", [Object, Object, Object, config_1.Config])
 ], QueueFactory);
 exports.QueueFactory = QueueFactory;

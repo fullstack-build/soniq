@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function filterExpressions(expressionObject) {
-    return expressionObject.gqlReturnType === 'Boolean' && expressionObject.isRoot === true;
+    return expressionObject.gqlReturnType === "Boolean" && expressionObject.isRoot === true;
 }
 function getExpression(expressionObject) {
     return `(${expressionObject.sql})`;
@@ -13,9 +13,9 @@ function createView(table, config, name, expressions) {
     sql += `SELECT "_local_table_"."id" FROM "${table.schemaName}"."${table.tableName}" AS "_local_table_"`;
     const conditionExpressions = expressions.filter(filterExpressions);
     if (conditionExpressions.length > 0) {
-        sql += ` WHERE ${conditionExpressions.map(getExpression).join(' OR ')}`;
+        sql += ` WHERE ${conditionExpressions.map(getExpression).join(" OR ")}`;
     }
-    sql += ';';
+    sql += ";";
     statements.push(sql);
     statements.push(`GRANT SELECT, DELETE ON "${config.schemaName}"."${name}" TO "${config.userName}";`);
     return statements;

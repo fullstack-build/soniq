@@ -13,10 +13,10 @@ function buildDeleteView(table, expressionsInput, context, extensions, config) {
         name: mutationName,
         viewSchemaName: config.schemaName,
         viewName: mutationName,
-        type: 'DELETE',
+        type: "DELETE",
         requiresAuth: false,
         gqlTypeName,
-        gqlReturnTypeName: 'ID',
+        gqlReturnTypeName: "ID",
         extensions: {},
         gqlInputTypeName
     };
@@ -24,18 +24,18 @@ function buildDeleteView(table, expressionsInput, context, extensions, config) {
     const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
     newGqlTypeDefinition.fields = [
         {
-            kind: 'InputValueDefinition',
+            kind: "InputValueDefinition",
             name: {
-                kind: 'Name',
-                value: 'id'
+                kind: "Name",
+                value: "id"
             },
             type: {
-                kind: 'NonNullType',
+                kind: "NonNullType",
                 type: {
-                    kind: 'NamedType',
+                    kind: "NamedType",
                     name: {
-                        kind: 'Name',
-                        value: 'ID',
+                        kind: "Name",
+                        value: "ID"
                     }
                 }
             },
@@ -44,8 +44,8 @@ function buildDeleteView(table, expressionsInput, context, extensions, config) {
         }
     ];
     newGqlTypeDefinition.name.value = gqlInputTypeName;
-    newGqlTypeDefinition.kind = 'InputObjectTypeDefinition';
-    const localTable = '_local_table_';
+    newGqlTypeDefinition.kind = "InputObjectTypeDefinition";
+    const localTable = "_local_table_";
     // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
     const expressionCreator = new createExpressions_1.CreateExpressions(context.expressions, localTable, true);
     expressionCreator.parseExpressionInput(expressionsInput);
@@ -56,8 +56,7 @@ function buildDeleteView(table, expressionsInput, context, extensions, config) {
     });
     const viewSql = helpers_1.createView(table, config, mutationName, expressions);
     if (meta.requiresAuth !== true) {
-        throw new Error('Due to security reasons it is not allowed to create DELETE permissions ' +
-            `without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
+        throw new Error(`Due to security reasons it is not allowed to create DELETE permissions without auth expressions. Look at the permission for type '${gqlTypeName}'.`);
     }
     return {
         gqlDefinitions: [newGqlTypeDefinition],

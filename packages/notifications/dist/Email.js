@@ -33,18 +33,18 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 let Email = class Email {
     constructor(loggerFactory, queueFactory, config, schemaBuilder, bootLoader) {
         this.isReady = false;
-        this.queueName = 'notifications.Email';
+        this.queueName = "notifications.Email";
         // set DI dependencies
         this.queueFactory = queueFactory;
         this.config = config;
         // register package config
-        const notificationsConfig = this.config.registerConfig('Notifications', __dirname + '/../config');
+        const notificationsConfig = this.config.registerConfig("Notifications", `${__dirname}/../config`);
         this.CONFIG = notificationsConfig.Email;
         this.logger = loggerFactory.create(this.constructor.name);
         // create Mailgen
         this.mailGenerator = new Mailgen(this.CONFIG.mailgen);
         // add migration path
-        schemaBuilder.getDbSchemaBuilder().addMigrationPath(__dirname + '/..');
+        schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
         // add to boot loader
         bootLoader.addBootFunction(this.boot.bind(this));
     }
@@ -54,11 +54,11 @@ let Email = class Email {
             if (this.CONFIG.testing) {
                 nodemailer_1.createTestAccount((err, account) => {
                     if (err != null) {
-                        this.logger.warn('testingAccount.creation.error', err);
+                        this.logger.warn("testingAccount.creation.error", err);
                         throw err;
                     }
                     else {
-                        this.logger.trace('testingAccount.creation.success', account.user);
+                        this.logger.trace("testingAccount.creation.success", account.user);
                     }
                     this.createTransport({
                         host: account.smtp.host,
@@ -76,14 +76,21 @@ let Email = class Email {
                     this.createTransport(this.CONFIG.transport.smtp);
                 }
             }
-            // subscribe to sendmail jobs in queue
-            const queue = yield this.queueFactory.getQueue();
-            queue.subscribe(this.queueName, this._sendMail.bind(this))
-                .then(() => this.logger.trace('subscribed.job.sendmail.success'))
-                .catch((err) => {
-                this.logger.warn('subscribed.job.sendmail.error', err);
+            try {
+                // subscribe to sendmail jobs in queue
+                const queue = yield this.queueFactory.getQueue();
+                queue
+                    .subscribe(this.queueName, this._sendMail.bind(this))
+                    .then(() => this.logger.trace("subscribed.job.sendmail.success"))
+                    .catch((err) => {
+                    this.logger.warn("subscribed.job.sendmail.error", err);
+                    throw err;
+                });
+            }
+            catch (err) {
+                this.logger.warn(err);
                 throw err;
-            });
+            }
         });
     }
     _sendMail(job) {
@@ -91,24 +98,25 @@ let Email = class Email {
             const message = job.data;
             try {
                 const mailInfo = yield this.transport.sendMail(message);
-                this.logger.trace('sendMessage.transport.sendMail.success', mailInfo);
+                this.logger.trace("sendMessage.transport.sendMail.success", mailInfo);
                 // extract email url for testing
                 if (this.CONFIG.testing) {
-                    this.logger.trace('testingAccount.sendMail.success.url', nodemailer_1.getTestMessageUrl(mailInfo));
+                    this.logger.trace("testingAccount.sendMail.success.url", nodemailer_1.getTestMessageUrl(mailInfo));
                 }
                 // send event with email success
                 this.eventEmitter.emit(`sendMessage.success.${job.id}`);
                 // mark job as done
-                job.done()
-                    .then(() => this.logger.trace('sendMessage.job.marked.completed.success', job.id))
+                job
+                    .done()
+                    .then(() => this.logger.trace("sendMessage.job.marked.completed.success", job.id))
                     .catch((err) => {
-                    this.logger.warn('sendMessage.job.marked.completed.error', err);
+                    this.logger.warn("sendMessage.job.marked.completed.error", err);
                     throw err;
                 });
                 return mailInfo;
             }
             catch (err) {
-                this.logger.warn('sendMessage.transport.sendMail.error', err.message);
+                this.logger.warn("sendMessage.transport.sendMail.error", err.message);
                 this.eventEmitter.emit(`sendMessage.error.${job.id}`);
                 throw err;
             }
@@ -119,14 +127,15 @@ let Email = class Email {
         return __awaiter(this, void 0, void 0, function* () {
             // create reusable transporter object using the default SMTP transport
             this.transport = nodemailer_1.createTransport(credentials);
-            this.transport.use('compile', nodemailer_html_to_text_1.htmlToText(this.CONFIG.htmlToText));
+            this.transport.use("compile", nodemailer_html_to_text_1.htmlToText(this.CONFIG.htmlToText));
             this.isReady = true;
-            this.eventEmitter.emit('transport.ready');
-            this.logger.trace('transport.ready');
+            this.eventEmitter.emit("transport.ready");
+            this.logger.trace("transport.ready");
         });
     }
     sendMessage(to, subject, html, text = null, attachments = [], from, jobOptions = {}) {
         return __awaiter(this, void 0, void 0, function* () {
+            // todo: jobOptions: use pg-boss interface here
             if (this.isReady) {
                 // Message object
                 const message = { from, to, subject, html, text };
@@ -136,18 +145,18 @@ let Email = class Email {
                     // create sendmail job in queue
                     const queue = yield this.queueFactory.getQueue();
                     const jobId = yield queue.publish(this.queueName, message, finalJobOptions);
-                    this.logger.trace('sendMessage.job.creation.success', jobId);
+                    this.logger.trace("sendMessage.job.creation.success", jobId);
                     return jobId;
                 }
                 catch (err) {
-                    this.logger.warn('sendMessage.job.creation.error', err);
+                    this.logger.warn("sendMessage.job.creation.error", err);
                     throw err;
                 }
             }
             else {
                 // retry sending message when transport is ready
-                this.eventEmitter.on('transport.ready', () => __awaiter(this, void 0, void 0, function* () {
-                    return yield this.sendMessage(to, subject, html, text, attachments, from);
+                this.eventEmitter.on("transport.ready", () => __awaiter(this, void 0, void 0, function* () {
+                    return this.sendMessage(to, subject, html, text, attachments, from);
                 }));
             }
         });
@@ -168,11 +177,11 @@ __decorate([
 ], Email.prototype, "eventEmitter", void 0);
 Email = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => queue_1.QueueFactory)),
-    __param(2, di_1.Inject(type => config_1.Config)),
-    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
-    __param(4, di_1.Inject(type => boot_loader_1.BootLoader)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject((type) => queue_1.QueueFactory)),
+    __param(2, di_1.Inject((type) => config_1.Config)),
+    __param(3, di_1.Inject((type) => schema_builder_1.SchemaBuilder)),
+    __param(4, di_1.Inject((type) => boot_loader_1.BootLoader)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
 ], Email);
 exports.Email = Email;

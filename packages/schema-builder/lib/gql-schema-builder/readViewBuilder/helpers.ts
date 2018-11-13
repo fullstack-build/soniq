@@ -1,9 +1,9 @@
 function filterBooleanExpressions(expressionObject) {
-  return expressionObject.gqlReturnType === 'Boolean';
+  return expressionObject.gqlReturnType === "Boolean";
 }
 
 function createExpressionSql(expressionObject) {
-  if (expressionObject.type === 'function') {
+  if (expressionObject.type === "function") {
     return `${expressionObject.sql} AS "${expressionObject.name}"`;
   }
   if (expressionObject.requiresLateral) {
@@ -22,19 +22,20 @@ export function createView(table, config, name, fields, expressions) {
   statements.push(`DROP VIEW IF EXISTS "${config.schemaName}"."${name}";`);
 
   let sql = `CREATE OR REPLACE VIEW "${config.schemaName}"."${name}" WITH (security_barrier) AS `;
-  sql += `SELECT ${fields.join(', ')} FROM "${table.schemaName}"."${table.tableName}" AS "_local_table_"`;
+  // TODO: Dustin: Put _local_table_ into constant for all queries
+  sql += `SELECT ${fields.join(", ")} FROM "${table.schemaName}"."${table.tableName}" AS "_local_table_"`;
 
   if (expressions.length > 0) {
-    sql += `, ${expressions.map(createExpressionSql).join(', ')}`;
+    sql += `, ${expressions.map(createExpressionSql).join(", ")}`;
   }
 
   const conditionExpressions = expressions.filter(filterBooleanExpressions);
 
   if (conditionExpressions.length > 0) {
-    sql += ` WHERE ${conditionExpressions.map(getExpressionName).join(' OR ')}`;
+    sql += ` WHERE ${conditionExpressions.map(getExpressionName).join(" OR ")}`;
   }
 
-  sql += ';';
+  sql += ";";
 
   statements.push(sql);
 
@@ -45,16 +46,16 @@ export function createView(table, config, name, fields, expressions) {
 
 export function createGqlField(name, gqlReturnType) {
   return {
-    kind: 'FieldDefinition',
+    kind: "FieldDefinition",
     name: {
-      kind: 'Name',
+      kind: "Name",
       value: name
     },
     arguments: [],
     type: {
-      kind: 'NamedType',
+      kind: "NamedType",
       name: {
-        kind: 'Name',
+        kind: "Name",
         value: gqlReturnType
       }
     },

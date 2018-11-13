@@ -1,6 +1,5 @@
-
 function filterExpressions(expressionObject) {
-  return expressionObject.gqlReturnType === 'Boolean' && expressionObject.isRoot === true;
+  return expressionObject.gqlReturnType === "Boolean" && expressionObject.isRoot === true;
 }
 
 function getExpression(expressionObject) {
@@ -18,10 +17,10 @@ export function createView(table, config, name, expressions) {
   const conditionExpressions = expressions.filter(filterExpressions);
 
   if (conditionExpressions.length > 0) {
-    sql += ` WHERE ${conditionExpressions.map(getExpression).join(' OR ')}`;
+    sql += ` WHERE ${conditionExpressions.map(getExpression).join(" OR ")}`;
   }
 
-  sql += ';';
+  sql += ";";
 
   statements.push(sql);
 

@@ -5,19 +5,24 @@ export interface IEventEmitter {
 }
 export declare class EventEmitter implements IEventEmitter {
     private config;
+    private readonly CONFIG;
     private eventEmitter;
+    private readonly THIS_NODE_ID_PLACEHOLDER;
     private nodeId;
     private dbClient;
-    private namespace;
+    private readonly namespace;
     private listenersCache;
     private emittersCache;
     constructor(config: any, bootLoader: any);
     private boot;
-    emit(eventName: string, ...args: any[]): void;
-    on(eventName: string, listener: (...args: any[]) => void): void;
-    onAnyInstance(eventName: string, listener: (...args: any[]) => void): void;
-    private _emit;
     private finishInitialisation;
-    private sendEventToPg;
     private receiveEventFromPg;
+    private _emit;
+    private sendEventToPg;
+    private _on;
+    emit(eventName: string, ...args: any[]): void;
+    on(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    once(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    onAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    onceAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
 }

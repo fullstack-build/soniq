@@ -1,8 +1,5 @@
-
-import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from '../utils';
-import {
-  _
-} from 'lodash';
+import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
+import { _ } from "lodash";
 
 function getRelations(dbMeta, relationName, tableName) {
   const relationConnections = dbMeta.relations[relationName];
@@ -71,14 +68,16 @@ export function parseReadField(ctx) {
       newGqlFieldDefinition.arguments = getQueryArguments(foreignGqlTypeName);
     }
 
-    return [{
+    return [
+      {
         gqlFieldName: fieldName,
         nativeFieldName,
         publicFieldSql,
         authFieldSql,
         gqlFieldDefinition: newGqlFieldDefinition,
         meta
-      }];
+      }
+    ];
   }
   return null;
 }
@@ -94,7 +93,7 @@ export function parseUpdateField(ctx) {
     const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
 
     if (ownRelation.columnName != null) {
-      if (foreignRelation != null && foreignRelation.type === 'MANY' && ownRelation.type === 'MANY') {
+      if (foreignRelation != null && foreignRelation.type === "MANY" && ownRelation.type === "MANY") {
         // In case of ManyToMany it's an array
         return [createIdArrayField(ownRelation.columnName, isNonNullType)];
       } else {

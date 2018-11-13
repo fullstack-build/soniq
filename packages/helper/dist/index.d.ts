@@ -1,5 +1,5 @@
-export declare namespace helper {
-    const loadFilesByGlobPattern: (pattern: string) => Promise<any[]>;
-    const requireFilesByGlobPattern: (pattern: string) => Promise<any[]>;
-    const requireFilesByGlobPatternAsObject: (pattern: string) => Promise<{}>;
+export declare abstract class AHelper {
+    static loadFilesByGlobPattern(pattern: string): Promise<any[]>;
+    static requireFilesByGlobPattern(pattern: string): Promise<any[]>;
+    static requireFilesByGlobPatternAsObject(pattern: string): Promise<{}>;
 }

@@ -50,17 +50,19 @@ let GraphQl = class GraphQl {
         this.operations = {};
         this.hooks = {
             preQuery: [],
+            // postQuery: No use case, since everything can be achieved with custom fields or permissions
+            // preMutation = preQuery (Mutation is a Query in GraphQL)
             postMutation: [],
             preMutationCommit: []
         };
         // register package config
-        this.graphQlConfig = config.registerConfig('GraphQl', `${__dirname}/../config`);
+        this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
         this.loggerFactory = loggerFactory;
         this.config = config;
         this.dbGeneralPool = dbGeneralPool;
         this.server = server;
         this.schemaBuilder = schemaBuilder;
-        let extendSchema = '';
+        let extendSchema = "";
         this.logger = this.loggerFactory.create(this.constructor.name);
         this.ENVIRONMENT = this.config.ENVIRONMENT;
         Object.values(compareOperators_1.operatorsObject).forEach((operator) => {
@@ -68,7 +70,7 @@ let GraphQl = class GraphQl {
                 extendSchema += `${operator.extendSchema}\n`;
             }
         });
-        if (extendSchema !== '') {
+        if (extendSchema !== "") {
             this.schemaBuilder.extendSchema(extendSchema);
         }
         // add boot function to boot loader
@@ -79,18 +81,20 @@ let GraphQl = class GraphQl {
             const gqlKoaRouter = new KoaRouter();
             // Load resolvers
             const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-            this.addResolvers(yield helper_1.helper.requireFilesByGlobPatternAsObject(resolversPattern));
+            this.addResolvers(yield helper_1.AHelper.requireFilesByGlobPatternAsObject(resolversPattern));
             const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
             const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
             const schema = graphql_tools_1.makeExecutableSchema({
                 typeDefs: runtimeSchema,
-                resolvers: resolvers_1.getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger),
+                resolvers: resolvers_1.getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
             });
             this.apolloSchema = schema;
             this.apolloClient = new apollo_client_1.ApolloClient({
                 ssrMode: true,
                 cache: new apollo_cache_inmemory_1.InMemoryCache(),
-                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
+                link: new apollo_link_schema_1.SchemaLink({
+                    schema: this.apolloSchema,
+                    context: {
                         ctx: {},
                         accessToken: null
                     }
@@ -98,24 +102,24 @@ let GraphQl = class GraphQl {
             });
             const setCacheHeaders = (ctx, next) => __awaiter(this, void 0, void 0, function* () {
                 yield next();
-                let cacheHeader = 'no-store';
+                let cacheHeader = "no-store";
                 // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
                 // || (ctx.body != null && ctx.body.errors != null && ctx.body.errors.length > 0)
                 if (ctx.state.includesMutation === true) {
-                    cacheHeader = 'no-store';
+                    cacheHeader = "no-store";
                 }
                 else {
                     if (ctx.state.authRequired === true) {
-                        cacheHeader = 'privat, max-age=600';
+                        cacheHeader = "privat, max-age=600"; // TODO: To config
                     }
                     else {
-                        cacheHeader = 'public, max-age=600';
+                        cacheHeader = "public, max-age=600";
                     }
                 }
-                ctx.set('Cache-Control', cacheHeader);
+                ctx.set("Cache-Control", cacheHeader);
             });
             const enforceOriginMatch = (ctx, next) => {
-                const errorMessage = 'All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.';
+                const errorMessage = "All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.";
                 // If securityContext is missing, don't allow the request.
                 if (ctx.securityContext == null) {
                     return ctx.throw(400, errorMessage);
@@ -147,6 +151,7 @@ let GraphQl = class GraphQl {
             gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, graphqlKoa(gQlParam));
             // graphiql
             if (this.graphQlConfig.graphiQlEndpointActive) {
+                // TODO: === true
                 gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
             }
             const app = this.server.getApp();
@@ -155,6 +160,7 @@ let GraphQl = class GraphQl {
         });
     }
     addPreQueryHook(fn) {
+        // TODO: Remove
         this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
         this.hooks.preQuery.push(fn);
     }
@@ -165,7 +171,7 @@ let GraphQl = class GraphQl {
         this.hooks[name].push(fn);
     }
     addResolvers(resolversObject) {
-        this.resolvers = Object.assign(this.resolvers, resolversObject);
+        this.resolvers = Object.assign({}, this.resolvers, resolversObject);
     }
     prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
         gqlRuntimeDocument.definitions.push(getOperatorsDefinition_1.getOperatorsDefinition(compareOperators_1.operatorsObject));
@@ -175,30 +181,33 @@ let GraphQl = class GraphQl {
     }
     getApolloClient(accessToken = null, ctx = {}) {
         if (this.apolloSchema == null) {
-            throw new Error('Please call getApolloClient after everything booted.');
+            throw new Error("Please call getApolloClient after booting has completed.");
         }
         if (accessToken != null) {
             return new apollo_client_1.ApolloClient({
                 ssrMode: true,
                 cache: new apollo_cache_inmemory_1.InMemoryCache(),
-                link: new apollo_link_schema_1.SchemaLink({ schema: this.apolloSchema, context: {
+                link: new apollo_link_schema_1.SchemaLink({
+                    schema: this.apolloSchema,
+                    context: {
                         ctx,
                         accessToken
                     }
                 })
             });
         }
+        // return generic (not authorized) apollo client
         return this.apolloClient;
     }
 };
 GraphQl = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject(type => logger_1.LoggerFactory)),
-    __param(1, di_1.Inject(type => config_1.Config)),
-    __param(2, di_1.Inject(type => boot_loader_1.BootLoader)),
-    __param(3, di_1.Inject(type => schema_builder_1.SchemaBuilder)),
-    __param(4, di_1.Inject(type => server_1.Server)),
-    __param(5, di_1.Inject(type => db_1.DbGeneralPool)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
+    __param(1, di_1.Inject((type) => config_1.Config)),
+    __param(2, di_1.Inject((type) => boot_loader_1.BootLoader)),
+    __param(3, di_1.Inject((type) => schema_builder_1.SchemaBuilder)),
+    __param(4, di_1.Inject((type) => server_1.Server)),
+    __param(5, di_1.Inject((type) => db_1.DbGeneralPool)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object, Object])
 ], GraphQl);
 exports.GraphQl = GraphQl;

@@ -10,18 +10,21 @@ function parsePermissions(permissions, context, extensions, config) {
         mutation: {},
         permissionMeta: {}
     };
-    createSchemaBasics_1.createSchemaBasics().forEach(d => context.gqlDocument.definitions.push(d));
+    // TODO: Dustin: evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
+    createSchemaBasics_1.createSchemaBasics().forEach((d) => context.gqlDocument.definitions.push(d));
     const sql = [];
+    // TODO: Dustin: same story... evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
     const currentExtensions = extensions.slice().concat(extensions_1.extensions.slice());
     permissions.forEach((permission) => {
         const result = parsePermission_1.parsePermission(permission, context, currentExtensions, config);
-        meta.query = Object.assign(meta.query, result.meta.query);
-        meta.mutation = Object.assign(meta.mutation, result.meta.mutation);
-        meta.permissionMeta = Object.assign(meta.permissionMeta, result.meta.permissionMeta);
-        result.sql.forEach(q => sql.push(q));
+        meta.query = Object.assign({}, meta.query, result.meta.query);
+        meta.mutation = Object.assign({}, meta.mutation, result.meta.mutation);
+        meta.permissionMeta = Object.assign({}, meta.permissionMeta, result.meta.permissionMeta);
+        result.sql.forEach((q) => sql.push(q));
         context.gqlDocument = result.gqlDocument;
     });
     const modifiedMutation = {};
+    // Loop over mutations to modify them by extensions (e.g. add input arguments)
     Object.values(meta.mutation).forEach((mutation) => {
         const extendArguments = [];
         let myMutation = mutation;
@@ -45,6 +48,7 @@ function parsePermissions(permissions, context, extensions, config) {
         modifiedMutation[myMutation.name] = mutation;
     });
     meta.mutation = modifiedMutation;
+    // Loop over extensions to add definitions
     currentExtensions.forEach((parser) => {
         if (parser.extendDefinitions != null) {
             const definitions = parser.extendDefinitions(context.gqlDocument, meta, sql);

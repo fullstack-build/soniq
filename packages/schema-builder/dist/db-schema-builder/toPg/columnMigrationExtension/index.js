@@ -6,6 +6,6 @@ function registerColumnMigrationExtension(extensionNameInLowerCase, fn) {
 }
 exports.registerColumnMigrationExtension = registerColumnMigrationExtension;
 function getColumnMigrationExtension(extensionName) {
-    return (extensionName != null) ? columnMigrationExtensions[extensionName] : columnMigrationExtensions;
+    return extensionName != null ? columnMigrationExtensions[extensionName] : columnMigrationExtensions;
 }
 exports.getColumnMigrationExtension = getColumnMigrationExtension;
