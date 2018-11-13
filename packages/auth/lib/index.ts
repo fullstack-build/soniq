@@ -1015,7 +1015,11 @@ export class Auth {
         const accessToken = args.accessToken || context.accessToken;
         const tempToken = args.tempToken || false;
         const tempTokenExpiration = args.tempTokenExpiration || false;
-        return await this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+        const tokenMeta = await this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+        if (tokenMeta.isValid !== true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        }
+        return tokenMeta;
       },
       '@fullstack-one/auth/invalidateUserToken': async (obj, args, context, info, params) => {
         const accessToken = context.accessToken;
