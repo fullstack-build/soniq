@@ -19,13 +19,13 @@ export declare class FileStorage {
     private verifiers;
     private verifierObjects;
     constructor(loggerFactory: LoggerFactory, dbGeneralPool?: any, server?: any, bootLoader?: any, config?: any, graphQl?: any, schemaBuilder?: any, auth?: any);
-    private boot();
-    private postMutationHook(info, context);
-    private presignedPutObject(objectName);
-    private presignedGetObject(objectName);
-    private deleteFileAsAdmin(fName);
-    private deleteFile(fName, context);
-    private deleteObjects(filePrefix);
-    private getResolvers();
+    private boot;
+    private postMutationHook;
+    private presignedPutObject;
+    private presignedGetObject;
+    private deleteFileAsAdmin;
+    private deleteFile;
+    private deleteObjects;
+    private getResolvers;
     addVerifier(type: any, fn: any): void;
 }
