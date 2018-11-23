@@ -681,7 +681,7 @@ class SqlObjFromMigrationObject {
                   remove: true
                 }};
                 // remove old FK, keep column
-                _createSqlRelation(fullRelationFromNodeOneSide, true);
+                _createSqlRelation.call(this, fullRelationFromNodeOneSide, true);
                 */
                 // TO: find one side and copy and add "add" action
                 const fullRelationToNodeOneSide = Object.assign({}, Object.values(this.toDbMeta.relations[node.name]).find((relation) => {
@@ -690,7 +690,7 @@ class SqlObjFromMigrationObject {
                         add: true
                     } });
                 // recreate new FK, keep column
-                _createSqlRelation(this.fullRelationToNodeOneSide, true);
+                _createSqlRelation.call(this, this.fullRelationToNodeOneSide, true);
             }
         }
     }
