@@ -625,9 +625,12 @@ export class SqlObjFromMigrationObject {
             }
             // create new one
             if (optionsObj.action.add || optionsObj.action.change) {
-              uniqueSql.up.push(
-                `CREATE UNIQUE INDEX "${constraintName}" ON ${tableNameWithSchema}(${columnNamesAsStr}) WHERE (${optionsObj.node.condition});`
-              );
+              // make sure column names for constraint are set
+              if (columnNamesAsStr != null) {
+                uniqueSql.up.push(
+                  `CREATE UNIQUE INDEX "${constraintName}" ON ${tableNameWithSchema}(${columnNamesAsStr}) WHERE (${optionsObj.node.condition});`
+                );
+              }
             }
           }
         }
