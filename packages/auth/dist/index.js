@@ -385,7 +385,11 @@ let Auth = class Auth {
                 const accessToken = args.accessToken || context.accessToken;
                 const tempToken = args.tempToken || false;
                 const tempTokenExpiration = args.tempTokenExpiration || false;
-                return this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+                const tokenMeta = yield this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+                if (tokenMeta.isValid !== true) {
+                    context.ctx.cookies.set(this.authConfig.cookie.name, null);
+                }
+                return tokenMeta;
             }),
             "@fullstack-one/auth/invalidateUserToken": (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 const accessToken = context.accessToken;

@@ -41,7 +41,12 @@ module.exports = {
   apiClientOrigin: '#?API_CLIENT',
   corsOptions: {
     allowMethods: ['GET', 'POST'],
-    credentials: true
+    credentials: true,
+    /**
+     * Added maxAge because of this: https://stackoverflow.com/a/29954326/4102308
+     * Chose 60 because it is default here: https://www.owasp.org/index.php/CORS_RequestPreflighScrutiny
+     */
+    maxAge: 60
   },
   privacyAgreementAcceptance: {
     tokenMaxAgeInSeconds: 86400, // One Day

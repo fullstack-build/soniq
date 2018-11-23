@@ -463,10 +463,7 @@ export class Auth {
             sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
           };
         } else {
-          return {
-            ...lData,
-            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
-          };
+          return { ...lData, sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000 };
         }
       },
       "@fullstack-one/auth/forgotPassword": async (obj, args, context, info, params) => {
@@ -480,7 +477,11 @@ export class Auth {
         const accessToken = args.accessToken || context.accessToken;
         const tempToken = args.tempToken || false;
         const tempTokenExpiration = args.tempTokenExpiration || false;
-        return this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+        const tokenMeta = await this.getTokenMeta(accessToken, tempToken, tempTokenExpiration);
+        if (tokenMeta.isValid !== true) {
+          context.ctx.cookies.set(this.authConfig.cookie.name, null);
+        }
+        return tokenMeta;
       },
       "@fullstack-one/auth/invalidateUserToken": async (obj, args, context, info, params) => {
         const accessToken = context.accessToken;
@@ -505,10 +506,7 @@ export class Auth {
             sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
           };
         } else {
-          return {
-            ...lData,
-            sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000
-          };
+          return { ...lData, sessionExpirationTimestamp: lData.payload.timestamp + lData.payload.userTokenMaxAgeInSeconds * 1000 };
         }
       },
       "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken": async (obj, args, context, info, params) => {
