@@ -238,11 +238,9 @@ export class PgToDbMeta {
 
         // default value
         if (column.column_default !== null) {
-          const isExpression = column.column_default.indexOf("::") === -1;
-          const value = isExpression ? column.column_default : column.column_default.split("::")[0].replace(/'/g, "");
           newColumn.defaultValue = {
-            isExpression,
-            value
+            value:
+              column.column_default.toLowerCase() === "true" ? true : column.column_default.toLowerCase() === "false" ? false : column.column_default
           };
         }
 

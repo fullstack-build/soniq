@@ -207,7 +207,6 @@ const GQL_JSON_PARSER = {
                 // set type to uuid
                 dbMetaNode.type = "uuid";
                 dbMetaNode.defaultValue = {
-                    isExpression: true,
                     // former uuid_generate_v4(), now a wrapper for INSERTS without SELECT permissions
                     value: "_meta.uuid_generate_v4()"
                 };

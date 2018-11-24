@@ -8,7 +8,6 @@ index_1.registerDirectiveParser("createdat", (gQlDirectiveNode, dbMetaNode, refD
     dbMetaNode.type = "customType";
     dbMetaNode.customType = "timestamp";
     dbMetaNode.defaultValue = {
-        isExpression: true,
         value: "timezone('UTC'::text, now())"
     };
 });
@@ -17,7 +16,6 @@ index_1.registerDirectiveParser("updatedat", (gQlDirectiveNode, dbMetaNode, refD
     dbMetaNode.type = "customType";
     dbMetaNode.customType = "timestamp";
     dbMetaNode.defaultValue = {
-        isExpression: true,
         value: "timezone('UTC'::text, now())"
     };
     dbMetaNode.extensions.triggerUpdatedAt = {

@@ -23,7 +23,6 @@ export interface IDbMeta {
               type: "computed" | "customResolver" | "varchar" | "int4" | "float8" | "bool" | "uuid" | "jsonb" | "relation" | "enum" | "customType";
               customType?: string;
               defaultValue?: {
-                isExpression: boolean;
                 value: "string";
               };
               relationName?: string;

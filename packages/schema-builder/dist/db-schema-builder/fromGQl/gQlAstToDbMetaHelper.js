@@ -5,10 +5,10 @@ const deepmerge = require("deepmerge");
 function setDefaultValueForColumn(gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) {
     const isExpression = _.get(gQlSchemaNode, "arguments[0].name.value").toLocaleLowerCase() === "expression";
     const defaultValue = _.get(gQlSchemaNode, "arguments[0].value.value");
+    const value = isExpression === true ? defaultValue : `'${defaultValue}'::character varying`;
     // add default object to column
     refDbMetaCurrentTableColumn.defaultValue = {
-        isExpression,
-        value: defaultValue
+        value
     };
 }
 exports.setDefaultValueForColumn = setDefaultValueForColumn;
