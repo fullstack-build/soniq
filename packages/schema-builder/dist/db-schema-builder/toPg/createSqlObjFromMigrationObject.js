@@ -430,23 +430,24 @@ class SqlObjFromMigrationObject {
                 thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" TYPE ${castType};`);
             }
         }
-        // add default values
+        // add default values // create or recreate
         if (node.defaultValue != null && node.defaultValue.value != null) {
-            if (node.defaultValue.isExpression) {
+            const defaultValueObj = this.splitActionFromNode(node.defaultValue);
+            if (defaultValueObj.node.isExpression) {
                 // set default - expression
-                if (action.add) {
-                    thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT ${node.defaultValue.value};`);
+                if (defaultValueObj.action.add || defaultValueObj.action.change) {
+                    thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT ${defaultValueObj.node.value};`);
                 }
-                else if (action.remove) {
+                else if (action.remove || defaultValueObj.action.change) {
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" DROP DEFAULT;`);
                 }
             }
             else {
                 // set default - value
-                if (action.add) {
-                    thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT '${node.defaultValue.value}';`);
+                if (defaultValueObj.action.add || defaultValueObj.action.change) {
+                    thisSql.up.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" SET DEFAULT ${defaultValueObj.node.value};`);
                 }
-                else if (action.remove) {
+                else if (action.remove || defaultValueObj.action.change) {
                     thisSql.down.push(`ALTER TABLE ${tableNameWithSchema} ALTER COLUMN "${columnName}" DROP DEFAULT;`);
                 }
             }

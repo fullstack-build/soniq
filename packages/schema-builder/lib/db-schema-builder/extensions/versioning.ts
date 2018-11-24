@@ -59,7 +59,7 @@ registerTableMigrationExtension(
       nodeSqlObj.up.push(`CREATE TABLE IF NOT EXISTS ${versionTableNameWithSchemaUp}
           (
             id uuid NOT NULL DEFAULT uuid_generate_v4(),
-            created_at timestamp without time zone DEFAULT now(),
+            created_at timestamp without time zone DEFAULT timezone('UTC'::text, now()),
             user_id uuid,
             created_by character varying(255),
             action _meta.versioning_action,

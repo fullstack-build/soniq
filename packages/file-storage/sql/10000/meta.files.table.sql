@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS "_meta"."Files" (
     "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-    "createdAt" timestamp without time zone NOT NULL DEFAULT now(),
+    "createdAt" timestamp without time zone NOT NULL DEFAULT timezone('UTC'::text, now()),
     "extension" varchar NOT NULL,
     "type" varchar NOT NULL,
     "ownerUserId" uuid NOT NULL,
