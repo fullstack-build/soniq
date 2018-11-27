@@ -23,6 +23,10 @@ export declare class EventEmitter implements IEventEmitter {
     emit(eventName: string, ...args: any[]): void;
     on(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
     once(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    removeListener(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    removeAllListeners(eventName: string): void;
     onAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
     onceAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    removeListenerAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void): void;
+    removeAllListenersAnyInstance(eventName: string): void;
 }

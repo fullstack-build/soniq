@@ -51,9 +51,11 @@ $auth.setNotificationFunction(async (user, caller, meta) => {
 
   // event example - multiple
   // register
-  $events.on("testEvent1", (nodeId, ...args) => {
+  const callback = (nodeId, ...args) => {
     console.log(`(on) testEvent1 cought on instance '${nodeId}' with payload`, args);
-  });
+    $events.removeListener("testEvent1", callback);
+  };
+  $events.on("testEvent1", callback);
 
   // fire three times
   $events.emit("testEvent1", 1);

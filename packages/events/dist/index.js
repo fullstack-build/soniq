@@ -158,6 +158,16 @@ let EventEmitter = class EventEmitter {
         const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
         this._on(eventNameForThisInstanceOnly, { once: true }, callback);
     }
+    removeListener(eventName, callback) {
+        // of nodeID not available, set THIS_NODE and replace later
+        const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+        this.eventEmitter.removeListener(eventNameForThisInstanceOnly, callback);
+    }
+    removeAllListeners(eventName) {
+        // of nodeID not available, set THIS_NODE and replace later
+        const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+        this.eventEmitter.removeAllListeners(eventNameForThisInstanceOnly);
+    }
     /*
      *   ON ANY INSTANCE
      *   Will also listen to the events fired on other parallel running nodes
@@ -169,6 +179,14 @@ let EventEmitter = class EventEmitter {
     onceAnyInstance(eventName, callback) {
         const eventNameForAnyInstance = `*.${eventName}`;
         this._on(eventNameForAnyInstance, { once: true }, callback);
+    }
+    removeListenerAnyInstance(eventName, callback) {
+        const eventNameForAnyInstance = `*.${eventName}`;
+        this.eventEmitter.removeListener(eventNameForAnyInstance, callback);
+    }
+    removeAllListenersAnyInstance(eventName) {
+        const eventNameForAnyInstance = `*.${eventName}`;
+        this.eventEmitter.removeAllListeners(eventNameForAnyInstance);
     }
 };
 EventEmitter = __decorate([

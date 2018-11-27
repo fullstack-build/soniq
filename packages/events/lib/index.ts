@@ -186,6 +186,18 @@ export class EventEmitter implements IEventEmitter {
     this._on(eventNameForThisInstanceOnly, { once: true }, callback);
   }
 
+  public removeListener(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
+    // of nodeID not available, set THIS_NODE and replace later
+    const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+    this.eventEmitter.removeListener(eventNameForThisInstanceOnly, callback);
+  }
+
+  public removeAllListeners(eventName: string) {
+    // of nodeID not available, set THIS_NODE and replace later
+    const eventNameForThisInstanceOnly = `${this.nodeId || this.THIS_NODE_ID_PLACEHOLDER}.${eventName}`;
+    this.eventEmitter.removeAllListeners(eventNameForThisInstanceOnly);
+  }
+
   /*
    *   ON ANY INSTANCE
    *   Will also listen to the events fired on other parallel running nodes
@@ -198,5 +210,15 @@ export class EventEmitter implements IEventEmitter {
   public onceAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
     const eventNameForAnyInstance = `*.${eventName}`;
     this._on(eventNameForAnyInstance, { once: true }, callback);
+  }
+
+  public removeListenerAnyInstance(eventName: string, callback: (nodeId: string, ...args: any[]) => void) {
+    const eventNameForAnyInstance = `*.${eventName}`;
+    this.eventEmitter.removeListener(eventNameForAnyInstance, callback);
+  }
+
+  public removeAllListenersAnyInstance(eventName: string) {
+    const eventNameForAnyInstance = `*.${eventName}`;
+    this.eventEmitter.removeAllListeners(eventNameForAnyInstance);
   }
 }
