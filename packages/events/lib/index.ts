@@ -103,7 +103,7 @@ export class EventEmitter implements IEventEmitter {
       const event = JSON.parse(msg.payload);
       // fire on this node if not from same node
       if (event.nodeId !== this.nodeId) {
-        const params = [event.name, event.nodeId, ...Object.values(event.args)];
+        const params = [event.name, ...Object.values(event.args)];
         this._emit.apply(this, params);
       }
     }
