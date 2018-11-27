@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auto-migrate",
-  "version": "0.4.27",
+  "version": "0.4.28",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,11 +22,11 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.4.23",
     "@fullstack-one/config": "^0.4.23",
-    "@fullstack-one/db": "^0.4.24",
+    "@fullstack-one/db": "^0.4.28",
     "@fullstack-one/di": "^0.4.23",
-    "@fullstack-one/events": "^0.4.24",
+    "@fullstack-one/events": "^0.4.28",
     "@fullstack-one/logger": "^0.4.24",
-    "@fullstack-one/schema-builder": "^0.4.27",
+    "@fullstack-one/schema-builder": "^0.4.28",
     "lodash": "^4.17.11"
   }
 }
