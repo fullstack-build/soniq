@@ -186,6 +186,7 @@ let Auth = class Auth {
     }
     addMiddleware() {
         const app = this.server.getApp();
+        app.keys = [this.authConfig.secrets.cookie];
         // If app.proxy === true koa will respect x-forwarded headers
         app.proxy = this.authConfig.isServerBehindProxy === true ? true : false;
         // Prevent CSRF
