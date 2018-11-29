@@ -18,6 +18,7 @@ export class Server {
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
+  private bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
 
   constructor(
@@ -28,6 +29,7 @@ export class Server {
   ) {
     this.config = config;
     this.loggerFactory = loggerFactory;
+    this.bootLoader = bootLoader;
 
     // register package config
     this.serverConfig = config.registerConfig("Server", `${__dirname}/../config`);
@@ -59,6 +61,13 @@ export class Server {
   private async bootKoa(): Promise<void> {
     try {
       this.app = new Koa();
+      // Block all requests when server has not finished booting
+      this.app.use(async (ctx, next) => {
+        if (this.bootLoader.hasBooted() !== true) {
+          return ctx.throw(503, "Service not ready yet!");
+        }
+        await next();
+      });
     } catch (e) {
       // tslint:disable-next-line:no-console
       console.error(e);
