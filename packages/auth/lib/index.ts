@@ -73,7 +73,11 @@ export class Auth {
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    this.notificationFunction = async (caller: string, user: {accessToken: string, userId: string, tenant?: string, username?: string, payload: any}, notificationContext: {meta?: string, tokenPayload?: any, input?: any}) => {
+    this.notificationFunction = async (
+      caller: string,
+      user: { accessToken: string; userId: string; tenant?: string; username?: string; payload: any },
+      notificationContext: { meta?: string; tokenPayload?: any; input?: any }
+    ) => {
       throw new Error("No notification function has been defined.");
     };
 

@@ -67,7 +67,7 @@ let Auth = class Auth {
         this.authConfig = this.config.registerConfig("Auth", `${__dirname}/../config`);
         this.logger = this.loggerFactory.create(this.constructor.name);
         this.sodiumConfig = crypto_1.createConfig(this.authConfig.sodium);
-        this.notificationFunction = (caller, user, meta) => __awaiter(this, void 0, void 0, function* () {
+        this.notificationFunction = (caller, user, notificationContext) => __awaiter(this, void 0, void 0, function* () {
             throw new Error("No notification function has been defined.");
         });
         graphQl.addHook("preQuery", this.preQueryHook.bind(this));
@@ -313,8 +313,8 @@ let Auth = class Auth {
                 }
                 const user = yield this.initializeUser(dbClient, hookInfo.entityId);
                 const notificationContext = {
-                    user,
                     input: args.input,
+                    meta: args.input,
                     tokenPayload: null
                 };
                 if (args.authToken != null) {
@@ -331,10 +331,10 @@ let Auth = class Auth {
                     notificationContext.tokenPayload = tokenPayload;
                     // console.log('SET PW', user.accessToken, user.payload.provider, tokenPayload.providerName, tokenPayload.profileId);
                     yield this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, dbClient);
-                    yield this.notificationFunction("REGISTER_OAUTH", notificationContext);
+                    yield this.notificationFunction("REGISTER_OAUTH", user, notificationContext);
                 }
                 else {
-                    yield this.notificationFunction("REGISTER", notificationContext);
+                    yield this.notificationFunction("REGISTER", user, notificationContext);
                 }
             }
         });
@@ -644,7 +644,10 @@ let Auth = class Auth {
                     tenant,
                     accessToken: signHelper_1.signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
                 };
-                yield this.notificationFunction(user, "FORGOT_PASSWORD", meta);
+                const notificationContext = {
+                    meta
+                };
+                yield this.notificationFunction("FORGOT_PASSWORD", user, notificationContext);
                 yield dbClient.query("COMMIT");
                 return true;
             }
