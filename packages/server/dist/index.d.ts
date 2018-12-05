@@ -8,6 +8,7 @@ export declare class Server {
     private loggerFactory;
     private logger;
     private ENVIRONMENT;
+    private bootLoader;
     constructor(loggerFactory: any, config: any, bootLoader: any);
     private boot;
     private bootKoa;

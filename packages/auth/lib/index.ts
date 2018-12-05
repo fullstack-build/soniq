@@ -73,7 +73,11 @@ export class Auth {
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.sodiumConfig = createConfig(this.authConfig.sodium);
 
-    this.notificationFunction = async (caller: string, user, meta: string) => {
+    this.notificationFunction = async (
+      caller: string,
+      user: { accessToken: string; userId: string; tenant?: string; username?: string; payload: any },
+      notificationContext: { meta?: string; tokenPayload?: any; input?: any }
+    ) => {
       throw new Error("No notification function has been defined.");
     };
 
@@ -235,6 +239,7 @@ export class Auth {
 
   private addMiddleware() {
     const app = this.server.getApp();
+    app.keys = [this.authConfig.secrets.cookie];
 
     // If app.proxy === true koa will respect x-forwarded headers
     app.proxy = this.authConfig.isServerBehindProxy === true ? true : false;
@@ -390,8 +395,8 @@ export class Auth {
       const user = await this.initializeUser(dbClient, hookInfo.entityId);
 
       const notificationContext = {
-        user,
         input: args.input,
+        meta: args.input,
         tokenPayload: null
       };
 
@@ -414,9 +419,9 @@ export class Auth {
 
         await this.setPasswordWithClient(user.accessToken, tokenPayload.providerName, tokenPayload.providerName, tokenPayload.profileId, dbClient);
 
-        await this.notificationFunction("REGISTER_OAUTH", notificationContext);
+        await this.notificationFunction("REGISTER_OAUTH", user, notificationContext);
       } else {
-        await this.notificationFunction("REGISTER", notificationContext);
+        await this.notificationFunction("REGISTER", user, notificationContext);
       }
     }
   }
@@ -760,7 +765,11 @@ export class Auth {
         accessToken: signJwt(this.authConfig.secrets.jwt, payload, payload.userTokenMaxAgeInSeconds)
       };
 
-      await this.notificationFunction(user, "FORGOT_PASSWORD", meta);
+      const notificationContext = {
+        meta
+      };
+
+      await this.notificationFunction("FORGOT_PASSWORD", user, notificationContext);
 
       await dbClient.query("COMMIT");
       return true;

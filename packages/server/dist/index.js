@@ -35,6 +35,7 @@ let Server = class Server {
     loggerFactory, config, bootLoader) {
         this.config = config;
         this.loggerFactory = loggerFactory;
+        this.bootLoader = bootLoader;
         // register package config
         this.serverConfig = config.registerConfig("Server", `${__dirname}/../config`);
         // this.eventEmitter = eventEmitter;
@@ -64,6 +65,13 @@ let Server = class Server {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this.app = new Koa();
+                // Block all requests when server has not finished booting
+                this.app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
+                    if (this.bootLoader.hasBooted() !== true) {
+                        return ctx.throw(503, "Service not ready yet!");
+                    }
+                    yield next();
+                }));
             }
             catch (e) {
                 // tslint:disable-next-line:no-console

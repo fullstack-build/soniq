@@ -12,8 +12,6 @@ import * as terminus from "@godaddy/terminus";
 
 @Service()
 export class GracefulShutdown {
-  // TODO @Eugene: Check functionality
-
   private dbAppClient: DbAppClient;
   private dbPoolObj: DbGeneralPool;
 
