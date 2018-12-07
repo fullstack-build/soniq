@@ -70,7 +70,7 @@ function parseReadField(ctx) {
         if (sameExpressionSets[expressionKey] == null) {
             sameExpressionSets[expressionKey] = {
                 matchObject: {},
-                permissionExpressions: expressionCreator.parseExpressionInput(readExpressionsField)
+                permissionExpressions: expressionCreator.parseExpressionInput(readExpressionsField, true)
             };
         }
         lodash_1._.set(sameExpressionSets[expressionKey].matchObject, key, true);

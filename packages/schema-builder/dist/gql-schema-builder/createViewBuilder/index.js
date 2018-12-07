@@ -72,7 +72,7 @@ function buildCreateView(table, view, context, extensions, config) {
     });
     // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
     const expressionCreator = new createExpressions_1.CreateExpressions(context.expressions, localTable, true);
-    expressionCreator.parseExpressionInput(view.expressions);
+    expressionCreator.parseExpressionInput(view.expressions, true);
     const expressionsObject = expressionCreator.getExpressionsObject();
     const expressions = Object.values(expressionsObject).sort(createExpressions_1.orderExpressions);
     expressions.forEach((expression) => {

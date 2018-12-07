@@ -30,11 +30,14 @@ class CreateExpressions {
         }
         return expressions;
     }
-    getExpression(name, params, isRoot = false) {
+    getExpression(name, params, isRequiredAsPermissionExpression = false) {
         if (this.expressionsByName[name] == null) {
             throw new Error(`Expression '${name}' is not defined.`);
         }
         const expression = this.expressionsByName[name];
+        if (isRequiredAsPermissionExpression && expression.gqlReturnType !== "Boolean") {
+            throw new Error(`You are using an the not Boolean expression '${name}' for a permission. This is not possible. A expression defining a permission must return true/false.`);
+        }
         let expressionName = name;
         if (params != null && typeof params === "object" && Object.keys(params).length > 0) {
             if (expression.getNameWithParams == null) {
@@ -56,8 +59,8 @@ class CreateExpressions {
                     if (this.expressionsObject[tempExpressionName].requiresAuth === true) {
                         this.expressionsObject[expressionName].requiresAuth = true;
                     }
-                    if (this.expressionsObject[expressionName].dependentExpresssions.indexOf(tempExpressionName) < 0) {
-                        this.expressionsObject[expressionName].dependentExpresssions.push(tempExpressionName);
+                    if (this.expressionsObject[expressionName].dependentExpressions.indexOf(tempExpressionName) < 0) {
+                        this.expressionsObject[expressionName].dependentExpressions.push(tempExpressionName);
                     }
                     if (this.total === true) {
                         //  TODO: Consider renaming total to a clearer name
@@ -75,27 +78,30 @@ class CreateExpressions {
                 sql: null,
                 requiresLateral: false,
                 requiresAuth: expression.requiresAuth === true,
-                dependentExpresssions: [],
+                dependentExpressions: [],
                 order: 0,
-                isRoot
+                isRequiredAsPermissionExpression
             };
             this.expressionsObject[expressionName].sql = expression.generate(expressionContext, params);
             if (this.expressionsObject[expressionName].sql.toLowerCase() === "true" && this.expressionsObject[expressionName].requiresAuth === true) {
                 throw new Error(`A expression which requires auth cannot return 'TRUE' as SQL. Found in '${name}'.`);
             }
         }
+        if (isRequiredAsPermissionExpression === true) {
+            this.expressionsObject[expressionName].isRequiredAsPermissionExpression = true;
+        }
         return expressionName;
     }
     getExpressionsObject() {
         return this.expressionsObject;
     }
-    parseExpressionInput(expressions) {
+    parseExpressionInput(expressions, isRequiredAsPermissionExpression = false) {
         return this.fixExpressionType(expressions).map((expression) => {
-            return this.getExpressionObject(expression.name, expression.params || {}, true);
+            return this.getExpressionObject(expression.name, expression.params || {}, isRequiredAsPermissionExpression);
         });
     }
-    getExpressionObject(name, params, isRoot) {
-        const expressionName = this.getExpression(name, params, isRoot);
+    getExpressionObject(name, params, isRequiredAsPermissionExpression = false) {
+        const expressionName = this.getExpression(name, params, isRequiredAsPermissionExpression);
         return this.expressionsObject[expressionName];
     }
 }

@@ -16,7 +16,7 @@ function getRelations(dbMeta, relationName, tableName) {
 }
 function parseReadField(ctx) {
     const { fieldName, readExpressions, directives } = ctx;
-    // Has field any permission-expression
+    // Has field any permission-expression - without at least one expression it is not queryable at all
     if (directives.relation != null && directives.relation.name != null && readExpressions[fieldName] != null) {
         const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, context } = ctx;
         let newGqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinition));

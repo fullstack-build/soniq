@@ -8,7 +8,7 @@ class CreateDefaultField {
         let publicFieldSql = null;
         let authFieldSql = null;
         let hasPublicTrueExpression = false;
-        const expressions = this.expressionCreator.parseExpressionInput(readExpressionsField);
+        const expressions = this.expressionCreator.parseExpressionInput(readExpressionsField, true);
         const getName = (expressionObject) => {
             return `"${expressionObject.name}"."${expressionObject.name}"`;
         };

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function parseReadField(ctx) {
     const { fieldName, readExpressions, directives } = ctx;
-    // Has field any permission-expression
+    // Has field any permission-expression - without at least one expression it is not queryable at all
     if (readExpressions[fieldName] != null && directives.computed != null && directives.computed.expression != null) {
         const { expressionCreator, defaultFieldCreator } = ctx;
         const computedExpression = expressionCreator.getExpressionObject(directives.computed.expression, directives.computed.params);

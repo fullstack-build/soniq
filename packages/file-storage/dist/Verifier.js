@@ -26,15 +26,15 @@ class Verifier {
     }
     putObjectCacheSettings(fName) {
         return {
-            expiryInSeconds: 43200,
+            expiryInSeconds: 43200 // 12 hours
         };
     }
     getObjectCacheSettings(fName) {
         return {
             expiryInSeconds: 43200,
             signIssueTimeReductionModuloInSeconds: 3600,
-            cacheControlHeader: 'private, max-age=43200',
-            expiryHeader: null,
+            cacheControlHeader: "private, max-age=43200",
+            expiryHeader: null
         };
     }
 }

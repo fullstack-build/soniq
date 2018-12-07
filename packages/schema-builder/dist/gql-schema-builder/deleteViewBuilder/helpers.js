@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function filterExpressions(expressionObject) {
-    return expressionObject.gqlReturnType === "Boolean" && expressionObject.isRoot === true;
+    return expressionObject.isRequiredAsPermissionExpression === true;
 }
 function getExpression(expressionObject) {
     return `(${expressionObject.sql})`;

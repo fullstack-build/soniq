@@ -7,7 +7,7 @@ export declare class CreateExpressions {
     private fixExpressionType;
     private getExpression;
     getExpressionsObject(): any;
-    parseExpressionInput(expressions: any): any[];
-    getExpressionObject(name: any, params?: any, isRoot?: any): any;
+    parseExpressionInput(expressions: any, isRequiredAsPermissionExpression?: boolean): any[];
+    getExpressionObject(name: any, params?: any, isRequiredAsPermissionExpression?: boolean): any;
 }
 export declare function orderExpressions(a: any, b: any): 0 | 1 | -1;

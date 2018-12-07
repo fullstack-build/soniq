@@ -110,13 +110,13 @@ let FileStorage = class FileStorage {
         return __awaiter(this, void 0, void 0, function* () {
             const respHeaders = {};
             if (cacheSettings.cacheControlHeader != null) {
-                respHeaders['response-cache-control'] = cacheSettings.cacheControlHeader;
+                respHeaders["response-cache-control"] = cacheSettings.cacheControlHeader;
             }
             if (cacheSettings.expiryHeader != null) {
-                respHeaders['response-expires'] = cacheSettings.expiryHeader;
+                respHeaders["response-expires"] = cacheSettings.expiryHeader;
             }
             const now = Date.now();
-            const issueAtDate = new Date(now - (now % cacheSettings.signIssueTimeReductionModuloInSeconds));
+            const issueAtDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
             return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds, respHeaders, issueAtDate);
         });
     }
@@ -233,8 +233,9 @@ let FileStorage = class FileStorage {
                 catch (err) {
                     this.logger.warn("verifyFile.removeObjectsFail", err);
                 }
-                const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
-                const cacheSettings = this.verifiers[type].getObjectCacheSettings(fName);
+                const verifier = this.verifierObjects[fName.type];
+                const objectNames = verifier.getObjectNames(fName);
+                const cacheSettings = verifier.getObjectCacheSettings(fName);
                 const objects = objectNames.map((object) => {
                     return {
                         objectName: object.objectName,
@@ -284,8 +285,9 @@ let FileStorage = class FileStorage {
                 for (const fileName of data) {
                     try {
                         const fName = new FileName_1.FileName(fileName);
-                        const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
-                        const cacheSettings = this.verifiers[fName.type].getObjectCacheSettings(fName);
+                        const verifier = this.verifierObjects[fName.type];
+                        const objectNames = verifier.getObjectNames(fName);
+                        const cacheSettings = verifier.getObjectCacheSettings(fName);
                         const objects = objectNames.map((object) => {
                             return {
                                 objectName: object.objectName,
