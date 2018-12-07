@@ -137,12 +137,6 @@ export class SchemaBuilder {
 
       //  Reverse to get the generated queries/mutations at the beginning
       data.gqlDocument.definitions.reverse();
-      // For debugging
-      // tslint:disable-next-line:forin
-      for (const i in sql) {
-        // tslint:disable-next-line:no-console
-        console.log(sql[i]);
-      }
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
