@@ -54,7 +54,7 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
   const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
 
-  expressionCreator.parseExpressionInput(expressionsInput);
+  expressionCreator.parseExpressionInput(expressionsInput, true);
 
   const expressionsObject = expressionCreator.getExpressionsObject();
 

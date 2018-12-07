@@ -1,7 +1,7 @@
 export function parseReadField(ctx) {
   const { fieldName, readExpressions } = ctx;
 
-  // Has field any permission-expression
+  // Has field any permission-expression - without at least one expression it is not queryable at all
   if (readExpressions[fieldName] != null) {
     const { localTable, defaultFieldCreator } = ctx;
 

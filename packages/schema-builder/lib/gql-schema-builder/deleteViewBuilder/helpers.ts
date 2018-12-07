@@ -1,5 +1,5 @@
 function filterExpressions(expressionObject) {
-  return expressionObject.gqlReturnType === "Boolean" && expressionObject.isRoot === true;
+  return expressionObject.isRequiredAsPermissionExpression === true;
 }
 
 function getExpression(expressionObject) {

@@ -1,5 +1,5 @@
-function filterBooleanExpressions(expressionObject) {
-  return expressionObject.gqlReturnType === "Boolean";
+function filterRelevantExpressions(expressionObject) {
+  return expressionObject.isRequiredAsPermissionExpression === true;
 }
 
 function createExpressionSql(expressionObject) {
@@ -29,7 +29,8 @@ export function createView(table, config, name, fields, expressions) {
     sql += `, ${expressions.map(createExpressionSql).join(", ")}`;
   }
 
-  const conditionExpressions = expressions.filter(filterBooleanExpressions);
+  // We only want to allow a user to see entities if he can access any field
+  const conditionExpressions = expressions.filter(filterRelevantExpressions);
 
   if (conditionExpressions.length > 0) {
     sql += ` WHERE ${conditionExpressions.map(getExpressionName).join(" OR ")}`;

@@ -11,7 +11,7 @@ export class CreateDefaultField {
 
     let hasPublicTrueExpression: any = false;
 
-    const expressions = this.expressionCreator.parseExpressionInput(readExpressionsField);
+    const expressions = this.expressionCreator.parseExpressionInput(readExpressionsField, true);
 
     const getName = (expressionObject) => {
       return `"${expressionObject.name}"."${expressionObject.name}"`;

@@ -88,7 +88,7 @@ export function buildUpdateView(table, view, context, extensions, config) {
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
   const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
 
-  expressionCreator.parseExpressionInput(view.expressions);
+  expressionCreator.parseExpressionInput(view.expressions, true);
 
   const expressionsObject = expressionCreator.getExpressionsObject();
 

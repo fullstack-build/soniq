@@ -83,7 +83,7 @@ export function parseReadField(ctx) {
     if (sameExpressionSets[expressionKey] == null) {
       sameExpressionSets[expressionKey] = {
         matchObject: {},
-        permissionExpressions: expressionCreator.parseExpressionInput(readExpressionsField)
+        permissionExpressions: expressionCreator.parseExpressionInput(readExpressionsField, true)
       };
     }
     _.set(sameExpressionSets[expressionKey].matchObject, key, true);
