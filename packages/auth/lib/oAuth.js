@@ -2,6 +2,7 @@ var FullstackOne = function (apiServerAddress) {
   var ERROR_UNKNOWN = 'ERROR_UNKNOWN';
   var ERROR_FAILED = 'ERROR_FAILED';
   var ERROR_CANCEL = 'ERROR_CANCEL';
+  var ERROR_POPUP_BLOCKED = 'ERROR_POPUP_BLOCKED';
 
 
   return {
@@ -13,8 +14,12 @@ var FullstackOne = function (apiServerAddress) {
       if (privacyAgreementAcceptanceToken != null) {
         address += '?privacyAgreementAcceptanceToken=' + encodeURIComponent(privacyAgreementAcceptanceToken);
       }
-      var oAuthPopup = window.open(address);
+      var oAuthPopup = window.open(address, '_blank');
       //var oAuthPopup = window.open(apiServerAddress + '/auth/' + encodeURIComponent(provider));
+
+      if (oAuthPopup == null) {
+        return cb('ERROR_POPUP_BLOCKED')
+      }
 
       function receiveMessage(event) {
         if (event.origin === apiServerAddress && event.data != null) {
