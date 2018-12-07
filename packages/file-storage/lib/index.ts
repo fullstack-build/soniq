@@ -127,7 +127,7 @@ export class FileStorage {
     }
 
     const now = Date.now();
-    const issueAtDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000) ) );
+    const issueAtDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
     return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds, respHeaders, issueAtDate);
   }
 
