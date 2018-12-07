@@ -264,9 +264,11 @@ export class FileStorage {
           this.logger.warn("verifyFile.removeObjectsFail", err);
         }
 
-        const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
+        const verifier = this.verifierObjects[fName.type];
 
-        const cacheSettings = this.verifiers[type].getObjectCacheSettings(fName);
+        const objectNames = verifier.getObjectNames(fName);
+
+        const cacheSettings = verifier.getObjectCacheSettings(fName);
 
         const objects = objectNames.map((object) => {
           return {
@@ -326,9 +328,11 @@ export class FileStorage {
           try {
             const fName = new FileName(fileName);
 
-            const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
+            const verifier = this.verifierObjects[fName.type];
 
-            const cacheSettings = this.verifiers[fName.type].getObjectCacheSettings(fName);
+            const objectNames = verifier.getObjectNames(fName);
+
+            const cacheSettings = verifier.getObjectCacheSettings(fName);
 
             const objects = objectNames.map((object) => {
               return {
