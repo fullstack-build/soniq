@@ -12,11 +12,11 @@ import * as koaBody from "koa-bodyparser";
 import * as Minio from "minio";
 // import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 import { getParser } from "./parser";
-import { Verifier, IBucketObject } from "./Verifier";
-import { DefaultVerifier } from "./defaultVerifier";
+import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
+import { DefaultVerifier } from "./DefaultVerifier";
 import { FileName } from "./FileName";
 
-export { DefaultVerifier, Verifier, Minio, IBucketObject, FileName };
+export { DefaultVerifier, Verifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
 
 import * as fs from "fs";
 
@@ -112,12 +112,23 @@ export class FileStorage {
     }
   }
 
-  private async presignedPutObject(objectName) {
-    return this.client.presignedPutObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
+  private async presignedPutObject(objectName, cacheSettings: IPutObjectCacheSettings) {
+    return this.client.presignedPutObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds);
   }
 
-  private async presignedGetObject(objectName) {
-    return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
+  private async presignedGetObject(objectName, cacheSettings: IGetObjectCacheSettings) {
+    const respHeaders = {};
+
+    if (cacheSettings.cacheControlHeader != null) {
+      respHeaders["response-cache-control"] = cacheSettings.cacheControlHeader;
+    }
+    if (cacheSettings.expiryHeader != null) {
+      respHeaders["response-expires"] = cacheSettings.expiryHeader;
+    }
+
+    const now = Date.now();
+    const issueAtDate = new Date(now - (now % cacheSettings.signIssueTimeReductionModuloInSeconds));
+    return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds, respHeaders, issueAtDate);
   }
 
   private async deleteFileAsAdmin(fName) {
@@ -194,7 +205,9 @@ export class FileStorage {
           extension
         });
 
-        const presignedPutUrl = await this.presignedPutObject(fName.uploadName);
+        const cacheSettings = this.verifiers[type].putObjectCacheSettings();
+
+        const presignedPutUrl = await this.presignedPutObject(fName.uploadName, cacheSettings);
 
         return {
           extension,
@@ -253,11 +266,13 @@ export class FileStorage {
 
         const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
 
+        const cacheSettings = this.verifiers[type].getObjectCacheSettings(fName);
+
         const objects = objectNames.map((object) => {
           return {
             objectName: object.objectName,
             info: object.info,
-            presignedGetUrlPromise: this.presignedGetObject(object.objectName)
+            presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings)
           };
         });
 
@@ -313,10 +328,12 @@ export class FileStorage {
 
             const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
 
+            const cacheSettings = this.verifiers[fName.type].getObjectCacheSettings(fName);
+
             const objects = objectNames.map((object) => {
               return {
                 objectName: object.objectName,
-                presignedGetUrlPromise: this.presignedGetObject(object.objectName),
+                presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings),
                 info: object.info
               };
             });

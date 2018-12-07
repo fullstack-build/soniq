@@ -35,8 +35,8 @@ exports.Minio = Minio;
 const parser_1 = require("./parser");
 const Verifier_1 = require("./Verifier");
 exports.Verifier = Verifier_1.Verifier;
-const defaultVerifier_1 = require("./defaultVerifier");
-exports.DefaultVerifier = defaultVerifier_1.DefaultVerifier;
+const DefaultVerifier_1 = require("./DefaultVerifier");
+exports.DefaultVerifier = DefaultVerifier_1.DefaultVerifier;
 const FileName_1 = require("./FileName");
 exports.FileName = FileName_1.FileName;
 const fs = require("fs");
@@ -63,7 +63,7 @@ let FileStorage = class FileStorage {
         this.schemaBuilder.addExtension(parser_1.getParser());
         this.graphQl.addResolvers(this.getResolvers());
         this.graphQl.addHook("postMutation", this.postMutationHook.bind(this));
-        this.addVerifier("DEFAULT", defaultVerifier_1.DefaultVerifier);
+        this.addVerifier("DEFAULT", DefaultVerifier_1.DefaultVerifier);
         bootLoader.addBootFunction(this.boot.bind(this));
     }
     boot() {
@@ -101,14 +101,23 @@ let FileStorage = class FileStorage {
             }
         });
     }
-    presignedPutObject(objectName) {
+    presignedPutObject(objectName, cacheSettings) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.client.presignedPutObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
+            return this.client.presignedPutObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds);
         });
     }
-    presignedGetObject(objectName) {
+    presignedGetObject(objectName, cacheSettings) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, 12 * 60 * 60);
+            const respHeaders = {};
+            if (cacheSettings.cacheControlHeader != null) {
+                respHeaders['response-cache-control'] = cacheSettings.cacheControlHeader;
+            }
+            if (cacheSettings.expiryHeader != null) {
+                respHeaders['response-expires'] = cacheSettings.expiryHeader;
+            }
+            const now = Date.now();
+            const issueAtDate = new Date(now - (now % cacheSettings.signIssueTimeReductionModuloInSeconds));
+            return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds, respHeaders, issueAtDate);
         });
     }
     deleteFileAsAdmin(fName) {
@@ -181,7 +190,8 @@ let FileStorage = class FileStorage {
                     type,
                     extension
                 });
-                const presignedPutUrl = yield this.presignedPutObject(fName.uploadName);
+                const cacheSettings = this.verifiers[type].putObjectCacheSettings();
+                const presignedPutUrl = yield this.presignedPutObject(fName.uploadName, cacheSettings);
                 return {
                     extension,
                     type,
@@ -224,11 +234,12 @@ let FileStorage = class FileStorage {
                     this.logger.warn("verifyFile.removeObjectsFail", err);
                 }
                 const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
+                const cacheSettings = this.verifiers[type].getObjectCacheSettings(fName);
                 const objects = objectNames.map((object) => {
                     return {
                         objectName: object.objectName,
                         info: object.info,
-                        presignedGetUrlPromise: this.presignedGetObject(object.objectName)
+                        presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings)
                     };
                 });
                 const bucketObjects = [];
@@ -274,10 +285,11 @@ let FileStorage = class FileStorage {
                     try {
                         const fName = new FileName_1.FileName(fileName);
                         const objectNames = this.verifierObjects[fName.type].getObjectNames(fName);
+                        const cacheSettings = this.verifiers[fName.type].getObjectCacheSettings(fName);
                         const objects = objectNames.map((object) => {
                             return {
                                 objectName: object.objectName,
-                                presignedGetUrlPromise: this.presignedGetObject(object.objectName),
+                                presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings),
                                 info: object.info
                             };
                         });

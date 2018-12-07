@@ -33,9 +33,7 @@
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.3.0",
     "lodash": "^4.17.11",
-    "minio": "^7.0.1"
+    "minio": "^7.0.2"
   },
-  "devDependencies": {
-    "@types/minio": "^7.0.0"
-  }
+  "devDependencies": {}
 }

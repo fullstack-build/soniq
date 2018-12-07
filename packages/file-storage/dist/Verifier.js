@@ -24,5 +24,18 @@ class Verifier {
         // tslint:disable-next-line:quotemark
         throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class Verifier.`);
     }
+    putObjectCacheSettings(fName) {
+        return {
+            expiryInSeconds: 43200,
+        };
+    }
+    getObjectCacheSettings(fName) {
+        return {
+            expiryInSeconds: 43200,
+            signIssueTimeReductionModuloInSeconds: 3600,
+            cacheControlHeader: 'private, max-age=43200',
+            expiryHeader: null,
+        };
+    }
 }
 exports.Verifier = Verifier;

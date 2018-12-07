@@ -6,6 +6,17 @@ export interface IBucketObject {
   info: string;
 }
 
+export interface IPutObjectCacheSettings {
+  expiryInSeconds;
+}
+
+export interface IGetObjectCacheSettings {
+  expiryInSeconds: number;
+  signIssueTimeReductionModuloInSeconds: number;
+  cacheControlHeader: string | null;
+  expiryHeader: string | null;
+}
+
 export class Verifier {
   public client: Client;
   public bucket: string;
@@ -23,5 +34,20 @@ export class Verifier {
   public getObjectNames(fName: FileName): IBucketObject[] {
     // tslint:disable-next-line:quotemark
     throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class Verifier.`);
+  }
+
+  public putObjectCacheSettings(fName: FileName): IPutObjectCacheSettings {
+    return {
+      expiryInSeconds: 43200 // 12 hours
+    };
+  }
+
+  public getObjectCacheSettings(fName: FileName): IGetObjectCacheSettings {
+    return {
+      expiryInSeconds: 43200, // 12 hours
+      signIssueTimeReductionModuloInSeconds: 3600, // one hour
+      cacheControlHeader: "private, max-age=43200", // 12 hours
+      expiryHeader: null
+    };
   }
 }
