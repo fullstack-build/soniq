@@ -7,6 +7,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import * as http from "http";
 // other npm dependencies
 import * as Koa from "koa";
+import * as compress from "koa-compress";
 
 @Service()
 export class Server {
@@ -61,6 +62,14 @@ export class Server {
   private async bootKoa(): Promise<void> {
     try {
       this.app = new Koa();
+      // enable compression
+      this.app.use(
+        compress({
+          ...this.serverConfig.compression,
+          flush: require("zlib").Z_SYNC_FLUSH
+        })
+      );
+
       // Block all requests when server has not finished booting
       this.app.use(async (ctx, next) => {
         if (this.bootLoader.hasBooted() !== true) {

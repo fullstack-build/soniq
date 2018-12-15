@@ -25,6 +25,7 @@
     "@fullstack-one/di": "^0.4.32",
     "@fullstack-one/events": "^0.4.32",
     "@fullstack-one/logger": "^0.4.32",
-    "koa": "^2.5.2"
+    "koa": "^2.5.2",
+    "koa-compress": "^3.0.0"
   }
 }

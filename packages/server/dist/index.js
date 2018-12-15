@@ -28,6 +28,7 @@ const boot_loader_1 = require("@fullstack-one/boot-loader");
 const http = require("http");
 // other npm dependencies
 const Koa = require("koa");
+const compress = require("koa-compress");
 let Server = class Server {
     // private eventEmitter: EventEmitter;
     constructor(
@@ -65,6 +66,8 @@ let Server = class Server {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this.app = new Koa();
+                // enable compression
+                this.app.use(compress(Object.assign({}, this.serverConfig.compression, { flush: require("zlib").Z_SYNC_FLUSH })));
                 // Block all requests when server has not finished booting
                 this.app.use((ctx, next) => __awaiter(this, void 0, void 0, function* () {
                     if (this.bootLoader.hasBooted() !== true) {
