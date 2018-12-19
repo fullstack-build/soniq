@@ -85,9 +85,11 @@ export class SchemaBuilder {
 
   private async boot(): Promise<any> {
     try {
+      this.logger.trace("boot", "started");
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
+      this.logger.trace("boot", "GraphQl schema loaded");
 
       // check if any files were loaded
       if (this.gQlSdl.length === 0) {
@@ -98,22 +100,27 @@ export class SchemaBuilder {
       // Combine all Schemas to a big one and add extensions from other modules
       const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
       this.gQlAst = AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
+      this.logger.trace("boot", "GraphQl schema parsed");
 
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
+      this.logger.trace("boot", "GraphQl AST parsed");
 
       // load permissions and expressions and generate views and put them into schemas
 
       // load permissions
       const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
       const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
+      this.logger.trace("boot", "Permissions loaded");
       this.permissions = [].concat.apply([], permissionsArray);
 
       // load expressions
       const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
       const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
+      this.logger.trace("boot", "Expressions loaded");
       this.expressions = [].concat.apply([], expressionsArray);
 
       const dbConfig = this.config.getConfig("Db");
+      this.logger.trace("boot", "Config loaded");
 
       const config = {
         schemaName: dbConfig.viewSchemaName,
@@ -130,8 +137,10 @@ export class SchemaBuilder {
       const extensions = this.extensions;
 
       const sql = createGrants(config, this.dbMeta);
+      this.logger.trace("boot", "Grants created");
 
       const data = parsePermissions(this.permissions, context, extensions, config);
+      this.logger.trace("boot", "Permissions parsed");
 
       data.sql.forEach((statement) => sql.push(statement));
 
@@ -141,6 +150,7 @@ export class SchemaBuilder {
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
       this.dbSchemaBuilder.setPermissionSqlStatements(sql);
+      this.logger.trace("boot", "Permission SQL statements set");
 
       return this.dbMeta;
     } catch (err) {
