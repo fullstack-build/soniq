@@ -21,7 +21,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const di_1 = require("@fullstack-one/di");
-const lib_1 = require("../../logger/lib");
+const logger_1 = require("@fullstack-one/logger");
 let BootLoader = class BootLoader {
     constructor(loggerFactory) {
         this.IS_BOOTING = false; // TODO: Dustin Rename
@@ -83,7 +83,7 @@ let BootLoader = class BootLoader {
 };
 BootLoader = __decorate([
     di_1.Service(),
-    __param(0, di_1.Inject((type) => lib_1.LoggerFactory)),
+    __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
     __metadata("design:paramtypes", [Object])
 ], BootLoader);
 exports.BootLoader = BootLoader;

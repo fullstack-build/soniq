@@ -1,7 +1,5 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { ILogger, LoggerFactory } from "../../logger/lib";
-import { EventEmitter } from "../../events/lib";
-import { Config } from "../../config/lib";
+import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 interface IBootFunction {
   name: string;
