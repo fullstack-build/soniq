@@ -2,7 +2,7 @@
 require("dotenv").config();
 
 process.on("unhandledRejection", (reason, p) => {
-  console.log("Unhandled Rejection at: Promise", p, "reason:", reason);
+  console.error("Unhandled Rejection:", reason);
   // application specific logging, throwing an error, or other logic here
 });
 

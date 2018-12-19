@@ -1,9 +1,9 @@
 // TODO: Dustin: Create interface for permissions (or jsonshema to validate against)
-export = [
+module.exports = [
   {
     gqlTypeName: "User",
     readExpressions: {
-      id: "Anyone", // Kann auch ein Array sein (expressions werden mit OR verknüpft) // TODO: Dustin translate
+      id: "Anyone", // Can also be an array (expressions will be combined with OR)
       firstLetterOfUserName: "Anyone",
       posts: "Anyone",
       stripeAccount: "Anyone",

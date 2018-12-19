@@ -53,7 +53,7 @@ let BootLoader = class BootLoader {
             if (this.HAS_BOOTED) {
                 return resolve();
             }
-            this.bootReadyFunctions.push({ name: "BoorLoader.ready", fn: resolve });
+            this.bootReadyFunctions.push({ name: "BootLoader.ready", fn: resolve });
         });
     }
     boot() {
@@ -74,9 +74,8 @@ let BootLoader = class BootLoader {
                 this.HAS_BOOTED = true;
             }
             catch (err) {
-                process.stderr.write("BootLoader.boot.error.caught\n");
-                process.stderr.write(`${err}`);
-                process.exit(0);
+                process.stderr.write(`BootLoader.boot.error.caught: ${err}\n`);
+                throw err;
             }
         });
     }
