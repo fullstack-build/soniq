@@ -56,10 +56,15 @@ let DbGeneralPool = class DbGeneralPool {
         // TODO: Evaluate: should we forbid getter and setter to prevent unexpected side effects
         return this.managedPool;
     }
-    // calculate number of max conections and adjust pool based on number of connected nodes
+    // calculate number of max connections and adjust pool based on number of connected nodes
     gracefullyAdjustPoolSize() {
         return __awaiter(this, void 0, void 0, function* () {
             const configDbGeneral = this.CONFIG.general;
+            const poolMin = parseInt(configDbGeneral.min, 10);
+            const poolTotalMax = parseInt(configDbGeneral.totalMax, 10);
+            if (isNaN(poolMin) || isNaN(poolTotalMax)) {
+                throw Error("DbGeneralPool.gracefullyAdjustPoolSize.poolSize.min.and.totalMax.must.be.numbers");
+            }
             // get known nodes from container, initially assume we are the first one
             let knownNodesCount = 1;
             try {
@@ -70,7 +75,7 @@ let DbGeneralPool = class DbGeneralPool {
                 // ignore error and continue assuming we are the first client
             }
             // reserve one for DbAppClient connection
-            const connectionsPerInstance = Math.floor(configDbGeneral.totalMax / knownNodesCount - 1);
+            const connectionsPerInstance = Math.floor(poolTotalMax / knownNodesCount - 1);
             // readjust pool only if number of max connections has changed
             if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
                 // gracefully end previous pool if already available
@@ -80,7 +85,7 @@ let DbGeneralPool = class DbGeneralPool {
                     this.end();
                 }
                 // credentials for general connection pool with calculated pool size
-                this.credentials = Object.assign({}, configDbGeneral, { application_name: this.applicationName, max: connectionsPerInstance });
+                this.credentials = Object.assign({}, configDbGeneral, { application_name: this.applicationName, min: poolMin, max: connectionsPerInstance });
                 // create managed pool with calculated pool size
                 this.managedPool = new pg_1.Pool(this.credentials);
                 this.logger.debug(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);
