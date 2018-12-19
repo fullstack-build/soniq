@@ -69,7 +69,7 @@ let SchemaBuilder = class SchemaBuilder {
         this.schemaBuilderConfig = this.config.registerConfig("SchemaBuilder", `${__dirname}/../config`);
         this.logger = this.loggerFactory.create(this.constructor.name);
         this.ENVIRONMENT = this.config.ENVIRONMENT;
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
         this.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
     }
     boot() {

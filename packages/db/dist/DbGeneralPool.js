@@ -38,7 +38,7 @@ let DbGeneralPool = class DbGeneralPool {
         this.CONFIG = this.config.registerConfig("Db", `${__dirname}/../config`);
         this.logger = loggerFactory.create(this.constructor.name);
         // add to boot loader
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {

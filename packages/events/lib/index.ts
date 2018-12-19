@@ -55,7 +55,7 @@ export class EventEmitter implements IEventEmitter {
     this.CONFIG = this.config.registerConfig("Events", `${__dirname}/../config`);
     this.namespace = this.CONFIG.namespace;
 
-    bootLoader.onBootReady(this.boot.bind(this));
+    bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {

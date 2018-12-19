@@ -74,7 +74,7 @@ let GraphQl = class GraphQl {
             this.schemaBuilder.extendSchema(extendSchema);
         }
         // add boot function to boot loader
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {

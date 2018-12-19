@@ -41,7 +41,7 @@ export class Server {
     this.ENVIRONMENT = Container.get("ENVIRONMENT");
 
     this.bootKoa();
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot(): Promise<void> {

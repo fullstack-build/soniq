@@ -32,7 +32,7 @@ export class GracefulShutdown {
     this.dbPoolObj = dbPoolObj;
     this.logger = loggerFactory.create(this.constructor.name);
 
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private boot() {

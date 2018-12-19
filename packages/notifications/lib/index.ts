@@ -1,1 +1,1 @@
-export { Email } from "./Email";
+export { NotificationsEmail } from "./NotificationsEmail";

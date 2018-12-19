@@ -40,7 +40,7 @@ export class DbSchemaBuilder {
     this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   // boot and load all extensions

@@ -30,10 +30,10 @@ const events_1 = require("@fullstack-one/events");
 const logger_1 = require("@fullstack-one/logger");
 const schema_builder_1 = require("@fullstack-one/schema-builder");
 const boot_loader_1 = require("@fullstack-one/boot-loader");
-let Email = class Email {
+let NotificationsEmail = class NotificationsEmail {
     constructor(loggerFactory, queueFactory, config, schemaBuilder, bootLoader) {
         this.isReady = false;
-        this.queueName = "notifications.Email";
+        this.queueName = "notifications.NotificationsEmail";
         // set DI dependencies
         this.queueFactory = queueFactory;
         this.config = config;
@@ -46,7 +46,7 @@ let Email = class Email {
         // add migration path
         schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
         // add to boot loader
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -174,8 +174,8 @@ let Email = class Email {
 __decorate([
     di_1.Inject(),
     __metadata("design:type", events_1.EventEmitter)
-], Email.prototype, "eventEmitter", void 0);
-Email = __decorate([
+], NotificationsEmail.prototype, "eventEmitter", void 0);
+NotificationsEmail = __decorate([
     di_1.Service(),
     __param(0, di_1.Inject((type) => logger_1.LoggerFactory)),
     __param(1, di_1.Inject((type) => queue_1.QueueFactory)),
@@ -183,5 +183,5 @@ Email = __decorate([
     __param(3, di_1.Inject((type) => schema_builder_1.SchemaBuilder)),
     __param(4, di_1.Inject((type) => boot_loader_1.BootLoader)),
     __metadata("design:paramtypes", [Object, Object, Object, Object, Object])
-], Email);
-exports.Email = Email;
+], NotificationsEmail);
+exports.NotificationsEmail = NotificationsEmail;

@@ -15,7 +15,7 @@ import { DbGeneralPool } from "@fullstack-one/db";
 import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth } from "@fullstack-one/auth";
 import { AuthFbToken } from "@fullstack-one/auth-fb-token";
-import { Email } from "@fullstack-one/notifications";
+import { NotificationsEmail } from "@fullstack-one/notifications";
 import { EventEmitter } from "@fullstack-one/events";
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
@@ -25,7 +25,7 @@ const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 const $fs: FileStorage = Container.get(FileStorage);
 const $auth: Auth = Container.get(Auth);
 const authfbtoken: AuthFbToken = Container.get(AuthFbToken);
-const $email: Email = Container.get(Email);
+const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);
 
 $auth.setNotificationFunction(async (user, caller, meta) => {

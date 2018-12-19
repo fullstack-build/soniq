@@ -11,10 +11,10 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
 @Service()
-export class Email {
+export class NotificationsEmail {
   private isReady = false;
   private transport;
-  private readonly queueName = "notifications.Email";
+  private readonly queueName = "notifications.NotificationsEmail";
   private readonly mailGenerator: Mailgen;
 
   // DI dependencies
@@ -48,7 +48,7 @@ export class Email {
     schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
 
     // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot(): Promise<void> {

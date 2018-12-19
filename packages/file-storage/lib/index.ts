@@ -77,7 +77,7 @@ export class FileStorage {
 
     this.addVerifier("DEFAULT", DefaultVerifier);
 
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {

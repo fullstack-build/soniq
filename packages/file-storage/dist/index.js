@@ -64,7 +64,7 @@ let FileStorage = class FileStorage {
         this.graphQl.addResolvers(this.getResolvers());
         this.graphQl.addHook("postMutation", this.postMutationHook.bind(this));
         this.addVerifier("DEFAULT", DefaultVerifier_1.DefaultVerifier);
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {

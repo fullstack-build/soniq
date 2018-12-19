@@ -29,7 +29,7 @@ let BootScripts = class BootScripts {
         this.logger = loggerFactory.create(this.constructor.name);
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     // execute all boot scripts in the boot folder
     boot() {

@@ -44,7 +44,7 @@ let Server = class Server {
         // get env from DI container
         this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
         this.bootKoa();
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
