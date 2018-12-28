@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.4.45",
+  "version": "0.4.46",
   "description": "fullstack.one events package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,10 +20,10 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.45",
-    "@fullstack-one/config": "^0.4.45",
-    "@fullstack-one/db": "^0.4.45",
-    "@fullstack-one/di": "^0.4.44",
+    "@fullstack-one/boot-loader": "^0.4.46",
+    "@fullstack-one/config": "^0.4.46",
+    "@fullstack-one/db": "^0.4.46",
+    "@fullstack-one/di": "^0.4.46",
     "eventemitter2": "^5.0.1"
   }
 }
