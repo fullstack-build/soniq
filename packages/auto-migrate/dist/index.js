@@ -36,7 +36,7 @@ let AutoMigrate = class AutoMigrate {
         this.logger = loggerFactory.create(this.constructor.name);
         // get settings from DI container
         this.ENVIRONMENT = di_1.Container.get("ENVIRONMENT");
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {

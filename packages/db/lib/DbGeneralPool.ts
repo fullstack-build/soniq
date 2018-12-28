@@ -37,7 +37,7 @@ export class DbGeneralPool implements IDb {
     this.logger = loggerFactory.create(this.constructor.name);
 
     // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot(): Promise<void> {
@@ -57,9 +57,15 @@ export class DbGeneralPool implements IDb {
     return this.managedPool;
   }
 
-  // calculate number of max conections and adjust pool based on number of connected nodes
+  // calculate number of max connections and adjust pool based on number of connected nodes
   private async gracefullyAdjustPoolSize(): Promise<PgPool> {
     const configDbGeneral = this.CONFIG.general;
+
+    const poolMin: number = parseInt(configDbGeneral.min, 10);
+    const poolTotalMax: number = parseInt(configDbGeneral.totalMax, 10);
+    if (isNaN(poolMin) || isNaN(poolTotalMax)) {
+      throw Error("DbGeneralPool.gracefullyAdjustPoolSize.poolSize.min.and.totalMax.must.be.numbers");
+    }
 
     // get known nodes from container, initially assume we are the first one
     let knownNodesCount: number = 1;
@@ -71,7 +77,7 @@ export class DbGeneralPool implements IDb {
     }
 
     // reserve one for DbAppClient connection
-    const connectionsPerInstance: number = Math.floor(configDbGeneral.totalMax / knownNodesCount - 1);
+    const connectionsPerInstance: number = Math.floor(poolTotalMax / knownNodesCount - 1);
 
     // readjust pool only if number of max connections has changed
     if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
@@ -86,6 +92,7 @@ export class DbGeneralPool implements IDb {
       this.credentials = {
         ...configDbGeneral,
         application_name: this.applicationName,
+        min: poolMin,
         max: connectionsPerInstance
       };
 

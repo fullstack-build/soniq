@@ -1,4 +1,4 @@
-export declare class Email {
+export declare class NotificationsEmail {
     private isReady;
     private transport;
     private readonly queueName;

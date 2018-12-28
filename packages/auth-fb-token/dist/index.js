@@ -40,7 +40,7 @@ let AuthFbToken = class AuthFbToken {
         this.config = config;
         this.logger = this.loggerFactory.create(this.constructor.name);
         // add to boot loader
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
         schemaBuilder.extendSchema(schema);
         graphQl.addResolvers(this.getResolvers());
     }

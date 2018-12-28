@@ -85,7 +85,7 @@ export class Auth {
     graphQl.addHook("preMutationCommit", this.preMutationCommitHook.bind(this));
 
     // add to boot loader
-    bootLoader.addBootFunction(this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
 
     // A test change
 
@@ -175,7 +175,7 @@ export class Auth {
             }
 
             if (profile == null || email == null || profile.id == null) {
-              throw new Error("Email or id is missing!");
+              throw new Error("NotificationEmail or id is missing!");
             }
 
             const response = this.createAuthToken(true, email, provider.name, profile.id, provider.tenant, profile);

@@ -73,7 +73,7 @@ let Auth = class Auth {
         graphQl.addHook("preQuery", this.preQueryHook.bind(this));
         graphQl.addHook("preMutationCommit", this.preMutationCommitHook.bind(this));
         // add to boot loader
-        bootLoader.addBootFunction(this.boot.bind(this));
+        bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
         // A test change
         this.schemaBuilder.extendSchema(schema);
         this.schemaBuilder.addExtension(getParser_1.getParser((key, value) => {
@@ -135,7 +135,7 @@ let Auth = class Auth {
                             email = profile.emails[0].value;
                         }
                         if (profile == null || email == null || profile.id == null) {
-                            throw new Error("Email or id is missing!");
+                            throw new Error("NotificationEmail or id is missing!");
                         }
                         const response = this.createAuthToken(true, email, provider.name, profile.id, provider.tenant, profile);
                         cb(null, response);

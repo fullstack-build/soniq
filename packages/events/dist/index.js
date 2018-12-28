@@ -36,7 +36,7 @@ let EventEmitter = class EventEmitter {
         // register package config
         this.CONFIG = this.config.registerConfig("Events", `${__dirname}/../config`);
         this.namespace = this.CONFIG.namespace;
-        bootLoader.onBootReady(this.boot.bind(this));
+        bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {

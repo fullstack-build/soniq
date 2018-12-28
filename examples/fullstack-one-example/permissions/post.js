@@ -1,4 +1,4 @@
-export = [
+module.exports = [
   {
     gqlTypeName: "Post",
     readExpressions: {

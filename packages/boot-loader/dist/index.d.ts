@@ -3,10 +3,12 @@ export declare class BootLoader {
     private HAS_BOOTED;
     private bootFunctions;
     private bootReadyFunctions;
+    private readonly logger;
+    constructor(loggerFactory: any);
     isBooting(): boolean;
     hasBooted(): boolean;
-    addBootFunction(fn: any): void;
-    onBootReady(fn: any): any;
+    addBootFunction(name: string, fn: any): void;
+    onBootReady(name: string, fn: any): any;
     getReadyPromise(): Promise<{}>;
     boot(): Promise<void>;
 }
