@@ -1,5 +1,5 @@
 -- FUNCTION: _meta.validate(text, text, text)
--- DROP FUNCTION _meta.validate(text, text, text);
+--DROP FUNCTION _meta.validate(text, text, text) CASCADE;
 CREATE OR REPLACE FUNCTION _meta.validate(
 	type text,
 	value text,
@@ -17,6 +17,10 @@ AS $BODY$
   try {
     parameter = JSON.parse(parameter);
   } catch (e) {}
+
+  if(validator[type] == null) {
+  	throw new Error('validator.unknown ' + type);
+  }
 
   return validator[type](value, parameter);
 

@@ -1,6 +1,6 @@
 ## examples
-* SELECT _meta.validate('test123@gmail.com', 'isEmail', '');
-* SELECT _meta.validate('test123_gmail.com', 'contains', 'test');
-* SELECT _meta.validate('2017-12-11', 'isAfter', '2017-12-10');
-* SELECT _meta.validate('19.5', 'isFloat', '{ "min": 7.22, "max": 9.55 }');
-* SELECT _meta.sanitize('test@Gmail.com ', 'normalizeEmail', '');
+* SELECT _meta.validate('isEmail', 'test123@gmail.com', '');
+* SELECT _meta.validate('contains', 'test123_gmail.com', 'test');
+* SELECT _meta.validate('isAfter', '2017-12-11', '2017-12-10');
+* SELECT _meta.validate('isFloat', '19.5', '{ "min": 7.22, "max": 9.55 }');
+* SELECT _meta.sanitize('normalizeEmail', 'test@Gmail.com ', '');
