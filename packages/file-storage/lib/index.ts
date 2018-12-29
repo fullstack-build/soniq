@@ -193,7 +193,7 @@ export class FileStorage {
         const extension = args.extension.toLowerCase();
         const type = args.type || "DEFAULT";
 
-        if (this.verifiers[type] == null) {
+        if (this.verifierObjects[type] == null) {
           throw new Error(`A verifier for type '${type}' hasn't been defined.`);
         }
 
@@ -205,7 +205,7 @@ export class FileStorage {
           extension
         });
 
-        const cacheSettings = this.verifiers[type].putObjectCacheSettings();
+        const cacheSettings = this.verifierObjects[type].putObjectCacheSettings();
 
         const presignedPutUrl = await this.presignedPutObject(fName.uploadName, cacheSettings);
 

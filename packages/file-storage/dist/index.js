@@ -181,7 +181,7 @@ let FileStorage = class FileStorage {
             "@fullstack-one/file-storage/createFile": (obj, args, context, info, params) => __awaiter(this, void 0, void 0, function* () {
                 const extension = args.extension.toLowerCase();
                 const type = args.type || "DEFAULT";
-                if (this.verifiers[type] == null) {
+                if (this.verifierObjects[type] == null) {
                     throw new Error(`A verifier for type '${type}' hasn't been defined.`);
                 }
                 const result = yield this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
@@ -190,7 +190,7 @@ let FileStorage = class FileStorage {
                     type,
                     extension
                 });
-                const cacheSettings = this.verifiers[type].putObjectCacheSettings();
+                const cacheSettings = this.verifierObjects[type].putObjectCacheSettings();
                 const presignedPutUrl = yield this.presignedPutObject(fName.uploadName, cacheSettings);
                 return {
                     extension,
