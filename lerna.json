@@ -3,7 +3,7 @@
   "packages": [
     "packages/*"
   ],
-  "version": "0.4.47",
+  "version": "0.4.48",
   "command": {
     "init": {
       "exact": true
