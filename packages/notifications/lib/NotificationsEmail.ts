@@ -98,15 +98,15 @@ export class NotificationsEmail {
     const message = job.data;
 
     try {
-      const mailInfo = await this.transport.sendMail(message);
-      this.logger.trace("sendMessage.transport.sendMail.success", mailInfo);
+      const response = await this.transport.sendMail(message);
+      this.logger.trace("sendMessage.transport.sendMail.success", response);
       // extract email url for testing
       if (this.CONFIG.testing) {
-        this.logger.trace("testingAccount.sendMail.success.url", getTestMessageUrl(mailInfo));
+        this.logger.trace("testingAccount.sendMail.success.url", getTestMessageUrl(response));
       }
 
       // send event with email success
-      this.eventEmitter.emit(`sendMessage.success.${job.id}`);
+      this.eventEmitter.emit(`sendMessage.success.${job.id}`, response);
 
       // mark job as done
       job
@@ -117,7 +117,7 @@ export class NotificationsEmail {
           throw err;
         });
 
-      return mailInfo;
+      return response;
     } catch (err) {
       this.logger.warn("sendMessage.transport.sendMail.error", err.message);
       this.eventEmitter.emit(`sendMessage.error.${job.id}`);
