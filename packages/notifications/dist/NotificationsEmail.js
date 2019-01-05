@@ -117,7 +117,7 @@ let NotificationsEmail = class NotificationsEmail {
             }
             catch (err) {
                 this.logger.warn("sendMessage.transport.sendMail.error", err.message);
-                this.eventEmitter.emit(`sendMessage.error.${job.id}`);
+                this.eventEmitter.emit(`sendMessage.error.${job.id}`, { jobId: job.id, response: err });
                 throw err;
             }
         });
