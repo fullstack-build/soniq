@@ -106,7 +106,7 @@ export class NotificationsEmail {
       }
 
       // send event with email success
-      this.eventEmitter.emit(`sendMessage.success.${job.id}`, response);
+      this.eventEmitter.emit(`sendMessage.success.${job.id}`, { jobId: job.id, response });
 
       // mark job as done
       job
