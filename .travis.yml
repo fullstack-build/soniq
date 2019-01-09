@@ -4,8 +4,7 @@ node_js:
 
 install:
   - npm install
-  - cd packages/config && npm install && cd ../..
-  - lerna link
+  - lerna boostrap
 
 script:
   - node_modules/tslint/bin/tslint --project .
