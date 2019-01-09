@@ -4,6 +4,9 @@ node_js:
 
 install:
   - npm install
+  - lerna link
+  - lerna run install
 
 script:
   - node_modules/tslint/bin/tslint --project .
+  - npm test
