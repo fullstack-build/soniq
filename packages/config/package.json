@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "ava --verbose ./test",
     "start": "echo \"Error: no start specified\" && exit 1",
     "build": "tsc",
     "prepublishOnly": "npm run build"
@@ -23,5 +23,17 @@
     "@fullstack-one/boot-loader": "^0.4.46",
     "@fullstack-one/di": "^0.4.46",
     "lodash": "^4.17.5"
+  },
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "devDependencies": {
+    "ava": "^1.0.1"
   }
 }
