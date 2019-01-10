@@ -22,6 +22,7 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.4.46",
     "@fullstack-one/di": "^0.4.46",
+    "@types/lodash": "^4.14.119",
     "lodash": "^4.17.5"
   },
   "ava": {

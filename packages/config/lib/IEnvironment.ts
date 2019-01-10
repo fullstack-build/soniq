@@ -5,5 +5,5 @@ export interface IEnvironment {
   path: string;
   version: string;
   namespace: string;
-  nodeId: string;
+  nodeId: string; // unique instance ID (6 char)
 }
