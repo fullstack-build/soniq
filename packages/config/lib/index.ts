@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import { Inject, Service, Container } from "@fullstack-one/di";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
+import ConfigIntegrator from "./ConfigIntegrator";
 import { IEnvironment } from "./IEnvironment";
 export { IEnvironment };
 
@@ -22,7 +23,6 @@ export class Config {
   private configModules: IConfigModule[] = [];
   private projectConfig: any = {};
   private config: any = {};
-  private readonly myConfig;
 
   // env
   public readonly ENVIRONMENT: IEnvironment = {
@@ -32,35 +32,33 @@ export class Config {
     version: null,
     path: null,
     namespace: null,
-    // unique instance ID (6 char)
     nodeId: null
   };
 
   constructor() {
-    // start with empty objects in DI
     Container.set("CONFIG", {});
     Container.set("ENVIRONMENT", {});
 
-    // load project config
-    const projectConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
-    this.projectConfig = this.requireConfigFiles(projectConfigFolderPath);
-
-    // register package config
-    this.myConfig = this.registerConfig("Config", `${__dirname}/../config`);
+    this.projectConfig = this.loadProjectConfigs();
+    this.registerConfig("Config", `${__dirname}/../config`);
   }
 
-  private requireConfigFiles(moduleConfigPath): any {
-    // config files
-    const mainConfigPath = `${moduleConfigPath}/default.js`;
-    const envConfigPath = `${moduleConfigPath}/${this.ENVIRONMENT.NODE_ENV}.js`;
+  private loadProjectConfigs(): any {
+    const projectConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
+    this.requireConfigFiles(projectConfigFolderPath);
+  }
+
+  private requireConfigFiles(configModulePath: string): any {
+    const defaultConfigPath = `${configModulePath}/default.js`;
+    const envConfigPath = `${configModulePath}/${this.ENVIRONMENT.NODE_ENV}.js`;
 
     // require config files
     let config = null;
     // require default config - fail if not found
     try {
-      config = require(mainConfigPath);
+      config = require(defaultConfigPath);
     } catch (err) {
-      process.stderr.write(`config.default.loading.error.not.found: ${mainConfigPath} \n`);
+      process.stderr.write(`config.default.loading.error.not.found: ${defaultConfigPath} \n`);
       process.stderr.write(`${err} \n`);
       process.exit();
     }
@@ -75,36 +73,12 @@ export class Config {
 
   // apply config to the global config object and return config part that was added after application
   private applyConfig(moduleName: string, moduleConfigPath: string): any {
-    const moduleConfig = this.requireConfigFiles(moduleConfigPath);
+    const moduleConfig = {
+      [moduleName]: this.requireConfigFiles(moduleConfigPath)
+    };
+    const processEnvironmentConfig = ConfigIntegrator.getProcessEnvironmentConfig();
 
-    // everything seems to be fine so far -> merge with the global settings object
-    this.config = _.merge(this.config, { [moduleName]: moduleConfig });
-
-    // ALWAYS merge with project config file at the END
-    this.config = _.merge(this.config, this.projectConfig);
-
-    // copy and override config with ENVs (dot = nested object separator)
-    Object.keys(process.env).map((envName) => {
-      // parse 'true' and 'false' to booleans
-      const envValue =
-        process.env[envName].toLocaleLowerCase() === "true"
-          ? true
-          : process.env[envName].toLocaleLowerCase() === "false"
-          ? false
-          : process.env[envName];
-
-      // if name includes a dot it means its a nested object
-      if (envName.includes(".")) {
-        const envNameAsArray = envName.split(".");
-        envNameAsArray.reduce((obj, key, index) => {
-          // assign value in last iteration round
-          obj[key] = index + 1 < envNameAsArray.length ? obj[key] || {} : envValue;
-          return obj[key];
-        }, this.config);
-      } else {
-        this.config[envName] = envValue;
-      }
-    });
+    this.config = _.defaultsDeep(processEnvironmentConfig, this.projectConfig, this.config, moduleConfig);
 
     // LAST STEP: check config for undefined settings
     let foundMissingConfig = false;
@@ -115,7 +89,7 @@ export class Config {
       }
     });
     // missing config found?
-    if (!!foundMissingConfig) {
+    if (foundMissingConfig) {
       process.exit();
     }
 
