@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "ava --verbose ./test",
+    "test": "ava --verbose ./test/test.ts",
     "start": "echo \"Error: no start specified\" && exit 1",
     "build": "tsc",
     "prepublishOnly": "npm run build"
