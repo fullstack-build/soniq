@@ -1,1 +1,1 @@
-export class DefaultConfigNotFoundError extends Error {};
+export class DefaultConfigNotFoundError extends Error {}
