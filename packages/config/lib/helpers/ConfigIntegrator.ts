@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import { MissingConfigPropertiesError } from "../errors";
 
 class ConfigIntegrator {
@@ -19,8 +21,10 @@ class ConfigIntegrator {
 
     Object.entries(process.env).forEach(([key, value]: [string, string]) => {
       const parsedValue: any = this.parseTrueAndFalseToBooleans(value);
-      processEnvironmentConfig[key] = parsedValue;
+      _.set(processEnvironmentConfig, key, parsedValue);
     });
+
+    return processEnvironmentConfig;
   }
 
   private static parseTrueAndFalseToBooleans(value: string): any {

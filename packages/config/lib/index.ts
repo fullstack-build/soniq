@@ -11,7 +11,7 @@ import { IEnvironment } from "./IEnvironment";
 
 interface IConfigModule {
   name: string;
-  path: string;
+  configDirectory: string;
 }
 
 export { default as Errors } from "./errors";
@@ -23,29 +23,31 @@ export class Config {
   private readonly bootLoader: BootLoader;
 
   private configModules: IConfigModule[] = [];
-  private projectConfig: any = {};
+  private applicationConfig: any = {};
   private config: any = {};
 
+  private readonly NODE_ENV = process.env.NODE_ENV;
   public readonly ENVIRONMENT: IEnvironment;
 
   constructor() {
     Container.set("CONFIG", {});
 
-    this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment();
-    Container.set("ENVIRONMENT", {});
-
-    this.projectConfig = this.loadProjectConfigs();
+    this.applicationConfig = this.loadApplicationConfig();
     this.registerConfig("Config", `${__dirname}/../config`);
+
+    const namespace = this.config.Config.namespace;
+    this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(this.NODE_ENV, namespace);
+    Container.set("ENVIRONMENT", {});
   }
 
-  private loadProjectConfigs(): any {
-    const projectConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
-    this.requireConfigFiles(projectConfigFolderPath);
+  private loadApplicationConfig(): any {
+    const applicationConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
+    return this.requireConfigFiles(applicationConfigFolderPath);
   }
 
-  private requireConfigFiles(configModulePath: string): any {
-    const defaultConfigPath = `${configModulePath}/default.js`;
-    const envConfigPath = `${configModulePath}/${this.ENVIRONMENT.NODE_ENV}.js`;
+  private requireConfigFiles(configDirectory: string): any {
+    const defaultConfigPath = `${configDirectory}/default.js`;
+    const envConfigPath = `${configDirectory}/${this.NODE_ENV}.js`;
 
     let defaultConfig: any;
     try {
@@ -64,39 +66,40 @@ export class Config {
     return _.defaultsDeep(environmentConfig, defaultConfig);
   }
 
-  private applyConfigModule(moduleName: string, moduleConfigPath: string): any {
-    const moduleConfig = { [moduleName]: this.requireConfigFiles(moduleConfigPath) };
+  private applyConfigModule(name: string, configDirectory: string): any {
+    const moduleConfig = { [name]: this.requireConfigFiles(configDirectory) };
     const processEnvironmentConfig = ConfigIntegrator.getProcessEnvironmentConfig();
 
-    this.config = _.defaultsDeep(processEnvironmentConfig, this.projectConfig, this.config, moduleConfig);
+    this.config = _.defaultsDeep(processEnvironmentConfig, this.applicationConfig, this.config, moduleConfig);
 
     ConfigIntegrator.checkForMissingConfigProperties(this.config);
 
-    return this.config[moduleName];
+    return this.config[name];
   }
 
-  public registerConfig(moduleName: string, moduleConfigPath: string): any {
-    if (this.configModules.find((configModule) => configModule.name === moduleName) == null) {
+  public registerConfig(name: string, configDirectory: string): any {
+    if (this.configModules.find((configModule) => configModule.name === name) == null) {
       const configModule: IConfigModule = {
-        name: moduleName,
-        path: moduleConfigPath
+        name,
+        configDirectory
       };
       this.configModules.push(configModule);
 
-      return this.applyConfigModule(moduleName, moduleConfigPath);
+      return this.applyConfigModule(name, configDirectory);
     } else {
-      return this.getConfig(moduleName);
+      return this.getConfig(name);
     }
   }
 
-  public getConfig(moduleName?: string): any {
-    if (moduleName == null) {
+  public getConfig(name?: string): any {
+    if (name == null) {
       if (!this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
-        throw Error("Configuration not available before booting.");
+        throw new Error("Configuration not available before booting.");
       }
       return { ...this.config };
+    } else if (!_.has(this.config, name)) {
+      throw new Error();
     }
-
-    return { ...this.config[moduleName] };
+    return { ...this.config[name] };
   }
 }

@@ -6,16 +6,15 @@ import { IEnvironment } from "../IEnvironment";
 const nodeIdLength = 6;
 
 export default class EnvironmentBuilder {
-  public static buildEnvironment(): IEnvironment {
+  public static buildEnvironment(NODE_ENV: string, namespace: string): IEnvironment {
     const frameworkVersion = require("../../package.json").version;
     const applicationRootPath = path.dirname(require.main.filename);
     const { applicationName, applicationVersion } = this.getApplicationNameAndVersion(applicationRootPath);
-    const namespace = require("../../config/default").namespace;
     const nodeId = this.generateNodeId(nodeIdLength);
 
     return {
       frameworkVersion,
-      NODE_ENV: process.env.NODE_ENV,
+      NODE_ENV,
       name: applicationName,
       path: applicationRootPath,
       version: applicationVersion,
