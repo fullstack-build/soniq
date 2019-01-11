@@ -1,12 +1,11 @@
-import { MissingConfigPropertiesError } from '../errors';
+import { MissingConfigPropertiesError } from "../errors";
 
 class ConfigIntegrator {
-
   public static checkForMissingConfigProperties(config: object): void {
-    const missingProperties: string [] = [];
+    const missingProperties: string[] = [];
     this.deepForEach(config, (key, val, nestedPath) => {
       if (val == null) {
-        missingProperties.push(nestedPath)
+        missingProperties.push(nestedPath);
       }
     });
 
@@ -22,7 +21,6 @@ class ConfigIntegrator {
       const parsedValue: any = this.parseTrueAndFalseToBooleans(value);
       processEnvironmentConfig[key] = parsedValue;
     });
-
   }
 
   private static parseTrueAndFalseToBooleans(value: string): any {

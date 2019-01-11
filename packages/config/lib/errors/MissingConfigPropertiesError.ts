@@ -1,5 +1,4 @@
 export class MissingConfigPropertiesError extends Error {
-
   public readonly missingProperties: string[];
 
   constructor(missingProperties: string[]) {
@@ -7,4 +6,4 @@ export class MissingConfigPropertiesError extends Error {
     this.message += missingProperties.join(", ");
     this.missingProperties = missingProperties;
   }
-};
+}

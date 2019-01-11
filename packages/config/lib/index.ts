@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import { Inject, Service, Container } from "@fullstack-one/di";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
-import { DefaultConfigNotFoundError } from './errors';
+import { DefaultConfigNotFoundError } from "./errors";
 import ConfigIntegrator from "./helpers/ConfigIntegrator";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
@@ -14,14 +14,14 @@ interface IConfigModule {
   path: string;
 }
 
-export { default as Errors } from './errors';
+export { default as Errors } from "./errors";
 export { IEnvironment };
 
 @Service()
 export class Config {
   @Inject((type) => BootLoader)
   private readonly bootLoader: BootLoader;
-  
+
   private configModules: IConfigModule[] = [];
   private projectConfig: any = {};
   private config: any = {};
@@ -51,7 +51,7 @@ export class Config {
     try {
       defaultConfig = require(defaultConfigPath);
     } catch (err) {
-      throw new DefaultConfigNotFoundError(`config.default.loading.error.not.found: ${defaultConfigPath} \n ${err}`)
+      throw new DefaultConfigNotFoundError(`config.default.loading.error.not.found: ${defaultConfigPath} \n ${err}`);
     }
 
     let environmentConfig: any;
@@ -96,7 +96,7 @@ export class Config {
       }
       return { ...this.config };
     }
-    
+
     return { ...this.config[moduleName] };
   }
 }
