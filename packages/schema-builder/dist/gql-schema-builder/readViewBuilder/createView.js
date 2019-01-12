@@ -5,7 +5,7 @@ const getQueryArguments_1 = require("./getQueryArguments");
 const helpers_1 = require("./helpers");
 const createExpressions_1 = require("../createExpressions");
 const defaultFieldCreator_1 = require("./defaultFieldCreator");
-function buildReadView(table, readExpressions, context, extensions, config) {
+function buildReadView(table, readExpressions, context, extensions, config, disableSecurityBarrier) {
     // Get some data from table
     const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
     // Initialize meta object. Required for querybuilder
@@ -105,10 +105,10 @@ function buildReadView(table, readExpressions, context, extensions, config) {
         meta.publicFieldNames.push(expressionObject.name);
     });
     if (meta.publicFieldNames.length > 0) {
-        publicViewSql = helpers_1.createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions);
+        publicViewSql = helpers_1.createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions, disableSecurityBarrier);
     }
     if (meta.authFieldNames.length > 0) {
-        authViewSql = helpers_1.createView(table, config, meta.authViewName, authFieldsSql, authExpressions);
+        authViewSql = helpers_1.createView(table, config, meta.authViewName, authFieldsSql, authExpressions, disableSecurityBarrier);
     }
     return {
         meta,

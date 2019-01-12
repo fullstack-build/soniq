@@ -3,14 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const createView_1 = require("./createView");
 const createQuery_1 = require("./createQuery");
 const getFilterDefinitions_1 = require("./getFilterDefinitions");
-function buildReadQuery(table, readExpressions, context, extensions, config) {
+function buildReadQuery(table, readExpressions, context, extensions, config, disableSecurityBarrier) {
     const gqlDefinitions = [];
     const sql = [];
     const queryName = `${table.gqlTypeName.toLowerCase()}s`;
     const orderByEnumName = `${table.gqlTypeName}OrderBy`;
     const whereFilterName = `${table.gqlTypeName}Filter`;
     let viewCreated = false;
-    const { meta, authViewSql, publicViewSql, gqlDefinition } = createView_1.buildReadView(table, readExpressions, context, extensions, config);
+    const { meta, authViewSql, publicViewSql, gqlDefinition } = createView_1.buildReadView(table, readExpressions, context, extensions, config, disableSecurityBarrier);
     if (authViewSql != null) {
         authViewSql.forEach((q) => sql.push(q));
         viewCreated = true;

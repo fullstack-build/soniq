@@ -64,6 +64,7 @@ class CreateExpressions {
                     }
                     if (this.total === true) {
                         //  TODO: Consider renaming total to a clearer name
+                        // For Create, Update and Delete Views, we don't create FROM clauses for every expression. Instead each expression sql gets returned without that placeholder
                         return `(${this.expressionsObject[tempExpressionName].sql})`;
                     }
                     else {
@@ -80,7 +81,8 @@ class CreateExpressions {
                 requiresAuth: expression.requiresAuth === true,
                 dependentExpressions: [],
                 order: 0,
-                isRequiredAsPermissionExpression
+                isRequiredAsPermissionExpression,
+                excludeFromPermissionExpressions: expression.excludeFromPermissionExpressions === true
             };
             this.expressionsObject[expressionName].sql = expression.generate(expressionContext, params);
             if (this.expressionsObject[expressionName].sql.toLowerCase() === "true" && this.expressionsObject[expressionName].requiresAuth === true) {

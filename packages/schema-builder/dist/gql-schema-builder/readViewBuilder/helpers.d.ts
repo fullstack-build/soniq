@@ -1,4 +1,4 @@
-export declare function createView(table: any, config: any, name: any, fields: any, expressions: any): any[];
+export declare function createView(table: any, config: any, name: any, fields: any, expressions: any, disableSecurityBarrier: any): any[];
 export declare function createGqlField(name: any, gqlReturnType: any): {
     kind: string;
     name: {

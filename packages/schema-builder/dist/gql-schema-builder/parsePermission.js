@@ -36,8 +36,9 @@ function parsePermission(permission, context, extensions, config) {
         gqlTypeDefinition
     };
     meta.permissionMeta[permission.gqlTypeName] = permission.meta || null;
+    const disableSecurityBarrier = permission.meta != null && permission.meta.disableSecurityBarrierForReadViews === true;
     if (permission.readExpressions != null && Object.keys(permission.readExpressions).length > 0) {
-        const readQuery = readViewBuilder_1.buildReadQuery(table, permission.readExpressions, context, extensions, config);
+        const readQuery = readViewBuilder_1.buildReadQuery(table, permission.readExpressions, context, extensions, config, disableSecurityBarrier);
         meta.query[permission.gqlTypeName] = readQuery.meta;
         readQuery.sql.forEach((q) => sql.push(q));
         readQuery.gqlDefinitions.forEach((d) => gqlDocument.definitions.push(d));

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function filterRelevantExpressions(expressionObject) {
-    return expressionObject.isRequiredAsPermissionExpression === true;
+    return expressionObject.isRequiredAsPermissionExpression === true && expressionObject.excludeFromPermissionExpressions !== true;
 }
 function createExpressionSql(expressionObject) {
     if (expressionObject.type === "function") {
@@ -15,10 +15,10 @@ function createExpressionSql(expressionObject) {
 function getExpressionName(expressionObject) {
     return `"${expressionObject.name}"`;
 }
-function createView(table, config, name, fields, expressions) {
+function createView(table, config, name, fields, expressions, disableSecurityBarrier) {
     const statements = [];
     statements.push(`DROP VIEW IF EXISTS "${config.schemaName}"."${name}";`);
-    let sql = `CREATE OR REPLACE VIEW "${config.schemaName}"."${name}" WITH (security_barrier) AS `;
+    let sql = `CREATE OR REPLACE VIEW "${config.schemaName}"."${name}"${disableSecurityBarrier === true ? "" : " WITH (security_barrier)"} AS `;
     // TODO: Dustin: Put _local_table_ into constant for all queries
     sql += `SELECT ${fields.join(", ")} FROM "${table.schemaName}"."${table.tableName}" AS "_local_table_"`;
     if (expressions.length > 0) {
