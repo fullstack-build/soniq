@@ -41,8 +41,10 @@ export function parsePermission(permission, context, extensions, config) {
 
   meta.permissionMeta[permission.gqlTypeName] = permission.meta || null;
 
+  const disableSecurityBarrier = permission.meta != null && permission.meta.disableSecurityBarrierForReadViews === true;
+
   if (permission.readExpressions != null && Object.keys(permission.readExpressions).length > 0) {
-    const readQuery = buildReadQuery(table, permission.readExpressions, context, extensions, config);
+    const readQuery = buildReadQuery(table, permission.readExpressions, context, extensions, config, disableSecurityBarrier);
 
     meta.query[permission.gqlTypeName] = readQuery.meta;
     readQuery.sql.forEach((q) => sql.push(q));

@@ -7,7 +7,7 @@ import { CreateExpressions, orderExpressions } from "../createExpressions";
 
 import { CreateDefaultField } from "./defaultFieldCreator";
 
-export function buildReadView(table, readExpressions, context, extensions, config) {
+export function buildReadView(table, readExpressions, context, extensions, config, disableSecurityBarrier) {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
 
@@ -122,10 +122,10 @@ export function buildReadView(table, readExpressions, context, extensions, confi
   });
 
   if (meta.publicFieldNames.length > 0) {
-    publicViewSql = createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions);
+    publicViewSql = createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions, disableSecurityBarrier);
   }
   if (meta.authFieldNames.length > 0) {
-    authViewSql = createView(table, config, meta.authViewName, authFieldsSql, authExpressions);
+    authViewSql = createView(table, config, meta.authViewName, authFieldsSql, authExpressions, disableSecurityBarrier);
   }
 
   return {

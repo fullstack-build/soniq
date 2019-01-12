@@ -16,12 +16,12 @@ function getExpressionName(expressionObject) {
   return `"${expressionObject.name}"`;
 }
 
-export function createView(table, config, name, fields, expressions) {
+export function createView(table, config, name, fields, expressions, disableSecurityBarrier) {
   const statements = [];
 
   statements.push(`DROP VIEW IF EXISTS "${config.schemaName}"."${name}";`);
 
-  let sql = `CREATE OR REPLACE VIEW "${config.schemaName}"."${name}" WITH (security_barrier) AS `;
+  let sql = `CREATE OR REPLACE VIEW "${config.schemaName}"."${name}"${disableSecurityBarrier === true ? "" : " WITH (security_barrier)"} AS `;
   // TODO: Dustin: Put _local_table_ into constant for all queries
   sql += `SELECT ${fields.join(", ")} FROM "${table.schemaName}"."${table.tableName}" AS "_local_table_"`;
 
