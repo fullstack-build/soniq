@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/schema-builder",
-  "version": "0.4.48",
+  "version": "0.4.51",
   "description": "fullstack.one schema builder package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -23,7 +23,7 @@
     "@fullstack-one/auth": "latest",
     "@fullstack-one/boot-loader": "^0.4.46",
     "@fullstack-one/config": "^0.4.46",
-    "@fullstack-one/db": "^0.4.46",
+    "@fullstack-one/db": "^0.4.51",
     "@fullstack-one/di": "^0.4.46",
     "@fullstack-one/helper": "^0.4.46",
     "@fullstack-one/logger": "^0.4.46",
