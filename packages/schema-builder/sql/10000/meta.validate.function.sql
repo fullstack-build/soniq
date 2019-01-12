@@ -1,5 +1,5 @@
 -- FUNCTION: _meta.validate(text, text, text)
--- DROP FUNCTION _meta.validate(text, text, text);
+--DROP FUNCTION _meta.validate(text, text, text) CASCADE;
 CREATE OR REPLACE FUNCTION _meta.validate(
 	type text,
 	value text,
@@ -13,11 +13,16 @@ AS $BODY$
   plv8.execute( 'SELECT _meta.plv8_require();' );
 
   var validator = require('validator');
+  var parsedParameter;
   // parse if parameter is json
   try {
-    parameter = JSON.parse(parameter);
+    parsedParameter = JSON.parse(parameter);
   } catch (e) {}
 
-  return validator[type](value, parameter);
+  if(validator[type] == null) {
+  	throw new Error('validator.unknown ' + type);
+  }
+
+  return validator[type](value, parsedParameter);
 
 $BODY$;

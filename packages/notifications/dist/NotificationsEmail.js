@@ -97,14 +97,14 @@ let NotificationsEmail = class NotificationsEmail {
         return __awaiter(this, void 0, void 0, function* () {
             const message = job.data;
             try {
-                const mailInfo = yield this.transport.sendMail(message);
-                this.logger.trace("sendMessage.transport.sendMail.success", mailInfo);
+                const response = yield this.transport.sendMail(message);
+                this.logger.trace("sendMessage.transport.sendMail.success", response);
                 // extract email url for testing
                 if (this.CONFIG.testing) {
-                    this.logger.trace("testingAccount.sendMail.success.url", nodemailer_1.getTestMessageUrl(mailInfo));
+                    this.logger.trace("testingAccount.sendMail.success.url", nodemailer_1.getTestMessageUrl(response));
                 }
                 // send event with email success
-                this.eventEmitter.emit(`sendMessage.success.${job.id}`);
+                this.eventEmitter.emit(`sendMessage.success.${job.id}`, { jobId: job.id, response });
                 // mark job as done
                 job
                     .done()
@@ -113,11 +113,11 @@ let NotificationsEmail = class NotificationsEmail {
                     this.logger.warn("sendMessage.job.marked.completed.error", err);
                     throw err;
                 });
-                return mailInfo;
+                return response;
             }
             catch (err) {
                 this.logger.warn("sendMessage.transport.sendMail.error", err.message);
-                this.eventEmitter.emit(`sendMessage.error.${job.id}`);
+                this.eventEmitter.emit(`sendMessage.error.${job.id}`, { jobId: job.id, response: err });
                 throw err;
             }
         });

@@ -18,7 +18,7 @@ registerDirectiveParser("validate", (gQlDirectiveNode, dbMetaNode, refDbMeta, re
     const validateType = argument.name.value;
     const constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_${validateType}_check`;
     const options = {
-      param1: `_meta.validate('${validateType}'::text, (${refDbMetaCurrentTableColumn.name})::text, '${argument.value.value}'::text)`
+      param1: `_meta.validate('${validateType}'::text, ("${refDbMetaCurrentTableColumn.name}")::text, '${argument.value.value}'::text)`
     };
     // create constraint
     createConstraint(constraintName, constraintType, options, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
