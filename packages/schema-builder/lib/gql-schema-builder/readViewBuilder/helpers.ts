@@ -1,5 +1,5 @@
 function filterRelevantExpressions(expressionObject) {
-  return expressionObject.isRequiredAsPermissionExpression === true;
+  return expressionObject.isRequiredAsPermissionExpression === true && expressionObject.excludeFromPermissionExpressions !== true;
 }
 
 function createExpressionSql(expressionObject) {

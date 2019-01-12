@@ -92,7 +92,8 @@ export class CreateExpressions {
         requiresAuth: expression.requiresAuth === true,
         dependentExpressions: [],
         order: 0,
-        isRequiredAsPermissionExpression
+        isRequiredAsPermissionExpression,
+        excludeFromPermissionExpressions: expression.excludeFromPermissionExpressions === true
       };
 
       this.expressionsObject[expressionName].sql = expression.generate(expressionContext, params);
