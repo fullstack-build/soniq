@@ -242,6 +242,8 @@ export class GraphQl {
       });
     }
     // return generic (not authorized) apollo client
+    // reset cache before returning. Apollo Cache is not able to invalidate correct.
+    this.apolloClient.cache.reset();
     return this.apolloClient;
   }
 }
