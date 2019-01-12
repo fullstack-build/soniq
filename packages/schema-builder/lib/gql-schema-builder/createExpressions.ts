@@ -75,6 +75,7 @@ export class CreateExpressions {
           }
           if (this.total === true) {
             //  TODO: Consider renaming total to a clearer name
+            // For Create, Update and Delete Views, we don't create FROM clauses for every expression. Instead each expression sql gets returned without that placeholder
             return `(${this.expressionsObject[tempExpressionName].sql})`;
           } else {
             return `"${tempExpressionName}"."${tempExpressionName}"`;
