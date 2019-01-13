@@ -123,6 +123,10 @@ export function buildReadView(table, readExpressions, context, extensions, confi
 
   if (meta.publicFieldNames.length > 0) {
     publicViewSql = createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions, disableSecurityBarrier);
+    // If no view is created, no public fields exist
+    if (publicViewSql == null) {
+      meta.publicFieldNames = [];
+    }
   }
   if (meta.authFieldNames.length > 0) {
     authViewSql = createView(table, config, meta.authViewName, authFieldsSql, authExpressions, disableSecurityBarrier);

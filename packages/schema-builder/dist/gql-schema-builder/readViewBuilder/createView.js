@@ -106,6 +106,10 @@ function buildReadView(table, readExpressions, context, extensions, config, disa
     });
     if (meta.publicFieldNames.length > 0) {
         publicViewSql = helpers_1.createView(table, config, meta.publicViewName, publicFieldsSql, publicExpressions, disableSecurityBarrier);
+        // If no view is created, no public fields exist
+        if (publicViewSql == null) {
+            meta.publicFieldNames = [];
+        }
     }
     if (meta.authFieldNames.length > 0) {
         authViewSql = helpers_1.createView(table, config, meta.authViewName, authFieldsSql, authExpressions, disableSecurityBarrier);
