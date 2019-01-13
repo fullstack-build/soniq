@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.4.53",
+  "version": "0.4.54",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -26,7 +26,7 @@
     "@fullstack-one/di": "^0.4.46",
     "@fullstack-one/helper": "^0.4.46",
     "@fullstack-one/logger": "^0.4.46",
-    "@fullstack-one/schema-builder": "^0.4.53",
+    "@fullstack-one/schema-builder": "^0.4.54",
     "@fullstack-one/server": "^0.4.46",
     "apollo-cache-inmemory": "^1.2.9",
     "apollo-client": "^2.4.1",
