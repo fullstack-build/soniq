@@ -1,4 +1,5 @@
 import * as apolloServer from "apollo-server-koa";
+import { ApolloClient } from "apollo-client";
 export { apolloServer };
 export declare class GraphQl {
     private graphQlConfig;
@@ -20,5 +21,5 @@ export declare class GraphQl {
     addHook(name: any, fn: any): void;
     addResolvers(resolversObject: any): void;
     prepareSchema(gqlRuntimeDocument: any, dbMeta: any, resolverMeta: any): any;
-    getApolloClient(accessToken?: string, ctx?: any): any;
+    getApolloClient(accessToken?: string, ctx?: any): ApolloClient<import("apollo-cache-inmemory/lib/types").NormalizedCacheObject>;
 }

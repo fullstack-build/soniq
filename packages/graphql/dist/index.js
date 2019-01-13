@@ -196,10 +196,24 @@ let GraphQl = class GraphQl {
                 })
             });
         }
+        /* OLD
         // return generic (not authorized) apollo client
         // reset cache before returning. Apollo Cache is not able to invalidate correct.
-        this.apolloClient.cache.reset();
-        return this.apolloClient;
+        // this.apolloClient.cache.reset();
+        // return this.apolloClient;
+        OLD */
+        // Return a new client every time because, clearing the cache could collide with other queries
+        return new apollo_client_1.ApolloClient({
+            ssrMode: true,
+            cache: new apollo_cache_inmemory_1.InMemoryCache(),
+            link: new apollo_link_schema_1.SchemaLink({
+                schema: this.apolloSchema,
+                context: {
+                    ctx: {},
+                    accessToken: null
+                }
+            })
+        });
     }
 };
 GraphQl = __decorate([
