@@ -98,7 +98,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
 
   const authExpressions = Object.values(expressionsObject).sort(orderExpressions);
   const publicExpressions = authExpressions.filter((expressionObject: any) => {
-    return expressionObject.requiresAuth !== true;
+    return expressionObject.requiresAuth !== true && expressionObject.excludeFromPermissionExpressions !== true;
   });
 
   authExpressions.forEach((expressionObject: any) => {
