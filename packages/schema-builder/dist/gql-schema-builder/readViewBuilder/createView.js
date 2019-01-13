@@ -86,7 +86,7 @@ function buildReadView(table, readExpressions, context, extensions, config, disa
     const expressionsObject = expressionCreator.getExpressionsObject();
     const authExpressions = Object.values(expressionsObject).sort(createExpressions_1.orderExpressions);
     const publicExpressions = authExpressions.filter((expressionObject) => {
-        return expressionObject.requiresAuth !== true && expressionObject.excludeFromPermissionExpressions !== true;
+        return expressionObject.requiresAuth !== true;
     });
     authExpressions.forEach((expressionObject) => {
         const gqlFieldDefinition = helpers_1.createGqlField(expressionObject.name, expressionObject.gqlReturnType);

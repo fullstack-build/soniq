@@ -33,7 +33,10 @@ export function createView(table, config, name, fields, expressions, disableSecu
   const conditionExpressions = expressions.filter(filterRelevantExpressions);
 
   if (conditionExpressions.length > 0) {
-    sql += ` WHERE ${conditionExpressions.map(getExpressionName).join(" OR ")}`;
+    sql += ` WHERE (FALSE OR ${conditionExpressions.map(getExpressionName).join(" OR ")})`;
+  } else {
+    // A view without any expression makes no sense
+    return null;
   }
 
   sql += ";";
