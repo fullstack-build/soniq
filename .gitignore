@@ -1,5 +1,7 @@
 .DS_Store
 
+packages/config/dist/index.js
+
 # Logs
 logs
 *.log
@@ -41,6 +43,9 @@ packages/*/node_modules
 
 # Typescript v1 declaration files
 typings/
+
+# Distribution folder
+**/dist
 
 # Optional npm cache directory
 .npm
