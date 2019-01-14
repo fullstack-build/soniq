@@ -102,14 +102,14 @@ export MyFullstackOnePackage.b.c=changed
 
 ```json
 {
-'MyFullstackOnePackage': {
-    'a': true,
-    'b': {
-      'c': 'changed',
-      'd': 'foo'
-    }
-  },
-  'Package2': { ... },
+  "MyFullstackOnePackage": {
+    "a": true,
+      "b": {
+        "c": "changed",
+        "d": "foo"
+      }
+    },
+  "Package2": { ... },
   ...
 }
 ```
