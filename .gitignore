@@ -1,7 +1,3 @@
-.DS_Store
-
-packages/config/dist/index.js
-
 # Logs
 logs
 *.log
@@ -94,7 +90,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-.DS_Store
+**/.DS_Store
 .vscode/
 
 .ts-node
