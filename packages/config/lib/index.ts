@@ -5,14 +5,9 @@ import { Inject, Service, Container } from "@fullstack-one/di";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
 import { DefaultConfigNotFoundError } from "./errors";
-import ConfigIntegrator from "./helpers/ConfigIntegrator";
+import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
-
-interface IConfigModule {
-  name: string;
-  configDirectory: string;
-}
 
 export { default as Errors } from "./errors";
 export { IEnvironment };
@@ -22,7 +17,7 @@ export class Config {
   @Inject((type) => BootLoader)
   private readonly bootLoader: BootLoader;
 
-  private configModules: IConfigModule[] = [];
+  private registeredConfigModules: string[] = [];
   private applicationConfig: any = {};
   private config: any = {};
 
@@ -40,25 +35,25 @@ export class Config {
     Container.set("ENVIRONMENT", {});
   }
 
-  private loadApplicationConfig(): any {
+  private loadApplicationConfig(): object {
     const applicationConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
-    return this.requireConfigFiles(applicationConfigFolderPath);
+    return this.getConfigFromConfigFiles(applicationConfigFolderPath);
   }
 
-  private requireConfigFiles(configDirectory: string): any {
+  private getConfigFromConfigFiles(configDirectory: string): object {
     const defaultConfigPath = `${configDirectory}/default.js`;
-    const envConfigPath = `${configDirectory}/${this.NODE_ENV}.js`;
+    const environmentConfigPath = `${configDirectory}/${this.NODE_ENV}.js`;
 
-    let defaultConfig: any;
+    let defaultConfig: object;
     try {
       defaultConfig = require(defaultConfigPath);
     } catch (err) {
       throw new DefaultConfigNotFoundError(`config.default.loading.error.not.found: ${defaultConfigPath} \n ${err}`);
     }
 
-    let environmentConfig: any;
+    let environmentConfig: object;
     try {
-      environmentConfig = require(envConfigPath);
+      environmentConfig = require(environmentConfigPath);
     } catch (err) {
       environmentConfig = {};
     }
@@ -66,29 +61,31 @@ export class Config {
     return _.defaultsDeep(environmentConfig, defaultConfig);
   }
 
-  private applyConfigModule(name: string, configDirectory: string): any {
-    const moduleConfig = { [name]: this.requireConfigFiles(configDirectory) };
-    const processEnvironmentConfig = ConfigIntegrator.getProcessEnvironmentConfig();
+  private applyConfigModule(name: string, baseConfigModule: object): void {
+    if (name in this.config) return;
 
-    this.config = _.defaultsDeep(processEnvironmentConfig, this.applicationConfig, this.config, moduleConfig);
+    const applicationConfigOfModule = this.applicationConfig[name] || {};
+    const processEnvironmentConfigOfModule = ConfigMergeHelper.getProcessEnvironmentConfig(name);
 
-    ConfigIntegrator.checkForMissingConfigProperties(this.config);
+    const configModule = _.defaultsDeep(processEnvironmentConfigOfModule, applicationConfigOfModule, baseConfigModule);
 
-    return this.config[name];
+    ConfigMergeHelper.checkForMissingConfigProperties(configModule);
+
+    this.config[name] = configModule;
   }
 
-  public registerConfig(name: string, configDirectory: string): any {
-    if (this.configModules.find((configModule) => configModule.name === name) == null) {
-      const configModule: IConfigModule = {
-        name,
-        configDirectory
-      };
-      this.configModules.push(configModule);
+  public registerConfig(name: string, configDirectory: string): object {
+    const baseConfigModule = this.getConfigFromConfigFiles(configDirectory);
+    this.applyConfigModule(name, baseConfigModule);
 
-      return this.applyConfigModule(name, configDirectory);
-    } else {
-      return this.getConfig(name);
-    }
+    return this.getConfig(name);
+  }
+
+  public registerApplicationConfigModule(name: string): object {
+    const baseConfigModule = {};
+    this.applyConfigModule(name, baseConfigModule);
+
+    return this.getConfig(name);
   }
 
   public getConfig(name?: string): any {

@@ -2,7 +2,7 @@ import * as _ from "lodash";
 
 import { MissingConfigPropertiesError } from "../errors";
 
-class ConfigIntegrator {
+class ConfigMergeHelper {
   public static checkForMissingConfigProperties(config: object): void {
     const missingProperties: string[] = [];
     this.deepForEach(config, (key, val, nestedPath) => {
@@ -16,7 +16,7 @@ class ConfigIntegrator {
     }
   }
 
-  public static getProcessEnvironmentConfig(): any {
+  public static getProcessEnvironmentConfig(moduleName: string): any {
     const processEnvironmentConfig = {};
 
     Object.entries(process.env).forEach(([key, value]: [string, string]) => {
@@ -24,7 +24,9 @@ class ConfigIntegrator {
       _.set(processEnvironmentConfig, key, parsedValue);
     });
 
-    return processEnvironmentConfig;
+    const processEnvironmentConfigOfModule = processEnvironmentConfig[moduleName] || {};
+
+    return processEnvironmentConfigOfModule;
   }
 
   private static parseTrueAndFalseToBooleans(value: string): any {
@@ -44,4 +46,4 @@ class ConfigIntegrator {
   }
 }
 
-export default ConfigIntegrator;
+export default ConfigMergeHelper;

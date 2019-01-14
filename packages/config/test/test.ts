@@ -24,8 +24,9 @@ ava("Construct config ENVIRONMENT", (test: ExecutionContext<{ applicationPath: s
   test.is(config.ENVIRONMENT.version, "1.0.0");
 });
 
-ava("Construct application config from default.js, test.js and process.env", (test) => {
+ava("Register application config module from default.js, test.js and process.env", (test) => {
   const config = new Config();
+  config.registerApplicationConfigModule("Foo");
 
   const expectedFooConfig = {
     processEnvironment: {
