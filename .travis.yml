@@ -8,4 +8,4 @@ install:
 
 script:
   - node_modules/tslint/bin/tslint --project .
-  - npm test
+  - npm run coverage

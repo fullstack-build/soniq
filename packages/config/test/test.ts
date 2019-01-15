@@ -171,3 +171,5 @@ ava("Throw error on get whole config while booting", (test: ExecutionContext<{ i
     test.pass();
   }
 });
+
+ava.todo("Throw error on missing config property after merge");

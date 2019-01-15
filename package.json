@@ -11,6 +11,7 @@
     "start": "echo \"Error: no start specified\" && exit 1",
     "tslint": "tslint-config-prettier-check ./tslint.json && prettier --write '**/*.ts' && tslint --project '.' --fix",
     "test": "lerna run test --scope @fullstack-one/config",
+    "coverage": "lerna run coverage --scope @fullstack-one/config",
     "lerna": "lerna bootstrap && lerna link --force-local",
     "lerna-publish": "lerna publish",
     "link": "sh scripts/dev.sh",
