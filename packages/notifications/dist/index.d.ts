@@ -1,1 +1,0 @@
-export { NotificationsEmail } from "./NotificationsEmail";
