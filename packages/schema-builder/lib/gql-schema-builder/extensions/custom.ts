@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 export function parseReadField(ctx) {
   const { fieldName, readExpressions, directives } = ctx;
 
@@ -9,7 +11,7 @@ export function parseReadField(ctx) {
 
     const { publicFieldSql, authFieldSql, gqlFieldDefinition } = defaultFieldCreator.create(
       readExpressions[fieldName],
-      JSON.parse(JSON.stringify(ctx.gqlFieldDefinition)),
+      _.cloneDeep(ctx.gqlFieldDefinition),
       columnExpression,
       fieldName
     );

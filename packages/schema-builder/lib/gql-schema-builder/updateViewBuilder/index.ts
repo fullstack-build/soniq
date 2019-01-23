@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import { CreateExpressions, orderExpressions } from "../createExpressions";
 import { parseDirectives } from "../utils/parseDirectives";
 
@@ -25,7 +27,7 @@ export function buildUpdateView(table, view, context, extensions, config) {
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array
-  const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
+  const newGqlTypeDefinition = _.cloneDeep(gqlTypeDefinition);
   newGqlTypeDefinition.fields = [];
   newGqlTypeDefinition.name.value = gqlInputTypeName;
   newGqlTypeDefinition.kind = "InputObjectTypeDefinition";
@@ -49,7 +51,7 @@ export function buildUpdateView(table, view, context, extensions, config) {
   const localTable = "_local_table_";
 
   gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
-    const gqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinitionTemp));
+    const gqlFieldDefinition = _.cloneDeep(gqlFieldDefinitionTemp);
 
     // Remove the NonNullType for all fields.
     if (gqlFieldDefinition.type.kind === "NonNullType") {

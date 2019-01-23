@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import { CreateExpressions, orderExpressions } from "../createExpressions";
 import { parseDirectives } from "../utils/parseDirectives";
 
@@ -24,7 +26,7 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array
-  const newGqlTypeDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
+  const newGqlTypeDefinition = _.cloneDeep(gqlTypeDefinition);
   newGqlTypeDefinition.fields = [
     {
       kind: "InputValueDefinition",

@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import { parsePermission } from "./parsePermission";
 import { extensions as defaultExtensions } from "./extensions";
 import { createSchemaBasics } from "./createSchemaBasics";
@@ -69,7 +71,7 @@ export function parsePermissions(permissions, context, extensions, config) {
   });
 
   return {
-    gqlDocument: JSON.parse(JSON.stringify(context.gqlDocument)),
+    gqlDocument: _.cloneDeep(context.gqlDocument),
     meta,
     sql
   };

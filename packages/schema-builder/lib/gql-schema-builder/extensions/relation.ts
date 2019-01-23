@@ -1,5 +1,5 @@
 import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
-import { _ } from "lodash";
+import * as _ from "lodash";
 
 function getRelations(dbMeta, relationName, tableName) {
   const relationConnections = dbMeta.relations[relationName];
@@ -26,7 +26,7 @@ export function parseReadField(ctx) {
   // Has field any permission-expression - without at least one expression it is not queryable at all
   if (directives.relation != null && directives.relation.name != null && readExpressions[fieldName] != null) {
     const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, context } = ctx;
-    let newGqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinition));
+    let newGqlFieldDefinition = _.cloneDeep(gqlFieldDefinition);
 
     let publicFieldSql = null;
     let authFieldSql = null;

@@ -1,3 +1,5 @@
+import * as _ from "lodash";
+
 import { parseDirectives } from "../utils/parseDirectives";
 import { getQueryArguments } from "./getQueryArguments";
 
@@ -24,7 +26,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array
-  const newGqlDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
+  const newGqlDefinition = _.cloneDeep(gqlTypeDefinition);
   newGqlDefinition.fields = [];
 
   // List of field-select sql statements
@@ -42,7 +44,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
   const defaultFieldCreator = new CreateDefaultField(expressionCreator);
 
   gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
-    const gqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinitionTemp));
+    const gqlFieldDefinition = _.cloneDeep(gqlFieldDefinitionTemp);
     const directives = parseDirectives(gqlFieldDefinition.directives);
     const fieldName = gqlFieldDefinition.name.value;
 
