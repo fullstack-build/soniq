@@ -1,3 +1,5 @@
+import { IBooleanOperator } from "./types";
+
 const operators = {
   NULL: "IS NULL",
   NOT_NULL: "IS NOT NULL",
@@ -15,7 +17,7 @@ enum IS_VALUE {
 }
 `;
 
-const booleanOperator = {
+const booleanOperator: IBooleanOperator = {
   name: "is",
   value: "IS_VALUE",
   extendSchema,
