@@ -1,8 +1,27 @@
 import * as gQlTypeJson from "graphql-type-json";
+import { GraphQLResolveInfo } from "graphql";
+import { IResolvers, IResolverObject, MergeInfo } from "graphql-tools";
+import { IOperations } from "./getOperations";
 
-export function getResolvers(operations, resolversObject, hooks, dbGeneralPool, logger) {
-  const queryResolvers = {};
-  const mutationResolvers = {};
+export type ICustomFieldResolver<TSource = any, TContext = any> = (
+  source: TSource,
+  args: {
+    [argument: string]: any;
+  },
+  context: TContext,
+  info: GraphQLResolveInfo & {
+    mergeInfo: MergeInfo;
+  },
+  operationParams: any
+) => any;
+
+export interface ICustomResolverObject<TSource = any, TContext = any> {
+  [key: string]: ICustomFieldResolver<TSource, TContext>;
+}
+
+export function getResolvers(operations: IOperations, resolversObject: ICustomResolverObject): IResolvers {
+  const queryResolvers: IResolverObject = {};
+  const mutationResolvers: IResolverObject = {};
 
   // Add  queries to queryResolvers
   Object.values(operations.queries).forEach((operation: any) => {
@@ -26,7 +45,7 @@ export function getResolvers(operations, resolversObject, hooks, dbGeneralPool, 
     };
   });
 
-  const resolvers = {
+  const resolvers: IResolvers = {
     // Add JSON Scalar
     JSON: gQlTypeJson,
     Query: queryResolvers,
@@ -34,7 +53,7 @@ export function getResolvers(operations, resolversObject, hooks, dbGeneralPool, 
   };
 
   // Add  field resolvers to resolvers object
-  Object.values(operations.fields).forEach((operation: any) => {
+  Object.values(operations.fields).forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(
         `The resolver "${operation.resolver}" is not defined.` +

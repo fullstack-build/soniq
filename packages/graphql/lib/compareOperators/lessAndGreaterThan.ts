@@ -1,4 +1,6 @@
-const greaterThan = {
+import { ISingleValueOperator } from "./types";
+
+const greaterThan: ISingleValueOperator = {
   name: "greaterThan",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const greaterThan = {
   }
 };
 
-const greaterThanOrEqual = {
+const greaterThanOrEqual: ISingleValueOperator = {
   name: "greaterThanOrEqual",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const greaterThanOrEqual = {
   }
 };
 
-const lessThan = {
+const lessThan: ISingleValueOperator = {
   name: "lessThan",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const lessThan = {
   }
 };
 
-const lessThanOrEqual = {
+const lessThanOrEqual: ISingleValueOperator = {
   name: "lessThanOrEqual",
   value: "String",
   getSql: (context) => {

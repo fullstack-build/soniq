@@ -1,15 +1,35 @@
 import { utils } from "@fullstack-one/schema-builder";
-const { parseDirectives } = utils;
+import { DocumentNode, DefinitionNode, DirectiveNode } from "graphql";
+import { IResolverObject } from "graphql-tools";
+const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custom?: { params: object, resolver: string } } = utils.parseDirectives;
 
-export function getOperations(gqlDocument) {
-  const queries = [];
-  const mutations = [];
-  const fields = [];
+interface IBaseOperation {
+  name: string,
+  type: string,
+  resolver: any,
+  params: object,
+  viewName?: string
+}
 
-  Object.values(gqlDocument.definitions).forEach((node: any) => {
+export type TQueryOperation = IBaseOperation
+export type TMutationOperation = IBaseOperation
+export type TFieldOperation = IBaseOperation & { gqlTypeName: string, fieldName: string }
+
+export interface IOperations {
+  queries: TQueryOperation[],
+  mutations: TMutationOperation[],
+  fields: TFieldOperation[]
+}
+
+export function getOperations(gqlDocument: DocumentNode): IOperations {
+  const queries: TQueryOperation[] = [];
+  const mutations: TMutationOperation[] = [];
+  const fields: TFieldOperation[] = [];
+
+  Object.values(gqlDocument.definitions).forEach((node) => {
     if (node.kind === "ObjectTypeExtension") {
       const type = node.name.value;
-      Object.values(node.fields).forEach((field: any) => {
+      Object.values(node.fields).forEach((field) => {
         const fieldName = field.name.value;
         const directives = parseDirectives(field.directives);
 
@@ -38,7 +58,7 @@ export function getOperations(gqlDocument) {
     }
     if (node.kind === "ObjectTypeDefinition") {
       const gqlTypeName = node.name.value;
-      Object.values(node.fields).forEach((field: any) => {
+      Object.values(node.fields).forEach((field) => {
         const fieldName = field.name.value;
         const directives = parseDirectives(field.directives);
 

@@ -8,12 +8,12 @@ import { ApolloClient } from "apollo-client";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { SchemaLink } from "apollo-link-schema";
 
-import { getResolvers } from "./resolvers";
+import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import { getDefaultResolvers } from "./queryBuilder/resolvers";
 
 import { operatorsObject } from "./compareOperators";
 
-import { getOperations } from "./getOperations";
+import { getOperations, IOperations } from "./getOperations";
 import { getOperatorsDefinition } from "./getOperatorsDefinition";
 
 // fullstack-one core
@@ -26,13 +26,14 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
+import { GraphQLSchema } from "graphql";
 
 export { apolloServer };
 
 @Service()
 export class GraphQl {
   private graphQlConfig: any;
-  private apolloSchema: any;
+  private apolloSchema: GraphQLSchema;
   private apolloClient: any;
 
   // DI
@@ -43,8 +44,7 @@ export class GraphQl {
   private schemaBuilder: SchemaBuilder;
   private server: Server;
   private dbGeneralPool: DbGeneralPool;
-  private resolvers: any = {};
-  private operations: any = {};
+  private resolvers: ICustomResolverObject = {};
 
   private hooks = {
     preQuery: [],
@@ -94,15 +94,15 @@ export class GraphQl {
 
     // Load resolvers
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-    this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject(resolversPattern));
+    this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver>(resolversPattern));
 
     const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
 
-    const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
+    const { gQlAst, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
 
     const schema = makeExecutableSchema({
-      typeDefs: runtimeSchema,
-      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
+      typeDefs: gQlAst,
+      resolvers: getResolvers(operations, this.resolvers)
     });
 
     this.apolloSchema = schema;
@@ -200,11 +200,11 @@ export class GraphQl {
     this.hooks[name].push(fn);
   }
 
-  public addResolvers(resolversObject) {
+  public addResolvers(resolversObject: ICustomResolverObject) {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta) {
+  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta): { gQlAst: string, operations: IOperations } {
     gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
 
     this.addResolvers(
@@ -218,9 +218,10 @@ export class GraphQl {
         this.graphQlConfig.minQueryDepthToCheckCostLimit
       )
     );
-    this.operations = getOperations(gqlRuntimeDocument);
+    const gQlAst = this.schemaBuilder.print(gqlRuntimeDocument);
+    const operations = getOperations(gqlRuntimeDocument);
 
-    return this.schemaBuilder.print(gqlRuntimeDocument);
+    return { gQlAst, operations };
   }
 
   public getApolloClient(accessToken: string = null, ctx: any = {}) {

@@ -1,4 +1,6 @@
-const equal = {
+import { ISingleValueOperator } from "./types";
+
+const equal: ISingleValueOperator = {
   name: "equals",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const equal = {
   }
 };
 
-const notEqual = {
+const notEqual: ISingleValueOperator = {
   name: "equalsNot",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const notEqual = {
   }
 };
 
-const isDistinctFrom = {
+const isDistinctFrom: ISingleValueOperator = {
   name: "isDistinctFrom",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const isDistinctFrom = {
   }
 };
 
-const isNotDistinctFrom = {
+const isNotDistinctFrom: ISingleValueOperator = {
   name: "isNotDistinctFrom",
   value: "String",
   getSql: (context) => {

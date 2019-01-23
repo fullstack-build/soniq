@@ -1,4 +1,6 @@
-const like = {
+import { ISingleValueOperator } from "./types";
+
+const like: ISingleValueOperator = {
   name: "like",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const like = {
   }
 };
 
-const notLike = {
+const notLike: ISingleValueOperator = {
   name: "notLike",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const notLike = {
   }
 };
 
-const iLike = {
+const iLike: ISingleValueOperator = {
   name: "iLike",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const iLike = {
   }
 };
 
-const notILike = {
+const notILike: ISingleValueOperator = {
   name: "notILike",
   value: "String",
   getSql: (context) => {
@@ -34,7 +36,7 @@ const notILike = {
   }
 };
 
-const similarTo = {
+const similarTo: ISingleValueOperator = {
   name: "similarTo",
   value: "String",
   getSql: (context) => {
@@ -43,7 +45,7 @@ const similarTo = {
   }
 };
 
-const notSimilarTo = {
+const notSimilarTo: ISingleValueOperator = {
   name: "notSimilarTo",
   value: "String",
   getSql: (context) => {
@@ -52,7 +54,7 @@ const notSimilarTo = {
   }
 };
 
-const posixMatchCaseSensitive = {
+const posixMatchCaseSensitive: ISingleValueOperator = {
   name: "posixMatchCaseSensitive",
   value: "String",
   getSql: (context) => {
@@ -61,7 +63,7 @@ const posixMatchCaseSensitive = {
   }
 };
 
-const posixMatchCaseInsensitive = {
+const posixMatchCaseInsensitive: ISingleValueOperator = {
   name: "posixMatchCaseInsensitive",
   value: "String",
   getSql: (context) => {
@@ -70,7 +72,7 @@ const posixMatchCaseInsensitive = {
   }
 };
 
-const posixNoMatchCaseSensitive = {
+const posixNoMatchCaseSensitive: ISingleValueOperator = {
   name: "posixNoMatchCaseSensitive",
   value: "String",
   getSql: (context) => {
@@ -79,7 +81,7 @@ const posixNoMatchCaseSensitive = {
   }
 };
 
-const posixNoMatchCaseInsensitive = {
+const posixNoMatchCaseInsensitive: ISingleValueOperator = {
   name: "posixNoMatchCaseInsensitive",
   value: "String",
   getSql: (context) => {
