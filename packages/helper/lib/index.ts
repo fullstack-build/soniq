@@ -8,8 +8,8 @@ export abstract class AHelper {
     try {
       const filePaths: string[] = fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
-      const readFilesPromises = [];
-      filePaths.map((filePath: any) => {
+      const readFilesPromises: Array<Promise<string>> = [];
+      filePaths.map((filePath) => {
         readFilesPromises.push(readFileAsync(filePath, "utf8"));
       });
 
