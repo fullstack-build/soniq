@@ -24,7 +24,7 @@ import { IDbMeta, IDbRelation } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
 import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
-import { print } from "graphql";
+import { print, DocumentNode } from "graphql";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -39,19 +39,20 @@ export { registerQueryParser } from "./db-schema-builder/fromPg/pgToDbMeta";
 export { registerTriggerParser } from "./db-schema-builder/fromPg/pgToDbMeta";
 // migrations
 export { registerColumnMigrationExtension, registerTableMigrationExtension } from "./db-schema-builder/toPg/createSqlObjFromMigrationObject";
+
 @Service()
 export class SchemaBuilder {
   private schemaBuilderConfig: any;
-  private gQlSdl: any;
+  private gQlSdl: string[];
   private gqlSdlExtensions: any = [];
-  private gQlAst: any;
+  private gQlAst: DocumentNode;
   private permissions: any;
   private expressions: any;
   private gqlRuntimeDocument: any;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
   private pgToDbMeta: PgToDbMeta;
-  private dbMeta: any;
+  private dbMeta: IDbMeta;
   private extensions: any = [];
 
   // DI
@@ -83,7 +84,7 @@ export class SchemaBuilder {
     this.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
   }
 
-  private async boot(): Promise<any> {
+  private async boot(): Promise<IDbMeta> {
     try {
       this.logger.trace("boot", "started");
       // load schema
@@ -159,7 +160,7 @@ export class SchemaBuilder {
     }
   }
 
-  public getDbSchemaBuilder() {
+  public getDbSchemaBuilder(): DbSchemaBuilder {
     return this.dbSchemaBuilder;
   }
 
@@ -167,19 +168,19 @@ export class SchemaBuilder {
     return this.pgToDbMeta.getPgDbMeta();
   }
 
-  public addExtension(extension) {
+  public addExtension(extension): void {
     this.extensions.push(extension);
   }
 
-  public getDbMeta() {
+  public getDbMeta(): IDbMeta {
     return this.dbMeta;
   }
 
-  public extendSchema(schema: string) {
+  public extendSchema(schema: string): void {
     this.gqlSdlExtensions.push(schema);
   }
 
-  public getGQlRuntimeObject() {
+  public getGQlRuntimeObject(): { dbMeta: IDbMeta, gqlRuntimeDocument: any, resolverMeta: any } {
     return {
       dbMeta: this.dbMeta,
       gqlRuntimeDocument: this.gqlRuntimeDocument,
@@ -187,17 +188,7 @@ export class SchemaBuilder {
     };
   }
 
-  public getGQlSdl() {
-    // return copy instead of ref
-    return { ...this.gQlSdl };
-  }
-
-  public getGQlAst() {
-    // return copy instead of ref
-    return { ...this.gQlAst };
-  }
-
-  public print(document) {
+  public print(document: any): string {
     return print(document);
   }
 }

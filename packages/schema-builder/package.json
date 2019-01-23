@@ -27,6 +27,7 @@
     "@fullstack-one/di": "^0.4.56",
     "@fullstack-one/helper": "^0.4.56",
     "@fullstack-one/logger": "^0.4.56",
+    "@types/graphql": "^0.13.2",
     "deep-diff": "^1.0.0",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.0.1",

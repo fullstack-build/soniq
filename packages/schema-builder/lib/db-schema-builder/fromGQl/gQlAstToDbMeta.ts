@@ -4,9 +4,10 @@ import { IDbMeta, IDbRelation } from "../IDbMeta";
 import { setDefaultValueForColumn, addMigration, relationBuilderHelper, createConstraint } from "./gQlAstToDbMetaHelper";
 
 import { getDirectiveParser } from "./directiveParser";
+import { DocumentNode, ObjectTypeDefinitionNode, EnumTypeDefinitionNode, ArgumentNode, ValueNode, StringValueNode, ASTNode, FieldDefinitionNode, NameNode, NamedTypeNode, NonNullTypeNode, ListTypeNode } from "graphql";
 export { registerDirectiveParser } from "./directiveParser";
 
-export const parseGQlAstToDbMeta = (gQlAST): IDbMeta => {
+export function parseGQlAstToDbMeta(gQlAST: DocumentNode): IDbMeta {
   // result dbMeta
   const dbMeta: IDbMeta = {
     version: 1.0,
@@ -34,7 +35,7 @@ export const parseGQlAstToDbMeta = (gQlAST): IDbMeta => {
 // refDbMetaCurrentTableColumn:
 // - ref to current parent table column obj will be passed through all iterations
 //   after table column was added
-function parseASTNode(gQlSchemaNode, dbMetaNode, dbMeta?, refDbMetaCurrentTable?, refDbMetaCurrentTableColumn?) {
+function parseASTNode(gQlSchemaNode: ASTNode, dbMetaNode, dbMeta?, refDbMetaCurrentTable?, refDbMetaCurrentTableColumn?) {
   // ref to dbMeta will be passed through all iterations
   const refDbMeta = dbMeta || dbMetaNode;
 
@@ -51,11 +52,11 @@ function parseASTNode(gQlSchemaNode, dbMetaNode, dbMeta?, refDbMetaCurrentTable?
 
 const GQL_JSON_PARSER = {
   // iterate over all type definitions
-  Document: (gQlSchemaNode, dbMetaNode, refDbMeta) => {
+  Document: (gQlDocumentNode: DocumentNode, dbMetaNode, refDbMeta): void => {
     // FIRST round:
     // add blank objects for all tables and enums (needed for validation of relationships)
     // but don't continue recursively
-    Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode: any) => {
+    Object.values(gQlDocumentNode.definitions).map((gQlJsonSchemaDocumentNode) => {
       // type
       if (gQlJsonSchemaDocumentNode.kind === "ObjectTypeDefinition") {
         GQL_JSON_PARSER.ObjectTypeDefinition(gQlJsonSchemaDocumentNode, dbMetaNode, refDbMeta, false);
@@ -67,36 +68,36 @@ const GQL_JSON_PARSER = {
 
     // SECOND round:
     // parse all documents recursively
-    Object.values(gQlSchemaNode.definitions).map((gQlJsonSchemaDocumentNode) => {
+    Object.values(gQlDocumentNode.definitions).map((gQlJsonSchemaDocumentNode) => {
       parseASTNode(gQlJsonSchemaDocumentNode, dbMetaNode, refDbMeta);
     });
   },
 
   // parse Type Definitions
-  ObjectTypeDefinition: (gQlSchemaDocumentNode, dbMetaNode, refDbMeta, continueRecursively: boolean = true) => {
-    const typeName = gQlSchemaDocumentNode.name.value;
-
+  ObjectTypeDefinition: (gQlObjectTypeDefinitionNode: ObjectTypeDefinitionNode, dbMetaNode, refDbMeta, continueRecursively: boolean = true): void => {
+    const typeName = gQlObjectTypeDefinitionNode.name.value;
     // find table directive
-    const dbDirective = gQlSchemaDocumentNode.directives.find((directive) => {
+    const tableDirective = gQlObjectTypeDefinitionNode.directives.find((directive) => {
       return directive.kind === "Directive" && directive.name.value === "table";
     });
 
     // ignore if not a table definition
-    if (dbDirective == null) {
+    if (tableDirective == null) {
       return;
     }
 
-    const schemaAndTableName = dbDirective.arguments.reduce(
-      (result, argument) => {
-        result.schemaName = argument.name.value === "schemaName" ? argument.value.value : result.schemaName;
-        result.tableName = argument.name.value === "tableName" ? argument.value.value : result.tableName;
-        return result;
-      },
-      { schemaName: null, tableName: null }
-    );
+    function isStringValueNode(valueNode: ValueNode): valueNode is StringValueNode {
+      return (valueNode as StringValueNode).kind === "StringValue";
+    }
 
-    const schemaName = schemaAndTableName.schemaName || "public";
-    const tableName = schemaAndTableName.tableName || typeName;
+    function getArgumentValue(argumentNodes: ReadonlyArray<ArgumentNode>, argumentName: string): string {
+      const argumentNode = argumentNodes.find(({ name }) => name.value === argumentName);
+      if (typeof argumentName === undefined || !isStringValueNode(argumentNode.value)) return null;
+      return argumentNode.value.value;
+    }
+
+    const schemaName = getArgumentValue(tableDirective.arguments, "schemaName") || "public";
+    const tableName = getArgumentValue(tableDirective.arguments, "tableName") || typeName;
 
     // find or add schema
     refDbMeta.schemas[schemaName] = refDbMeta.schemas[schemaName] || {
@@ -127,7 +128,7 @@ const GQL_JSON_PARSER = {
     }
 
     // parse ObjectType properties
-    Object.values(gQlSchemaDocumentNode).map((gQlSchemaDocumentNodeProperty) => {
+    Object.values(gQlObjectTypeDefinitionNode).map((gQlSchemaDocumentNodeProperty) => {
       // iterate over sub nodes (e.g. interfaces, fields, directives
       if (Array.isArray(gQlSchemaDocumentNodeProperty)) {
         Object.values(gQlSchemaDocumentNodeProperty).map((gQlSchemaDocumentSubnode) => {
@@ -139,15 +140,16 @@ const GQL_JSON_PARSER = {
   },
 
   // parse EnumType
-  EnumTypeDefinition: (gQlEnumTypeDefinitionNode, dbMetaNode, refDbMeta) => {
+  EnumTypeDefinition: (gQlEnumTypeDefinitionNode: EnumTypeDefinitionNode, dbMetaNode: IDbMeta, refDbMeta): void => {
     const enumName = gQlEnumTypeDefinitionNode.name.value;
-    const enumValues = gQlEnumTypeDefinitionNode.values.reduce((values, gQlEnumTypeDefinitionNodeValue) => {
-      values.push(gQlEnumTypeDefinitionNodeValue.name.value);
+    const enumValues = gQlEnumTypeDefinitionNode.values.reduce<string[]>((values, gQlEnumValueDefinitionNode) => {
+      values.push(gQlEnumValueDefinitionNode.name.value);
       return values;
     }, []);
 
     // convention enums are DB wide (keep values from previous round if already set)
-    dbMetaNode.enums[enumName] = dbMetaNode.enums[enumName] || {
+    if (typeof dbMetaNode.enums[enumName] !== "undefined") return;
+    dbMetaNode.enums[enumName] = {
       name: enumName,
       values: enumValues,
       columns: {}
@@ -176,7 +178,7 @@ const GQL_JSON_PARSER = {
   },
 
   // parse FieldDefinition Definitions
-  FieldDefinition: (gQlFieldDefinitionNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable) => {
+  FieldDefinition: (gQlFieldDefinitionNode: FieldDefinitionNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable) => {
     // add columns object if not set already
     dbMetaNode.columns = dbMetaNode.columns || {};
 
@@ -218,17 +220,17 @@ const GQL_JSON_PARSER = {
   },
 
   // parse Name kind
-  Name: (gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
-    if (gQlSchemaNode != null && dbMetaNode != null) {
+  Name: (gQlNameNode: NameNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+    if (gQlNameNode != null && dbMetaNode != null) {
       // set column name
-      dbMetaNode.name = gQlSchemaNode.value;
+      dbMetaNode.name = gQlNameNode.value;
     }
   },
 
   // parse NamedType kind
-  NamedType: (gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  NamedType: (gQlNamedTypeNode: NamedTypeNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     // set column type
-    const columnTypeLowerCase = gQlSchemaNode.name.value.toLocaleLowerCase();
+    const columnTypeLowerCase = gQlNamedTypeNode.name.value.toLocaleLowerCase();
     dbMetaNode.type = "varchar";
     // types
     // GraphQl: http://graphql.org/graphql-js/basic-types/
@@ -296,29 +298,29 @@ const GQL_JSON_PARSER = {
   },
 
   // parse NonNullType kind
-  NonNullType: (gQlSchemaNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  NonNullType: (gQlNonNullTypeNode: NonNullTypeNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn): void => {
     // add new constraint
     const constraintName = `${refDbMetaCurrentTable.name}_${refDbMetaCurrentTableColumn.name}_not_null`;
     createConstraint(constraintName, "NOT NULL", {}, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
 
     // parse sub type
-    if (gQlSchemaNode.type != null) {
-      const gQlSchemaTypeNode = gQlSchemaNode.type;
+    if (gQlNonNullTypeNode.type != null) {
+      const gQlSchemaTypeNode = gQlNonNullTypeNode.type;
       parseASTNode(gQlSchemaTypeNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn);
     }
   },
 
   // set list type
-  ListType: (gQlSchemaTypeNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  ListType: (gQlListTypeNode: ListTypeNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn): void => {
     dbMetaNode.type = "jsonb";
     dbMetaNode.defaultValue = {};
   },
 
   // parse Argument
-  Argument: (gQlNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  Argument: (gQlArgumentNode: ArgumentNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn): void => {
     // set argument name and value
-    if (gQlNode != null && dbMetaNode != null) {
-      dbMetaNode[gQlNode.name.value] = gQlNode.value.value;
+    if (gQlArgumentNode != null && dbMetaNode != null) {
+      dbMetaNode[gQlArgumentNode.name.value] = (gQlArgumentNode.value as StringValueNode).value;
     }
   }
 };
