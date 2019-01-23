@@ -5,15 +5,12 @@ const readFileAsync = promisify(readFile);
 const writeFileAsync = promisify(writeFile);
 
 export abstract class AHelper {
-  public static async loadFilesByGlobPattern(pattern: string) {
+  public static async loadFilesByGlobPattern(pattern: string): Promise<string[]> {
     try {
-      const files = fastGlob.sync(pattern, {
-        deep: false,
-        onlyFiles: true
-      });
+      const filePaths: string[] = fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
       const readFilesPromises = [];
-      files.map((filePath: any) => {
+      filePaths.map((filePath: any) => {
         readFilesPromises.push(readFileAsync(filePath, "utf8"));
       });
 
@@ -23,12 +20,12 @@ export abstract class AHelper {
     }
   }
 
-  public static async requireFilesByGlobPattern(pattern: string) {
+  public static async requireFilesByGlobPattern(pattern: string): Promise<any[]> {
     try {
-      const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+      const filePaths: string[] = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
       const requiredFiles = [];
-      files.map((filePath: any) => {
+      filePaths.map((filePath) => {
         let requiredFileContent: any = null;
         try {
           const requiredFile = require(filePath);
@@ -46,13 +43,13 @@ export abstract class AHelper {
     }
   }
 
-  public static async requireFilesByGlobPatternAsObject(pattern: string) {
+  public static async requireFilesByGlobPatternAsObject<T>(pattern: string): Promise<{ [name: string]: T }> {
     try {
-      const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+      const filePaths: string[] = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
-      const requiredFiles = {};
-      files.map((filePath: any) => {
-        let requiredFileContent: any = null;
+      const requiredFiles: { [name: string]: T } = {};
+      filePaths.map((filePath) => {
+        let requiredFileContent: T = null;
         try {
           const requiredFile = require(filePath);
           const name = filePath
