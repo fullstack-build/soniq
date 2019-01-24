@@ -5,6 +5,7 @@ import { IEnvironment } from "../IEnvironment";
 
 const nodeIdLength = 6;
 
+// TODO: Needs to be rewritten to actually look for the latest framework version
 export default class EnvironmentBuilder {
   public static buildEnvironment(NODE_ENV: string, namespace: string): IEnvironment {
     const frameworkVersion = require("../../package.json").version;

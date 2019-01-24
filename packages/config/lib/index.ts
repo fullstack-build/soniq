@@ -22,9 +22,7 @@ export class Config {
   private readonly NODE_ENV = process.env.NODE_ENV;
   public readonly ENVIRONMENT: IEnvironment;
 
-  constructor(
-    @Inject((type) => BootLoader) bootLoader
-  ) {
+  constructor(@Inject((type) => BootLoader) bootLoader) {
     this.bootLoader = bootLoader;
 
     Container.set("CONFIG", {});
