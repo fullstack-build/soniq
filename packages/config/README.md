@@ -7,7 +7,7 @@ A configuration module is a configuration registered with `@fullstack-one/config
 
 An application is the main program, that utilizes the `@fullstack-one` framework.
 
-The main idea is, that each package registers a configuration module with a set of properties it requires to run. The values of those properties depend on multiple configuration sources, that are merged in a fixed hierarchie. The following shows the merging hierarchy with the primary configuration on top and the most subsidiary configuration at the bottom:
+The main idea is, that each package registers a configuration module with a set of properties it requires to run. The values of those properties depend on multiple configuration sources, that are merged in a fixed hierarchy. The following shows the merging hierarchy with the primary configuration on top and the most subsidiary configuration at the bottom:
 
 ```
 process.env configuration
@@ -47,7 +47,7 @@ class MyFullstackOnePackage {
 }
 ```
 
-`@fullstack-one/config` goes into the specified directory and tries to find the `default.js`. Additionally, the environment config, e.g. `development.js`, is loaded based on `process.env.NODE_ENV`. The default configuration is mandatory (if not given an error is thrown) and the environment configuration is optional. The configuration directoriy may look like this:
+`@fullstack-one/config` goes into the specified directory and tries to find the `default.js`. Additionally, the environment config, e.g. `development.js`, is loaded based on `process.env.NODE_ENV`. The default configuration is mandatory (if not given an error is thrown) and the environment configuration is optional. The configuration directory may look like this:
 
 ```sh
 $ cd config && find .

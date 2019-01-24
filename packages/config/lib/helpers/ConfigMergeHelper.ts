@@ -31,8 +31,8 @@ class ConfigMergeHelper {
 
   private static parseTrueAndFalseToBooleans(value: string): any {
     const lowerCaseValue = value.toLocaleLowerCase();
-    if (value === "true") return true;
-    if (value === "false") return false;
+    if (lowerCaseValue === "true") return true;
+    if (lowerCaseValue === "false") return false;
     return value;
   }
 

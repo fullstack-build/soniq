@@ -13,7 +13,6 @@ export { IEnvironment };
 
 @Service()
 export class Config {
-  @Inject((type) => BootLoader)
   private readonly bootLoader: BootLoader;
 
   private registeredConfigModules: string[] = [];
@@ -23,7 +22,11 @@ export class Config {
   private readonly NODE_ENV = process.env.NODE_ENV;
   public readonly ENVIRONMENT: IEnvironment;
 
-  constructor() {
+  constructor(
+    @Inject((type) => BootLoader) bootLoader
+  ) {
+    this.bootLoader = bootLoader;
+
     Container.set("CONFIG", {});
 
     this.applicationConfig = this.loadApplicationConfig();
@@ -87,15 +90,15 @@ export class Config {
     return this.getConfig(name);
   }
 
-  public getConfig(name?: string): any {
+  public getConfig(name?: string): object {
     if (name == null) {
       if (!this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
         throw new Error("Configuration not available before booting.");
       }
-      return { ...this.config };
+      return _.cloneDeep(this.config);
     } else if (!_.has(this.config, name)) {
       throw new Error();
     }
-    return { ...this.config[name] };
+    return _.cloneDeep(this.config[name]);
   }
 }
