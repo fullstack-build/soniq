@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - "10"
+
+install:
+  - npm install
+  - npm run reinstall
+
+script:
+  - node_modules/tslint/bin/tslint --project .
+  - npm run coverage
