@@ -7,6 +7,7 @@
   ],
   "jsRules": {},
   "rules": {
+    "prettier": true,
     "ordered-imports": false,
     "object-literal-sort-keys": false,
     "prefer-template": true,
@@ -71,7 +72,7 @@
 
     ]
   },
-  "rulesDirectory": [],
+  "rulesDirectory": ["tslint-plugin-prettier"],
   "linterOptions": {
     "exclude": ["**/node_modules/**", "**/examples/**"]
   }

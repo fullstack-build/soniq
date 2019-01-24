@@ -15,3 +15,21 @@ type Post @table @versioning @migrate(from:"PostOld"){
   #contributors: [User!]! @relation(name: "PostContributors")
   contributorSecret: String
 }
+
+extend type Query {
+
+  """
+  this is an example custom query
+  """
+  getRandomValueOutOfArray(possibleValues: IPossibleValues!): IRandomResult
+    @custom(resolver: "getRandomValueOutOfArray")
+
+}
+
+input IPossibleValues {
+  values: [String]!
+}
+
+type IRandomResult {
+  randomResult: String!
+}

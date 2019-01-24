@@ -8,8 +8,10 @@
   },
   "main": "packages/server/main",
   "scripts": {
-    "start": "echo \"Error: no start specified\" && exit 1",
-    "tslint": "tslint-config-prettier-check ./tslint.json && prettier --write '**/*.ts' && tslint --project '.' --fix",
+    "fix-style": "tslint-config-prettier-check ./tslint.json && npm run prettier && npm run tslint-fix",
+    "prettier": "prettier --write **/*.ts",
+    "tslint-fix": "tslint --project . --fix",
+    "tslint": "tslint --project .",
     "test": "lerna run test --scope @fullstack-one/config",
     "coverage": "lerna run coverage --scope @fullstack-one/config",
     "lerna": "lerna bootstrap && lerna link --force-local",
@@ -49,7 +51,8 @@
     "ts-node-dev": "^1.0.0-pre.30",
     "tslint": "^5.11.0",
     "tslint-config-airbnb": "^5.9.2",
-    "tslint-config-prettier": "^1.15.0"
+    "tslint-config-prettier": "^1.15.0",
+    "tslint-plugin-prettier": "^2.0.1"
   },
   "dependencies": {
     "ts-node": "^3.3.0",

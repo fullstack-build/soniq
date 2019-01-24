@@ -22,9 +22,9 @@ module.exports = {
     totalMax:                 10,
     // set min pool size to 4
     min:                      2,
-    // close idle clients after 1 second
-    idleTimeoutMillis:        1000,
-    // return an error after 1 second if connection could not be established
-    connectionTimeoutMillis:  1000,
+    // close idle clients after 30 seconds
+    // idleTimeoutMillis:        30000, => REMOVED BECAUSE OPTIONAL
+    // return an error after 3 seconds if connection could not be established
+    // connectionTimeoutMillis:  3000, => REMOVED BECAUSE OPTIONAL
   }
 };
