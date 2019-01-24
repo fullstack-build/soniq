@@ -188,6 +188,16 @@ export class SchemaBuilder {
     };
   }
 
+  public getGQlSdl() {
+    // return copy instead of ref
+    return { ...this.gQlSdl };
+  }
+
+  public getGQlAst() {
+    // return copy instead of ref
+    return { ...this.gQlAst };
+  }
+
   public print(document: any): string {
     return print(document);
   }

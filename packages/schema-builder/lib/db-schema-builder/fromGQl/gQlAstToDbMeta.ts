@@ -4,7 +4,7 @@ import { IDbMeta, IDbRelation } from "../IDbMeta";
 import { setDefaultValueForColumn, addMigration, relationBuilderHelper, createConstraint } from "./gQlAstToDbMetaHelper";
 
 import { getDirectiveParser } from "./directiveParser";
-import { DocumentNode, ObjectTypeDefinitionNode, EnumTypeDefinitionNode, ArgumentNode, ValueNode, StringValueNode, ASTNode, FieldDefinitionNode, NameNode, NamedTypeNode, NonNullTypeNode, ListTypeNode } from "graphql";
+import { DocumentNode, ObjectTypeDefinitionNode, EnumTypeDefinitionNode, ArgumentNode, ASTNode, FieldDefinitionNode, NameNode, NamedTypeNode, NonNullTypeNode, ListTypeNode, DirectiveNode } from "graphql";
 export { registerDirectiveParser } from "./directiveParser";
 
 export function parseGQlAstToDbMeta(gQlAST: DocumentNode): IDbMeta {
@@ -86,18 +86,17 @@ const GQL_JSON_PARSER = {
       return;
     }
 
-    function isStringValueNode(valueNode: ValueNode): valueNode is StringValueNode {
-      return (valueNode as StringValueNode).kind === "StringValue";
-    }
+    const schemaAndTableName = tableDirective.arguments.reduce(
+      (result, argument: any) => {
+        result.schemaName = argument.name.value === "schemaName" ? argument.value.value : result.schemaName;
+        result.tableName = argument.name.value === "tableName" ? argument.value.value : result.tableName;
+        return result;
+      },
+      { schemaName: null, tableName: null }
+    );
 
-    function getArgumentValue(argumentNodes: ReadonlyArray<ArgumentNode>, argumentName: string): string {
-      const argumentNode = argumentNodes.find(({ name }) => name.value === argumentName);
-      if (typeof argumentName === undefined || !isStringValueNode(argumentNode.value)) return null;
-      return argumentNode.value.value;
-    }
-
-    const schemaName = getArgumentValue(tableDirective.arguments, "schemaName") || "public";
-    const tableName = getArgumentValue(tableDirective.arguments, "tableName") || typeName;
+    const schemaName = schemaAndTableName.schemaName || "public";
+    const tableName = schemaAndTableName.tableName || typeName;
 
     // find or add schema
     refDbMeta.schemas[schemaName] = refDbMeta.schemas[schemaName] || {
@@ -140,7 +139,7 @@ const GQL_JSON_PARSER = {
   },
 
   // parse EnumType
-  EnumTypeDefinition: (gQlEnumTypeDefinitionNode: EnumTypeDefinitionNode, dbMetaNode: IDbMeta, refDbMeta): void => {
+  EnumTypeDefinition: (gQlEnumTypeDefinitionNode: EnumTypeDefinitionNode, dbMetaNode, refDbMeta): void => {
     const enumName = gQlEnumTypeDefinitionNode.name.value;
     const enumValues = gQlEnumTypeDefinitionNode.values.reduce<string[]>((values, gQlEnumValueDefinitionNode) => {
       values.push(gQlEnumValueDefinitionNode.name.value);
@@ -148,8 +147,7 @@ const GQL_JSON_PARSER = {
     }, []);
 
     // convention enums are DB wide (keep values from previous round if already set)
-    if (typeof dbMetaNode.enums[enumName] !== "undefined") return;
-    dbMetaNode.enums[enumName] = {
+    dbMetaNode.enums[enumName] = dbMetaNode.enums[enumName] || {
       name: enumName,
       values: enumValues,
       columns: {}
@@ -157,7 +155,7 @@ const GQL_JSON_PARSER = {
   },
 
   // parse Directive
-  Directive: (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
+  Directive: (gQlDirectiveNode: DirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
     const directiveKind = gQlDirectiveNode.name.value;
     const directiveKindLowerCase = directiveKind.toLocaleLowerCase();
 
@@ -320,7 +318,7 @@ const GQL_JSON_PARSER = {
   Argument: (gQlArgumentNode: ArgumentNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn): void => {
     // set argument name and value
     if (gQlArgumentNode != null && dbMetaNode != null) {
-      dbMetaNode[gQlArgumentNode.name.value] = (gQlArgumentNode.value as StringValueNode).value;
+      dbMetaNode[gQlArgumentNode.name.value] = (gQlArgumentNode.value as { value: string }).value;
     }
   }
 };
