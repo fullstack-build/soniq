@@ -1,18 +1,14 @@
 import * as fastGlob from "fast-glob";
-import { readFile, writeFile } from "fs";
+import { readFile } from "fs";
 import { promisify } from "util";
 const readFileAsync = promisify(readFile);
-const writeFileAsync = promisify(writeFile);
 
 export abstract class AHelper {
-  public static async loadFilesByGlobPattern(pattern: string) {
+  public static async loadFilesByGlobPattern(pattern: string): Promise<string[]> {
     try {
-      const files = fastGlob.sync(pattern, {
-        deep: false,
-        onlyFiles: true
-      });
+      const files = fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
-      const readFilesPromises = [];
+      const readFilesPromises: Array<Promise<string>> = [];
       files.map((filePath: any) => {
         readFilesPromises.push(readFileAsync(filePath, "utf8"));
       });
@@ -23,11 +19,11 @@ export abstract class AHelper {
     }
   }
 
-  public static async requireFilesByGlobPattern(pattern: string) {
+  public static async requireFilesByGlobPattern(pattern: string): Promise<any[]> {
     try {
       const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
-      const requiredFiles = [];
+      const requiredFiles: any[] = [];
       files.map((filePath: any) => {
         let requiredFileContent: any = null;
         try {
@@ -46,7 +42,7 @@ export abstract class AHelper {
     }
   }
 
-  public static async requireFilesByGlobPatternAsObject(pattern: string) {
+  public static async requireFilesByGlobPatternAsObject(pattern: string): Promise<{}> {
     try {
       const files = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
 
@@ -55,13 +51,13 @@ export abstract class AHelper {
         let requiredFileContent: any = null;
         try {
           const requiredFile = require(filePath);
-          const name = filePath
+          const filename: string = filePath
             .split("/")
             .pop()
             .split(".ts")[0];
           requiredFileContent = requiredFile.default != null ? requiredFile.default : requiredFile;
 
-          requiredFiles[name] = requiredFileContent;
+          requiredFiles[filename] = requiredFileContent;
         } catch (err) {
           throw err;
         }

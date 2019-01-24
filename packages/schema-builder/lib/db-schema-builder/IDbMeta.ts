@@ -10,7 +10,7 @@ export interface IDbMeta {
           oldSchemaName?: string;
           name: string;
           oldName?: string;
-          exposedNames?: [string];
+          exposedNames?: string[];
           description?: string;
           extensions?: {
             [name: string]: any;
@@ -36,7 +36,7 @@ export interface IDbMeta {
             [name: string]: {
               name: string;
               type: "PRIMARY KEY" | "NOT NULL" | "UNIQUE" | "CHECK";
-              columns?: [string];
+              columns?: string[];
               options?: [any];
             };
           };
@@ -48,7 +48,7 @@ export interface IDbMeta {
   enums?: {
     [name: string]: {
       name: string;
-      values: [string];
+      values: string[];
       columns?: {
         [name: string]: {
           schemaName: string;
