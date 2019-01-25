@@ -1,5 +1,5 @@
 import { parseResolveInfo } from "graphql-parse-resolve-info";
-import { _ } from "lodash";
+import * as _ from "lodash";
 import { generateCustomSql } from "./custom";
 
 export class QueryBuilder {

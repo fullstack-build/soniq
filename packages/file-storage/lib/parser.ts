@@ -4,7 +4,7 @@ const { createArrayField, getEnum } = utils;
 
 const typesEnumName = "FILE_TYPES";
 
-import { _ } from "lodash";
+import * as _ from "lodash";
 
 const resolverName = "@fullstack-one/file-storage/readFiles";
 
