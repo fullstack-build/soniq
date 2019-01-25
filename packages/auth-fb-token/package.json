@@ -5,7 +5,11 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
+<<<<<<< HEAD
     "test": "ava --verbose ./test/test.ts",
+=======
+    "test": "ava --verbose ./test/**/*.ts",
+>>>>>>> 3fb6c7066a3640538b807c90d38a9d25b259cba9
     "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/test.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build"
