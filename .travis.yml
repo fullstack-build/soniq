@@ -8,5 +8,5 @@ install:
   - lerna run build
 
 script:
-  - node_modules/tslint/bin/tslint --project .
+  - npm run tslint --project .
   - npm run coverage

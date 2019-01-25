@@ -20,7 +20,7 @@ export abstract class AGraphQlHelper {
     } catch (err) {
       throw err;
     }
-  };
+  }
 
   public static async writeTableObjectIntoMigrationsFolder(migrationsPath: string, tableObject: IDbMeta, migrationId?: number): Promise<void> {
     const timestamp = new Date().getTime();
