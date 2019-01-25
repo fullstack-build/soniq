@@ -5,8 +5,8 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "echo \"typedi tests. ;)\" && exit 0",
-    "coverage": "echo \"typedi tests. ;)\" && exit 0",
+    "test": "echo \"typedi has tests. ;)\" && exit 0",
+    "coverage": "echo \"typedi has tests. ;)\" && exit 0",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },

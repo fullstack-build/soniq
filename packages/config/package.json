@@ -6,7 +6,7 @@
   "types": "lib/index.ts",
   "scripts": {
     "test": "ava --verbose ./test/**/*test.ts",
-    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/test.ts",
+    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
     "start": "echo \"Error: no start specified\" && exit 1",
     "build": "tsc",
     "prepublishOnly": "npm run build"
