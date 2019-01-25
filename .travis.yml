@@ -4,8 +4,9 @@ node_js:
 
 install:
   - npm install
-  - npm run reinstall
+  - lerna bootstrap --hoist
+  - lerna run build
 
 script:
-  - node_modules/tslint/bin/tslint --project .
+  - npm run tslint
   - npm run coverage

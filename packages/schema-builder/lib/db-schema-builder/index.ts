@@ -56,7 +56,7 @@ export class DbSchemaBuilder {
     this.initSqlPaths.push(path);
   }
 
-  public getMigrationDbMeta(): IDbMeta {
+  public getMigrationDbMeta(): MigrationObject {
     return _.cloneDeep(this.migrationObject);
   }
 

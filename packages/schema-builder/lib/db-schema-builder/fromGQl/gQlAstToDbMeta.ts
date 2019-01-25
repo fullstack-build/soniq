@@ -4,7 +4,19 @@ import { IDbMeta, IDbRelation } from "../IDbMeta";
 import { setDefaultValueForColumn, addMigration, relationBuilderHelper, createConstraint } from "./gQlAstToDbMetaHelper";
 
 import { getDirectiveParser } from "./directiveParser";
-import { DocumentNode, ObjectTypeDefinitionNode, EnumTypeDefinitionNode, ArgumentNode, ASTNode, FieldDefinitionNode, NameNode, NamedTypeNode, NonNullTypeNode, ListTypeNode, DirectiveNode } from "graphql";
+import {
+  DocumentNode,
+  ObjectTypeDefinitionNode,
+  EnumTypeDefinitionNode,
+  ArgumentNode,
+  ASTNode,
+  FieldDefinitionNode,
+  NameNode,
+  NamedTypeNode,
+  NonNullTypeNode,
+  ListTypeNode,
+  DirectiveNode
+} from "graphql";
 export { registerDirectiveParser } from "./directiveParser";
 
 export function parseGQlAstToDbMeta(gQlAST: DocumentNode): IDbMeta {
@@ -28,7 +40,7 @@ export function parseGQlAstToDbMeta(gQlAST: DocumentNode): IDbMeta {
 
   // return copy instead of ref
   return _.cloneDeep(dbMeta);
-};
+}
 
 // refDbMetaCurrentTable:
 //  - ref to current parent table obj will be passed through all iterations after table was added

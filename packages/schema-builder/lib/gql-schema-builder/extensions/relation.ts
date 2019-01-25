@@ -1,5 +1,5 @@
 import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
-import { _ } from "lodash";
+import * as _ from "lodash";
 
 function getRelations(dbMeta, relationName, tableName) {
   const relationConnections = dbMeta.relations[relationName];

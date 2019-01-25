@@ -180,7 +180,7 @@ export class SchemaBuilder {
     this.gqlSdlExtensions.push(schema);
   }
 
-  public getGQlRuntimeObject(): { dbMeta: IDbMeta, gqlRuntimeDocument: any, resolverMeta: any } {
+  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: any; resolverMeta: any } {
     return {
       dbMeta: this.dbMeta,
       gqlRuntimeDocument: this.gqlRuntimeDocument,

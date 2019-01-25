@@ -74,21 +74,21 @@ export class Config {
     this.config[name] = configModule;
   }
 
-  public registerConfig(name: string, configDirectory: string): object {
+  public registerConfig(name: string, configDirectory: string): any {
     const baseConfigModule = this.getConfigFromConfigFiles(configDirectory);
     this.applyConfigModule(name, baseConfigModule);
 
     return this.getConfig(name);
   }
 
-  public registerApplicationConfigModule(name: string): object {
+  public registerApplicationConfigModule(name: string): any {
     const baseConfigModule = {};
     this.applyConfigModule(name, baseConfigModule);
 
     return this.getConfig(name);
   }
 
-  public getConfig(name?: string): object {
+  public getConfig(name?: string): any {
     if (name == null) {
       if (!this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
         throw new Error("Configuration not available before booting.");

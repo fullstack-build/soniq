@@ -240,7 +240,7 @@ export class MigrationObject {
         // => original still exists and both are not the same (e.g. oldName = name)
 
         // find differences (e.g. new columns), keep new and old name
-        const renameObj = helper.difference(nodeTo, nodeFrom);
+        const renameObj: any = helper.difference(nodeTo, nodeFrom);
         // always keep node name
         renameObj.name = nodeTo.name;
 
