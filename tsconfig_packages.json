@@ -1,21 +1,22 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-        "lib": ["es2017"],
-        "target": "es6",
-        "module": "commonjs",
-        "types": ["node"],
-        "moduleResolution": "node",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": false,
-        "declaration": true,
-        "outDir": "./dist",
-        "strict": false,
-        "suppressImplicitAnyIndexErrors": true
-    },
-    "exclude": [
-        "node_modules",
-        "dist"
-    ]
+  "compileOnSave": false,
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "target": "es6",
+    "module": "commonjs",
+    "types": ["node"],
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": false,
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": false,
+    "suppressImplicitAnyIndexErrors": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test"
+  ]
 }
