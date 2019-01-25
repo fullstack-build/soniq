@@ -8,6 +8,7 @@
     "test": "ava --verbose ./test/**/*test.ts",
     "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
     "build": "tsc",
+    "clean:dist": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
   "publishConfig": {
