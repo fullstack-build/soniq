@@ -1,4 +1,6 @@
-export function parseReadField(ctx) {
+import { IParseReadFieldContext } from "../interfaces";
+
+export function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all

@@ -84,9 +84,9 @@ export function buildCreateView(table, view, context, extensions, config) {
 
   expressionCreator.parseExpressionInput(view.expressions, true);
 
-  const expressionsObject = expressionCreator.getExpressionsObject();
+  const compiledExpressions = expressionCreator.getCompiledExpressions();
 
-  const expressions = Object.values(expressionsObject).sort(orderExpressions);
+  const expressions = Object.values(compiledExpressions).sort(orderExpressions);
 
   expressions.forEach((expression: any) => {
     meta.requiresAuth = expression.requiresAuth === true ? true : meta.requiresAuth;

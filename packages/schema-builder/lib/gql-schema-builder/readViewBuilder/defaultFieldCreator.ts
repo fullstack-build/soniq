@@ -1,11 +1,14 @@
-export class CreateDefaultField {
-  private expressionCreator: any;
+import { IExpressionInput, CreateExpressions } from "../createExpressions";
+import { FieldDefinitionNode } from "graphql";
 
-  constructor(expressionCreator) {
+export class CreateDefaultField {
+  private expressionCreator: CreateExpressions;
+
+  constructor(expressionCreator: CreateExpressions) {
     this.expressionCreator = expressionCreator;
   }
 
-  public create(readExpressionsField, gqlFieldDefinition, columnExpression, nativeFieldName) {
+  public create(readExpressionsField: IExpressionInput, gqlFieldDefinition: FieldDefinitionNode | any, columnExpression: string, nativeFieldName: string) {
     let publicFieldSql = null;
     let authFieldSql = null;
 

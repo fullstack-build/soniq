@@ -1,4 +1,7 @@
-export function getRelationMetasFromDefinition(field) {
+import { IRelationMeta } from "../interfaces";
+import { FieldDefinitionNode } from "graphql";
+
+export function getRelationMetasFromDefinition(field: FieldDefinitionNode): IRelationMeta {
   if (field.type.kind === "NamedType") {
     return {
       foreignGqlTypeName: field.type.name.value,

@@ -1,4 +1,6 @@
-function getEnumValue(value) {
+import { EnumValueDefinitionNode, EnumTypeDefinitionNode } from "graphql";
+
+function getEnumValue(value: string): EnumValueDefinitionNode {
   return {
     kind: "EnumValueDefinition",
     name: {
@@ -9,7 +11,7 @@ function getEnumValue(value) {
   };
 }
 
-function getEnumDefinition(name, values) {
+function getEnumDefinition(name: string, values: string[]): EnumTypeDefinitionNode {
   return {
     kind: "EnumTypeDefinition",
     name: {
@@ -21,6 +23,6 @@ function getEnumDefinition(name, values) {
   };
 }
 
-export function getEnum(name, values) {
+export function getEnum(name: string, values: string[]) {
   return getEnumDefinition(name, values);
 }

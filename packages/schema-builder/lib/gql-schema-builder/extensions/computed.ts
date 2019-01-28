@@ -1,11 +1,13 @@
-export function parseReadField(ctx) {
+import { IParseReadFieldContext } from "../interfaces";
+
+export function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
   if (readExpressions[fieldName] != null && directives.computed != null && directives.computed.expression != null) {
     const { expressionCreator, defaultFieldCreator } = ctx;
 
-    const computedExpression = expressionCreator.getExpressionObject(directives.computed.expression, directives.computed.params);
+    const computedExpression = expressionCreator.getCompiledExpression(directives.computed.expression, directives.computed.params);
 
     const columnExpression = `"${computedExpression.name}"."${computedExpression.name}"`;
 

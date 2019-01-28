@@ -1,4 +1,7 @@
-export function createGrants(config, dbMeta) {
+import { IConfig } from "./gql-schema-builder/interfaces";
+import { IDbMeta } from ".";
+
+export function createGrants(config: IConfig, dbMeta: IDbMeta): string[] {
   const sql = [];
   sql.push(`REVOKE ALL PRIVILEGES ON DATABASE "${config.databaseName}" FROM "${config.userName}";`);
   sql.push(`CREATE SCHEMA IF NOT EXISTS "${config.schemaName}";`);

@@ -25,6 +25,8 @@ import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta"
 import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
 import { print, DocumentNode } from "graphql";
+import { IExpression } from "./gql-schema-builder/createExpressions";
+import { IPermissionContext, IConfig } from "./gql-schema-builder/interfaces";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -47,7 +49,7 @@ export class SchemaBuilder {
   private gqlSdlExtensions: any = [];
   private gQlAst: DocumentNode;
   private permissions: any;
-  private expressions: any;
+  private expressions: IExpression[];
   private gqlRuntimeDocument: any;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
@@ -120,16 +122,16 @@ export class SchemaBuilder {
       this.logger.trace("boot", "Expressions loaded");
       this.expressions = [].concat.apply([], expressionsArray);
 
-      const dbConfig = this.config.getConfig("Db");
+      const dbConfig: any = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
 
-      const config = {
+      const config: IConfig = {
         schemaName: dbConfig.viewSchemaName,
         userName: dbConfig.general.user,
         databaseName: dbConfig.general.database
       };
 
-      const context = {
+      const context: IPermissionContext = {
         gqlDocument: this.gQlAst,
         dbMeta: this.dbMeta,
         expressions: this.expressions

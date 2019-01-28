@@ -1,4 +1,6 @@
-const greaterThan = {
+import { IOperator } from "../../interfaces";
+
+const greaterThan: IOperator = {
   name: "greaterThan",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const greaterThan = {
   }
 };
 
-const greaterThanOrEqual = {
+const greaterThanOrEqual: IOperator = {
   name: "greaterThanOrEqual",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const greaterThanOrEqual = {
   }
 };
 
-const lessThan = {
+const lessThan: IOperator = {
   name: "lessThan",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const lessThan = {
   }
 };
 
-const lessThanOrEqual = {
+const lessThanOrEqual: IOperator = {
   name: "lessThanOrEqual",
   value: "String",
   getSql: (context) => {

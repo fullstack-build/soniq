@@ -1,4 +1,6 @@
-const inOperator = {
+import { IOperator } from "../../interfaces";
+
+const inOperator: IOperator = {
   name: "in",
   value: "[String!]",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const inOperator = {
   }
 };
 
-const notInOperator = {
+const notInOperator: IOperator = {
   name: "notIn",
   value: "[String!]",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const notInOperator = {
   }
 };
 
-const includes = {
+const includes: IOperator = {
   name: "includes",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const includes = {
   }
 };
 
-const includesNot = {
+const includesNot: IOperator = {
   name: "includesNot",
   value: "String",
   getSql: (context) => {
@@ -34,7 +36,7 @@ const includesNot = {
   }
 };
 
-const contains = {
+const contains: IOperator = {
   name: "contains",
   value: "[String!]",
   getSql: (context) => {
@@ -43,7 +45,7 @@ const contains = {
   }
 };
 
-const isContainedBy = {
+const isContainedBy: IOperator = {
   name: "isContainedBy",
   value: "[String!]",
   getSql: (context) => {
