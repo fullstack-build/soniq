@@ -1,9 +1,11 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
-interface IBootFunction {
+type TBootFuntion = (obj?: any) => void | Promise<void>;
+
+interface IBootFunctionObject {
   name: string;
-  fn: any;
+  fn: TBootFuntion;
 }
 
 @Service()
@@ -11,8 +13,8 @@ export class BootLoader {
   private IS_BOOTING: boolean = false; // TODO: Dustin Rename
   private HAS_BOOTED: boolean = false; // TODO: Dustin Rename
 
-  private bootFunctions: IBootFunction[] = [];
-  private bootReadyFunctions: IBootFunction[] = [];
+  private bootFunctionObjects: IBootFunctionObject[] = [];
+  private bootReadyFunctionObjects: IBootFunctionObject[] = [];
 
   private readonly logger: ILogger;
 
@@ -29,37 +31,37 @@ export class BootLoader {
     return this.HAS_BOOTED;
   }
 
-  public addBootFunction(name: string, fn: any) {
+  public addBootFunction(name: string, fn: TBootFuntion): void {
     this.logger.trace("addBootFunction", name);
-    this.bootFunctions.push({ name, fn });
+    this.bootFunctionObjects.push({ name, fn });
   }
 
-  public onBootReady(name: string, fn: any) {
+  public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
     this.logger.trace("onBootReady", name);
     if (this.HAS_BOOTED) {
       return fn();
     }
-    this.bootReadyFunctions.push({ name, fn });
+    this.bootReadyFunctionObjects.push({ name, fn });
   }
 
-  public getReadyPromise() {
+  public getReadyPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.HAS_BOOTED) {
         return resolve();
       }
-      this.bootReadyFunctions.push({ name: "BootLoader.ready", fn: resolve });
+      this.bootReadyFunctionObjects.push({ name: "BootLoader.ready", fn: resolve });
     });
   }
 
-  public async boot() {
+  public async boot(): Promise<void> {
     this.IS_BOOTING = true;
     try {
-      for (const fnObj of this.bootFunctions) {
+      for (const fnObj of this.bootFunctionObjects) {
         this.logger.trace("boot.bootFunctions.start", fnObj.name);
         await fnObj.fn(this);
         this.logger.trace("boot.bootFunctions.end", fnObj.name);
       }
-      for (const fnObj of this.bootReadyFunctions) {
+      for (const fnObj of this.bootReadyFunctionObjects) {
         this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
         fnObj.fn(this);
         this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
