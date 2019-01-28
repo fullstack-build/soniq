@@ -1,7 +1,9 @@
-function getArgumentsValue(node) {
+import { ArgumentNode, DirectiveNode, ListValueNode, ObjectValueNode, ObjectFieldNode } from "graphql";
+
+function getArgumentsValue(node: DirectiveNode) {
   const obj = {};
 
-  Object.values(node.arguments).forEach((field: any) => {
+  Object.values(node.arguments).forEach((field: ArgumentNode | any) => {
     const type = field.value.kind;
     let value = field.value.value;
 
@@ -35,10 +37,10 @@ function getArgumentsValue(node) {
   return obj;
 }
 
-function getObjectValue(node) {
+function getObjectValue(node: ObjectValueNode) {
   const obj = {};
 
-  Object.values(node.fields).forEach((field: any) => {
+  Object.values(node.fields).forEach((field: ObjectFieldNode | any) => {
     const type = field.value.kind;
     let value = field.value.value;
 
@@ -72,7 +74,7 @@ function getObjectValue(node) {
   return obj;
 }
 
-function getListValues(node) {
+function getListValues(node: ListValueNode) {
   const arr = [];
 
   Object.values(node.values).forEach((field: any) => {
@@ -107,6 +109,6 @@ function getListValues(node) {
   return arr;
 }
 
-export function parseDirectiveArguments(argument) {
+export function parseDirectiveArguments(argument: DirectiveNode) {
   return getArgumentsValue(argument);
 }

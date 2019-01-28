@@ -1,5 +1,6 @@
 import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
 import * as _ from "lodash";
+import { IParseReadFieldContext } from "../interfaces";
 
 function getRelations(dbMeta, relationName, tableName) {
   const relationConnections = dbMeta.relations[relationName];
@@ -20,12 +21,12 @@ function getRelations(dbMeta, relationName, tableName) {
   };
 }
 
-export function parseReadField(ctx) {
+export function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
   if (directives.relation != null && directives.relation.name != null && readExpressions[fieldName] != null) {
-    const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, context } = ctx;
+    const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, permissionContext } = ctx;
     let newGqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinition));
 
     let publicFieldSql = null;
@@ -34,7 +35,7 @@ export function parseReadField(ctx) {
 
     const { foreignGqlTypeName, isListType, isNonNullType } = getRelationMetasFromDefinition(gqlFieldDefinition);
 
-    const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
+    const { ownRelation, foreignRelation } = getRelations(permissionContext.dbMeta, directives.relation.name, table.tableName);
 
     const meta = {
       foreignGqlTypeName,
@@ -86,11 +87,11 @@ export function parseUpdateField(ctx) {
   const { view, fieldName, directives } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.relation != null && directives.relation.name != null) {
-    const { gqlFieldDefinition, table, context } = ctx;
+    const { gqlFieldDefinition, table, permissionContext } = ctx;
 
     const { foreignGqlTypeName, isListType, isNonNullType } = getRelationMetasFromDefinition(gqlFieldDefinition);
 
-    const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
+    const { ownRelation, foreignRelation } = getRelations(permissionContext.dbMeta, directives.relation.name, table.tableName);
 
     if (ownRelation.columnName != null) {
       if (foreignRelation != null && foreignRelation.type === "MANY" && ownRelation.type === "MANY") {

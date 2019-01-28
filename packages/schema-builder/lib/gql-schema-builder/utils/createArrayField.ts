@@ -1,4 +1,6 @@
-export function createArrayField(fieldName, type) {
+import { FieldDefinitionNode } from "graphql";
+
+export function createArrayField(fieldName: string, type: string): FieldDefinitionNode {
   return {
     kind: "FieldDefinition",
     name: {

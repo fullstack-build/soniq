@@ -1,4 +1,7 @@
-function operationValueMapper(value) {
+import { NamedTypeNode, ListTypeNode, InputValueDefinitionNode } from "graphql";
+import { IOperator } from "./interfaces";
+
+function operationValueMapper(value: string): NamedTypeNode | ListTypeNode {
   if (value[0] !== "[") {
     return {
       kind: "NamedType",
@@ -24,8 +27,8 @@ function operationValueMapper(value) {
   }
 }
 
-function getOperationField(operation) {
-  const def = {
+function getOperationField(operation: IOperator): InputValueDefinitionNode {
+  return {
     kind: "InputValueDefinition",
     name: {
       kind: "Name",
@@ -34,19 +37,5 @@ function getOperationField(operation) {
     type: operationValueMapper(operation.value),
     defaultValue: null,
     directives: []
-  };
-
-  return def;
-}
-
-function getOperatorsDefinition(operatorsObject) {
-  return {
-    kind: "InputObjectTypeDefinition",
-    name: {
-      kind: "Name",
-      value: "Operators"
-    },
-    directives: [],
-    fields: Object.values(operatorsObject).map(getOperationField)
-  };
+  }
 }

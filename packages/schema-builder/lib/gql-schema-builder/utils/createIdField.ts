@@ -1,4 +1,6 @@
-export function createIdField(fieldName, isNonNullType: boolean = false) {
+import { FieldDefinitionNode } from "graphql";
+
+export function createIdField(fieldName: string, isNonNullType: boolean = false): FieldDefinitionNode {
   const field: any = {
     kind: "FieldDefinition",
     name: {

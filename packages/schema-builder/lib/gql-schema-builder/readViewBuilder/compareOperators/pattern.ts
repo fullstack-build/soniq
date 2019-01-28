@@ -1,4 +1,6 @@
-const like = {
+import { IOperator } from "../../interfaces";
+
+const like: IOperator = {
   name: "like",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const like = {
   }
 };
 
-const notLike = {
+const notLike: IOperator = {
   name: "notLike",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const notLike = {
   }
 };
 
-const iLike = {
+const iLike: IOperator = {
   name: "iLike",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const iLike = {
   }
 };
 
-const notILike = {
+const notILike: IOperator = {
   name: "notILike",
   value: "String",
   getSql: (context) => {
@@ -34,7 +36,7 @@ const notILike = {
   }
 };
 
-const similarTo = {
+const similarTo: IOperator = {
   name: "similarTo",
   value: "String",
   getSql: (context) => {
@@ -43,7 +45,7 @@ const similarTo = {
   }
 };
 
-const notSimilarTo = {
+const notSimilarTo: IOperator = {
   name: "notSimilarTo",
   value: "String",
   getSql: (context) => {
@@ -52,7 +54,7 @@ const notSimilarTo = {
   }
 };
 
-const posixMatchCaseSensitive = {
+const posixMatchCaseSensitive: IOperator = {
   name: "posixMatchCaseSensitive",
   value: "String",
   getSql: (context) => {
@@ -61,7 +63,7 @@ const posixMatchCaseSensitive = {
   }
 };
 
-const posixMatchCaseInsensitive = {
+const posixMatchCaseInsensitive: IOperator = {
   name: "posixMatchCaseInsensitive",
   value: "String",
   getSql: (context) => {
@@ -70,7 +72,7 @@ const posixMatchCaseInsensitive = {
   }
 };
 
-const posixNoMatchCaseSensitive = {
+const posixNoMatchCaseSensitive: IOperator = {
   name: "posixNoMatchCaseSensitive",
   value: "String",
   getSql: (context) => {
@@ -79,7 +81,7 @@ const posixNoMatchCaseSensitive = {
   }
 };
 
-const posixNoMatchCaseInsensitive = {
+const posixNoMatchCaseInsensitive: IOperator = {
   name: "posixNoMatchCaseInsensitive",
   value: "String",
   getSql: (context) => {
@@ -90,7 +92,9 @@ const posixNoMatchCaseInsensitive = {
 
 export {
   like,
+  iLike,
   notLike,
+  notILike,
   similarTo,
   notSimilarTo,
   posixMatchCaseSensitive,

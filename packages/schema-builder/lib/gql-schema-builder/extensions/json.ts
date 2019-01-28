@@ -1,5 +1,6 @@
 import { getJsonObjectBuilderExpression } from "../utils";
 import * as _ from "lodash";
+import { IParseReadFieldContext } from "../interfaces";
 
 const JSON_SPLIT = ".";
 
@@ -56,7 +57,7 @@ function getJsonMerge(jsonFields) {
   return `_meta.jsonb_merge(${jsonField}, ${getJsonMerge(jsonFields)})`;
 }
 
-export function parseReadField(ctx) {
+export function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives, expressionCreator, localTable, gqlFieldDefinition } = ctx;
 
   // Is this a json field

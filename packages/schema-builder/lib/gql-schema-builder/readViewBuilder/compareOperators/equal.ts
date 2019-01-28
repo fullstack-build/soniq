@@ -1,4 +1,6 @@
-const equal = {
+import { IOperator } from "../../interfaces";
+
+const equal: IOperator = {
   name: "equals",
   value: "String",
   getSql: (context) => {
@@ -7,7 +9,7 @@ const equal = {
   }
 };
 
-const notEqual = {
+const notEqual: IOperator = {
   name: "equalsNot",
   value: "String",
   getSql: (context) => {
@@ -16,7 +18,7 @@ const notEqual = {
   }
 };
 
-const isDistinctFrom = {
+const isDistinctFrom: IOperator = {
   name: "isDistinctFrom",
   value: "String",
   getSql: (context) => {
@@ -25,7 +27,7 @@ const isDistinctFrom = {
   }
 };
 
-const isNotDistinctFrom = {
+const isNotDistinctFrom: IOperator = {
   name: "isNotDistinctFrom",
   value: "String",
   getSql: (context) => {

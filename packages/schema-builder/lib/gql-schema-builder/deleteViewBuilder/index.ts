@@ -1,9 +1,10 @@
-import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { CreateExpressions, orderExpressions, IExpressionInput } from "../createExpressions";
 import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";
+import { ITableData, IPermissionContext } from "../interfaces";
 
-export function buildDeleteView(table, expressionsInput, context, extensions, config) {
+export function buildDeleteView(table: ITableData, expressionsInput: IExpressionInput, permissionContext: IPermissionContext, extensions, config) {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -51,14 +52,14 @@ export function buildDeleteView(table, expressionsInput, context, extensions, co
 
   const localTable = "_local_table_";
 
-  // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
+  // Create an instance of CreateExpression, to create several used expressions in the permissionContext of the current gqlType
+  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(expressionsInput, true);
 
-  const expressionsObject = expressionCreator.getExpressionsObject();
+  const compiledExpressions = expressionCreator.getCompiledExpressions();
 
-  const expressions = Object.values(expressionsObject).sort(orderExpressions);
+  const expressions = Object.values(compiledExpressions).sort(orderExpressions);
 
   expressions.forEach((expression: any) => {
     meta.requiresAuth = expression.requiresAuth === true ? true : meta.requiresAuth;

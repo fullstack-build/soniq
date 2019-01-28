@@ -1,8 +1,12 @@
-function filterRelevantExpressions(expressionObject) {
+import { FieldDefinitionNode, NameNode } from "graphql";
+import { ITableData, IConfig } from "../interfaces";
+import { ICompiledExpression } from "../createExpressions";
+
+function filterRelevantExpressions(expressionObject: ICompiledExpression): boolean {
   return expressionObject.isRequiredAsPermissionExpression === true && expressionObject.excludeFromPermissionExpressions !== true;
 }
 
-function createExpressionSql(expressionObject) {
+function createExpressionSql(expressionObject: ICompiledExpression): string {
   if (expressionObject.type === "function") {
     return `${expressionObject.sql} AS "${expressionObject.name}"`;
   }
@@ -12,11 +16,11 @@ function createExpressionSql(expressionObject) {
   return `(SELECT ${expressionObject.sql} AS "${expressionObject.name}") AS "${expressionObject.name}"`;
 }
 
-function getExpressionName(expressionObject) {
+function getExpressionName(expressionObject: ICompiledExpression): string {
   return `"${expressionObject.name}"`;
 }
 
-export function createView(table, config, name, fields, expressions, disableSecurityBarrier) {
+export function createView(table: ITableData, config: IConfig, name:string, fields: string[], expressions: ICompiledExpression[], disableSecurityBarrier: boolean): string[] {
   const statements = [];
 
   statements.push(`DROP VIEW IF EXISTS "${config.schemaName}"."${name}";`);
@@ -48,7 +52,7 @@ export function createView(table, config, name, fields, expressions, disableSecu
   return statements;
 }
 
-export function createGqlField(name, gqlReturnType) {
+export function createGqlField(name: string, gqlReturnType: string): FieldDefinitionNode {
   return {
     kind: "FieldDefinition",
     name: {

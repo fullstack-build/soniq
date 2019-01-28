@@ -1,9 +1,11 @@
 import { buildReadView } from "./createView";
 import { createQuery } from "./createQuery";
 import { getFilterDefinitions } from "./getFilterDefinitions";
+import { ITableData, IPermissionView, IReadExpressions, IPermissionContext } from "../interfaces";
+import { DefinitionNode } from "graphql";
 
-export function buildReadQuery(table, readExpressions, context, extensions, config, disableSecurityBarrier) {
-  const gqlDefinitions = [];
+export function buildReadQuery(table: ITableData, readExpressions: IReadExpressions, permissionContext: IPermissionContext, extensions, config, disableSecurityBarrier: boolean):IPermissionView {
+  const gqlDefinitions: DefinitionNode[] = [];
   const sql = [];
   const queryName = `${table.gqlTypeName.toLowerCase()}s`;
   const orderByEnumName = `${table.gqlTypeName}OrderBy`;
@@ -13,7 +15,7 @@ export function buildReadQuery(table, readExpressions, context, extensions, conf
   const { meta, authViewSql, publicViewSql, gqlDefinition } = buildReadView(
     table,
     readExpressions,
-    context,
+    permissionContext,
     extensions,
     config,
     disableSecurityBarrier

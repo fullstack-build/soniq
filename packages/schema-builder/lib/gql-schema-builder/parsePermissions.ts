@@ -2,30 +2,31 @@ import { parsePermission } from "./parsePermission";
 import { extensions as defaultExtensions } from "./extensions";
 import { createSchemaBasics } from "./createSchemaBasics";
 import { createMutation } from "./createMutation";
+import { IPermissionContext, IPermission, IConfig } from "./interfaces";
 
-export function parsePermissions(permissions, context, extensions, config) {
+export function parsePermissions(permissions: IPermission[], permissionContext: IPermissionContext, extensions, config: IConfig) {
   const meta = {
     query: {},
     mutation: {},
     permissionMeta: {}
   };
 
-  // TODO: Dustin: evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
-  createSchemaBasics().forEach((d) => context.gqlDocument.definitions.push(d));
+  // TODO: Dustin: evaluate: permissionContext.gqlDocument = [...permissionContext.gqlDocument, ...createSchemaBasics()];
+  createSchemaBasics().forEach((d) => permissionContext.gqlDocument.definitions.push(d));
 
   const sql = [];
-  // TODO: Dustin: same story... evaluate: context.gqlDocument = [...context.gqlDocument, ...createSchemaBasics()];
+  // TODO: Dustin: same story... evaluate: permissionContext.gqlDocument = [...permissionContext.gqlDocument, ...createSchemaBasics()];
   const currentExtensions = extensions.slice().concat(defaultExtensions.slice());
 
   permissions.forEach((permission) => {
-    const result = parsePermission(permission, context, currentExtensions, config);
+    const result = parsePermission(permission, permissionContext, currentExtensions, config);
     meta.query = { ...meta.query, ...result.meta.query };
     meta.mutation = { ...meta.mutation, ...result.meta.mutation };
     meta.permissionMeta = { ...meta.permissionMeta, ...result.meta.permissionMeta };
 
     result.sql.forEach((q) => sql.push(q));
 
-    context.gqlDocument = result.gqlDocument;
+    permissionContext.gqlDocument = result.gqlDocument;
   });
 
   const modifiedMutation = {};
@@ -50,7 +51,7 @@ export function parsePermissions(permissions, context, extensions, config) {
       }
     });
     const gqlMutation = createMutation(myMutation.name, myMutation.gqlReturnTypeName, myMutation.gqlInputTypeName, extendArguments);
-    context.gqlDocument.definitions.push(gqlMutation);
+    permissionContext.gqlDocument.definitions.push(gqlMutation);
     modifiedMutation[myMutation.name] = mutation;
   });
 
@@ -59,17 +60,17 @@ export function parsePermissions(permissions, context, extensions, config) {
   // Loop over extensions to add definitions
   currentExtensions.forEach((parser: any) => {
     if (parser.extendDefinitions != null) {
-      const definitions = parser.extendDefinitions(context.gqlDocument, meta, sql);
+      const definitions = parser.extendDefinitions(permissionContext.gqlDocument, meta, sql);
       if (definitions != null && Array.isArray(definitions)) {
         definitions.forEach((definition) => {
-          context.gqlDocument.definitions.push(definition);
+          permissionContext.gqlDocument.definitions.push(definition);
         });
       }
     }
   });
 
   return {
-    gqlDocument: JSON.parse(JSON.stringify(context.gqlDocument)),
+    gqlDocument: JSON.parse(JSON.stringify(permissionContext.gqlDocument)),
     meta,
     sql
   };

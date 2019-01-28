@@ -1,6 +1,7 @@
 import { createMutationArguments } from "./createMutationArguments";
+import { ObjectTypeExtensionNode, InputValueDefinitionNode } from "graphql";
 
-export function createMutation(name, gqlTypeName, gqlInputTypeName, extendArguments) {
+export function createMutation(name: string, gqlTypeName: string, gqlInputTypeName: string, extendArguments: InputValueDefinitionNode[]): ObjectTypeExtensionNode {
   return {
     kind: "ObjectTypeExtension",
     name: {
