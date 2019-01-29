@@ -9,17 +9,20 @@ export enum EBootState {
   Finished = "finished"
 }
 
-interface IBootFunctionObject {
+interface IFunctionObject {
   name: string;
   fn: TBootFuntion;
 }
+
+type IBootFunctionObject = IFunctionObject;
+type IAfterBootFunctionObject = IFunctionObject;
 
 @Service()
 export class BootLoader {
   private state: EBootState = EBootState.Initial;
 
   private bootFunctionObjects: IBootFunctionObject[] = [];
-  private bootReadyFunctionObjects: IBootFunctionObject[] = [];
+  private afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
 
   private readonly logger: ILogger;
 
@@ -50,7 +53,7 @@ export class BootLoader {
     if (this.state === EBootState.Finished) {
       return fn();
     }
-    this.bootReadyFunctionObjects.push({ name, fn });
+    this.afterBootFunctionObjects.push({ name, fn });
   }
 
   public getReadyPromise(): Promise<void> {
@@ -67,12 +70,12 @@ export class BootLoader {
         await fnObj.fn(this);
         this.logger.trace("boot.bootFunctions.end", fnObj.name);
       }
-      for (const fnObj of this.bootReadyFunctionObjects) {
-        this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
-        fnObj.fn(this);
-        this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
-      }
       this.state = EBootState.Finished;
+      for (const fnObj of this.afterBootFunctionObjects) {
+        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+        fnObj.fn(this);
+        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+      }
     } catch (err) {
       process.stderr.write(`BootLoader.boot.error.caught: ${err}\n`);
       throw err;
