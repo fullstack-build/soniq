@@ -1,4 +1,5 @@
+import { EBootState } from "../lib";
+
 export default interface IStateSpy {
-  hasBooted: boolean;
-  isBooting: boolean;
+  bootState: EBootState;
 }

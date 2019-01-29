@@ -3,7 +3,7 @@ import ava, { ExecutionContext } from "ava";
 import { LoggerFactory } from "@fullstack-one/logger";
 import { Container } from "@fullstack-one/di";
 import { FakeLoggerFactory } from "./mock/FakeLoggerFactory";
-import { BootLoader } from "../lib/index";
+import { BootLoader, EBootState } from "../lib/index";
 import { bootWithTimeoutMock } from "./mock/bootFunctions";
 import { BootMock } from "./mock/BootMock";
 import { AfterBootMock } from "./mock/AfterBootMock";
@@ -27,6 +27,7 @@ ava("Initial state", (test: ExecutionContext<ITestContext>) => {
 
   test.is(bootLoader.hasBooted(), false);
   test.is(bootLoader.isBooting(), false);
+  test.is(bootLoader.getBootState(), EBootState.Initial);
 });
 
 ava("State while booting", (test: ExecutionContext<ITestContext>) => {
@@ -36,6 +37,7 @@ ava("State while booting", (test: ExecutionContext<ITestContext>) => {
 
   test.is(bootLoader.hasBooted(), false);
   test.is(bootLoader.isBooting(), true);
+  test.is(bootLoader.getBootState(), EBootState.Booting);
 });
 
 ava("Final state", (test: ExecutionContext<ITestContext>) => {
@@ -44,27 +46,28 @@ ava("Final state", (test: ExecutionContext<ITestContext>) => {
 
   test.is(bootLoader.hasBooted(), true);
   test.is(bootLoader.isBooting(), false);
+  test.is(bootLoader.getBootState(), EBootState.Finished);
 });
 
 ava("Add boot function, boot and get boot result", async (test: ExecutionContext<ITestContext>) => {
   const bootLoader = Container.of(test.context.id).get(BootLoader);
-  const stateSpy: IStateSpy = { hasBooted: null, isBooting: null };
+  const stateSpy: IStateSpy = { bootState: null };
   const bootable = new BootMock(bootLoader, stateSpy);
   const expectedPropertyAfterBoot = "new property";
   await bootLoader.boot();
 
-  test.deepEqual(stateSpy, { hasBooted: false, isBooting: true });
+  test.deepEqual(stateSpy, { bootState: EBootState.Booting });
   test.is(bootable.property, expectedPropertyAfterBoot);
 });
 
 ava("Add after boot function, boot and get after boot result", async (test: ExecutionContext<ITestContext>) => {
   const bootLoader = Container.of(test.context.id).get(BootLoader);
-  const stateSpy: IStateSpy = { hasBooted: null, isBooting: null };
+  const stateSpy: IStateSpy = { bootState: null };
   const bootable = new AfterBootMock(bootLoader, stateSpy);
   const expectedPropertyAfterBoot = "new property";
   await bootLoader.boot();
 
-  test.deepEqual(stateSpy, { hasBooted: true, isBooting: false });
+  test.deepEqual(stateSpy, { bootState: EBootState.Finished });
   test.is(bootable.property, expectedPropertyAfterBoot);
 });
 

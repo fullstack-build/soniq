@@ -3,6 +3,12 @@ import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
+export enum EBootState {
+  Initial = "initial",
+  Booting = "booting",
+  Finished = "finished"
+}
+
 interface IBootFunctionObject {
   name: string;
   fn: TBootFuntion;
@@ -10,8 +16,7 @@ interface IBootFunctionObject {
 
 @Service()
 export class BootLoader {
-  private IS_BOOTING: boolean = false; // TODO: Dustin Rename
-  private HAS_BOOTED: boolean = false; // TODO: Dustin Rename
+  private state: EBootState = EBootState.Initial;
 
   private bootFunctionObjects: IBootFunctionObject[] = [];
   private bootReadyFunctionObjects: IBootFunctionObject[] = [];
@@ -23,12 +28,16 @@ export class BootLoader {
     this.logger = loggerFactory.create(this.constructor.name);
   }
 
+  public getBootState(): EBootState {
+    return this.state;
+  }
+
   public isBooting(): boolean {
-    return this.IS_BOOTING;
+    return this.state === EBootState.Booting;
   }
 
   public hasBooted(): boolean {
-    return this.HAS_BOOTED;
+    return this.state === EBootState.Finished;
   }
 
   public addBootFunction(name: string, fn: TBootFuntion): void {
@@ -38,7 +47,7 @@ export class BootLoader {
 
   public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
     this.logger.trace("onBootReady", name);
-    if (this.HAS_BOOTED) {
+    if (this.state === EBootState.Finished) {
       return fn();
     }
     this.bootReadyFunctionObjects.push({ name, fn });
@@ -46,15 +55,12 @@ export class BootLoader {
 
   public getReadyPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.HAS_BOOTED) {
-        return resolve();
-      }
-      this.bootReadyFunctionObjects.push({ name: "BootLoader.ready", fn: () => resolve() });
+      this.onBootReady("BootLoader.ready", () => resolve());
     });
   }
 
   public async boot(): Promise<void> {
-    this.IS_BOOTING = true;
+    this.state = EBootState.Booting;
     try {
       for (const fnObj of this.bootFunctionObjects) {
         this.logger.trace("boot.bootFunctions.start", fnObj.name);
@@ -66,8 +72,7 @@ export class BootLoader {
         fnObj.fn(this);
         this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
       }
-      this.IS_BOOTING = false;
-      this.HAS_BOOTED = true;
+      this.state = EBootState.Finished;
     } catch (err) {
       process.stderr.write(`BootLoader.boot.error.caught: ${err}\n`);
       throw err;
