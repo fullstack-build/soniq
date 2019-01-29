@@ -1,7 +1,7 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
-type TBootFuntion = (obj?: any) => void | Promise<void>;
+type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
 interface IBootFunctionObject {
   name: string;
@@ -49,7 +49,7 @@ export class BootLoader {
       if (this.HAS_BOOTED) {
         return resolve();
       }
-      this.bootReadyFunctionObjects.push({ name: "BootLoader.ready", fn: resolve });
+      this.bootReadyFunctionObjects.push({ name: "BootLoader.ready", fn: () => resolve() });
     });
   }
 
