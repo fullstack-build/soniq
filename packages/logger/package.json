@@ -20,11 +20,10 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.56",
     "@fullstack-one/config": "^0.4.56",
     "@fullstack-one/di": "^0.4.56",
     "debug-logger": "^0.4.1",
-    "tracer": "^0.8.12"
+    "tracer": "^0.9.8"
   },
   "devDependencies": {
     "ava": "^1.1.0",
