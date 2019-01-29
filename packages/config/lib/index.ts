@@ -13,6 +13,7 @@ export { IEnvironment };
 
 @Service()
 export class Config {
+  @Inject((type) => BootLoader)
   private readonly bootLoader: BootLoader;
 
   private registeredConfigModules: string[] = [];
@@ -22,9 +23,7 @@ export class Config {
   private readonly NODE_ENV = process.env.NODE_ENV;
   public readonly ENVIRONMENT: IEnvironment;
 
-  constructor(@Inject((type) => BootLoader) bootLoader) {
-    this.bootLoader = bootLoader;
-
+  constructor() {
     Container.set("CONFIG", {});
 
     this.applicationConfig = this.loadApplicationConfig();
@@ -69,7 +68,7 @@ export class Config {
 
     const configModule = _.defaultsDeep(processEnvironmentConfigOfModule, applicationConfigOfModule, baseConfigModule);
 
-    ConfigMergeHelper.checkForMissingConfigProperties(configModule);
+    ConfigMergeHelper.checkForMissingConfigProperties(name, configModule);
 
     this.config[name] = configModule;
   }
@@ -77,25 +76,25 @@ export class Config {
   public registerConfig(name: string, configDirectory: string): any {
     const baseConfigModule = this.getConfigFromConfigFiles(configDirectory);
     this.applyConfigModule(name, baseConfigModule);
-
     return this.getConfig(name);
   }
 
   public registerApplicationConfigModule(name: string): any {
     const baseConfigModule = {};
     this.applyConfigModule(name, baseConfigModule);
-
+    console.log(`config.register name: ${name}`);
     return this.getConfig(name);
   }
 
   public getConfig(name?: string): any {
     if (name == null) {
       if (!this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
-        throw new Error("Configuration not available before booting.");
+        throw new Error(`config.not.available.before.booting module name: ${name}`);
       }
       return _.cloneDeep(this.config);
     } else if (!_.has(this.config, name)) {
-      throw new Error();
+      return undefined;
+      throw new Error(`config.module.not.found module name: ${name}`);
     }
     return _.cloneDeep(this.config[name]);
   }
