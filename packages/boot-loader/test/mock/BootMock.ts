@@ -13,8 +13,7 @@ export class BootMock {
   }
 
   private boot(): void {
-    this.stateSpy.hasBooted = this.bootLoader.hasBooted();
-    this.stateSpy.isBooting = this.bootLoader.isBooting();
+    this.stateSpy.bootState = this.bootLoader.getBootState();
     this.property = "new property";
   }
 }
