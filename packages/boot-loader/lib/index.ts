@@ -26,8 +26,7 @@ export class BootLoader {
 
   private readonly logger: ILogger;
 
-  constructor(@Inject((type) => LoggerFactory) loggerFactory) {
-    // init logger
+  constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory) {
     this.logger = loggerFactory.create(this.constructor.name);
   }
 
