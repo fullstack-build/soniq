@@ -1,6 +1,8 @@
 import { IExpressionInput, CreateExpressions } from "../createExpressions";
 import { FieldDefinitionNode } from "graphql";
 
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
 export class CreateDefaultField {
   private expressionCreator: CreateExpressions;
 
@@ -8,7 +10,12 @@ export class CreateDefaultField {
     this.expressionCreator = expressionCreator;
   }
 
-  public create(readExpressionsField: IExpressionInput, gqlFieldDefinition: FieldDefinitionNode | any, columnExpression: string, nativeFieldName: string) {
+  public create(
+    readExpressionsField: IExpressionInput,
+    gqlFieldDefinition: Mutable<FieldDefinitionNode>,
+    columnExpression: string,
+    nativeFieldName: string
+  ) {
     let publicFieldSql = null;
     let authFieldSql = null;
 
