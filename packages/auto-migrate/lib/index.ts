@@ -43,7 +43,7 @@ export class AutoMigrate {
   }
 
   public async getMigrationSql() {
-    const configDB = this.config.getConfig("db");
+    const configDB = this.config.getConfig("Db");
     try {
       const fromDbMeta = await this.schemaBuilder.getPgDbMeta();
       const toDbMeta = this.getDbMeta();
@@ -54,7 +54,7 @@ export class AutoMigrate {
   }
 
   public async runMigration() {
-    const configDB = this.config.getConfig("db");
+    const configDB = this.config.getConfig("Db");
     try {
       const fromDbMeta = await this.schemaBuilder.getPgDbMeta();
       const toDbMeta = this.getDbMeta();

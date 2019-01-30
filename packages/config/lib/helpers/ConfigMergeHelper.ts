@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import { MissingConfigPropertiesError } from "../errors";
 
 class ConfigMergeHelper {
-  public static checkForMissingConfigProperties(config: object): void {
+  public static checkForMissingConfigProperties(moduleName: string, config: object): void {
     const missingProperties: string[] = [];
     this.deepForEach(config, (key, val, nestedPath) => {
       if (val == null) {
@@ -12,7 +12,7 @@ class ConfigMergeHelper {
     });
 
     if (missingProperties.length > 0) {
-      throw new MissingConfigPropertiesError(missingProperties);
+      throw new MissingConfigPropertiesError(moduleName, missingProperties);
     }
   }
 
