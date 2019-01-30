@@ -21,12 +21,12 @@ export class CreateExpressions {
     const expressions: IExpressionInputObject[] = [];
 
     if (Array.isArray(expressionInput) === true) {
-      const expressionInputArray = expressionInput as (string | IExpressionInputObject)[];
+      const expressionInputArray = expressionInput as Array<string | IExpressionInputObject>;
       expressionInputArray.forEach((innerExpression) => {
         this.fixExpressionType(innerExpression).forEach((e) => expressions.push(e));
       });
     } else if (typeof expressionInput === "string") {
-      expressions.push({ name: expressionInput as string });
+      expressions.push({ name: expressionInput });
     } else if (typeof expressionInput === "object") {
       const expressionInputObject = expressionInput as IExpressionInputObject;
       if (expressionInputObject.name != null) {
@@ -182,4 +182,4 @@ export interface IExpressionParams {
   [key: string]: any;
 }
 
-export type IExpressionInput = IExpressionInputObject | string | (IExpressionInputObject | string)[];
+export type IExpressionInput = IExpressionInputObject | string | Array<IExpressionInputObject | string>;
