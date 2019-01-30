@@ -92,7 +92,6 @@ export class Config {
       }
       return _.cloneDeep(this.config);
     } else if (!_.has(this.config, name)) {
-      return undefined;
       throw new Error(`config.module.not.found module name: ${name}`);
     }
     return _.cloneDeep(this.config[name]);
