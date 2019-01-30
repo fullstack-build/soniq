@@ -31,7 +31,7 @@ export class Config {
 
     const namespace = this.config.Config.namespace;
     this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(this.NODE_ENV, namespace);
-    Container.set("ENVIRONMENT", {});
+    Container.set("ENVIRONMENT", this.ENVIRONMENT);
   }
 
   private loadApplicationConfig(): object {
@@ -82,7 +82,6 @@ export class Config {
   public registerApplicationConfigModule(name: string): any {
     const baseConfigModule = {};
     this.applyConfigModule(name, baseConfigModule);
-    console.log(`config.register name: ${name}`);
     return this.getConfig(name);
   }
 
