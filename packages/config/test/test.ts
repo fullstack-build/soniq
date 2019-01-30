@@ -1,14 +1,11 @@
 import ava, { ExecutionContext } from "ava";
 
 import { Container } from "@fullstack-one/di";
-import { BootLoader } from "@fullstack-one/boot-loader";
 
 import { Config } from "../lib/index";
-import FakeBootLoader from "./mock/FakeBootLoader";
 
 ava.beforeEach("Set mock application path", (test: ExecutionContext<{ id: number; applicationPath: string }>) => {
   test.context.id = Math.random();
-  Container.of(test.context.id).set(BootLoader, new FakeBootLoader());
 
   process.env["Foo.bat"] = "process.env";
   process.env["Foo.processEnvironment.text"] = "process.env";
@@ -133,8 +130,6 @@ ava("Throw error on getConfig for unknown module name", (test: ExecutionContext<
 });
 
 ava("Get whole config", (test: ExecutionContext<{ id: number }>) => {
-  const fakeBootLoader = new FakeBootLoader(true, false);
-  Container.of(test.context.id).set(BootLoader, fakeBootLoader);
   const config = Container.of(test.context.id).get(Config);
 
   const expectedConfig = {
@@ -144,32 +139,6 @@ ava("Get whole config", (test: ExecutionContext<{ id: number }>) => {
   };
   const value = config.getConfig();
   test.deepEqual(value, expectedConfig);
-});
-
-ava("Throw error on get whole config before booting", (test: ExecutionContext<{ id: number }>) => {
-  const fakeBootLoader = new FakeBootLoader(false, false);
-  Container.of(test.context.id).set(BootLoader, fakeBootLoader);
-  const config = Container.of(test.context.id).get(Config);
-
-  try {
-    config.getConfig();
-    test.fail();
-  } catch {
-    test.pass();
-  }
-});
-
-ava("Throw error on get whole config while booting", (test: ExecutionContext<{ id: number }>) => {
-  const fakeBootLoader = new FakeBootLoader(false, true);
-  Container.of(test.context.id).set(BootLoader, fakeBootLoader);
-  const config = Container.of(test.context.id).get(Config);
-
-  try {
-    config.getConfig();
-    test.fail();
-  } catch {
-    test.pass();
-  }
 });
 
 ava.todo("Throw error on missing config property after merge");
