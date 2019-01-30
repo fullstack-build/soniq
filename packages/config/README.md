@@ -23,7 +23,9 @@ module default configuration
 
 **Hint:** If any value is still null after the merge, `@fullstack-one/config` will throw an error.
 
-## Setup for @fullstack-one packages
+## Setup
+
+### Setup for @fullstack-one packages
 
 First add the config package as a dependency to your package:
 
@@ -70,7 +72,7 @@ module.exports = {
 }
 ```
 
-## Setup in the Application
+### Setup in the Application
 
 As soon as any `@fullstack-one` package is loaded and initialized, that uses `@fullstack-one/config`, the application is required to have a `./package.json` and a `./config` directory on the same level as its main file (given by `require.main.filename`). If one of these is not given, `@fullstack-one/config` throws an error.
 
@@ -92,7 +94,7 @@ module.exports = {
 
 **Hint:** It does not have to include all properties, as the objects will be merged.
 
-## Setup the process environment
+### Setup the process environment
 
 On registration of a configuration module the process environment is loaded via `process.env`. The name of the variable is interpreted as path in the whole configuration object. For example, the following process environment variable would lead to the respective change in the config object:
 
@@ -113,3 +115,11 @@ export MyFullstackOnePackage.b.c=changed
   ...
 }
 ```
+
+## Usage
+
+You can use `registerConfig(moduleName, configDirPath)`, `registerApplicationConfigModule(moduleName, configObject)` and `getConfig(moduleName)` as described above. Find examples in `./test`.
+
+### Dangerzone
+
+You can also get the whole config object containing all config modules using `dangerouslyGetWholeConfig()`. If you are in the middle of a boot process for example, some config modules might have not been set.

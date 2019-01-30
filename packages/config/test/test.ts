@@ -137,7 +137,7 @@ ava("Get whole config", (test: ExecutionContext<{ id: number }>) => {
       namespace: "application-default"
     }
   };
-  const value = config.getConfig();
+  const value = config.dangerouslyGetWholeConfig();
   test.deepEqual(value, expectedConfig);
 });
 

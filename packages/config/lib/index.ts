@@ -79,12 +79,14 @@ export class Config {
     return this.getConfig(name);
   }
 
-  public getConfig(name?: string): any {
-    if (name == null) {
-      return _.cloneDeep(this.config);
-    } else if (!_.has(this.config, name)) {
+  public getConfig(name: string): any {
+    if (!_.has(this.config, name)) {
       throw new Error(`config.module.not.found module name: ${name}`);
     }
     return _.cloneDeep(this.config[name]);
+  }
+
+  public dangerouslyGetWholeConfig(): any {
+    return _.cloneDeep(this.config);
   }
 }
