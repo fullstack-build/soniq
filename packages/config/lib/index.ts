@@ -20,8 +20,6 @@ export class Config {
   public readonly ENVIRONMENT: IEnvironment;
 
   constructor() {
-    Container.set("CONFIG", {});
-
     this.applicationConfig = this.loadApplicationConfig();
     this.registerConfig("Config", `${__dirname}/../config`);
 
