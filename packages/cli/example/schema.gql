@@ -1,0 +1,416 @@
+enum FILE_TYPES {
+  DEFAULT
+}
+
+extend type Mutation {
+  """
+  
+  """
+  USER_CREATE_ME(input: USER_CREATE_ME!, authToken: String, privacyAgreementAcceptanceToken: String, meta: String): ID! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+extend type Mutation {
+  """
+  
+  """
+  USER_UPDATE_ME(input: USER_UPDATE_ME!): User! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+extend type Mutation {
+  """
+  
+  """
+  USER_DELETE(input: USER_DELETE!): ID! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+extend type Mutation {
+  """
+  
+  """
+  POST_CREATE_ME(input: POST_CREATE_ME!): ID! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+extend type Mutation {
+  """
+  
+  """
+  POST_UPDATE_ME(input: POST_UPDATE_ME!): Post! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+extend type Mutation {
+  """
+  
+  """
+  POST_DELETE(input: POST_DELETE!): ID! @custom(resolver: "@fullstack-one/graphql/mutationResolver")
+}
+
+input USER_CREATE_ME @table @auth @versioning {
+  email: String @unique @username
+  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyAgreementAcceptedAtInUTC
+  acceptedPrivacyTermsVersion: Int @privacyAgreementAcceptedVersion
+}
+
+input USER_UPDATE_ME @table @auth @versioning {
+  email: String @unique @username
+  payload: PayloadInput @json @migrate(from: "payloadOld")
+}
+
+input USER_DELETE @table @auth @versioning {
+  id: ID!
+}
+
+input UserFilter {
+  OR: [UserFilter!]
+  AND: [UserFilter!]
+  id: Operators
+  email: Operators
+  firstLetterOfUserName: Operators
+  payload: Operators
+  _Anyone: Operators
+  _currentUserId: Operators
+  _FirstNOfField_email_1: Operators
+  _Owner_id: Operators
+}
+
+enum UserOrderBy {
+  id_ASC
+  id_DESC
+  email_ASC
+  email_DESC
+  firstLetterOfUserName_ASC
+  firstLetterOfUserName_DESC
+  payload_ASC
+  payload_DESC
+  _Anyone_ASC
+  _Anyone_DESC
+  _currentUserId_ASC
+  _currentUserId_DESC
+  _FirstNOfField_email_1_ASC
+  _FirstNOfField_email_1_DESC
+  _Owner_id_ASC
+  _Owner_id_DESC
+}
+
+extend type Query {
+  """
+  Returns an array of users.
+  """
+  users(where: UserFilter, orderBy: [UserOrderBy!], limit: Int, offset: Int): [User!]! @custom(resolver: "@fullstack-one/graphql/queryResolver")
+}
+
+type User @table @auth @versioning {
+  id: ID! @unique
+  email: String @unique @username
+  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
+  payload: Payload @json @migrate(from: "payloadOld")
+  posts(where: PostFilter, orderBy: [PostOrderBy!], limit: Int, offset: Int): [Post!]! @relation(name: "PostOwner")
+  stripeAccount: String @custom(resolver: "stripeAccount")
+  _Anyone: Boolean
+  _currentUserId: ID
+  _FirstNOfField_email_1: String
+  _Owner_id: Boolean
+}
+
+input POST_CREATE_ME @table @versioning @migrate(from: "PostOld") {
+  title: String
+  content: String
+  """
+  List of FileNames. Allowed types: ["DEFAULT"]
+  """
+  images: [String!]
+  ownerId: ID!
+  ownerSecret: String @unique(name: "uniqueAcrossFKs")
+}
+
+input POST_UPDATE_ME @table @versioning @migrate(from: "PostOld") {
+  id: ID! @unique
+  title: String
+  content: String
+  """
+  List of FileNames. Allowed types: ["DEFAULT"]
+  """
+  images: [String!]
+  ownerSecret: String @unique(name: "uniqueAcrossFKs")
+}
+
+input POST_DELETE @table @versioning @migrate(from: "PostOld") {
+  id: ID!
+}
+
+input PostFilter {
+  OR: [PostFilter!]
+  AND: [PostFilter!]
+  id: Operators
+  title: Operators
+  content: Operators
+  ownerId: Operators
+  ownerSecret: Operators
+  _currentUserId: Operators
+  _Admin: Operators
+}
+
+enum PostOrderBy {
+  id_ASC
+  id_DESC
+  title_ASC
+  title_DESC
+  content_ASC
+  content_DESC
+  ownerId_ASC
+  ownerId_DESC
+  ownerSecret_ASC
+  ownerSecret_DESC
+  _currentUserId_ASC
+  _currentUserId_DESC
+  _Admin_ASC
+  _Admin_DESC
+}
+
+extend type Query {
+  """
+  Returns an array of posts.
+  """
+  posts(where: PostFilter, orderBy: [PostOrderBy!], limit: Int, offset: Int): [Post!]! @custom(resolver: "@fullstack-one/graphql/queryResolver")
+}
+
+type Post @table @versioning @migrate(from: "PostOld") {
+  id: ID! @unique
+  title: String
+  content: String
+  """
+  List of Files. Allowed types: ["DEFAULT"]
+  """
+  images: [BucketFile] @files @custom(resolver: "@fullstack-one/file-storage/readFiles")
+  owner: User @relation(name: "PostOwner", onDelete: "restrict", onUpdate: "restrict") @default(expression: "_meta.current_user_id()")
+  ownerSecret: String @unique(name: "uniqueAcrossFKs")
+  _currentUserId: ID
+  _Admin: Boolean
+}
+
+scalar JSON
+
+type Mutation
+
+type Query
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+extend type Mutation {
+  """
+  Validates a Facebook-Token and creates a Fullstack-ONE Auth-Token to login.
+  """
+  createAuthTokenFromFacebookToken(token: String!, tenant: String, privacyAgreementAcceptanceToken: String): AuthToken @custom(resolver: "@fullstack-one/auth-fb-token/createAuthTokenFromFacebookToken")
+}
+
+extend type Mutation {
+  """
+  Creates a new file for upload. Login required.
+  """
+  createFile(extension: String!, type: FILE_TYPES): UploadFile @custom(resolver: "@fullstack-one/file-storage/createFile")
+  """
+  Verifies a new file after upload. Login required.
+  """
+  verifyFile(fileName: String!): BucketFile @custom(resolver: "@fullstack-one/file-storage/verifyFile")
+  """
+  Deletes temporary files of the current user which have not been added to any entity. If you provide a fileName only this will be deleted. Login required.
+  """
+  clearUpFiles(fileName: String): [String] @custom(resolver: "@fullstack-one/file-storage/clearUpFiles")
+}
+
+type BucketObject {
+  objectName: String!
+  presignedGetUrl: String!
+  info: String!
+}
+
+type BucketFile {
+  fileName: String!
+  objects: [BucketObject!]!
+}
+
+type UploadFile {
+  extension: String!
+  type: String!
+  fileName: String!
+  uploadFileName: String!
+  presignedPutUrl: String!
+}
+
+extend type Query {
+  """
+  Tells if the given token is valid and gives some meta information.
+  """
+  getTokenMeta(accessToken: String, tempToken: Boolean, tempTokenExpiration: Boolean): TokenMeta @custom(resolver: "@fullstack-one/auth/getTokenMeta")
+}
+
+extend type Mutation {
+  """
+  Login a user. Get back an accessToken and metadata about it.
+  """
+  login(username: String!, tenant: String, password: String, authToken: String): LoginData @custom(resolver: "@fullstack-one/auth/login")
+  """
+  Creates a temporary token and sends it to the user, to create a new password.
+  
+  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...). Another use-case could be to use this mutation to re-send a registration-email.
+  """
+  forgotPassword(username: String!, tenant: String, meta: String): Boolean @custom(resolver: "@fullstack-one/auth/forgotPassword")
+  """
+  Set a new password with a temporary token. This will invalidate all other sessions.
+  """
+  setPassword(accessToken: String, password: String!): Boolean @custom(resolver: "@fullstack-one/auth/setPassword")
+  """
+  Invalidates the given accessToken and deletes the auth cookie if set.
+  """
+  invalidateUserToken: Boolean @custom(resolver: "@fullstack-one/auth/invalidateUserToken")
+  """
+  Invalidates all accessTokens ever issued to the user and deletes the auth cookie if set.
+  """
+  invalidateAllUserTokens: Boolean @custom(resolver: "@fullstack-one/auth/invalidateAllUserTokens")
+  """
+  Sets the given accessToken into a cookie. With a set cookie, normal queries an mutations are authorized. However, auth mutations will ignore this cookie.
+  """
+  refreshUserToken(refreshToken: String!): LoginData @custom(resolver: "@fullstack-one/auth/refreshUserToken")
+  """
+  Creates a JWT-Token which verifies the user-approval of the privacy terms
+  """
+  createPrivacyAgreementAcceptanceToken(acceptedVersion: Int!): PrivacyAgreementAcceptanceToken @custom(resolver: "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken")
+}
+
+type AuthTokenPayload {
+  email: String!
+  providerName: String!
+  profileId: String!
+  tenant: String!
+  profile: JSON
+}
+
+type AuthToken {
+  token: String!
+  payload: AuthTokenPayload
+}
+
+type PrivacyAgreementAcceptanceToken {
+  token: String!
+  acceptedAtInUTC: String!
+  acceptedVersion: Int!
+}
+
+type TokenMeta {
+  isValid: Boolean!
+  userId: ID!
+  provider: String!
+  timestamp: String!
+  issuedAt: Int!
+  expiresAt: Int!
+}
+
+type LoginData {
+  userId: ID!
+  refreshToken: String
+  accessToken: String
+  sessionExpirationTimestamp: String!
+  payload: AccessTokenPayload
+}
+
+type AccessTokenPayload {
+  userId: ID!
+  provider: String!
+  timestamp: String!
+  userToken: String!
+  userTokenMaxAgeInSeconds: Int!
+}
+
+enum IS_VALUE {
+  NULL
+  NOT_NULL
+  TRUE
+  NOT_TRUE
+  FALSE
+  NOT_FALSE
+  UNKNOWN
+  NOT_UNKNOWN
+}
+
+extend type Query {
+  add(a: Int!, b: Int!): AdditionPayload @custom(resolver: "add")
+}
+
+type AdditionPayload {
+  sum: Int!
+}
+
+input PayloadInput {
+  data: String!
+  secret: Int!
+}
+
+input PayloadDataInput {
+  title: String!
+  content: String!
+}
+
+type Payload {
+  data: String
+  secret: Int!
+}
+
+type PayloadData {
+  title: String
+  content: String
+}
+
+type UniqueDemo @table @versioning {
+  id: ID! @unique
+  updatedAt: String @updatedAt
+  createdAt: String @createdAt
+  simpleUnique: String @unique
+  namedUnique: String @unique(name: "namedUnique")
+  multipleUnique2: String @unique(name: "multipleUnique")
+  multipleUnique1: String @unique(name: "multipleUnique")
+  multipleUniqueExpression1: Boolean @unique(name: "multipleUniqueExpression")
+  multipleUniqueExpression2: Boolean @unique(name: "multipleUniqueExpression", condition: "(\"multipleUniqueExpression1\" = true) AND (\"multipleUniqueExpression2\" = true)")
+}
+
+type IRandomResult {
+  randomResult: String!
+}
+
+input IPossibleValues {
+  values: [String]!
+}
+
+extend type Query {
+  """
+  this is an example custom query
+  """
+  getRandomValueOutOfArray(possibleValues: IPossibleValues!): IRandomResult @custom(resolver: "getRandomValueOutOfArray")
+}
+
+input Operators {
+  equals: String
+  equalsNot: String
+  isDistinctFrom: String
+  isNotDistinctFrom: String
+  greaterThan: String
+  greaterThanOrEqual: String
+  lessThan: String
+  lessThanOrEqual: String
+  is: IS_VALUE
+  in: [String!]
+  notIn: [String!]
+  includes: String
+  includesNot: String
+  contains: [String!]
+  isContainedBy: [String!]
+  like: String
+  notLike: String
+  similarTo: String
+  notSimilarTo: String
+  posixMatchCaseSensitive: String
+  posixMatchCaseInsensitive: String
+  posixNoMatchCaseSensitive: String
+  posixNoMatchCaseInsensitive: String
+}

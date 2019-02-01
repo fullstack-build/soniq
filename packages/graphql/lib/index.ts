@@ -26,6 +26,7 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
+import { GraphQLSchema } from "graphql";
 
 export { apolloServer };
 
@@ -96,14 +97,7 @@ export class GraphQl {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject(resolversPattern));
 
-    const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
-
-    const runtimeSchema = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
-
-    const schema = makeExecutableSchema({
-      typeDefs: runtimeSchema,
-      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
-    });
+    const schema = this.getExecutableSchema();
 
     this.apolloSchema = schema;
 
@@ -185,6 +179,19 @@ export class GraphQl {
 
     app.use(gqlKoaRouter.routes());
     app.use(gqlKoaRouter.allowedMethods());
+  }
+
+  public getExecutableSchema(): GraphQLSchema {
+    const runtimeSchema = this.getRuntimeSchema();
+    return makeExecutableSchema({
+      typeDefs: runtimeSchema,
+      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
+    });
+  }
+
+  public getRuntimeSchema(): string {
+    const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
+    return this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
   }
 
   public addPreQueryHook(fn) {

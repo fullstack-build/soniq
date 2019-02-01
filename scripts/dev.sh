@@ -14,4 +14,5 @@ npm link @fullstack-one/db
 npm link @fullstack-one/auth-fb-token
 npm link @fullstack-one/notifications
 npm link @fullstack-one/events
+npm link @fullstack-one/cli
 npm link fullstack-one

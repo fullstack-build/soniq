@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 // tslint:disable:no-console
-// tslint:disable:no-var-requires
 import * as program from "commander";
 
 program
