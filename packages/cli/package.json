@@ -1,0 +1,74 @@
+{
+  "name": "@fullstack-one/cli",
+  "version": "0.4.56",
+  "description": "fullstack.one cli package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "bin": {
+    "one": "./dist/bin/one.js",
+    "one-init": "./dist/bin/one-init.js",
+    "one-migrate-db": "./dist/bin/one-migrate-db.js",
+    "one-generate-ts": "./dist/bin/one-generate-ts.js"
+  },
+  "scripts": {
+    "test": "ava --verbose ./test/**/*test.ts",
+    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
+    "start": "node ./dist/bin/one.js",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/auto-migrate": "^0.4.56",
+    "@fullstack-one/boot-loader": "^0.4.56",
+    "@fullstack-one/di": "^0.4.56",
+    "@types/graphql": "^14.0.5",
+    "commander": "^2.19.0",
+    "dotenv": "^6.2.0",
+    "graphql": "^14.1.1",
+    "graphql-code-generator": "^0.16.0",
+    "graphql-codegen-typescript-common": "0.16.0",
+    "graphql-codegen-typescript-resolvers": "^0.16.0",
+    "graphql-codegen-typescript-server": "^0.16.0",
+    "graphql-tools": "^4.0.4"
+  },
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "devDependencies": {
+    "ava": "^1.0.1",
+    "nyc": "^13.1.0",
+    "source-map-support": "^0.5.10"
+  },
+  "nyc": {
+    "include": [
+      "lib/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+  }
+}
