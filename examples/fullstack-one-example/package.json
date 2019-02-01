@@ -12,6 +12,7 @@
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
     "dev": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false .",
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
+    "migrate-db": "one migrate-db",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
