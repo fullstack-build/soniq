@@ -5,10 +5,10 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "bin": {
-    "one": "./dist/bin/one.js",
-    "one-init": "./dist/bin/one-init.js",
-    "one-migrate-db": "./dist/bin/one-migrate-db.js",
-    "one-generate-ts": "./dist/bin/one-generate-ts.js"
+    "one": "./bin/index",
+    "one-init": "./bin/init",
+    "one-migrate-db": "./bin/migrate-db",
+    "one-generate-ts": "./bin/generate-ts"
   },
   "scripts": {
     "test": "ava --verbose ./test/**/*test.ts",
@@ -39,7 +39,8 @@
     "graphql-codegen-typescript-common": "0.16.0",
     "graphql-codegen-typescript-resolvers": "^0.16.0",
     "graphql-codegen-typescript-server": "^0.16.0",
-    "graphql-tools": "^4.0.4"
+    "graphql-tools": "^4.0.4",
+    "ts-node": "^8.0.2"
   },
   "ava": {
     "compileEnhancements": false,

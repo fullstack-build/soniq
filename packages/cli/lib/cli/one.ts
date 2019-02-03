@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // tslint:disable:no-console
+
 import * as program from "commander";
 
 program

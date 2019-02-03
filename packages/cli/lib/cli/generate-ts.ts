@@ -3,7 +3,8 @@
 
 import * as path from "path";
 import * as program from "commander";
-import { generate } from "../lib/generate";
+
+import { generate } from "../generate";
 
 program.option("-o, --output <file>", "relative path to the typescript output").parse(process.argv);
 
