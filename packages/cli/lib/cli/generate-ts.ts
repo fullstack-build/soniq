@@ -10,20 +10,22 @@ program.option("-o, --output <file>", "relative path to the typescript output").
 
 const outputFilename = program.output || "types.ts";
 
-const projectRootMainFile = `${process.argv[1].split("node_modules/")[0]}index.ts`;
-const projectRootDir = path.dirname(projectRootMainFile);
-const outputPath = `${projectRootDir}/${outputFilename}`;
-console.log(`Assumed ProjectRootMainFile: ${projectRootMainFile}`);
-console.log(`Assumed ProjectRootDir: ${projectRootDir}`);
-console.log(`Assumed OutputPath: ${outputPath}`);
-console.log();
-
-console.log(`require.main.filename: ${require.main.filename}`);
-console.log(`process.argv[1]: ${process.argv[1]}`);
+const currentWorkDirectory = process.cwd();
+const projectMainFile = `${currentWorkDirectory}/index.ts`;
+const outputPath = `${currentWorkDirectory}/${outputFilename}`;
+console.log(`Current work director: ${currentWorkDirectory}`);
+console.log(`Assumed project main file: ${projectMainFile}`);
+console.log(`Output path: ${outputPath}`);
 console.log();
 
 console.log(`Generate typescript file and save to ${outputPath} ...`);
 
-generate(outputPath).then(() => {
-  console.log("Successfully generated typescript file.");
-});
+generate(outputPath)
+  .then(() => {
+    console.log("Successfully generated typescript file.");
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.log(`Error while generating code: ${err}`);
+    process.exit(1);
+  });

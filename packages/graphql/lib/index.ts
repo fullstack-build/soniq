@@ -97,7 +97,11 @@ export class GraphQl {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject(resolversPattern));
 
-    const schema = this.getExecutableSchema();
+    const runtimeSchema = this.getRuntimeSchema();
+    const schema = makeExecutableSchema({
+      typeDefs: runtimeSchema,
+      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
+    });
 
     this.apolloSchema = schema;
 
@@ -179,14 +183,6 @@ export class GraphQl {
 
     app.use(gqlKoaRouter.routes());
     app.use(gqlKoaRouter.allowedMethods());
-  }
-
-  public getExecutableSchema(): GraphQLSchema {
-    const runtimeSchema = this.getRuntimeSchema();
-    return makeExecutableSchema({
-      typeDefs: runtimeSchema,
-      resolvers: getResolvers(this.operations, this.resolvers, this.hooks, this.dbGeneralPool, this.logger)
-    });
   }
 
   public getRuntimeSchema(): string {

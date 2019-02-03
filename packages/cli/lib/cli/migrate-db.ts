@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 // tslint:disable:no-console
 
-import * as path from "path";
 import * as dotenv from "dotenv";
 
-const projectRootMainFile = `${process.argv[1].split("node_modules/")[0]}index.ts`;
-const projectRootDir = path.dirname(projectRootMainFile);
-console.log(`Assumed ProjectRootMainFile: ${projectRootMainFile}`);
-console.log(`Assumed ProjectRootDir: ${projectRootDir}`);
+const currentWorkDirectory = process.cwd();
+const projectMainFile = `${currentWorkDirectory}/index.ts`;
+console.log(`Current work directory: ${currentWorkDirectory}`);
+console.log(`Assumed ProjectRootMainFile: ${projectMainFile}`);
 console.log();
 
 // Manipulate main file name, so @fullstack-one/config gets the config and we can get the env.
-require.main.filename = projectRootMainFile;
-const dotEnvPath = `${projectRootDir}/.env`;
+require.main.filename = projectMainFile;
+const dotEnvPath = `${currentWorkDirectory}/.env`;
 dotenv.config(dotEnvPath);
 
 import { Container } from "@fullstack-one/di";
