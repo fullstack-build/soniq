@@ -5,7 +5,7 @@ interface IPossibleNumbers {
   values: string[];
 }
 
-export interface IRandomResult {
+interface IRandomResult {
   randomResult: string;
 }
 
