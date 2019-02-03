@@ -45,10 +45,6 @@ export async function generate(outputPath: string): Promise<void> {
 
   const runtimeSchema = graphql.getRuntimeSchema();
 
-  console.log();
-  console.log(`Runtime schema: ${runtimeSchema}`);
-  console.log();
-
   console.log(`Generate code to ${outputPath} ...`);
   await gqlCodeGen.generate(
     {
