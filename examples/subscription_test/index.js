@@ -62,7 +62,7 @@ router.get(`/sub`, async (ctx) => {
                 // access db with user transaction and find changed rows
                 const updatedRows = await client.query(`SELECT cur.result FROM "${subscriptionId}_current" cur FULL OUTER JOIN "${subscriptionId}_previous" prev ON cur.hash = prev.hash WHERE prev.hash IS NULL;`);
                 // update materialized view in user transaction
-                await client.query(`REFRESH MATERIALIZED VIEW "${subscriptionId}_previous"; -- don"t run CONCURRENTLY, otherwise we miss out;`);
+                await client.query(`REFRESH MATERIALIZED VIEW "${subscriptionId}_previous"; -- don't run CONCURRENTLY, otherwise we miss out;`);
                 console.log("#", updatedRows);
                 send("query", JSON.stringify(updatedRows.rows));
             } catch (err) {
