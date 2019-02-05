@@ -1,8 +1,8 @@
 module.exports = {
-  endpoint:               '/graphql',
+  endpoint:               "/graphql",
   graphiQlEndpointActive: true,
-  graphiQlEndpoint:       '/graphiql',
+  graphiQlEndpoint:       "/graphiql",
   queryCostLimit:         2000000,
   minQueryDepthToCheckCostLimit: 3,
-  resolversPattern:   '/resolvers/*.ts'
+  resolversPattern:   "/resolvers/*.ts"
 };
