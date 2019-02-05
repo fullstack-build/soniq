@@ -8,7 +8,6 @@
     "test": "echo \"typedi has tests. ;)\" && exit 0",
     "coverage": "echo \"typedi has tests. ;)\" && exit 0",
     "build": "tsc",
-    "clean:dist": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
   "publishConfig": {
