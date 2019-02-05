@@ -3,4 +3,4 @@
 // tslint:disable:no-var-requires
 // tslint:disable-next-line:no-submodule-imports
 require("ts-node/register");
-require("../lib/cli/migrate-db.ts");
+require("../lib/migrate-db/index.ts");

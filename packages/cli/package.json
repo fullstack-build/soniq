@@ -5,7 +5,7 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "bin": {
-    "one": "./bin/index",
+    "one": "./bin/one",
     "one-init": "./bin/init",
     "one-migrate-db": "./bin/migrate-db",
     "one-generate-ts": "./bin/generate-ts"

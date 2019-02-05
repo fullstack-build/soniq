@@ -12,7 +12,7 @@ console.log();
 // Manipulate main file name, so @fullstack-one/config gets the config and we can get the env.
 require.main.filename = projectMainFile;
 const dotEnvPath = `${currentWorkDirectory}/.env`;
-dotenv.config(dotEnvPath);
+dotenv.config({ path: dotEnvPath });
 
 import { Container } from "@fullstack-one/di";
 import { BootLoader } from "@fullstack-one/boot-loader";
