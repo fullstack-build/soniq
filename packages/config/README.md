@@ -9,7 +9,7 @@ An application is the main program, that utilizes the `@fullstack-one` framework
 
 The main idea is, that each package registers a configuration module with a set of properties it requires to run. The values of those properties depend on multiple configuration sources, that are merged in a fixed hierarchy. The following shows the merging hierarchy with the primary configuration on top and the most subsidiary configuration at the bottom:
 
-```
+```sh
 process.env configuration
   ↑
 application environment configuration
