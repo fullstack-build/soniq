@@ -14,11 +14,11 @@
     "tslint": "tslint --project .",
     "test": "lerna run test",
     "coverage": "lerna run coverage",
-    "lerna": "lerna bootstrap && lerna link --force-local",
+    "lerna-bootstrap": "lerna bootstrap --force-local",
     "lerna-publish": "lerna publish",
     "link": "sh scripts/dev.sh",
     "build": "lerna run build",
-    "clean:dist": "lerna run clean:dist",
+    "clean:dist": "lerna exec -- rm -rf ./dist",
     "clean:modules": "lerna clean",
     "clean:example": "rm -rf examples/fullstack-one-example/node_modules/ examples/fullstack-one-example/package-lock.json",
     "reinstall": "npm run clean:example && npm run clean:modules && npm run link && npm run clean:dist && npm run build"

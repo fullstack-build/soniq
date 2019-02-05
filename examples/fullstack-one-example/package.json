@@ -2,6 +2,7 @@
   "name": "fullstack.one-example",
   "version": "0.1.0",
   "description": "Example project: how to use fullstack.one",
+  "private": true,
   "engines": {
     "node": ">=10",
     "npm": ">=6"
