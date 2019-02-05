@@ -3,12 +3,12 @@ module.exports = {
     testing: true,
     transport: {
       smtp: {
-        host: 'host',
-        port: 'port',
+        host: "host",
+        port: "port",
         secure: true,
         auth: {
-          user: 'username',
-          pass: 'pass'
+          user: "username",
+          pass: "pass"
         },
         // Security options to disallow using attachments from file or URL
         disableFileAccess: true,
@@ -23,16 +23,16 @@ module.exports = {
       retryLimit: 10,
       retryBackoff: true,
       retryDelay: 1,
-      expireIn:   '60 min'
+      expireIn:   "60 min"
     },
     mailgen: {
-      theme: 'default',
+      theme: "default",
       product: {
         // Appears in header & footer of e-mails
-        name: 'Mailgen',
-        link: 'https://mailgen.js/'
+        name: "Mailgen",
+        link: "https://mailgen.js/"
         // Optional logo
-        // logo: 'https://mailgen.js/img/logo.png'
+        // logo: "https://mailgen.js/img/logo.png"
       }
     }
   }
