@@ -33,7 +33,6 @@
     "@fullstack-one/boot-loader": "^0.4.56",
     "@fullstack-one/di": "^0.4.56",
     "@fullstack-one/file-storage": "^0.4.56",
-    "@fullstack-one/graphql": "^0.4.56",
     "@fullstack-one/schema-builder": "^0.4.56",
     "@types/graphql": "^0.13.2",
     "change-case": "^3.1.0",
