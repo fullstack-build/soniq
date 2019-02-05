@@ -88,7 +88,9 @@ export class SchemaBuilder {
     try {
       this.logger.trace("boot", "started");
       // load schema
-      this.gQlSdl = await this.getImplementationSDLs();
+      const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
+      this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
+      this.logger.trace("boot", "GraphQl schema loaded");
 
       // check if any files were loaded
       if (this.gQlSdl.length === 0) {
@@ -97,7 +99,7 @@ export class SchemaBuilder {
       }
 
       // Combine all Schemas to a big one and add extensions from other modules
-      const gQlSdlCombined = this.getCombinedSdls();
+      const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
       this.gQlAst = AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
       this.logger.trace("boot", "GraphQl schema parsed");
 
@@ -164,17 +166,6 @@ export class SchemaBuilder {
 
   public async getPgDbMeta(): Promise<IDbMeta> {
     return this.pgToDbMeta.getPgDbMeta();
-  }
-
-  public async getImplementationSDLs(): Promise<string[]> {
-    const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
-    const gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
-    this.logger.trace("boot", "GraphQl schema loaded");
-    return gQlSdl;
-  }
-
-  public getCombinedSdls(): string {
-    return this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
   }
 
   public addExtension(extension): void {
