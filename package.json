@@ -16,7 +16,6 @@
     "coverage": "lerna run coverage",
     "lerna-bootstrap": "lerna bootstrap --force-local",
     "lerna-publish": "lerna publish",
-    "link": "sh scripts/dev.sh",
     "build": "lerna run build",
     "clean:dist": "lerna exec -- rm -rf ./dist",
     "clean:modules": "lerna clean",
