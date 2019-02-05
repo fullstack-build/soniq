@@ -18,7 +18,11 @@
     "lerna-publish": "lerna publish",
     "link": "sh scripts/dev.sh",
     "build": "lerna run build",
+<<<<<<< HEAD
     "clean:dist": "lerna exec -- rm -rf ./dist",
+=======
+    "clean:dist": "lerna run clean:dist",
+>>>>>>> 043006bd7e92b2428b2cfe78cf6abf7d0b5c4875
     "clean:modules": "lerna clean",
     "clean:example": "rm -rf examples/fullstack-one-example/node_modules/ examples/fullstack-one-example/package-lock.json",
     "reinstall": "npm run clean:example && npm run clean:modules && npm run link && npm run clean:dist && npm run build"
