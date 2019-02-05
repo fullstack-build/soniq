@@ -11,6 +11,15 @@ npm install @fullstack-one/cli
 
 ## Commands
 
+### --help
+
+Get cli help for the commands:
+
+```sh
+one --help
+one [command] --help
+```
+
 ### init
 
 Initializes a fullstack one project.
@@ -31,7 +40,7 @@ one migrate-db
 
 ### generate-ts
 
-Generates typescript interfaces, enums and types according to the schema definitions.
+Generates typescript interfaces, enums and types based on the dbMeta object derived from the schema definitions.
 
 ```sh
 one generate-ts
