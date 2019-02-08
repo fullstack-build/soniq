@@ -7,13 +7,15 @@ module.exports = {
       database: process.env.DB_DATABASE,
       host:     process.env.DB_HOST,
       user:     process.env.DB_USER,
-      password: process.env.DB_PASSWORD
+      password: process.env.DB_PASSWORD,
+      port:     process.env.DB_PORT
     },
     general: {
       database: process.env.DB_DATABASE,
       host:     process.env.DB_HOST,
       user:     process.env.DB_GENERAL_USER,
-      password: process.env.DB_GENERAL_PASSWORD
+      password: process.env.DB_GENERAL_PASSWORD,
+      port:     process.env.DB_PORT
     }
   },
   Auth: {
@@ -77,10 +79,11 @@ module.exports = {
   },
   Queue: {
     // leaving this settings out will use a connection from the general pool
-    database: "fullstack-one-example",
-    host: "localhost",
-    user: "postgres",
-    password: "postgres",
+    database: process.env.DB_DATABASE,
+    host: process.env.DB_HOST,
+    user: process.env.DB_QUEUE_USER,
+    password: process.env.DB_QUEUE_PASSWORD,
+    port: process.env.DB_PORT,
     poolSize: 1,
     archiveCompletedJobsEvery: "2 days",
     //schema: "_queue"

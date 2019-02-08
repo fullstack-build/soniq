@@ -45,7 +45,7 @@ $auth.setNotificationFunction(async (user, caller, meta) => {
   });
 
   // send mail example
-  await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", [], "user@fullstack.one", {
+  await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", null, [], "user@fullstack.one", {
     singletonKey: "welcome:user@fullstack.one"
   });
 

@@ -13,6 +13,8 @@
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
     "dev": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false .",
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
+    "migrate-db": "one migrate-db",
+    "generate-ts": "one generate-ts --output types/generated.ts",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
     "test": "mocha -r ts-node/register test/*.ts"
   },
@@ -43,6 +45,7 @@
     "@fullstack-one/auth": "^0.4.56",
     "@fullstack-one/auth-fb-token": "^0.4.56",
     "@fullstack-one/auto-migrate": "^0.4.56",
+    "@fullstack-one/cli": "^0.4.56",
     "@fullstack-one/db": "^0.4.56",
     "@fullstack-one/di": "^0.4.56",
     "@fullstack-one/events": "^0.4.56",

@@ -7,7 +7,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
-export { IDbMeta, IDbRelation };
+export * from "./db-schema-builder/IDbMeta";
 
 import * as utils from "./gql-schema-builder/utils";
 export { utils };
