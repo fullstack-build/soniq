@@ -1,33 +1,38 @@
-import * as _ from "lodash";
 import { pascal } from "change-case";
 
 import { IDbMeta, IColumnType, IEnum, ITable, IColumn, IConstraint } from "@fullstack-one/schema-builder";
 
 export function mapDbMetaToTypeDefinitions(dbMeta: IDbMeta): string {
   const tsEnums: string = mapDbMetaEnumsToTypescriptEnums(dbMeta.enums);
-  const tsInterfaces: string = mapDbMetaTablesToTypescriptInterfaces(dbMeta.schemas.public.tables, _.map(dbMeta.enums, (value, key) => key));
+  const tsInterfaces: string = mapDbMetaTablesToTypescriptInterfaces(dbMeta.schemas.public.tables, Object.keys(dbMeta.enums));
 
   return `${tsEnums}\n\n${tsInterfaces}\n`;
 }
 
 function mapDbMetaEnumsToTypescriptEnums(dbMetaEnums: { [name: string]: IEnum }): string {
-  return _.map(dbMetaEnums, (enumItem) => {
-    const values: string = _.map(enumItem.values, (value) => `  ${pascal(value)} = "${value}"`).join(",\n");
-    return `export enum ${enumItem.name} {\n${values}\n}`;
-  }).join("\n\n");
+  return Object.values(dbMetaEnums)
+    .map((enumItem) => {
+      const values: string = enumItem.values.map((value) => `  ${pascal(value)} = "${value}"`).join(",\n");
+      return `export enum ${enumItem.name} {\n${values}\n}`;
+    })
+    .join("\n\n");
 }
 
 function mapDbMetaTablesToTypescriptInterfaces(dbMetaTables: { [name: string]: ITable }, enums: string[] = []): string {
-  return _.map(dbMetaTables, (table) => {
-    const constraints = table.constraints;
-    const tsProperties: string = _.map(table.columns, (column) => mapDbMetaColumnToTypescriptProperty(column, constraints, enums)).join("\n");
-    return `export interface I${pascal(table.name)} {\n${tsProperties}\n}`;
-  }).join("\n\n");
+  return Object.values(dbMetaTables)
+    .map((table) => {
+      const constraints = table.constraints;
+      const tsProperties: string = Object.values(table.columns)
+        .map((column) => mapDbMetaColumnToTypescriptProperty(column, constraints, enums))
+        .join("\n");
+      return `export interface I${pascal(table.name)} {\n${tsProperties}\n}`;
+    })
+    .join("\n\n");
 }
 
 function mapDbMetaColumnToTypescriptProperty(dbMetaColumn: IColumn, constraints: { [name: string]: IConstraint }, enums: string[]): string {
   const { name, type, constraintNames, customType, defaultValue } = dbMetaColumn;
-  const isMandatory = _.find(constraintNames, (constraintName) => constraints[constraintName].type === "NOT NULL") !== undefined;
+  const isMandatory = constraintNames.find((constraintName) => constraints[constraintName].type === "NOT NULL") !== undefined;
   const property: string = `${name}${isMandatory ? "" : "?"}`;
   const tsType: string = dbMetaColumnTypeToTypescriptType(type, customType, enums);
   const comment = [type, `${customType || ""}`, `${defaultValue ? defaultValue.value || "" : ""}`].filter((item) => item !== "").join(" ");
@@ -49,7 +54,7 @@ function dbMetaColumnTypeToTypescriptType(columnType: IColumnType, customType: s
     enum: "any",
     customType: "any"
   };
-  if (columnType === "enum" && _.includes(enums, customType)) return customType;
+  if (columnType === "enum" && enums.includes(customType)) return customType;
   if (columnType === "customType" && customType === "timestamp") return "string";
   return map[columnType];
 }
