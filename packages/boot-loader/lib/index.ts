@@ -1,71 +1,80 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
-interface IBootFunction {
-  name: string;
-  fn: any;
+type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
+
+export enum EBootState {
+  Initial = "initial",
+  Booting = "booting",
+  Finished = "finished"
 }
+
+interface IFunctionObject {
+  name: string;
+  fn: TBootFuntion;
+}
+
+type IBootFunctionObject = IFunctionObject;
+type IAfterBootFunctionObject = IFunctionObject;
 
 @Service()
 export class BootLoader {
-  private IS_BOOTING: boolean = false; // TODO: Dustin Rename
-  private HAS_BOOTED: boolean = false; // TODO: Dustin Rename
+  private state: EBootState = EBootState.Initial;
 
-  private bootFunctions: IBootFunction[] = [];
-  private bootReadyFunctions: IBootFunction[] = [];
+  private bootFunctionObjects: IBootFunctionObject[] = [];
+  private afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
 
   private readonly logger: ILogger;
 
-  constructor(@Inject((type) => LoggerFactory) loggerFactory) {
-    // init logger
+  constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory) {
     this.logger = loggerFactory.create(this.constructor.name);
   }
 
+  public getBootState(): EBootState {
+    return this.state;
+  }
+
   public isBooting(): boolean {
-    return this.IS_BOOTING;
+    return this.state === EBootState.Booting;
   }
 
   public hasBooted(): boolean {
-    return this.HAS_BOOTED;
+    return this.state === EBootState.Finished;
   }
 
-  public addBootFunction(name: string, fn: any) {
+  public addBootFunction(name: string, fn: TBootFuntion): void {
     this.logger.trace("addBootFunction", name);
-    this.bootFunctions.push({ name, fn });
+    this.bootFunctionObjects.push({ name, fn });
   }
 
-  public onBootReady(name: string, fn: any) {
+  public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
     this.logger.trace("onBootReady", name);
-    if (this.HAS_BOOTED) {
+    if (this.state === EBootState.Finished) {
       return fn();
     }
-    this.bootReadyFunctions.push({ name, fn });
+    this.afterBootFunctionObjects.push({ name, fn });
   }
 
-  public getReadyPromise() {
+  public getReadyPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.HAS_BOOTED) {
-        return resolve();
-      }
-      this.bootReadyFunctions.push({ name: "BootLoader.ready", fn: resolve });
+      this.onBootReady("BootLoader.ready", () => resolve());
     });
   }
 
-  public async boot() {
-    this.IS_BOOTING = true;
+  public async boot(): Promise<void> {
+    this.state = EBootState.Booting;
     try {
-      for (const fnObj of this.bootFunctions) {
+      for (const fnObj of this.bootFunctionObjects) {
         this.logger.trace("boot.bootFunctions.start", fnObj.name);
         await fnObj.fn(this);
         this.logger.trace("boot.bootFunctions.end", fnObj.name);
       }
-      for (const fnObj of this.bootReadyFunctions) {
-        this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
+      this.state = EBootState.Finished;
+      for (const fnObj of this.afterBootFunctionObjects) {
+        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
         fnObj.fn(this);
-        this.logger.trace("boot.bootReadyFunctions.start", fnObj.name);
+        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
       }
-      this.IS_BOOTING = false;
-      this.HAS_BOOTED = true;
     } catch (err) {
       process.stderr.write(`BootLoader.boot.error.caught: ${err}\n`);
       throw err;
