@@ -2,6 +2,7 @@
   "name": "fullstack.one-example",
   "version": "0.1.0",
   "description": "Example project: how to use fullstack.one",
+  "private": true,
   "engines": {
     "node": ">=10",
     "npm": ">=6"
@@ -41,8 +42,20 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
+    "@fullstack-one/auth": "^0.4.56",
+    "@fullstack-one/auth-fb-token": "^0.4.56",
+    "@fullstack-one/auto-migrate": "^0.4.56",
+    "@fullstack-one/db": "^0.4.56",
+    "@fullstack-one/di": "^0.4.56",
+    "@fullstack-one/events": "^0.4.56",
+    "@fullstack-one/file-storage": "^0.4.56",
+    "@fullstack-one/graceful-shutdown": "^0.4.56",
+    "@fullstack-one/graphql": "^0.4.56",
+    "@fullstack-one/notifications": "^0.4.56",
+    "@types/graphql": "^14.0.5",
     "apollo-server": "^2.3.1",
     "dotenv": "^4.0.0",
+    "fullstack-one": "^0.4.56",
     "graphql": "^14.1.1",
     "passport-facebook": "^2.1.1",
     "passport-google-oauth20": "^1.0.0"

@@ -1,5 +1,5 @@
-const FacebookStrategy  = require('passport-facebook');
-const GoogleStrategy    = require('passport-google-oauth20');
+const FacebookStrategy  = require("passport-facebook");
+const GoogleStrategy    = require("passport-google-oauth20");
 
 module.exports = {
   Db: {
@@ -31,48 +31,48 @@ module.exports = {
     oAuth: {
       providers: {
         facebook: {
-          name: 'facebook',
-          tenant: 'default',
+          name: "facebook",
+          tenant: "default",
           strategy: FacebookStrategy,
           config: {
             clientID: 2045088022395430,
-            clientSecret: 'ad5b17b47d056393b687c20b64fea2b5',
-            profileFields: ['id', 'email']
+            clientSecret: "ad5b17b47d056393b687c20b64fea2b5",
+            profileFields: ["id", "email"]
           }
         },
         google: {
-          name: 'google',
-          tenant: 'default',
+          name: "google",
+          tenant: "default",
           strategy: GoogleStrategy,
           config: {
-            clientID: '24830444193-hoqu3rnqie6078upl25dp6dircdq4c8c.apps.googleusercontent.com',
-            clientSecret: '1tf3kDvh2UkNdaF68HA3lS_F',
-            profileFields: ['id', 'email']
+            clientID: "24830444193-hoqu3rnqie6078upl25dp6dircdq4c8c.apps.googleusercontent.com",
+            clientSecret: "1tf3kDvh2UkNdaF68HA3lS_F",
+            profileFields: ["id", "email"]
           }
         }
       },
       frontendOrigins: [
-        'http://localhost:3000'
+        "http://localhost:3000"
       ],
-      serverApiAddress: 'http://localhost:3000'
+      serverApiAddress: "http://localhost:3000"
     }
   },
   AuthFbToken: {
     clientID: 2045088022395430,
-    clientSecret: 'ad5b17b47d056393b687c20b64fea2b5'
+    clientSecret: "ad5b17b47d056393b687c20b64fea2b5"
   },
   Server: {
     port: process.env.PORT
   },
   FileStorage: {
     minio: {
-      endPoint: 'play.minio.io',
+      endPoint: "play.minio.io",
       port: 9000,
       useSSL: true,
-      accessKey: 'Q3AM3UQ867SPQQA43P2F',
-      secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+      accessKey: "Q3AM3UQ867SPQQA43P2F",
+      secretKey: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
     },
-    bucket: 'fullstackonetest'
+    bucket: "fullstackonetest"
   },
   SchemaBuilder: {
     setUserPrivileges: true
@@ -85,8 +85,8 @@ module.exports = {
     password: process.env.DB_QUEUE_PASSWORD,
     port: process.env.DB_PORT,
     poolSize: 1,
-    archiveCompletedJobsEvery: '2 days',
-    //schema: '_queue'
+    archiveCompletedJobsEvery: "2 days",
+    //schema: "_queue"
   },
   Notifications: {
     Email: {
@@ -95,7 +95,7 @@ module.exports = {
         smtp: {
           host: process.env.EMAIL_HOST,
           port: (process.env.EMAIL_PORT != null) ? parseInt(process.env.EMAIL_PORT, 10) : null,
-          secure: process.env.EMAIL_SECURE != null && process.env.EMAIL_SECURE.toLowerCase() === 'true',
+          secure: process.env.EMAIL_SECURE != null && process.env.EMAIL_SECURE.toLowerCase() === "true",
           auth: {
             user:  process.env.EMAIL_AUTH_USERNAME,
             pass:  process.env.EMAIL_AUTH_PASSWORD
@@ -111,7 +111,7 @@ module.exports = {
       htmlToText: {},
       queue: {
         retryLimit: 10,
-        expireIn:   '60 min'
+        expireIn:   "60 min"
       }
     }
   }

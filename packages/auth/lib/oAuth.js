@@ -1,8 +1,8 @@
 var FullstackOne = function (apiServerAddress) {
-  var ERROR_UNKNOWN = 'ERROR_UNKNOWN';
-  var ERROR_FAILED = 'ERROR_FAILED';
-  var ERROR_CANCEL = 'ERROR_CANCEL';
-  var ERROR_POPUP_BLOCKED = 'ERROR_POPUP_BLOCKED';
+  var ERROR_UNKNOWN = "ERROR_UNKNOWN";
+  var ERROR_FAILED = "ERROR_FAILED";
+  var ERROR_CANCEL = "ERROR_CANCEL";
+  var ERROR_POPUP_BLOCKED = "ERROR_POPUP_BLOCKED";
 
 
   return {
@@ -10,22 +10,22 @@ var FullstackOne = function (apiServerAddress) {
       var message = {err: ERROR_CANCEL, data: null};
       var messageReceived = false;
       var closed = false;
-      var address = apiServerAddress + '/auth/oAuth/' + encodeURIComponent(provider)
+      var address = apiServerAddress + "/auth/oAuth/" + encodeURIComponent(provider)
       if (privacyAgreementAcceptanceToken != null) {
-        address += '?privacyAgreementAcceptanceToken=' + encodeURIComponent(privacyAgreementAcceptanceToken);
+        address += "?privacyAgreementAcceptanceToken=" + encodeURIComponent(privacyAgreementAcceptanceToken);
       }
-      var oAuthPopup = window.open(address, '_blank');
-      //var oAuthPopup = window.open(apiServerAddress + '/auth/' + encodeURIComponent(provider));
+      var oAuthPopup = window.open(address, "_blank");
+      //var oAuthPopup = window.open(apiServerAddress + "/auth/" + encodeURIComponent(provider));
 
       if (oAuthPopup == null) {
-        return cb('ERROR_POPUP_BLOCKED')
+        return cb("ERROR_POPUP_BLOCKED")
       }
 
       function receiveMessage(event) {
         if (event.origin === apiServerAddress && event.data != null) {
           message = event.data;
           messageReceived = true;
-          window.removeEventListener('message', receiveMessage, false);
+          window.removeEventListener("message", receiveMessage, false);
 
           if(closed === true) {
             cb(message.err, message.data);
@@ -42,7 +42,7 @@ var FullstackOne = function (apiServerAddress) {
         }
       }
 
-      window.addEventListener('message', receiveMessage, false);
+      window.addEventListener("message", receiveMessage, false);
 
       var timer = setInterval(function() { 
           if (oAuthPopup.closed) {
@@ -53,7 +53,7 @@ var FullstackOne = function (apiServerAddress) {
               } else {
                 setTimeout(function() {
                   if(messageReceived !== true) {
-                    window.removeEventListener('message', receiveMessage, false);
+                    window.removeEventListener("message", receiveMessage, false);
                     cb(message.err, message.data);
                   }
                 }, 1000);

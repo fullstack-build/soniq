@@ -1,6 +1,6 @@
 module.exports = {
   Foo: {
-    bat: 'application-test',
-    bar: 'application-test'
+    bat: "application-test",
+    bar: "application-test"
   }
 };

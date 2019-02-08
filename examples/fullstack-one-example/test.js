@@ -20,12 +20,12 @@ var genPost = (num) => {
 	return post(title, content, secret, userId);
 }
 
-console.log('START');
-var data = '';
+console.log("START");
+var data = "";
 for(var i = 0; i<100000; i++) {
-	data += genPost(i)+'\n';
+	data += genPost(i)+"\n";
 }
-var fs = require('fs');
+var fs = require("fs");
 
-fs.writeFileSync('posts.sql', data);
+fs.writeFileSync("posts.sql", data);
 

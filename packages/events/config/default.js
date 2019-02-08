@@ -1,5 +1,5 @@
 module.exports = {
-  namespace: 'one',
+  namespace: "one",
   eventEmitter: {
     wildcard: true,
     delimiter: ".",

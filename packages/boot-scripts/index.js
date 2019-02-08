@@ -4,7 +4,7 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 
-if (process.env.FULLSTACK_ONE_DEV === 'true') {
+if (process.env.FULLSTACK_ONE_DEV === "true") {
   __export(require("./lib/index.ts"));
 } else {
   __export(require("./dist/index.js"));
