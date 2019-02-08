@@ -31,7 +31,7 @@ export class Config {
 
     const namespace = this.config.Config.namespace;
     this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(this.NODE_ENV, namespace);
-    Container.set("ENVIRONMENT", this.ENVIRONMENT);
+    Container.set("ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
   }
 
   private loadApplicationConfig(): object {
