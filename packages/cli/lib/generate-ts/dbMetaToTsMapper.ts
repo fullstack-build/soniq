@@ -32,12 +32,16 @@ function mapDbMetaTablesToTypescriptInterfaces(dbMetaTables: { [name: string]: I
 
 function mapDbMetaColumnToTypescriptProperty(dbMetaColumn: IColumn, constraints: { [name: string]: IConstraint }, enums: string[]): string {
   const { name, type, constraintNames, customType, defaultValue } = dbMetaColumn;
-  const isMandatory = constraintNames.find((constraintName) => constraints[constraintName].type === "NOT NULL") !== undefined;
-  const property: string = `${name}${isMandatory ? "" : "?"}`;
+  const property: string = `${name}${isMandatory(constraintNames, constraints) ? "" : "?"}`;
   const tsType: string = dbMetaColumnTypeToTypescriptType(type, customType, enums);
   const comment = [type, `${customType || ""}`, `${defaultValue ? defaultValue.value || "" : ""}`].filter((item) => item !== "").join(" ");
 
   return `  ${property}: ${tsType}; // ${comment}`;
+}
+
+function isMandatory(constraintNames: string[] | undefined, constraints: { [name: string]: IConstraint }): boolean {
+  if (constraintNames == null) return false;
+  return constraintNames.find((constraintName) => constraints[constraintName].type === "NOT NULL") !== undefined;
 }
 
 function dbMetaColumnTypeToTypescriptType(columnType: IColumnType, customType: string, enums: string[]): string {
