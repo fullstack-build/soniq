@@ -12,6 +12,7 @@
     "prettier": "prettier --write **/*.ts",
     "tslint-fix": "tslint --project . --fix",
     "tslint": "tslint --project .",
+    "docker-tslint": "sh docker/tslint.sh",
     "test": "lerna run test",
     "coverage": "lerna run coverage",
     "lerna-bootstrap": "lerna bootstrap --force-local",
