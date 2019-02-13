@@ -36,6 +36,7 @@
     "graphql-parse-resolve-info": "0.1.0-alpha.18",
     "graphql-tools": "^3.0.0",
     "graphql-type-json": "^0.1.4",
+    "koa": "2.5.2",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.4.0",
     "lodash": "^4.17.10"
