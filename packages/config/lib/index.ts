@@ -2,7 +2,6 @@ import * as path from "path";
 import * as _ from "lodash";
 
 import { Inject, Service, Container } from "@fullstack-one/di";
-import { BootLoader } from "@fullstack-one/boot-loader";
 
 import { DefaultConfigNotFoundError } from "./errors";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
@@ -13,9 +12,6 @@ export { IEnvironment };
 
 @Service()
 export class Config {
-  @Inject((type) => BootLoader)
-  private readonly bootLoader: BootLoader;
-
   private registeredConfigModules: string[] = [];
   private applicationConfig: any = {};
   private config: any = {};
@@ -24,8 +20,6 @@ export class Config {
   public readonly ENVIRONMENT: IEnvironment;
 
   constructor() {
-    Container.set("CONFIG", {});
-
     this.applicationConfig = this.loadApplicationConfig();
     this.registerConfig("Config", `${__dirname}/../config`);
 
@@ -85,15 +79,14 @@ export class Config {
     return this.getConfig(name);
   }
 
-  public getConfig(name?: string): any {
-    if (name == null) {
-      if (!this.bootLoader.hasBooted() || this.bootLoader.isBooting()) {
-        throw new Error(`config.not.available.before.booting module name: ${name}`);
-      }
-      return _.cloneDeep(this.config);
-    } else if (!_.has(this.config, name)) {
+  public getConfig(name: string): any {
+    if (!_.has(this.config, name)) {
       throw new Error(`config.module.not.found module name: ${name}`);
     }
     return _.cloneDeep(this.config[name]);
+  }
+
+  public dangerouslyGetWholeConfig(): any {
+    return _.cloneDeep(this.config);
   }
 }
