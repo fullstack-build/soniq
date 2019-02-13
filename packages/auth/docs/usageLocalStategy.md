@@ -1,7 +1,7 @@
 
 # Usage of the default local strategy
 
-This tutorial is assuming you have defined a User-Entity-Type called `User` in the GQL-Definition
+This tutorial is assuming you have defined a User-Entity-Type called `User` in the GQL-Definition and a permissions object with  `gqlTypeName: "User"`.
 
 ## Register user
 
@@ -11,8 +11,8 @@ Request:
 
 ```
 mutation {
-  createPrivacyToken(acceptedVersion: 0) {
-    privacyToken
+  createPrivacyAgreementAcceptanceToken(acceptedVersion: 0) {
+    token
     acceptedAtInUTC
     acceptedVersion
   }
@@ -26,7 +26,7 @@ Response:
 {
   "data": {
     "createPrivacyToken": {
-      "privacyToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NlcHRlZFZlcnNpb24iOjAsImFjY2VwdGVkQXRJblVUQyI6IjIwMTgtMDYtMjJUMTM6MDg6MTUuMTQ5WiIsImlhdCI6MTUyOTY3Mjg5NSwiZXhwIjoxNTI5NzU5Mjk1fQ.EpuhlGE5Y1kvV8XwWik7c-gtV4JxrGAhZWmmnYWw5no"
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NlcHRlZFZlcnNpb24iOjAsImFjY2VwdGVkQXRJblVUQyI6IjIwMTgtMDYtMjJUMTM6MDg6MTUuMTQ5WiIsImlhdCI6MTUyOTY3Mjg5NSwiZXhwIjoxNTI5NzU5Mjk1fQ.EpuhlGE5Y1kvV8XwWik7c-gtV4JxrGAhZWmmnYWw5no"
       "acceptedAtInUTC": "2018-06-22T13:08:15.149Z"
       "acceptedVersion": 0
     }
@@ -42,8 +42,8 @@ Request:
 mutation {
   USER_CREATE_ME(input: {
     email: "bob@marley.reggea"
-    acceptedPrivacyTermsAtInUTC: "2018-06-22T13:08:15.149Z"
-    acceptedPrivacyTermsVersion: 0
+    privacyAgreementAcceptedAtInUTC: "2018-06-22T13:08:15.149Z"
+    privacyAgreementAcceptedVersion: 0
   }, privacyToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NlcHRlZFZlcnNpb24iOjAsImFjY2VwdGVkQXRJblVUQyI6IjIwMTgtMDYtMjJUMTM6MDg6MTUuMTQ5WiIsImlhdCI6MTUyOTY3Mjg5NSwiZXhwIjoxNTI5NzU5Mjk1fQ.EpuhlGE5Y1kvV8XwWik7c-gtV4JxrGAhZWmmnYWw5no")
 }
 ```
