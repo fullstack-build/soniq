@@ -1,5 +1,5 @@
 import { operatorsObject } from "../../compareOperators";
-import { IBooleanOperator, isSingleValueOperator } from "../../compareOperators/types";
+import { IBooleanOperator } from "../../compareOperators/types";
 
 export function generateCustomSql(match, customs, getParam, getField) {
   function createOperator(operatorName, fieldName, value) {
@@ -28,18 +28,16 @@ export function generateCustomSql(match, customs, getParam, getField) {
       }
     }
 
+    const requiresArray = operatorsObject[operatorName].value[0] === "[";
 
-    if (isSingleValueOperator(operator)) {
-      if (context.values == null) {
-        throw new Error(`Operator '${operatorName}' requires an array of values.`);
-      }
-      return operator.getSql(context);
-    } else {
-      if (context.value == null) {
-        throw new Error(`Operator '${operatorName}' requires a single value.`);
-      }
-      return operator.getSql(context);
+    if (requiresArray === true && context.values == null) {
+      throw new Error(`Operator '${operatorName}' requires an array of values.`);
     }
+    if (requiresArray !== true && context.value == null) {
+      throw new Error(`Operator '${operatorName}' requires a single value.`);
+    }
+
+    return operatorsObject[operatorName].getSql(context);
   }
 
   function createOperators(fieldName, field) {
