@@ -29,7 +29,7 @@ export interface IBooleanOperator extends ISingleValueOperator {
 export type IOperator = IBooleanOperator | ISingleValueOperator | IMultiValueOperator;
 
 export interface IOperatorObject {
-  [key: string]: IOperator
+  [key: string]: IOperator;
 }
 
 export function isSingleValueOperator(operator: IOperator): operator is ISingleValueOperator {

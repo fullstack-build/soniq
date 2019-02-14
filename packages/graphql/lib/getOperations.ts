@@ -1,24 +1,24 @@
 import { utils } from "@fullstack-one/schema-builder";
 import { DocumentNode, DefinitionNode, DirectiveNode } from "graphql";
 import { IResolverObject } from "graphql-tools";
-const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custom?: { params: object, resolver: string } } = utils.parseDirectives;
+const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custom?: { params: object; resolver: string } } = utils.parseDirectives;
 
 interface IBaseOperation {
-  name: string,
-  type: string,
-  resolver: any,
-  params: object,
-  viewName?: string
+  name: string;
+  type: string;
+  resolver: any;
+  params: object;
+  viewName?: string;
 }
 
-export type TQueryOperation = IBaseOperation
-export type TMutationOperation = IBaseOperation
-export type TFieldOperation = IBaseOperation & { gqlTypeName: string, fieldName: string }
+export type TQueryOperation = IBaseOperation;
+export type TMutationOperation = IBaseOperation;
+export type TFieldOperation = IBaseOperation & { gqlTypeName: string; fieldName: string };
 
 export interface IOperations {
-  queries: TQueryOperation[],
-  mutations: TMutationOperation[],
-  fields: TFieldOperation[]
+  queries: TQueryOperation[];
+  mutations: TMutationOperation[];
+  fields: TFieldOperation[];
 }
 
 export function getOperations(gqlDocument: DocumentNode): IOperations {
