@@ -1,6 +1,6 @@
 import { utils } from "@fullstack-one/schema-builder";
-import { DocumentNode, DefinitionNode, DirectiveNode } from "graphql";
-import { IResolverObject } from "graphql-tools";
+import { DocumentNode, DirectiveNode } from "graphql";
+
 const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custom?: { params: object; resolver: string } } = utils.parseDirectives;
 
 interface IBaseOperation {
