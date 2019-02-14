@@ -1,10 +1,12 @@
-import { parseResolveInfo } from "graphql-parse-resolve-info";
-import { QueryBuilder } from "./sqlGenerator/read";
-import { MutationBuilder } from "./sqlGenerator/mutate";
+import { QueryBuilder } from "./sqlGenerator/QueryBuilder";
+import { MutationBuilder } from "./sqlGenerator/MutationBuilder";
 import { checkQueryResult } from "./injectionProtector";
 import * as crypto from "crypto";
+import { GraphQLFieldResolver } from "graphql";
+import { IDbMeta } from "@fullstack-one/schema-builder";
+import { ILogger } from "../../../logger/lib";
 
-export function sha1Base64(input) {
+function sha1Base64(input: string): string {
   return crypto
     .createHash("sha1")
     .update(input)
@@ -15,7 +17,7 @@ const costCache = {};
 const COST_CACHE_MAX_AGE = 1000 * 60 * 60 * 24; // One Day //TODO Dustin put in config
 
 async function getCurrentCosts(client, query) {
-  const queryHash = sha1Base64(query.sql + query.values.join(""));
+  const queryHash: string = sha1Base64(query.sql + query.values.join(""));
 
   if (costCache[queryHash] != null) {
     if (costCache[queryHash].t + COST_CACHE_MAX_AGE > Date.now()) {
@@ -83,7 +85,7 @@ async function checkCosts(client, query, costLimit) {
   return currentCost;
 }
 
-export function getDefaultResolvers(resolverMeta, hooks, dbMeta, dbGeneralPool, logger, costLimit, minQueryDepthToCheckCostLimit) {
+export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGeneralPool, logger: ILogger, costLimit, minQueryDepthToCheckCostLimit) {
   const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 
