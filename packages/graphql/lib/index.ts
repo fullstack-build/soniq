@@ -204,7 +204,7 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta): { gQlAst: string, operations: IOperations } {
+  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta): { gQlAst: string; operations: IOperations } {
     gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
 
     this.addResolvers(
