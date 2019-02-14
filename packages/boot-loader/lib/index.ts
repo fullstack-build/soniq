@@ -76,7 +76,7 @@ export class BootLoader {
         this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
       }
     } catch (err) {
-      process.stderr.write(`BootLoader.boot.error.caught: ${err}\n`);
+      this.logger.error(`BootLoader.boot.error.caught: ${err}\n`);
       throw err;
     }
   }
