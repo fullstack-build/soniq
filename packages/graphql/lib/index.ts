@@ -1,24 +1,13 @@
-import * as apolloServer from "apollo-server-koa";
-const { graphiqlKoa, graphqlKoa } = apolloServer;
+import { GraphQLSchema } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
+import * as apolloServer from "apollo-server-koa";
+import { ApolloClient } from "apollo-client";
+import { SchemaLink } from "apollo-link-schema";
+import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
 import * as koaBody from "koa-bodyparser";
 import * as KoaRouter from "koa-router";
 
-import { ApolloClient } from "apollo-client";
-import { InMemoryCache } from "apollo-cache-inmemory";
-import { SchemaLink } from "apollo-link-schema";
-
-import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
-import { getDefaultResolvers } from "./queryBuilder/resolvers";
-
-import { operatorsObject } from "./compareOperators";
-
-import { getOperations, IOperations } from "./getOperations";
-import { getOperatorsDefinition } from "./getOperatorsDefinition";
-
-// fullstack-one core
-import { Service, Inject, Container } from "@fullstack-one/di";
-// DI imports
+import { Service, Inject } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
@@ -26,15 +15,20 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
-import { GraphQLSchema } from "graphql";
+
+import IGraphqlConfig from "../config/IGraphqlConfig";
+import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
+import { getDefaultResolvers } from "./queryBuilder/resolvers";
+import { operatorsObject } from "./compareOperators";
+import { getOperations, IOperations } from "./getOperations";
+import { getOperatorsDefinition } from "./getOperatorsDefinition";
 
 export { apolloServer };
 
 @Service()
 export class GraphQl {
-  private graphQlConfig: any;
+  private graphQlConfig: IGraphqlConfig;
   private apolloSchema: GraphQLSchema;
-  private apolloClient: any;
 
   // DI
   private config: Config;
@@ -62,7 +56,6 @@ export class GraphQl {
     @Inject((type) => Server) server,
     @Inject((type) => DbGeneralPool) dbGeneralPool
   ) {
-    // register package config
     this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
 
     this.loggerFactory = loggerFactory;
@@ -85,7 +78,6 @@ export class GraphQl {
       this.schemaBuilder.extendSchema(extendSchema);
     }
 
-    // add boot function to boot loader
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
@@ -106,18 +98,6 @@ export class GraphQl {
     });
 
     this.apolloSchema = schema;
-
-    this.apolloClient = new ApolloClient({
-      ssrMode: true,
-      cache: new InMemoryCache(),
-      link: new SchemaLink({
-        schema: this.apolloSchema,
-        context: {
-          ctx: {},
-          accessToken: null
-        }
-      })
-    });
 
     const setCacheHeaders = async (ctx, next) => {
       await next();
@@ -173,12 +153,12 @@ export class GraphQl {
     };
 
     // koaBody is needed just for POST.
-    gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, graphqlKoa(gQlParam));
-    gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, graphqlKoa(gQlParam));
+    gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
+    gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
     // graphiql
     if (this.graphQlConfig.graphiQlEndpointActive) {
       // TODO: === true
-      gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+      gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apolloServer.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
     }
 
     const app = this.server.getApp();
@@ -224,41 +204,20 @@ export class GraphQl {
     return { gQlAst, operations };
   }
 
-  public getApolloClient(accessToken: string = null, ctx: any = {}) {
+  public getApolloClient(accessToken: string = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {
     if (this.apolloSchema == null) {
       throw new Error("Please call getApolloClient after booting has completed.");
     }
 
-    if (accessToken != null) {
-      return new ApolloClient({
-        ssrMode: true,
-        cache: new InMemoryCache(),
-        link: new SchemaLink({
-          schema: this.apolloSchema,
-          context: {
-            ctx,
-            accessToken
-          }
-        })
-      });
-    }
-    /* OLD 
-    // return generic (not authorized) apollo client
-    // reset cache before returning. Apollo Cache is not able to invalidate correct.
-    // this.apolloClient.cache.reset();
-    // return this.apolloClient;
-    OLD */
+    const schemaLinkContext = accessToken != null ? { ctx, accessToken } : { ctx: {}, accessToken: null };
 
-    // Return a new client every time because, clearing the cache could collide with other queries
+    // Return a new client every time because, clearing the cache (using `apolloClient.cache.reset()`) could collide with other queries
     return new ApolloClient({
       ssrMode: true,
       cache: new InMemoryCache(),
       link: new SchemaLink({
         schema: this.apolloSchema,
-        context: {
-          ctx: {},
-          accessToken: null
-        }
+        context: schemaLinkContext
       })
     });
   }
