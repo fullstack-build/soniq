@@ -1,8 +1,10 @@
+import * as DebugLogger from "debug-logger";
+import { Tracer, colorConsole } from "tracer";
+
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-import { ILogger, createLogger } from "./createLogger";
 
-export { ILogger };
+export type ILogger = Tracer.Logger;
 
 @Service()
 export class LoggerFactory {
@@ -14,6 +16,19 @@ export class LoggerFactory {
 
   public create(moduleName: string): ILogger {
     const env: IEnvironment = Container.get("ENVIRONMENT");
-    return createLogger(moduleName, this.config, env);
+    // return createLogger(moduleName, this.config, env);
+    const levels = ["trace", "debug", "info", "warn", "error"];
+    const loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
+    const debugLogger = DebugLogger(loggerName);
+
+    const tracerConfig: Tracer.LoggerConfig = {
+      level: this.config.minLevel,
+      methods: levels,
+      transport: (logObject: Tracer.LogOutput): void => debugLogger[logObject.title](logObject.output)
+    };
+
+    const tracerLogger: Tracer.Logger = colorConsole(tracerConfig);
+
+    return tracerLogger;
   }
 }
