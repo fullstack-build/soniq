@@ -3,6 +3,4 @@ NAME=one-test
 
 docker build -f docker/test.Dockerfile -t $TAG .
 
-docker run --name "$NAME" $TAG
-
-docker rm $NAME
+docker run --rm -i -t --name "$NAME" $TAG
