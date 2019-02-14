@@ -82,9 +82,6 @@ export class GraphQl {
   }
 
   private async boot() {
-    const gqlKoaRouter = new KoaRouter();
-
-    // Load resolvers
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
     this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver>(resolversPattern));
 
@@ -102,13 +99,11 @@ export class GraphQl {
     const setCacheHeaders = async (ctx, next) => {
       await next();
       let cacheHeader = "no-store";
-      // console.log(ctx.response.body, ctx.response.body != null , typeof ctx.response.body);
-      // || (ctx.body != null && ctx.body.errors != null && ctx.body.errors.length > 0)
       if (ctx.state.includesMutation === true) {
         cacheHeader = "no-store";
       } else {
         if (ctx.state.authRequired === true) {
-          cacheHeader = "privat, max-age=600"; // TODO: To config
+          cacheHeader = "privat, max-age=600";
         } else {
           cacheHeader = "public, max-age=600";
         }
@@ -120,7 +115,6 @@ export class GraphQl {
     const enforceOriginMatch = (ctx, next) => {
       const errorMessage = "All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.";
 
-      // If securityContext is missing, don't allow the request.
       if (ctx.securityContext == null) {
         return ctx.throw(400, errorMessage);
       }
@@ -130,12 +124,10 @@ export class GraphQl {
         return next();
       }
 
-      // If the request is approved by origin and referrer it is allowed
       if (ctx.securityContext.sameOriginApproved.byOrigin === true && ctx.securityContext.sameOriginApproved.byReferrer === true) {
         return next();
       }
 
-      // Else forbid everything
       return ctx.throw(400, errorMessage);
     };
 
@@ -152,17 +144,14 @@ export class GraphQl {
       };
     };
 
-    // koaBody is needed just for POST.
+    const gqlKoaRouter = new KoaRouter();
     gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
     gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
-    // graphiql
-    if (this.graphQlConfig.graphiQlEndpointActive) {
-      // TODO: === true
+    if (this.graphQlConfig.graphiQlEndpointActive === true) {
       gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apolloServer.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
     }
 
     const app = this.server.getApp();
-
     app.use(gqlKoaRouter.routes());
     app.use(gqlKoaRouter.allowedMethods());
   }
