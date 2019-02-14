@@ -6,7 +6,7 @@ const readFileAsync = promisify(readFile);
 export abstract class AHelper {
   public static async loadFilesByGlobPattern(pattern: string): Promise<string[]> {
     try {
-      const filePaths: string[] = fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+      const filePaths: string[] = fastGlob.sync<string>(pattern, { deep: false, onlyFiles: true });
 
       const readFilesPromises: Array<Promise<string>> = [];
       filePaths.map((filePath) => {
@@ -21,7 +21,7 @@ export abstract class AHelper {
 
   public static async requireFilesByGlobPattern(pattern: string): Promise<any[]> {
     try {
-      const filePaths: string[] = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+      const filePaths: string[] = await fastGlob.sync<string>(pattern, { deep: false, onlyFiles: true });
 
       const requiredFiles = [];
       filePaths.map((filePath) => {
@@ -44,7 +44,7 @@ export abstract class AHelper {
 
   public static async requireFilesByGlobPatternAsObject<T>(pattern: string): Promise<{ [name: string]: T }> {
     try {
-      const filePaths: string[] = await fastGlob.sync(pattern, { deep: false, onlyFiles: true });
+      const filePaths: string[] = await fastGlob.sync<string>(pattern, { deep: false, onlyFiles: true });
 
       const requiredFiles: { [name: string]: T } = {};
       filePaths.map((filePath) => {

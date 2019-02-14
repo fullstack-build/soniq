@@ -37,7 +37,7 @@ export function generateCustomSql(match, customs, getParam, getField) {
       throw new Error(`Operator '${operatorName}' requires a single value.`);
     }
 
-    return operatorsObject[operatorName].getSql(context);
+    return (operatorsObject[operatorName] as IBooleanOperator).getSql(context);
   }
 
   function createOperators(fieldName, field) {
