@@ -3,13 +3,15 @@ import * as apolloServer from "apollo-server-koa";
 import * as KoaRouter from "koa-router";
 import * as koaBody from "koa-bodyparser";
 
-export function createGraphQlKoaRouter(schema: GraphQLSchema): KoaRouter {
+import IGraphQlConfig from "../config/IGraphQlConfig";
+
+export function createGraphQlKoaRouter(schema: GraphQLSchema, { endpoint, graphiQlEndpointActive, graphiQlEndpoint }: IGraphQlConfig): KoaRouter {
   const koaGraphQlOptionsFunction = getKoaGraphQLOptionsFunction(schema);
   const gqlKoaRouter = new KoaRouter();
-  gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(koaGraphQlOptionsFunction));
-  gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(koaGraphQlOptionsFunction));
-  if (this.graphQlConfig.graphiQlEndpointActive === true) {
-    gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apolloServer.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
+  gqlKoaRouter.post(endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(koaGraphQlOptionsFunction));
+  gqlKoaRouter.get(endpoint, enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(koaGraphQlOptionsFunction));
+  if (graphiQlEndpointActive === true) {
+    gqlKoaRouter.get(graphiQlEndpoint, apolloServer.graphiqlKoa({ endpointURL: endpoint }));
   }
   return gqlKoaRouter;
 }

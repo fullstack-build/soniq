@@ -1,4 +1,4 @@
-export default interface IConfig {
+export default interface IGraphQlConfig {
   endpoint: string;
   graphiQlEndpointActive: boolean;
   graphiQlEndpoint: string;

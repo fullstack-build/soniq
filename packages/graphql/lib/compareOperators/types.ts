@@ -22,7 +22,7 @@ export interface IMultiValueOperator extends IBaseOperator {
 }
 
 export interface IBooleanOperator extends ISingleValueOperator {
-  extendSchema: string;
+  schemaExtension: string;
   unsafeValue: boolean;
 }
 
@@ -33,5 +33,13 @@ export interface IOperatorObject {
 }
 
 export function isSingleValueOperator(operator: IOperator): operator is ISingleValueOperator {
+  return !operator.value.startsWith("[");
+}
+
+export function isMultiValueOperator(operator: IOperator): operator is IMultiValueOperator {
   return operator.value.startsWith("[");
+}
+
+export function isBooleanOperator(operator: IOperator): operator is IBooleanOperator {
+  return (operator as IBooleanOperator).schemaExtension != null;
 }

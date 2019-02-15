@@ -1,5 +1,5 @@
-import { GraphQLSchema } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
+import { GraphQLSchema, DocumentNode, DefinitionNode } from "graphql";
+import { makeExecutableSchema, IExecutableSchemaDefinition } from "graphql-tools";
 import * as apolloServer from "apollo-server-koa";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
@@ -9,24 +9,23 @@ import { Service, Inject } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
+import { SchemaBuilder, IDbMeta } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
 
-import IGraphqlConfig from "../config/IGraphqlConfig";
+import IGraphQlConfig from "../config/IGraphQlConfig";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import { createGraphQlKoaRouter } from "./createGraphQlKoaRouter";
 import { getDefaultResolvers } from "./queryBuilder/resolvers";
-import { operatorsObject } from "./compareOperators";
+import { operatorsSchemaExtension, operatorsDefinitionNode } from "./compareOperators";
 import { getOperations, IOperations } from "./getOperations";
-import { getOperatorsDefinition } from "./getOperatorsDefinition";
 
 export { apolloServer };
 
 @Service()
 export class GraphQl {
-  private graphQlConfig: IGraphqlConfig;
+  private graphQlConfig: IGraphQlConfig;
   private apolloSchema: GraphQLSchema;
 
   // DI
@@ -62,42 +61,43 @@ export class GraphQl {
     this.dbGeneralPool = dbGeneralPool;
     this.server = server;
     this.schemaBuilder = schemaBuilder;
-    let extendSchema = "";
 
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.ENVIRONMENT = this.config.ENVIRONMENT;
 
-    Object.values(operatorsObject).forEach((operator: any) => {
-      if (operator.extendSchema != null) {
-        extendSchema += `${operator.extendSchema}\n`;
-      }
-    });
-
-    if (extendSchema !== "") {
-      this.schemaBuilder.extendSchema(extendSchema);
-    }
+    if (operatorsSchemaExtension !== "") this.schemaBuilder.extendSchema(operatorsSchemaExtension);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {
-    const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-    this.addResolvers(await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver>(resolversPattern));
+    await this.addApplicationResolvers();
 
     const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
 
+    console.log(`\n\n\nGqlRuntimeDocument:\n\n${JSON.stringify(gqlRuntimeDocument)}\n\n`);
+
     const { gQlAst, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
 
-    this.apolloSchema = makeExecutableSchema({
+    console.log(`\n\n\nGqlAst after prepare schema:\n\n${JSON.stringify(gQlAst)}\n\n`);
+
+    const schemaDefinition: IExecutableSchemaDefinition = {
       typeDefs: gQlAst,
       resolvers: getResolvers(operations, this.resolvers)
-    });
+    };
+    this.apolloSchema = makeExecutableSchema(schemaDefinition);
 
-    const gqlKoaRouter = createGraphQlKoaRouter(this.apolloSchema);
+    const gqlKoaRouter = createGraphQlKoaRouter(this.apolloSchema, this.graphQlConfig);
     this.server
       .getApp()
       .use(gqlKoaRouter.routes())
       .use(gqlKoaRouter.allowedMethods());
+  }
+
+  private async addApplicationResolvers(): Promise<void> {
+    const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
+    const resolversObject = await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver>(resolversPattern);
+    this.addResolvers(resolversObject);
   }
 
   public addPreQueryHook(fn) {
@@ -117,8 +117,9 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta): { gQlAst: string; operations: IOperations } {
-    gqlRuntimeDocument.definitions.push(getOperatorsDefinition(operatorsObject));
+  public prepareSchema(gqlRuntimeDocument: DocumentNode, dbMeta: IDbMeta, resolverMeta: any): { gQlAst: string; operations: IOperations } {
+    const definitions = gqlRuntimeDocument.definitions as DefinitionNode[];
+    definitions.push(operatorsDefinitionNode);
 
     this.addResolvers(
       getDefaultResolvers(

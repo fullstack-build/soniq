@@ -11,7 +11,7 @@ const operators = {
   NOT_UNKNOWN: "IS NOT UNKNOWN"
 };
 
-const extendSchema = `
+const schemaExtension = `
 enum IS_VALUE {
   ${Object.keys(operators).join("\n")}
 }
@@ -20,7 +20,7 @@ enum IS_VALUE {
 const booleanOperator: IBooleanOperator = {
   name: "is",
   value: "IS_VALUE",
-  extendSchema,
+  schemaExtension,
   unsafeValue: true,
   getSql: (context) => {
     const { field, value } = context;
