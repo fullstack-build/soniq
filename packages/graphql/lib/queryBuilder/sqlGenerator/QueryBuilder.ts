@@ -4,7 +4,7 @@ import { MergeInfo } from "graphql-tools";
 
 import { IDbMeta } from "@fullstack-one/schema-builder";
 
-import { generateCustomSql } from "./custom";
+import generateCustomSql from "./generateCustomSql";
 
 export interface IQueryContext {
   sql: string;
@@ -16,7 +16,7 @@ export interface IQueryContext {
   maxDepth: number;
 }
 
-export class QueryBuilder {
+export default class QueryBuilder {
   private resolverMeta: any;
   private dbMeta: IDbMeta;
   private minQueryDepthToCheckCostLimit: number;
@@ -334,9 +334,10 @@ export class QueryBuilder {
     };
   }
 
-  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match = null): IQueryContext {
+  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match: any = null): IQueryContext {
     // Use PostGraphile parser to get nested query object
     const query = parseResolveInfo(info);
+    console.log(`\n\nQueryBuilder.build - query:\n\n${JSON.stringify(info)}\n\n${JSON.stringify(query)}\n\n`);
 
     const costTree = {};
 
