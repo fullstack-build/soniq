@@ -75,11 +75,7 @@ export class GraphQl {
 
     const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
 
-    console.log(`\n\n\nGqlRuntimeDocument:\n\n${JSON.stringify(gqlRuntimeDocument)}\n\n`);
-
     const { gQlAst, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
-
-    console.log(`\n\n\nGqlAst after prepare schema:\n\n${JSON.stringify(gQlAst)}\n\n`);
 
     const schemaDefinition: IExecutableSchemaDefinition = {
       typeDefs: gQlAst,
