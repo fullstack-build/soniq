@@ -1,9 +1,9 @@
 import * as gQlTypeJson from "graphql-type-json";
 import { GraphQLResolveInfo } from "graphql";
-import { IResolvers, IResolverObject, MergeInfo } from "graphql-tools";
-import { IOperations } from "./getOperations";
+import { IResolvers, IResolverObject, MergeInfo, IFieldResolver } from "graphql-tools";
+import { IOperationsObject } from "./getOperations";
 
-export type ICustomFieldResolver<TSource = any, TContext = any> = (
+export type ICustomFieldResolver<TSource, TContext, TParams> = (
   source: TSource,
   args: {
     [argument: string]: any;
@@ -12,52 +12,43 @@ export type ICustomFieldResolver<TSource = any, TContext = any> = (
   info: GraphQLResolveInfo & {
     mergeInfo: MergeInfo;
   },
-  operationParams: any
+  operationParams: TParams
 ) => any;
 
-export interface ICustomResolverObject<TSource = any, TContext = any> {
-  [key: string]: ICustomFieldResolver<TSource, TContext>;
+export interface ICustomResolverObject<TSource = any, TContext = any, TParams = any> {
+  [key: string]: ICustomFieldResolver<TSource, TContext, TParams>;
 }
 
-export function getResolvers(operations: IOperations, resolversObject: ICustomResolverObject): IResolvers {
+export function getResolvers(operations: IOperationsObject, resolversObject: ICustomResolverObject): IResolvers {
   const queryResolvers: IResolverObject = {};
   const mutationResolvers: IResolverObject = {};
 
-  // Add  queries to queryResolvers
-  Object.values(operations.queries).forEach((operation: any) => {
+  operations.queries.forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(`The resolver "${operation.resolver}" is not defined. You used it in custom Query "${operation.name}".`);
     }
 
-    queryResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
-    };
+    queryResolvers[operation.name] = wrapResolver(resolversObject[operation.resolver], operation.name);
   });
 
-  // Add  mutations to mutationResolvers
-  Object.values(operations.mutations).forEach((operation: any) => {
+  operations.mutations.forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(`The resolver "${operation.resolver}" is not defined. You used it in custom Mutation "${operation.name}".`);
     }
 
-    mutationResolvers[operation.name] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
-    };
+    mutationResolvers[operation.name] = wrapResolver(resolversObject[operation.resolver], operation.params);
   });
 
   const resolvers: IResolvers = {
-    // Add JSON Scalar
     JSON: gQlTypeJson,
     Query: queryResolvers,
     Mutation: mutationResolvers
   };
 
-  // Add  field resolvers to resolvers object
-  Object.values(operations.fields).forEach((operation) => {
+  operations.fields.forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(
-        `The resolver "${operation.resolver}" is not defined.` +
-          ` You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`
+        `The resolver "${operation.resolver}" is not defined. You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`
       );
     }
 
@@ -65,10 +56,17 @@ export function getResolvers(operations: IOperations, resolversObject: ICustomRe
       resolvers[operation.gqlTypeName] = {};
     }
 
-    resolvers[operation.gqlTypeName][operation.fieldName] = (obj, args, context, info) => {
-      return resolversObject[operation.resolver](obj, args, context, info, operation.params);
-    };
+    resolvers[operation.gqlTypeName][operation.fieldName] = wrapResolver(resolversObject[operation.resolver], operation.params);
   });
 
   return resolvers;
+}
+
+function wrapResolver<TSource, TContext, TParams>(
+  customResolver: ICustomFieldResolver<TSource, TContext, TParams>,
+  operationParams: TParams
+): IFieldResolver<TSource, TContext> {
+  return (obj, args, context, info) => {
+    return customResolver(obj, args, context, info, operationParams);
+  };
 }

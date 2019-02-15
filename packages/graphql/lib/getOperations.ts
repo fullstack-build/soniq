@@ -6,7 +6,7 @@ const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custo
 interface IBaseOperation {
   name: string;
   type: string;
-  resolver: any;
+  resolver: string;
   params: object;
   viewName?: string;
 }
@@ -15,13 +15,13 @@ export type TQueryOperation = IBaseOperation;
 export type TMutationOperation = IBaseOperation;
 export type TFieldOperation = IBaseOperation & { gqlTypeName: string; fieldName: string };
 
-export interface IOperations {
+export interface IOperationsObject {
   queries: TQueryOperation[];
   mutations: TMutationOperation[];
   fields: TFieldOperation[];
 }
 
-export function getOperations(gqlDocument: DocumentNode): IOperations {
+export function getOperations(gqlDocument: DocumentNode): IOperationsObject {
   const queries: TQueryOperation[] = [];
   const mutations: TMutationOperation[] = [];
   const fields: TFieldOperation[] = [];

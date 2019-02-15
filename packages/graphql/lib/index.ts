@@ -19,7 +19,7 @@ import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import { getDefaultResolvers } from "./queryBuilder/resolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./compareOperators";
-import { getOperations, IOperations } from "./getOperations";
+import { getOperations, IOperationsObject } from "./getOperations";
 
 export { apolloServer };
 
@@ -92,7 +92,7 @@ export class GraphQl {
 
   private async addApplicationResolvers(): Promise<void> {
     const resolversPattern = this.ENVIRONMENT.path + this.graphQlConfig.resolversPattern;
-    const resolversObject = await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver>(resolversPattern);
+    const resolversObject = await AHelper.requireFilesByGlobPatternAsObject<ICustomFieldResolver<any, any, any>>(resolversPattern);
     this.addResolvers(resolversObject);
   }
 
@@ -113,7 +113,7 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public prepareSchema(gqlRuntimeDocument: DocumentNode, dbMeta: IDbMeta, resolverMeta: any): { gQlAst: string; operations: IOperations } {
+  public prepareSchema(gqlRuntimeDocument: DocumentNode, dbMeta: IDbMeta, resolverMeta: any): { gQlAst: string; operations: IOperationsObject } {
     const definitions = gqlRuntimeDocument.definitions as DefinitionNode[];
     definitions.push(operatorsDefinitionNode);
 
