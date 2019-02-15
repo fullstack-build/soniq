@@ -5,7 +5,10 @@ import * as koaBody from "koa-bodyparser";
 
 import IGraphQlConfig from "../config/IGraphQlConfig";
 
-export function createGraphQlKoaRouter(schema: GraphQLSchema, { endpoint, graphiQlEndpointActive, graphiQlEndpoint }: IGraphQlConfig): KoaRouter {
+export default function createGraphQlKoaRouter(
+  schema: GraphQLSchema,
+  { endpoint, graphiQlEndpointActive, graphiQlEndpoint }: IGraphQlConfig
+): KoaRouter {
   const koaGraphQlOptionsFunction = getKoaGraphQLOptionsFunction(schema);
   const gqlKoaRouter = new KoaRouter();
   gqlKoaRouter.post(endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(koaGraphQlOptionsFunction));
