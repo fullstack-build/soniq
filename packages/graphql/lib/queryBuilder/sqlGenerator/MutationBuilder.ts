@@ -1,13 +1,5 @@
-import { parseResolveInfo } from "graphql-parse-resolve-info";
 import { GraphQLResolveInfo } from "graphql";
-import { MergeInfo } from "graphql-tools";
-
-export interface IMutationQuery {
-  sql: string;
-  values: any[];
-  mutation: any;
-  id: any;
-}
+import { IMutationBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
 
 export default class MutationBuilder {
   private resolverMeta: any;
@@ -16,7 +8,7 @@ export default class MutationBuilder {
     this.resolverMeta = resolverMeta;
   }
 
-  private resolveCreateMutation(query: any, mutation: any): IMutationQuery {
+  private resolveCreateMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
     const fieldNames = Object.keys(query.args.input);
     const fieldValues = Object.values(query.args.input);
 
@@ -50,7 +42,7 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveUpdateMutation(query: any, mutation: any): IMutationQuery {
+  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
     const setFields = [];
     const values = [];
     let entityId = null;
@@ -84,7 +76,7 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveDeleteMutation(query: any, mutation: any): IMutationQuery {
+  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
     // Build delete by id query
     return {
       sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
@@ -94,14 +86,12 @@ export default class MutationBuilder {
     };
   }
 
-  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }) {
-    // Use PostGraphile parser to get nested query object
-    const query = parseResolveInfo(info);
+  public build(info: GraphQLResolveInfo) {
+    const query: IParsedResolveInfo = parseResolveInfo(info);
 
     // Get mutation information from generated Schema-data
     const mutation = this.resolverMeta.mutation[query.name];
 
-    // Switch mutation type
     switch (mutation.type) {
       case "CREATE":
         return this.resolveCreateMutation(query, mutation);

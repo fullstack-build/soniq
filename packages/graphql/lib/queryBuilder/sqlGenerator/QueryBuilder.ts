@@ -1,22 +1,9 @@
-import { parseResolveInfo } from "graphql-parse-resolve-info";
 import { GraphQLResolveInfo } from "graphql";
-import { MergeInfo } from "graphql-tools";
 
 import { IDbMeta } from "@fullstack-one/schema-builder";
 
 import generateCustomSql from "./generateCustomSql";
-
-export interface IQueryParams {
-  sql: string;
-  values: any[];
-  query: {
-    name: string;
-  };
-  authRequired: boolean;
-  potentialHighCost: boolean;
-  costTree: any;
-  maxDepth: number;
-}
+import { IQueryBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
 
 export default class QueryBuilder {
   private resolverMeta: any;
@@ -62,7 +49,7 @@ export default class QueryBuilder {
   }
 
   // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-  private resolveTable(c, query, values, isAuthenticated, match, isAggregation, costTree) {
+  private resolveTable(c, query: IParsedResolveInfo, values, isAuthenticated: boolean, match, isAggregation: boolean, costTree) {
     // Get the tableName from the nested query object
     const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
 
@@ -301,7 +288,7 @@ export default class QueryBuilder {
   }
 
   // Generates Array of Objects from a select query
-  private jsonAgg(c, query, values, isAuthenticated, match, costTree) {
+  private jsonAgg(c, query: IParsedResolveInfo, values, isAuthenticated: boolean, match, costTree) {
     // Counter is to generate unique local aliases for all Tables (Joins of Views)
     let counter = c;
     // Generate new local alias (e.g. "_local_1_")
@@ -336,9 +323,9 @@ export default class QueryBuilder {
     };
   }
 
-  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match: any = null): IQueryParams {
+  public build(info: GraphQLResolveInfo, isAuthenticated: boolean, match: any = null): IQueryBuild {
     // Use PostGraphile parser to get nested query object
-    const query = parseResolveInfo(info);
+    const query: IParsedResolveInfo = parseResolveInfo(info);
 
     const costTree = {};
 
