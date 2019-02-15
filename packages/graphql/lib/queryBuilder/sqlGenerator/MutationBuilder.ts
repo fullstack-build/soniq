@@ -1,13 +1,22 @@
 import { parseResolveInfo } from "graphql-parse-resolve-info";
+import { GraphQLResolveInfo } from "graphql";
+import { MergeInfo } from "graphql-tools";
+
+export interface IMutationQuery {
+  sql: string;
+  values: any[];
+  mutation: any;
+  id: any;
+}
 
 export class MutationBuilder {
   private resolverMeta: any;
 
-  constructor(resolverMeta) {
+  constructor(resolverMeta: any) {
     this.resolverMeta = resolverMeta;
   }
 
-  private resolveCreateMutation(query, mutation) {
+  private resolveCreateMutation(query: any, mutation: any): IMutationQuery {
     const fieldNames = Object.keys(query.args.input);
     const fieldValues = Object.values(query.args.input);
 
@@ -41,10 +50,7 @@ export class MutationBuilder {
     };
   }
 
-  private resolveUpdateMutation(query, mutation) {
-    const fieldNames = Object.keys(query.args.input);
-    const fieldValues = Object.values(query.args.input);
-
+  private resolveUpdateMutation(query: any, mutation: any): IMutationQuery {
     const setFields = [];
     const values = [];
     let entityId = null;
@@ -78,7 +84,7 @@ export class MutationBuilder {
     };
   }
 
-  private resolveDeleteMutation(query, mutation) {
+  private resolveDeleteMutation(query: any, mutation: any): IMutationQuery {
     // Build delete by id query
     return {
       sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
@@ -88,7 +94,7 @@ export class MutationBuilder {
     };
   }
 
-  public build(obj, args, context, info) {
+  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }) {
     // Use PostGraphile parser to get nested query object
     const query = parseResolveInfo(info);
 

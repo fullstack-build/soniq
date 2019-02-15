@@ -17,7 +17,7 @@ import { DbGeneralPool } from "@fullstack-one/db";
 import IGraphQlConfig from "../config/IGraphQlConfig";
 import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
-import { getDefaultResolvers } from "./queryBuilder/resolvers";
+import { getDefaultResolvers, IHookObject } from "./queryBuilder/resolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./compareOperators";
 import { getOperationsObject, IOperationsObject } from "./getOperations";
 
@@ -38,12 +38,10 @@ export class GraphQl {
   private dbGeneralPool: DbGeneralPool;
   private resolvers: ICustomResolverObject = {};
 
-  private hooks = {
+  private hookObject: IHookObject = {
     preQuery: [],
-    // postQuery: No use case, since everything can be achieved with custom fields or permissions
-    // preMutation = preQuery (Mutation is a Query in GraphQL)
-    postMutation: [],
-    preMutationCommit: []
+    preMutationCommit: [],
+    postMutation: []
   };
 
   constructor(
@@ -96,17 +94,17 @@ export class GraphQl {
     this.addResolvers(resolversObject);
   }
 
-  public addPreQueryHook(fn) {
+  public addPreQueryHook(fn: any) {
     // TODO: Remove
-    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(name, fn)'.");
-    this.hooks.preQuery.push(fn);
+    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(\"preQuery\", fn)'.");
+    this.hookObject.preQuery.push(fn);
   }
 
-  public addHook(name, fn) {
-    if (this.hooks[name] == null || Array.isArray(this.hooks[name]) !== true) {
+  public addHook(name: string, fn: any) {
+    if (this.hookObject[name] == null || Array.isArray(this.hookObject[name]) !== true) {
       throw new Error(`The hook '${name}' does not exist.`);
     }
-    this.hooks[name].push(fn);
+    this.hookObject[name].push(fn);
   }
 
   public addResolvers(resolversObject: ICustomResolverObject) {
@@ -120,7 +118,7 @@ export class GraphQl {
     this.addResolvers(
       getDefaultResolvers(
         resolverMeta,
-        this.hooks,
+        this.hookObject,
         dbMeta,
         this.dbGeneralPool,
         this.logger,

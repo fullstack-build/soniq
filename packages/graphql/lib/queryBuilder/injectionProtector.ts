@@ -1,4 +1,6 @@
-export function checkQueryResult(column, result, logger) {
+import { ILogger } from "@fullstack-one/logger";
+
+export function checkQueryResult(result: any, logger: ILogger): void {
   if (Array.isArray(result) === true) {
     logger.error("InjectionProtector:", "Successful SQL-Injection Attack. To many queries in result. Request denied.");
     throw new Error("InjectionProtector: To many queries.");
@@ -17,8 +19,4 @@ export function checkQueryResult(column, result, logger) {
     logger.error("InjectionProtector:", "Successful SQL-Injection Attack. To many columns in result. Request denied.");
     throw new Error("InjectionProtector: To many columns.");
   }
-}
-
-export function checkQuery() {
-  return;
 }

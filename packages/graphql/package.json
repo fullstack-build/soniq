@@ -41,8 +41,7 @@
     "graphql-type-json": "^0.1.4",
     "koa": "2.5.2",
     "koa-bodyparser": "^4.2.0",
-    "koa-router": "^7.4.0",
-    "lodash": "^4.17.10"
+    "koa-router": "^7.4.0"
   },
   "devDependencies": {
     "ava": "^1.1.0",

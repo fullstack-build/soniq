@@ -1,92 +1,38 @@
+import { IDbMeta } from "@fullstack-one/schema-builder";
+import { ILogger } from "@fullstack-one/logger";
+import { DbGeneralPool } from "@fullstack-one/db";
+
 import { QueryBuilder } from "./sqlGenerator/QueryBuilder";
 import { MutationBuilder } from "./sqlGenerator/MutationBuilder";
 import { checkQueryResult } from "./injectionProtector";
-import * as crypto from "crypto";
-import { GraphQLFieldResolver } from "graphql";
-import { IDbMeta } from "@fullstack-one/schema-builder";
-import { ILogger } from "../../../logger/lib";
+import checkCosts from "./checkCosts";
+import { IFieldResolver } from "graphql-tools";
 
-function sha1Base64(input: string): string {
-  return crypto
-    .createHash("sha1")
-    .update(input)
-    .digest("base64");
+export type TPreQueryHookFunction = (client: any, context: any, authRequired: boolean) => any;
+export type TPreMutationCommitHookFunction = (client: any, hookInfo: any) => any;
+export type TPostMutationHookFunction = (hookInfo: any, context: any, info: any) => any;
+
+export interface IHookObject {
+  preQuery: TPreQueryHookFunction[];
+  preMutationCommit: TPreMutationCommitHookFunction[];
+  postMutation: TPostMutationHookFunction[];
 }
 
-const costCache = {};
-const COST_CACHE_MAX_AGE = 1000 * 60 * 60 * 24; // One Day //TODO Dustin put in config
-
-async function getCurrentCosts(client, query) {
-  const queryHash: string = sha1Base64(query.sql + query.values.join(""));
-
-  if (costCache[queryHash] != null) {
-    if (costCache[queryHash].t + COST_CACHE_MAX_AGE > Date.now()) {
-      return costCache[queryHash].c;
-    } else {
-      costCache[queryHash] = null;
-      delete costCache[queryHash];
-    }
-  }
-
-  const result = await client.query(`EXPLAIN ${query.sql}`, query.values);
-
-  const queryPlan = result.rows[0]["QUERY PLAN"];
-
-  const data: any = {};
-
-  queryPlan
-    .split("(")[1]
-    .split(")")[0]
-    .split(" ")
-    .forEach((element) => {
-      const keyValue = element.split("=");
-      data[keyValue[0]] = keyValue[1];
-    });
-
-  const costs = data.cost
-    .split(".")
-    .filter((i) => i !== "")
-    .map((i) => parseInt(i, 10));
-
-  let currentCost = 0;
-
-  costs.forEach((cost) => {
-    currentCost = cost > currentCost ? cost : currentCost;
-  });
-
-  costCache[queryHash] = {
-    c: currentCost,
-    t: Date.now()
-  };
-
-  // Clean up cache
-  Object.keys(costCache).forEach((key) => {
-    const now = Date.now();
-
-    if (costCache[key].time + COST_CACHE_MAX_AGE < now) {
-      costCache[key] = null;
-      delete costCache[key];
-    }
-  });
-
-  return currentCost;
+interface IDefaultResolversObject {
+  "@fullstack-one/graphql/queryResolver": IFieldResolver<any, any>;
+  "@fullstack-one/graphql/mutationResolver": IFieldResolver<any, any>;
 }
 
-async function checkCosts(client, query, costLimit) {
-  const currentCost = await getCurrentCosts(client, query);
-
-  if (currentCost > costLimit) {
-    throw new Error(
-      "This query seems to be to exprensive. Please set some limits. " +
-        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`
-    );
-  }
-
-  return currentCost;
-}
-
-export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGeneralPool, logger: ILogger, costLimit, minQueryDepthToCheckCostLimit) {
-  const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit);
+export function getDefaultResolvers(
+  resolverMeta: any,
+  hookObject: IHookObject,
+  dbMeta: IDbMeta,
+  dbGeneralPool: DbGeneralPool,
+  logger: ILogger,
+  costLimit: number,
+  minQueryDepthToCheckCostLimit: number
+): IDefaultResolversObject {
+  const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, minQueryDepthToCheckCostLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 
   return {
@@ -96,13 +42,11 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
         isAuthenticated = true;
       }
       // Generate select sql query
-      const selectQuery = queryBuilder.build(obj, args, context, info, isAuthenticated);
+      const selectQuery = queryBuilder.build(info, isAuthenticated);
 
-      // Get a pgClient from pool
       const client = await dbGeneralPool.pgPool.connect();
 
       try {
-        // Begin transaction
         await client.query("BEGIN");
 
         // Set authRequired in koa state for cache headers
@@ -111,7 +55,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
         }
 
         // PreQueryHook (for auth)
-        for (const fn of hooks.preQuery) {
+        for (const fn of hookObject.preQuery) {
           await fn(client, context, selectQuery.authRequired);
         }
 
@@ -127,7 +71,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
 
         // Run query against pg to get data
         const result = await client.query(selectQuery.sql, selectQuery.values);
-        checkQueryResult(selectQuery.query.name, result, logger);
+        checkQueryResult(result, logger);
 
         const { rows } = result;
         // Read JSON data from first row
@@ -153,18 +97,17 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
         isAuthenticated = true;
       }
       // Generate mutation sql query
-      const mutationQuery = mutationBuilder.build(obj, args, context, info);
+      const mutationQuery = mutationBuilder.build(info);
       context.ctx.state.includesMutation = true;
 
       // Get a pgClient from pool
       const client = await dbGeneralPool.pgPool.connect();
 
       try {
-        // Begin transaction
         await client.query("BEGIN");
 
         // PreQueryHook (for auth)
-        for (const fn of hooks.preQuery) {
+        for (const fn of hookObject.preQuery) {
           await fn(client, context, context.accessToken != null);
         }
 
@@ -172,7 +115,6 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
 
         // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
         const result = await client.query(mutationQuery.sql, mutationQuery.values);
-        const { rows } = result; // TODO Dustin not used
 
         if (result.rowCount < 1) {
           throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
@@ -205,7 +147,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
           };
 
           // Generate sql query for response-data of the mutation
-          returnQuery = queryBuilder.build(obj, args, context, info, isAuthenticated, match);
+          returnQuery = queryBuilder.build(info, isAuthenticated, match);
 
           logger.trace("mutationResolver.returnQuery.run", returnQuery.sql, returnQuery.values);
 
@@ -219,7 +161,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
 
           // Run SQL query on pg to get response-data
           const returnResult = await client.query(returnQuery.sql, returnQuery.values);
-          checkQueryResult(returnQuery.query.name, returnResult, logger);
+          checkQueryResult(returnResult, logger);
 
           const { rows: returnRows } = returnResult;
 
@@ -254,7 +196,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
 
         // PreMutationCommitHook (for auth register etc.)
         // TODO: Move this in front of mutation
-        for (const fn of hooks.preMutationCommit) {
+        for (const fn of hookObject.preMutationCommit) {
           await fn(client, hookInfo);
         }
 
@@ -262,7 +204,7 @@ export function getDefaultResolvers(resolverMeta, hooks, dbMeta: IDbMeta, dbGene
         await client.query("COMMIT");
 
         // PostMutationHook (for file-storage etc.)
-        for (const fn of hooks.postMutation) {
+        for (const fn of hookObject.postMutation) {
           await fn(hookInfo, context, info);
         }
 

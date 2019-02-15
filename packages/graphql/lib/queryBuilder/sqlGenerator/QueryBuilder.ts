@@ -1,21 +1,33 @@
 import { parseResolveInfo } from "graphql-parse-resolve-info";
-import * as _ from "lodash";
+import { GraphQLResolveInfo } from "graphql";
+import { MergeInfo } from "graphql-tools";
+
+import { IDbMeta } from "@fullstack-one/schema-builder";
+
 import { generateCustomSql } from "./custom";
+
+export interface IQueryContext {
+  sql: string;
+  values: any[];
+  query: any;
+  authRequired: boolean;
+  potentialHighCost: boolean;
+  costTree: any;
+  maxDepth: number;
+}
 
 export class QueryBuilder {
   private resolverMeta: any;
-  private dbMeta: any;
-  private costLimit;
-  private minQueryDepthToCheckCostLimit;
+  private dbMeta: IDbMeta;
+  private minQueryDepthToCheckCostLimit: number;
 
-  constructor(resolverMeta, dbMeta, costLimit, minQueryDepthToCheckCostLimit) {
+  constructor(resolverMeta, dbMeta: IDbMeta, minQueryDepthToCheckCostLimit: number) {
     this.resolverMeta = resolverMeta;
     this.dbMeta = dbMeta;
-    this.costLimit = costLimit;
     this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
   }
 
-  private calculateMaxDepth(costTree) {
+  private calculateMaxDepth(costTree: any): number {
     let depth = 0;
 
     if (costTree.__meta.type === "aggregation") {
@@ -322,14 +334,14 @@ export class QueryBuilder {
     };
   }
 
-  public build(obj, args, context, info, isAuthenticated, match = null) {
+  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match = null): IQueryContext {
     // Use PostGraphile parser to get nested query object
     const query = parseResolveInfo(info);
 
     const costTree = {};
 
     // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
-    const { sql, counter, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
+    const { sql, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
 
     const maxDepth = this.calculateMaxDepth(costTree[query.name]);
 

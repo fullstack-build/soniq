@@ -1,7 +1,7 @@
 import { operatorsObject } from "../../compareOperators";
 import { IBooleanOperator } from "../../compareOperators/types";
 
-export function generateCustomSql(match, customs, getParam, getField) {
+export function generateCustomSql(match, customs, getParam, getField): string {
   function createOperator(operatorName, fieldName, value) {
     if (operatorsObject[operatorName] == null) {
       throw new Error(`Operator '${operatorName}' not found.`);
