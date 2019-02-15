@@ -97,7 +97,6 @@ export default class MutationBuilder {
   public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }) {
     // Use PostGraphile parser to get nested query object
     const query = parseResolveInfo(info);
-    console.log(`\n\nMutationBuilder.build - query:\n\n${JSON.stringify(info)}\n\n${JSON.stringify(query)}\n\n`);
 
     // Get mutation information from generated Schema-data
     const mutation = this.resolverMeta.mutation[query.name];
