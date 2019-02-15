@@ -19,7 +19,7 @@ import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import { getDefaultResolvers } from "./queryBuilder/resolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./compareOperators";
-import { getOperations, IOperationsObject } from "./getOperations";
+import { getOperationsObject, IOperationsObject } from "./getOperations";
 
 export { apolloServer };
 
@@ -129,7 +129,7 @@ export class GraphQl {
       )
     );
     const gQlAst = this.schemaBuilder.print(gqlRuntimeDocument);
-    const operations = getOperations(gqlRuntimeDocument);
+    const operations = getOperationsObject(gqlRuntimeDocument);
 
     return { gQlAst, operations };
   }

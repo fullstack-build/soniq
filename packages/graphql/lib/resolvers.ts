@@ -48,7 +48,7 @@ export function getResolvers(operations: IOperationsObject, resolversObject: ICu
   operations.fields.forEach((operation) => {
     if (resolversObject[operation.resolver] == null) {
       throw new Error(
-        `The resolver "${operation.resolver}" is not defined. You used it in custom Field "${operation.fieldName}" in Type "${operation.viewName}".`
+        `The resolver "${operation.resolver}" is not defined. You used it in custom Field "${operation.fieldName}" in Type "${operation.name}".`
       );
     }
 

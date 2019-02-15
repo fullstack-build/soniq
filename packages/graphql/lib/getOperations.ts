@@ -1,7 +1,10 @@
 import { utils } from "@fullstack-one/schema-builder";
-import { DocumentNode, DirectiveNode } from "graphql";
+import { DocumentNode, DirectiveNode, ObjectTypeExtensionNode, DefinitionNode, FieldDefinitionNode, ObjectTypeDefinitionNode } from "graphql";
 
-const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => { custom?: { params: object; resolver: string } } = utils.parseDirectives;
+interface IDirectivesObject {
+  custom?: { params?: any; resolver: string };
+}
+const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => IDirectivesObject = utils.parseDirectives;
 
 interface IBaseOperation {
   name: string;
@@ -21,66 +24,74 @@ export interface IOperationsObject {
   fields: TFieldOperation[];
 }
 
-export function getOperations(gqlDocument: DocumentNode): IOperationsObject {
-  const queries: TQueryOperation[] = [];
-  const mutations: TMutationOperation[] = [];
-  const fields: TFieldOperation[] = [];
+interface IFieldNodeAndDirectivesObject {
+  fieldNode: FieldDefinitionNode;
+  directivesObject: IDirectivesObject;
+}
 
-  Object.values(gqlDocument.definitions).forEach((node) => {
-    if (node.kind === "ObjectTypeExtension") {
-      const type = node.name.value;
-      Object.values(node.fields).forEach((field) => {
-        const fieldName = field.name.value;
-        const directives = parseDirectives(field.directives);
-
-        if (directives.custom != null && directives.custom.resolver != null) {
-          const params = directives.custom.params || {};
-
-          if (type === "Query") {
-            queries.push({
-              name: fieldName,
-              type,
-              resolver: directives.custom.resolver,
-              params
-            });
-          }
-
-          if (type === "Mutation") {
-            mutations.push({
-              name: fieldName,
-              type,
-              resolver: directives.custom.resolver,
-              params
-            });
-          }
-        }
-      });
-    }
-    if (node.kind === "ObjectTypeDefinition") {
-      const gqlTypeName = node.name.value;
-      Object.values(node.fields).forEach((field) => {
-        const fieldName = field.name.value;
-        const directives = parseDirectives(field.directives);
-
-        if (directives.custom != null && directives.custom.resolver != null) {
-          const params = directives.custom.params || {};
-
-          fields.push({
-            name: fieldName,
-            type: "FIELD",
-            gqlTypeName,
-            fieldName,
-            resolver: directives.custom.resolver,
-            params
-          });
-        }
-      });
-    }
-  });
+export function getOperationsObject({ definitions }: DocumentNode): IOperationsObject {
+  const queries: TQueryOperation[] = getBaseOperations(definitions, "Query");
+  const mutations: TMutationOperation[] = getBaseOperations(definitions, "Mutation");
+  const fields: TFieldOperation[] = getFieldOperations(definitions);
 
   return {
     queries,
     mutations,
     fields
+  };
+}
+
+function getBaseOperations(definitionNodes: ReadonlyArray<DefinitionNode>, gqlTypeName: string): IBaseOperation[] {
+  return definitionNodes
+    .filter((definitionNode) => definitionNode.kind === "ObjectTypeExtension" && definitionNode.name.value === gqlTypeName)
+    .map((definitionNode: ObjectTypeExtensionNode) => definitionNode.fields)
+    .reduce((x, y) => x.concat(y), [])
+    .map(toFieldNodeAndDirectivesObject)
+    .filter(({ directivesObject }) => hasCustomDirective(directivesObject))
+    .map((item) => toBaseOperation(item, gqlTypeName));
+}
+
+function getFieldOperations(definitionNodes: ReadonlyArray<DefinitionNode>): TFieldOperation[] {
+  return definitionNodes
+    .filter((definitionNode) => definitionNode.kind === "ObjectTypeDefinition")
+    .map(({ fields, name }: ObjectTypeDefinitionNode) => toFieldOperations(fields, name.value))
+    .reduce((x, y) => x.concat(y), []);
+}
+
+function toFieldNodeAndDirectivesObject(fieldNode: FieldDefinitionNode): IFieldNodeAndDirectivesObject {
+  return {
+    fieldNode,
+    directivesObject: parseDirectives(fieldNode.directives)
+  };
+}
+
+function hasCustomDirective(directivesObject: IDirectivesObject): boolean {
+  return directivesObject.custom != null && directivesObject.custom.resolver != null;
+}
+
+function toBaseOperation({ fieldNode, directivesObject }: IFieldNodeAndDirectivesObject, gqlTypeName: string): IBaseOperation {
+  return {
+    name: fieldNode.name.value,
+    type: gqlTypeName,
+    resolver: directivesObject.custom.resolver,
+    params: directivesObject.custom.params || {}
+  };
+}
+
+function toFieldOperations(fieldNodes: ReadonlyArray<FieldDefinitionNode>, gqlTypeName: string): TFieldOperation[] {
+  return fieldNodes
+    .map(toFieldNodeAndDirectivesObject)
+    .filter(({ directivesObject }) => hasCustomDirective(directivesObject))
+    .map((item) => toFieldOperation(item, gqlTypeName));
+}
+
+function toFieldOperation({ fieldNode, directivesObject }: IFieldNodeAndDirectivesObject, gqlTypeName: string): TFieldOperation {
+  return {
+    name: fieldNode.name.value,
+    type: "FIELD",
+    gqlTypeName,
+    fieldName: fieldNode.name.value,
+    resolver: directivesObject.custom.resolver,
+    params: directivesObject.custom.params || {}
   };
 }

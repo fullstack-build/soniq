@@ -8,7 +8,7 @@ import getDuplicates from "./helpers/getDuplicates";
 import getOperatorsDefinitionNode from "./helpers/getOperatorsDefinitionNode";
 import getOperatorsSchemaExtension from "./helpers/getOperatorsSchemaExtension";
 
-const operatorsObject: IOperatorObject = { ...equal, ...lessAndGreaterThan, ...boolean, ...inOperators, ...pattern };
+export const operatorsObject: IOperatorObject = { ...equal, ...lessAndGreaterThan, ...boolean, ...inOperators, ...pattern };
 
 const operatorNames = Object.values(operatorsObject).map(({ name }) => name);
 const duplicateOpertorNames = getDuplicates(operatorNames);
