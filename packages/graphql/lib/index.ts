@@ -4,8 +4,6 @@ import * as apolloServer from "apollo-server-koa";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
-import * as koaBody from "koa-bodyparser";
-import * as KoaRouter from "koa-router";
 
 import { Service, Inject } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
@@ -18,6 +16,7 @@ import { DbGeneralPool } from "@fullstack-one/db";
 
 import IGraphqlConfig from "../config/IGraphqlConfig";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
+import { createGraphQlKoaRouter } from "./createGraphQlKoaRouter";
 import { getDefaultResolvers } from "./queryBuilder/resolvers";
 import { operatorsObject } from "./compareOperators";
 import { getOperations, IOperations } from "./getOperations";
@@ -89,71 +88,16 @@ export class GraphQl {
 
     const { gQlAst, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
 
-    const schema = makeExecutableSchema({
+    this.apolloSchema = makeExecutableSchema({
       typeDefs: gQlAst,
       resolvers: getResolvers(operations, this.resolvers)
     });
 
-    this.apolloSchema = schema;
-
-    const setCacheHeaders = async (ctx, next) => {
-      await next();
-      let cacheHeader = "no-store";
-      if (ctx.state.includesMutation === true) {
-        cacheHeader = "no-store";
-      } else {
-        if (ctx.state.authRequired === true) {
-          cacheHeader = "privat, max-age=600";
-        } else {
-          cacheHeader = "public, max-age=600";
-        }
-      }
-
-      ctx.set("Cache-Control", cacheHeader);
-    };
-
-    const enforceOriginMatch = (ctx, next) => {
-      const errorMessage = "All graphql endpoints only allow requests with origin and referrer headers or API-Client requests from non-browsers.";
-
-      if (ctx.securityContext == null) {
-        return ctx.throw(400, errorMessage);
-      }
-
-      // If a user is requesting data through an API-Client (not a Browser) simply allow everything
-      if (ctx.securityContext.isApiClient === true) {
-        return next();
-      }
-
-      if (ctx.securityContext.sameOriginApproved.byOrigin === true && ctx.securityContext.sameOriginApproved.byReferrer === true) {
-        return next();
-      }
-
-      return ctx.throw(400, errorMessage);
-    };
-
-    const gQlParam = (ctx) => {
-      ctx.state.authRequired = false;
-      ctx.state.includesMutation = false;
-
-      return {
-        schema,
-        context: {
-          ctx,
-          accessToken: ctx.state.accessToken
-        }
-      };
-    };
-
-    const gqlKoaRouter = new KoaRouter();
-    gqlKoaRouter.post(this.graphQlConfig.endpoint, koaBody(), enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
-    gqlKoaRouter.get(this.graphQlConfig.endpoint, enforceOriginMatch, setCacheHeaders, apolloServer.graphqlKoa(gQlParam));
-    if (this.graphQlConfig.graphiQlEndpointActive === true) {
-      gqlKoaRouter.get(this.graphQlConfig.graphiQlEndpoint, apolloServer.graphiqlKoa({ endpointURL: this.graphQlConfig.endpoint }));
-    }
-
-    const app = this.server.getApp();
-    app.use(gqlKoaRouter.routes());
-    app.use(gqlKoaRouter.allowedMethods());
+    const gqlKoaRouter = createGraphQlKoaRouter(this.apolloSchema);
+    this.server
+      .getApp()
+      .use(gqlKoaRouter.routes())
+      .use(gqlKoaRouter.allowedMethods());
   }
 
   public addPreQueryHook(fn) {
