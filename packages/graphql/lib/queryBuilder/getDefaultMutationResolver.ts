@@ -21,10 +21,8 @@ export default function getDefaultMutationResolver(
   dbMeta: IDbMeta
 ): IFieldResolver<any, any> {
   return async (obj, args, context, info) => {
-    let isAuthenticated = false;
-    if (context.accessToken != null) {
-      isAuthenticated = true;
-    }
+    const isAuthenticated = context.accessToken != null;
+
     // Generate mutation sql query
     const mutationQuery = mutationBuilder.build(info);
     context.ctx.state.includesMutation = true;

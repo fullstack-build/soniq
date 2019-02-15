@@ -6,10 +6,12 @@ import { IDbMeta } from "@fullstack-one/schema-builder";
 
 import generateCustomSql from "./generateCustomSql";
 
-export interface IQueryContext {
+export interface IQueryParams {
   sql: string;
   values: any[];
-  query: any;
+  query: {
+    name: string;
+  };
   authRequired: boolean;
   potentialHighCost: boolean;
   costTree: any;
@@ -334,7 +336,7 @@ export default class QueryBuilder {
     };
   }
 
-  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match: any = null): IQueryContext {
+  public build(info: GraphQLResolveInfo & { mergeInfo: MergeInfo }, isAuthenticated: boolean, match: any = null): IQueryParams {
     // Use PostGraphile parser to get nested query object
     const query = parseResolveInfo(info);
 
