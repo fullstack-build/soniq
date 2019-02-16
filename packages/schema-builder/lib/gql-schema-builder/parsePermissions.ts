@@ -2,10 +2,10 @@ import { parsePermission } from "./parsePermission";
 import { extensions as defaultExtensions } from "./extensions";
 import { createSchemaBasics } from "./createSchemaBasics";
 import { createMutation } from "./createMutation";
-import { IPermissionContext, IPermission, IConfig } from "./interfaces";
+import { IPermissionContext, IPermission, IConfig, IResolverMeta } from "./interfaces";
 
 export function parsePermissions(permissions: IPermission[], permissionContext: IPermissionContext, extensions, config: IConfig) {
-  const meta = {
+  const meta: IResolverMeta = {
     query: {},
     mutation: {},
     permissionMeta: {}
@@ -32,7 +32,7 @@ export function parsePermissions(permissions: IPermission[], permissionContext: 
   const modifiedMutation = {};
 
   // Loop over mutations to modify them by extensions (e.g. add input arguments)
-  Object.values(meta.mutation).forEach((mutation: any) => {
+  Object.values(meta.mutation).forEach((mutation) => {
     const extendArguments = [];
     let myMutation = mutation;
     currentExtensions.forEach((parser: any) => {

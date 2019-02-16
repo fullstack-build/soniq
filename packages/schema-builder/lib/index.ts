@@ -26,7 +26,7 @@ import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
 import { print, DocumentNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
-import { IPermissionContext, IConfig } from "./gql-schema-builder/interfaces";
+import { IPermissionContext, IConfig, IResolverMeta } from "./gql-schema-builder/interfaces";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -182,7 +182,7 @@ export class SchemaBuilder {
     this.gqlSdlExtensions.push(schema);
   }
 
-  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: DocumentNode; resolverMeta: any } {
+  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: DocumentNode; resolverMeta: IResolverMeta } {
     return {
       dbMeta: this.dbMeta,
       gqlRuntimeDocument: this.gqlRuntimeDocument,

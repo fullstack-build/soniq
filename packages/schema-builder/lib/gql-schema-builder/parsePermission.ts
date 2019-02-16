@@ -3,12 +3,12 @@ import { buildReadQuery } from "./readViewBuilder";
 import { buildUpdateView } from "./updateViewBuilder";
 import { buildCreateView } from "./createViewBuilder";
 import { buildDeleteView } from "./deleteViewBuilder";
-import { ITableData, IPermissionContext, IConfig, IPermission } from "./interfaces";
+import { ITableData, IPermissionContext, IConfig, IPermission, IResolverMeta } from "./interfaces";
 
 export function parsePermission(permission: IPermission, permissionContext: IPermissionContext, extensions, config: IConfig) {
   const { gqlDocument } = permissionContext;
   const sql = [];
-  const meta = {
+  const meta: IResolverMeta = {
     query: {},
     mutation: {},
     permissionMeta: {}

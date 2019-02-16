@@ -1,44 +1,39 @@
 import { ArgumentNode, DirectiveNode, ListValueNode, ObjectValueNode, ObjectFieldNode } from "graphql";
 
-function getArgumentsValue(node: DirectiveNode) {
-  const obj = {};
+function getArgumentsValue(node: DirectiveNode): any {
+  const obj: any = {};
 
-  Object.values(node.arguments).forEach((field: ArgumentNode | any) => {
-    const type = field.value.kind;
-    let value = field.value.value;
-
-    if (type === "IntValue") {
-      obj[field.name.value] = parseInt(value, 10);
+  Object.values(node.arguments).forEach((field: ArgumentNode) => {
+    if (field.value.kind === "IntValue") {
+      obj[field.name.value] = parseInt(field.value.value, 10);
     }
 
-    if (type === "FloatValue") {
-      obj[field.name.value] = parseFloat(value);
+    if (field.value.kind === "FloatValue") {
+      obj[field.name.value] = parseFloat(field.value.value);
     }
 
-    if (type === "StringValue") {
-      obj[field.name.value] = value.toString();
+    if (field.value.kind === "StringValue") {
+      obj[field.name.value] = field.value.value.toString();
     }
 
-    if (type === "BooleanValue") {
-      obj[field.name.value] = value === "true";
+    if (field.value.kind === "BooleanValue") {
+      obj[field.name.value] = field.value.value === true;
     }
 
-    if (type === "ObjectValue") {
-      value = field.value;
-      obj[field.name.value] = getObjectValue(value);
+    if (field.value.kind === "ObjectValue") {
+      obj[field.name.value] = getObjectValue(field.value);
     }
 
-    if (type === "ListValue") {
-      value = field.value;
-      obj[field.name.value] = getListValues(value);
+    if (field.value.kind === "ListValue") {
+      obj[field.name.value] = getListValues(field.value);
     }
   });
 
   return obj;
 }
 
-function getObjectValue(node: ObjectValueNode) {
-  const obj = {};
+function getObjectValue(node: ObjectValueNode): any {
+  const obj: any = {};
 
   Object.values(node.fields).forEach((field: ObjectFieldNode | any) => {
     const type = field.value.kind;
@@ -74,8 +69,8 @@ function getObjectValue(node: ObjectValueNode) {
   return obj;
 }
 
-function getListValues(node: ListValueNode) {
-  const arr = [];
+function getListValues(node: ListValueNode): any[] {
+  const arr: any[] = [];
 
   Object.values(node.values).forEach((field: any) => {
     const type = field.kind;
@@ -109,6 +104,6 @@ function getListValues(node: ListValueNode) {
   return arr;
 }
 
-export function parseDirectiveArguments(argument: DirectiveNode) {
-  return getArgumentsValue(argument);
+export function parseDirectiveArguments(directiveNode: DirectiveNode) {
+  return getArgumentsValue(directiveNode);
 }

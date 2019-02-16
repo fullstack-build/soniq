@@ -3,8 +3,15 @@ import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";
 import { ITableData, IPermissionContext } from "../interfaces";
+import { IDeleteViewMeta, IDeleteView } from "./interfaces";
 
-export function buildDeleteView(table: ITableData, expressionsInput: IExpressionInput, permissionContext: IPermissionContext, extensions, config) {
+export function buildDeleteView(
+  table: ITableData,
+  expressionsInput: IExpressionInput,
+  permissionContext: IPermissionContext,
+  extensions,
+  config
+): IDeleteView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -12,7 +19,7 @@ export function buildDeleteView(table: ITableData, expressionsInput: IExpression
   const gqlInputTypeName = mutationName;
 
   // Initialize meta object. Required for querybuilder
-  const meta: any = {
+  const meta: IDeleteViewMeta = {
     name: mutationName,
     viewSchemaName: config.schemaName,
     viewName: mutationName,

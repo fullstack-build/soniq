@@ -1,9 +1,11 @@
 import { CreateExpressions, orderExpressions } from "../createExpressions";
 import { parseDirectives } from "../utils/parseDirectives";
 
+import { ITableData, IPermissionContext } from "../interfaces";
 import { createView } from "./helpers";
+import { ICreateViewMeta, ICreateView } from "./interfaces";
 
-export function buildCreateView(table, view, context, extensions, config) {
+export function buildCreateView(table: ITableData, view, permissionContext: IPermissionContext, extensions, config): ICreateView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -12,7 +14,7 @@ export function buildCreateView(table, view, context, extensions, config) {
   const returnOnlyId = view.returnOnlyId === true ? true : false;
 
   // Initialize meta object. Required for querybuilder
-  const meta: any = {
+  const meta: ICreateViewMeta = {
     name: mutationName,
     viewSchemaName: config.schemaName,
     viewName: mutationName,
@@ -60,7 +62,7 @@ export function buildCreateView(table, view, context, extensions, config) {
       directives,
       fieldName,
       localTable,
-      context,
+      context: permissionContext,
       table
     };
 
@@ -80,7 +82,7 @@ export function buildCreateView(table, view, context, extensions, config) {
   });
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
+  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(view.expressions, true);
 

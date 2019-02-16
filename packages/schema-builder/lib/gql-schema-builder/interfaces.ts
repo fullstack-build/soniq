@@ -1,5 +1,8 @@
 import { ObjectTypeDefinitionNode, DefinitionNode, DocumentNode, InputValueDefinitionNode, FieldDefinitionNode } from "graphql";
 import { IReadViewMeta } from "./readViewBuilder/interfaces";
+import { ICreateViewMeta } from "./createViewBuilder/interfaces";
+import { IUpdateViewMeta } from "./updateViewBuilder/interfaces";
+import { IDeleteViewMeta } from "./deleteViewBuilder/interfaces";
 import { IDbMeta } from "..";
 import { IExpression, IExpressionInput, CreateExpressions } from "./createExpressions";
 import { CreateDefaultField } from "./readViewBuilder/defaultFieldCreator";
@@ -13,7 +16,7 @@ export interface ITableData {
 
 export interface IPermissionView {
   gqlDefinitions: DefinitionNode[];
-  meta: IReadViewMeta | any;
+  meta: IReadViewMeta;
   sql: string[];
 }
 
@@ -115,3 +118,15 @@ export interface IPermissionQueries {}
 
 // tslint:disable-next-line:no-empty-interface
 export interface IPermissionMutations {}
+
+export interface IResolverMeta {
+  query: {
+    [gqlTypeName: string]: IReadViewMeta;
+  };
+  mutation: {
+    [name: string]: ICreateViewMeta | IUpdateViewMeta | IDeleteViewMeta;
+  };
+  permissionMeta: {
+    [gqlTypeName: string]: IPermissionMeta;
+  };
+}
