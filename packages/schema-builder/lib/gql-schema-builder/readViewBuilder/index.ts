@@ -4,7 +4,14 @@ import { getFilterDefinitions } from "./getFilterDefinitions";
 import { ITableData, IPermissionView, IReadExpressions, IPermissionContext } from "../interfaces";
 import { DefinitionNode } from "graphql";
 
-export function buildReadQuery(table: ITableData, readExpressions: IReadExpressions, permissionContext: IPermissionContext, extensions, config, disableSecurityBarrier: boolean):IPermissionView {
+export function buildReadQuery(
+  table: ITableData,
+  readExpressions: IReadExpressions,
+  permissionContext: IPermissionContext,
+  extensions,
+  config,
+  disableSecurityBarrier: boolean
+): IPermissionView {
   const gqlDefinitions: DefinitionNode[] = [];
   const sql = [];
   const queryName = `${table.gqlTypeName.toLowerCase()}s`;

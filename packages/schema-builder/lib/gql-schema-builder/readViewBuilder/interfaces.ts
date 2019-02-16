@@ -1,4 +1,3 @@
-
 import { DefinitionNode } from "graphql";
 
 export interface IReadView {

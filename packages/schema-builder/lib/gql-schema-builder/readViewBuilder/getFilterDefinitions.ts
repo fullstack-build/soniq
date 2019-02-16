@@ -82,7 +82,7 @@ function getWhereType(name: string, fieldNames: string[]): InputObjectTypeDefini
   return def;
 }
 
-function getEnumValueDefinition(option: string):EnumValueDefinitionNode {
+function getEnumValueDefinition(option: string): EnumValueDefinitionNode {
   return {
     kind: "EnumValueDefinition",
     name: {

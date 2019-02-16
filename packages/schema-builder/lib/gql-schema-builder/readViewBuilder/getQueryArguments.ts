@@ -82,6 +82,6 @@ function getOrderByArgument(gqlTypeName: string): InputValueDefinitionNode {
   };
 }
 
-export function getQueryArguments(gqlTypeName: string): InputValueDefinitionNode[] {
+export function getQueryArguments(gqlTypeName: string): ReadonlyArray<InputValueDefinitionNode> {
   return [getWhereArgument(gqlTypeName), getOrderByArgument(gqlTypeName), getLimitArgument(), getOffsetArgument()];
 }

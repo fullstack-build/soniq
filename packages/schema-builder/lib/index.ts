@@ -50,7 +50,7 @@ export class SchemaBuilder {
   private gQlAst: DocumentNode;
   private permissions: any;
   private expressions: IExpression[];
-  private gqlRuntimeDocument: any;
+  private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
   private pgToDbMeta: PgToDbMeta;
@@ -182,7 +182,7 @@ export class SchemaBuilder {
     this.gqlSdlExtensions.push(schema);
   }
 
-  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: any; resolverMeta: any } {
+  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: DocumentNode; resolverMeta: any } {
     return {
       dbMeta: this.dbMeta,
       gqlRuntimeDocument: this.gqlRuntimeDocument,

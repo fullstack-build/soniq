@@ -10,7 +10,14 @@ import { IReadViewMeta, IReadView } from "./interfaces";
 import { ITableData, IPermissionContext } from "../interfaces";
 import { ObjectTypeDefinitionNode } from "graphql";
 
-export function buildReadView(table: ITableData, readExpressions, permissionContext: IPermissionContext, extensions, config, disableSecurityBarrier): IReadView {
+export function buildReadView(
+  table: ITableData,
+  readExpressions,
+  permissionContext: IPermissionContext,
+  extensions,
+  config,
+  disableSecurityBarrier
+): IReadView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
 
@@ -27,7 +34,7 @@ export function buildReadView(table: ITableData, readExpressions, permissionCont
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array
-  let newGqlDefinition = {...JSON.parse(JSON.stringify(gqlTypeDefinition)), fields: []};
+  const newGqlDefinition = { ...JSON.parse(JSON.stringify(gqlTypeDefinition)), fields: [] };
 
   // List of field-select sql statements
   const publicFieldsSql = [];

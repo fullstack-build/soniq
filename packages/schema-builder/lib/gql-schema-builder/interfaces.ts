@@ -43,10 +43,10 @@ export interface IParser {
 }
 
 export interface IPermissionContext {
-  gqlDocument: DocumentNode | any,
-  dbMeta: IDbMeta,
-  expressions: IExpression[]
-};
+  gqlDocument: DocumentNode | any;
+  dbMeta: IDbMeta;
+  expressions: IExpression[];
+}
 
 export interface IReadExpressions {
   [fieldName: string]: IExpressionInput;
@@ -99,9 +99,9 @@ export interface IOperatorsByKey {
 }
 
 export interface IRelationMeta {
-  foreignGqlTypeName: string,
-  isNonNullType: boolean,
-  isListType: boolean
+  foreignGqlTypeName: string;
+  isNonNullType: boolean;
+  isListType: boolean;
 }
 
 export interface ICompiledPermissionMeta {
@@ -110,10 +110,8 @@ export interface ICompiledPermissionMeta {
   meta: any;
 }
 
-export interface IPermissionQueries {
+// tslint:disable-next-line:no-empty-interface
+export interface IPermissionQueries {}
 
-}
-
-export interface IPermissionMutations {
-  
-}
+// tslint:disable-next-line:no-empty-interface
+export interface IPermissionMutations {}

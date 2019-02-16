@@ -20,7 +20,14 @@ function getExpressionName(expressionObject: ICompiledExpression): string {
   return `"${expressionObject.name}"`;
 }
 
-export function createView(table: ITableData, config: IConfig, name:string, fields: string[], expressions: ICompiledExpression[], disableSecurityBarrier: boolean): string[] {
+export function createView(
+  table: ITableData,
+  config: IConfig,
+  name: string,
+  fields: string[],
+  expressions: ICompiledExpression[],
+  disableSecurityBarrier: boolean
+): string[] {
   const statements = [];
 
   statements.push(`DROP VIEW IF EXISTS "${config.schemaName}"."${name}";`);

@@ -3,7 +3,7 @@ import { ArgumentNode, DirectiveNode, ListValueNode, ObjectValueNode, ObjectFiel
 function getArgumentsValue(node: DirectiveNode) {
   const obj = {};
 
-  Object.values(node.arguments).forEach((field: ArgumentNode | any) => {
+  Object.values(node.arguments).forEach((field: ArgumentNode | any) => {
     const type = field.value.kind;
     let value = field.value.value;
 
