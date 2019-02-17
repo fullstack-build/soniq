@@ -24,7 +24,9 @@ import { IDbMeta, IDbRelation } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
 import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
-import { print, DocumentNode } from "graphql";
+import { print, DocumentNode, DefinitionNode } from "graphql";
+import { IExpression } from "./gql-schema-builder/createExpressions";
+import { IPermissionContext, IConfig, IResolverMeta } from "./gql-schema-builder/interfaces";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -47,8 +49,8 @@ export class SchemaBuilder {
   private gqlSdlExtensions: any = [];
   private gQlAst: DocumentNode;
   private permissions: any;
-  private expressions: any;
-  private gqlRuntimeDocument: any;
+  private expressions: IExpression[];
+  private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
   private pgToDbMeta: PgToDbMeta;
@@ -120,16 +122,16 @@ export class SchemaBuilder {
       this.logger.trace("boot", "Expressions loaded");
       this.expressions = [].concat.apply([], expressionsArray);
 
-      const dbConfig = this.config.getConfig("Db");
+      const dbConfig: any = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
 
-      const config = {
+      const config: IConfig = {
         schemaName: dbConfig.viewSchemaName,
         userName: dbConfig.general.user,
         databaseName: dbConfig.general.database
       };
 
-      const context = {
+      const context: IPermissionContext = {
         gqlDocument: this.gQlAst,
         dbMeta: this.dbMeta,
         expressions: this.expressions
@@ -146,7 +148,7 @@ export class SchemaBuilder {
       data.sql.forEach((statement) => sql.push(statement));
 
       //  Reverse to get the generated queries/mutations at the beginning
-      data.gqlDocument.definitions.reverse();
+      (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
@@ -180,7 +182,7 @@ export class SchemaBuilder {
     this.gqlSdlExtensions.push(schema);
   }
 
-  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: any; resolverMeta: any } {
+  public getGQlRuntimeObject(): { dbMeta: IDbMeta; gqlRuntimeDocument: DocumentNode; resolverMeta: IResolverMeta } {
     return {
       dbMeta: this.dbMeta,
       gqlRuntimeDocument: this.gqlRuntimeDocument,

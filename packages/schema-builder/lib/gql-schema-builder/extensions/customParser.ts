@@ -1,4 +1,14 @@
-export function parseReadField(ctx) {
+import { IParser, IParseReadFieldContext, IParseUpdateFieldContext, IParseCreateFieldContext } from "./interfaces";
+
+const customParser: IParser = {
+  parseReadField,
+  parseUpdateField,
+  parseCreateField
+};
+
+export default customParser;
+
+function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
@@ -28,8 +38,8 @@ export function parseReadField(ctx) {
   return null;
 }
 
-export function parseUpdateField(ctx) {
-  const { gqlFieldDefinition, view, fieldName, directives } = ctx;
+function parseUpdateField(ctx: IParseUpdateFieldContext) {
+  const { view, fieldName, directives } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.custom != null) {
     return [];
@@ -37,6 +47,6 @@ export function parseUpdateField(ctx) {
   return null;
 }
 
-export function parseCreateField(ctx) {
+function parseCreateField(ctx: IParseCreateFieldContext) {
   return parseUpdateField(ctx);
 }

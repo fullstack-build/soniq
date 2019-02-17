@@ -1,11 +1,11 @@
 export class CreateExpressions {
-  private expressionsObject: any = {};
-  private expressionsByName: any = {};
+  private compiledExpressions: ICompiledExpressions = {};
+  private expressionsByName: IExpressionsByName = {};
   private tableName: string;
-  private total: any = false;
+  private total: boolean = false;
 
-  constructor(expressions, tableName, total = false) {
-    Object.values(expressions).forEach((expression: any) => {
+  constructor(expressions: IExpression[], tableName: string, total: boolean = false) {
+    Object.values(expressions).forEach((expression: IExpression) => {
       if (this.expressionsByName[expression.name] != null) {
         throw new Error(`Expression '${expression.name}' is defined at least twice.`);
       }
@@ -17,23 +17,27 @@ export class CreateExpressions {
   }
 
   // Allow String/Array/Object as input and transfer it to an array of objects
-  private fixExpressionType(expression) {
-    const expressions = [];
+  private fixExpressionType(expressionInput: IExpressionInput): IExpressionInputObject[] {
+    const expressions: IExpressionInputObject[] = [];
 
-    if (Array.isArray(expression) === true) {
-      expression.forEach((innerExpression) => {
+    if (Array.isArray(expressionInput) === true) {
+      const expressionInputArray = expressionInput as Array<string | IExpressionInputObject>;
+      expressionInputArray.forEach((innerExpression) => {
         this.fixExpressionType(innerExpression).forEach((e) => expressions.push(e));
       });
-    } else if (typeof expression === "string") {
-      expressions.push({ name: expression });
-    } else if (typeof expression === "object" && expression.name != null) {
-      expressions.push(expression);
+    } else if (typeof expressionInput === "string") {
+      expressions.push({ name: expressionInput });
+    } else if (typeof expressionInput === "object") {
+      const expressionInputObject = expressionInput as IExpressionInputObject;
+      if (expressionInputObject.name != null) {
+        expressions.push(expressionInputObject);
+      }
     }
 
     return expressions;
   }
 
-  private getExpression(name, params?, isRequiredAsPermissionExpression = false) {
+  private getExpression(name: string, params: IExpressionParams, isRequiredAsPermissionExpression: boolean = false) {
     if (this.expressionsByName[name] == null) {
       throw new Error(`Expression '${name}' is not defined.`);
     }
@@ -57,33 +61,33 @@ export class CreateExpressions {
 
     expressionName = `_${expressionName}`;
 
-    if (this.expressionsObject[expressionName] == null) {
+    if (this.compiledExpressions[expressionName] == null) {
       const expressionContext = {
-        getField: (fieldName) => {
-          this.expressionsObject[expressionName].requiresLateral = true;
+        getField: (fieldName: string): string => {
+          this.compiledExpressions[expressionName].requiresLateral = true;
           return `"${this.tableName}"."${fieldName}"`;
         },
-        getExpression: (tempName, tempParams) => {
+        getExpression: (tempName: string, tempParams: IExpressionParams): string => {
           const tempExpressionName = this.getExpression(tempName, tempParams);
-          this.expressionsObject[expressionName].requiresLateral = true;
-          this.expressionsObject[expressionName].order = this.expressionsObject[tempExpressionName].order + 1;
-          if (this.expressionsObject[tempExpressionName].requiresAuth === true) {
-            this.expressionsObject[expressionName].requiresAuth = true;
+          this.compiledExpressions[expressionName].requiresLateral = true;
+          this.compiledExpressions[expressionName].order = this.compiledExpressions[tempExpressionName].order + 1;
+          if (this.compiledExpressions[tempExpressionName].requiresAuth === true) {
+            this.compiledExpressions[expressionName].requiresAuth = true;
           }
-          if (this.expressionsObject[expressionName].dependentExpressions.indexOf(tempExpressionName) < 0) {
-            this.expressionsObject[expressionName].dependentExpressions.push(tempExpressionName);
+          if (this.compiledExpressions[expressionName].dependentExpressions.indexOf(tempExpressionName) < 0) {
+            this.compiledExpressions[expressionName].dependentExpressions.push(tempExpressionName);
           }
           if (this.total === true) {
             //  TODO: Consider renaming total to a clearer name
             // For Create, Update and Delete Views, we don't create FROM clauses for every expression. Instead each expression sql gets returned without that placeholder
-            return `(${this.expressionsObject[tempExpressionName].sql})`;
+            return `(${this.compiledExpressions[tempExpressionName].sql})`;
           } else {
             return `"${tempExpressionName}"."${tempExpressionName}"`;
           }
         }
       };
 
-      this.expressionsObject[expressionName] = {
+      this.compiledExpressions[expressionName] = {
         type: expression.type,
         gqlReturnType: expression.gqlReturnType,
         name: expressionName,
@@ -96,36 +100,37 @@ export class CreateExpressions {
         excludeFromPermissionExpressions: expression.excludeFromPermissionExpressions === true
       };
 
-      this.expressionsObject[expressionName].sql = expression.generate(expressionContext, params);
+      // Have to be set afterwards, since expression.generate tries to access this.compiledExpressions[expressionName].requiresLateral
+      this.compiledExpressions[expressionName].sql = expression.generate(expressionContext, params);
 
-      if (this.expressionsObject[expressionName].sql.toLowerCase() === "true" && this.expressionsObject[expressionName].requiresAuth === true) {
+      if (this.compiledExpressions[expressionName].sql.toLowerCase() === "true" && this.compiledExpressions[expressionName].requiresAuth === true) {
         throw new Error(`A expression which requires auth cannot return 'TRUE' as SQL. Found in '${name}'.`);
       }
     }
     if (isRequiredAsPermissionExpression === true) {
-      this.expressionsObject[expressionName].isRequiredAsPermissionExpression = true;
+      this.compiledExpressions[expressionName].isRequiredAsPermissionExpression = true;
     }
 
     return expressionName;
   }
 
-  public getExpressionsObject() {
-    return this.expressionsObject;
+  public getCompiledExpressions(): ICompiledExpressions {
+    return this.compiledExpressions;
   }
 
-  public parseExpressionInput(expressions, isRequiredAsPermissionExpression = false) {
-    return this.fixExpressionType(expressions).map((expression) => {
-      return this.getExpressionObject(expression.name, expression.params || {}, isRequiredAsPermissionExpression);
+  public parseExpressionInput(expressionsInput: IExpressionInput, isRequiredAsPermissionExpression: boolean = false): ICompiledExpression[] {
+    return this.fixExpressionType(expressionsInput).map((expression: IExpressionInputObject) => {
+      return this.getCompiledExpression(expression.name, expression.params || {}, isRequiredAsPermissionExpression);
     });
   }
 
-  public getExpressionObject(name, params?, isRequiredAsPermissionExpression = false) {
+  public getCompiledExpression(name, params?, isRequiredAsPermissionExpression = false): ICompiledExpression {
     const expressionName = this.getExpression(name, params, isRequiredAsPermissionExpression);
-    return this.expressionsObject[expressionName];
+    return this.compiledExpressions[expressionName];
   }
 }
 
-export function orderExpressions(a, b) {
+export function orderExpressions(a: ICompiledExpression, b: ICompiledExpression) {
   if (a.order > b.order) {
     return 1;
   }
@@ -134,3 +139,50 @@ export function orderExpressions(a, b) {
   }
   return 0;
 }
+
+export interface IExpressionsByName {
+  [name: string]: IExpression;
+}
+
+export interface IExpression {
+  name: string;
+  type: "expression" | "function";
+  requiresAuth?: boolean;
+  gqlReturnType: string;
+  getNameWithParams?: (params: IExpressionParams) => string;
+  generate: (context: IExpressionContext, params: IExpressionParams) => string;
+  excludeFromPermissionExpressions?: boolean;
+}
+
+export interface IExpressionContext {
+  getField: (name: string) => string;
+  getExpression: (name: string, params: IExpressionParams) => string;
+}
+
+export interface ICompiledExpressions {
+  [name: string]: ICompiledExpression;
+}
+
+export interface ICompiledExpression {
+  type: string;
+  gqlReturnType: string;
+  name: string;
+  sql: string;
+  requiresLateral: boolean;
+  requiresAuth: boolean;
+  dependentExpressions: string[];
+  order: number;
+  isRequiredAsPermissionExpression: boolean;
+  excludeFromPermissionExpressions: boolean;
+}
+
+export interface IExpressionInputObject {
+  name: string;
+  params?: IExpressionParams;
+}
+
+export interface IExpressionParams {
+  [key: string]: any;
+}
+
+export type IExpressionInput = IExpressionInputObject | string | Array<IExpressionInputObject | string>;

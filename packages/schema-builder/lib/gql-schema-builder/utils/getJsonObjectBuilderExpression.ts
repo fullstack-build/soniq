@@ -1,4 +1,4 @@
-function buildJsonObject(obj, fieldExpression, prePath) {
+function buildJsonObject(obj: any, fieldExpression: string, prePath: string[]): string {
   const values = [];
 
   Object.keys(obj).forEach((key) => {
@@ -26,7 +26,7 @@ function buildJsonObject(obj, fieldExpression, prePath) {
   return `jsonb_build_object(${values.join(", ")})`;
 }
 
-export function getJsonObjectBuilderExpression(matchObject, fieldName, tableName) {
+export function getJsonObjectBuilderExpression(matchObject, fieldName: string, tableName: string): string {
   const fieldExpression = `COALESCE("${tableName}"."${fieldName}", jsonb_build_object())`;
 
   return `${buildJsonObject(matchObject[fieldName], fieldExpression, [])}`;

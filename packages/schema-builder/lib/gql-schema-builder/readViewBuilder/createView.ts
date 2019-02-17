@@ -1,18 +1,26 @@
+import { CreateExpressions, orderExpressions, ICompiledExpression } from "../createExpressions";
+import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
+import { ITableData, IPermissionContext } from "../interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
-import { getQueryArguments } from "./getQueryArguments";
-
-import { createGqlField, createView } from "./helpers";
-
-import { CreateExpressions, orderExpressions } from "../createExpressions";
 
 import { CreateDefaultField } from "./defaultFieldCreator";
+import { getQueryArguments } from "./getQueryArguments";
+import { createGqlField, createView } from "./helpers";
+import { IReadViewMeta, IReadView } from "./interfaces";
 
-export function buildReadView(table, readExpressions, context, extensions, config, disableSecurityBarrier) {
+export function buildReadView(
+  table: ITableData,
+  readExpressions,
+  permissionContext: IPermissionContext,
+  extensions: IParser[],
+  config,
+  disableSecurityBarrier
+): IReadView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition, schemaName } = table;
 
   // Initialize meta object. Required for querybuilder
-  const meta: any = {
+  const meta: IReadViewMeta = {
     viewSchemaName: config.schemaName,
     publicViewName: `${tableName.toUpperCase()}_READ_PUBLIC`,
     authViewName: `${tableName.toUpperCase()}_READ_AUTH`,
@@ -24,8 +32,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
   };
 
   // Create a copy of the current gqlDefinition and set fields to an empty array
-  const newGqlDefinition = JSON.parse(JSON.stringify(gqlTypeDefinition));
-  newGqlDefinition.fields = [];
+  const newGqlDefinition = { ...JSON.parse(JSON.stringify(gqlTypeDefinition)), fields: [] };
 
   // List of field-select sql statements
   const publicFieldsSql = [];
@@ -37,8 +44,8 @@ export function buildReadView(table, readExpressions, context, extensions, confi
 
   const localTable = "_local_table_";
 
-  // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(context.expressions, localTable);
+  // Create an instance of CreateExpression, to create several used expressions in the permissionContext of the current gqlType
+  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable);
   const defaultFieldCreator = new CreateDefaultField(expressionCreator);
 
   gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {
@@ -46,7 +53,7 @@ export function buildReadView(table, readExpressions, context, extensions, confi
     const directives = parseDirectives(gqlFieldDefinition.directives);
     const fieldName = gqlFieldDefinition.name.value;
 
-    const ctx = {
+    const ctx: IParseReadFieldContext = {
       readExpressions,
       gqlFieldDefinition,
       directives,
@@ -54,12 +61,12 @@ export function buildReadView(table, readExpressions, context, extensions, confi
       defaultFieldCreator,
       fieldName,
       localTable,
-      context, // TODO: Dustin: contect should have a parentContext or permissionContext
+      permissionContext, // TODO: Dustin: contect should have a parentContext or permissionContext
       getQueryArguments,
       table
     };
 
-    extensions.some((parser: any) => {
+    extensions.some((parser) => {
       if (parser.parseReadField != null) {
         const results = parser.parseReadField(ctx);
         if (results != null && Array.isArray(results)) {
@@ -94,31 +101,31 @@ export function buildReadView(table, readExpressions, context, extensions, confi
     });
   });
 
-  const expressionsObject = expressionCreator.getExpressionsObject();
+  const compiledExpressions = expressionCreator.getCompiledExpressions();
 
-  const authExpressions = Object.values(expressionsObject).sort(orderExpressions);
-  const publicExpressions = authExpressions.filter((expressionObject: any) => {
-    return expressionObject.requiresAuth !== true;
+  const authExpressions = Object.values(compiledExpressions).sort(orderExpressions);
+  const publicExpressions = authExpressions.filter((compiledExpression) => {
+    return compiledExpression.requiresAuth !== true;
   });
 
-  authExpressions.forEach((expressionObject: any) => {
-    const gqlFieldDefinition = createGqlField(expressionObject.name, expressionObject.gqlReturnType);
+  authExpressions.forEach((compiledExpression) => {
+    const gqlFieldDefinition = createGqlField(compiledExpression.name, compiledExpression.gqlReturnType);
 
-    authFieldsSql.push(`"${expressionObject.name}"."${expressionObject.name}" AS "${expressionObject.name}"`);
-    meta.authFieldNames.push(expressionObject.name);
+    authFieldsSql.push(`"${compiledExpression.name}"."${compiledExpression.name}" AS "${compiledExpression.name}"`);
+    meta.authFieldNames.push(compiledExpression.name);
     newGqlDefinition.fields.push(gqlFieldDefinition);
 
-    meta.fields[expressionObject.name] = {
-      gqlFieldName: expressionObject.name,
-      nativeFieldName: expressionObject.name,
+    meta.fields[compiledExpression.name] = {
+      gqlFieldName: compiledExpression.name,
+      nativeFieldName: compiledExpression.name,
       isVirtual: false,
       meta: null
     };
   });
 
-  publicExpressions.forEach((expressionObject: any) => {
-    publicFieldsSql.push(`"${expressionObject.name}"."${expressionObject.name}" AS "${expressionObject.name}"`);
-    meta.publicFieldNames.push(expressionObject.name);
+  publicExpressions.forEach((compiledExpression) => {
+    publicFieldsSql.push(`"${compiledExpression.name}"."${compiledExpression.name}" AS "${compiledExpression.name}"`);
+    meta.publicFieldNames.push(compiledExpression.name);
   });
 
   if (meta.publicFieldNames.length > 0) {
