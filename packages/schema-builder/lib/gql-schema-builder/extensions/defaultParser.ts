@@ -1,4 +1,14 @@
-export function parseReadField(ctx) {
+import { IParser, IParseReadFieldContext, IParseUpdateFieldContext, IParseCreateFieldContext } from "./interfaces";
+
+const defaultParser: IParser = {
+  parseReadField,
+  parseUpdateField,
+  parseCreateField
+};
+
+export default defaultParser;
+
+function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
@@ -27,7 +37,7 @@ export function parseReadField(ctx) {
   return null;
 }
 
-export function parseUpdateField(ctx) {
+function parseUpdateField(ctx: IParseUpdateFieldContext) {
   const { gqlFieldDefinition, view, fieldName } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0) {
@@ -36,6 +46,6 @@ export function parseUpdateField(ctx) {
   return null;
 }
 
-export function parseCreateField(ctx) {
+function parseCreateField(ctx: IParseCreateFieldContext) {
   return parseUpdateField(ctx);
 }

@@ -1,62 +1,18 @@
-import { getJsonObjectBuilderExpression } from "../utils";
 import * as _ from "lodash";
+import { getJsonObjectBuilderExpression } from "../utils";
+import { IParser, IParseUpdateFieldContext, IParseReadFieldContext, IParseCreateFieldContext } from "./interfaces";
+import { Mutable } from "../interfaces";
+import { FieldDefinitionNode } from "graphql";
 
-const JSON_SPLIT = ".";
+const jsonParser: IParser = {
+  parseReadField,
+  parseUpdateField,
+  parseCreateField
+};
 
-function createJsonSubset(expressions, columnExpression) {
-  let publicSql = null;
-  let authSql = null;
+export default jsonParser;
 
-  let hasPublicTrueExpression: any = false;
-
-  const getName = (expressionObject) => {
-    return `"${expressionObject.name}"."${expressionObject.name}"`;
-  };
-
-  // Generate public condition out of array of expressions
-  const publicCondition = expressions
-    .filter((expressionObject) => {
-      // If any expression is just true, the hole field is public
-      if (expressionObject.sql.toLowerCase() === "true") {
-        hasPublicTrueExpression = true;
-      }
-
-      return expressionObject.requiresAuth !== true;
-    })
-    .map(getName)
-    .join(" OR ");
-
-  // Generate condition out of array of expressions
-  const authCondition = expressions.map(getName).join(" OR ");
-
-  // If one expression is just true we don't need CASE (for public fields)
-  if (hasPublicTrueExpression === true) {
-    publicSql = `${columnExpression}`;
-  } else {
-    if (publicCondition !== "") {
-      publicSql = `CASE WHEN ${publicCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
-    }
-    authSql = `CASE WHEN ${authCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
-  }
-  return {
-    publicSql,
-    authSql
-  };
-}
-
-function getJsonMerge(jsonFields) {
-  if (jsonFields.length < 1) {
-    return "jsonb_build_object()";
-  }
-  if (jsonFields.length < 2) {
-    return jsonFields.pop();
-  }
-  const jsonField = jsonFields.pop();
-
-  return `_meta.jsonb_merge(${jsonField}, ${getJsonMerge(jsonFields)})`;
-}
-
-export function parseReadField(ctx) {
+function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives, expressionCreator, localTable, gqlFieldDefinition } = ctx;
 
   // Is this a json field
@@ -128,17 +84,17 @@ export function parseReadField(ctx) {
   ];
 }
 
-export function parseUpdateField(ctx) {
+function parseUpdateField(ctx: IParseUpdateFieldContext) {
   const { gqlFieldDefinition, view, fieldName, directives } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.json != null) {
-    gqlFieldDefinition.type = renameNamedTypeToInput(gqlFieldDefinition.type);
+    (gqlFieldDefinition as Mutable<FieldDefinitionNode>).type = renameNamedTypeToInput(gqlFieldDefinition.type);
     return [gqlFieldDefinition];
   }
   return null;
 }
 
-export function parseCreateField(ctx) {
+function parseCreateField(ctx: IParseCreateFieldContext) {
   return parseUpdateField(ctx);
 }
 
@@ -149,4 +105,56 @@ function renameNamedTypeToInput(gqlType) {
     gqlType.type = renameNamedTypeToInput(gqlType.type);
   }
   return gqlType;
+}
+function createJsonSubset(expressions, columnExpression) {
+  let publicSql = null;
+  let authSql = null;
+
+  let hasPublicTrueExpression: any = false;
+
+  const getName = (expressionObject) => {
+    return `"${expressionObject.name}"."${expressionObject.name}"`;
+  };
+
+  // Generate public condition out of array of expressions
+  const publicCondition = expressions
+    .filter((expressionObject) => {
+      // If any expression is just true, the hole field is public
+      if (expressionObject.sql.toLowerCase() === "true") {
+        hasPublicTrueExpression = true;
+      }
+
+      return expressionObject.requiresAuth !== true;
+    })
+    .map(getName)
+    .join(" OR ");
+
+  // Generate condition out of array of expressions
+  const authCondition = expressions.map(getName).join(" OR ");
+
+  // If one expression is just true we don't need CASE (for public fields)
+  if (hasPublicTrueExpression === true) {
+    publicSql = `${columnExpression}`;
+  } else {
+    if (publicCondition !== "") {
+      publicSql = `CASE WHEN ${publicCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
+    }
+    authSql = `CASE WHEN ${authCondition} THEN ${columnExpression} ELSE jsonb_build_object() END`;
+  }
+  return {
+    publicSql,
+    authSql
+  };
+}
+
+function getJsonMerge(jsonFields) {
+  if (jsonFields.length < 1) {
+    return "jsonb_build_object()";
+  }
+  if (jsonFields.length < 2) {
+    return jsonFields.pop();
+  }
+  const jsonField = jsonFields.pop();
+
+  return `_meta.jsonb_merge(${jsonField}, ${getJsonMerge(jsonFields)})`;
 }

@@ -1,27 +1,16 @@
-import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
 import * as _ from "lodash";
-import { IParseReadFieldContext, IParseUpdateFieldContext } from "../extensions.new/interfaces";
+import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
+import { IParseReadFieldContext, IParseUpdateFieldContext, IParser, IParseCreateFieldContext } from "./interfaces";
 
-function getRelations(dbMeta, relationName, tableName) {
-  const relationConnections = dbMeta.relations[relationName];
+const relationParser: IParser = {
+  parseReadField,
+  parseUpdateField,
+  parseCreateField
+};
 
-  const relationConnectionsArray: any = Object.values(relationConnections);
+export default relationParser;
 
-  const isFirstRelation = relationConnectionsArray[0].tableName === tableName;
-
-  // Determine which relation is the foreign one to get the correct columnName
-  const foreignRelation = isFirstRelation !== true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-
-  // Determine which relation is the own one to get the correct columnName
-  const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-
-  return {
-    ownRelation,
-    foreignRelation
-  };
-}
-
-export function parseReadField(ctx: IParseReadFieldContext) {
+function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
@@ -83,7 +72,7 @@ export function parseReadField(ctx: IParseReadFieldContext) {
   return null;
 }
 
-export function parseUpdateField(ctx: IParseUpdateFieldContext) {
+function parseUpdateField(ctx: IParseUpdateFieldContext) {
   const { view, fieldName, directives } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.relation != null && directives.relation.name != null) {
@@ -107,6 +96,25 @@ export function parseUpdateField(ctx: IParseUpdateFieldContext) {
   return null;
 }
 
-export function parseCreateField(ctx) {
+function parseCreateField(ctx: IParseCreateFieldContext) {
   return parseUpdateField(ctx);
+}
+
+function getRelations(dbMeta, relationName, tableName) {
+  const relationConnections = dbMeta.relations[relationName];
+
+  const relationConnectionsArray: any = Object.values(relationConnections);
+
+  const isFirstRelation = relationConnectionsArray[0].tableName === tableName;
+
+  // Determine which relation is the foreign one to get the correct columnName
+  const foreignRelation = isFirstRelation !== true ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
+  // Determine which relation is the own one to get the correct columnName
+  const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
+  return {
+    ownRelation,
+    foreignRelation
+  };
 }
