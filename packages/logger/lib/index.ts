@@ -1,21 +1,34 @@
+import * as DebugLogger from "debug-logger";
+import { Tracer, colorConsole } from "tracer";
+
 import { Service, Inject, Container } from "@fullstack-one/di";
-import { Config } from "@fullstack-one/config";
-import { Logger } from "./Logger";
-export { ILogger } from "./ILogger";
+import { Config, IEnvironment } from "@fullstack-one/config";
+
+export type ILogger = Tracer.Logger;
 
 @Service()
 export class LoggerFactory {
-  private config: Config;
-  private readonly CONFIG;
+  private readonly config: any;
 
   constructor(@Inject((type) => Config) config: Config) {
-    this.config = config;
-
-    // register package config
-    this.CONFIG = this.config.registerConfig("Logger", `${__dirname}/../config`);
+    this.config = config.registerConfig("Logger", `${__dirname}/../config`);
   }
-  public create(moduleName) {
-    const env: any = Container.get("ENVIRONMENT");
-    return new Logger(moduleName, this.CONFIG, env);
+
+  public create(moduleName: string): ILogger {
+    const env: IEnvironment = Container.get("ENVIRONMENT");
+    // return createLogger(moduleName, this.config, env);
+    const levels = ["trace", "debug", "info", "warn", "error"];
+    const loggerName = `${env.namespace}:${env.nodeId}:${moduleName}`;
+    const debugLogger = DebugLogger(loggerName);
+
+    const tracerConfig: Tracer.LoggerConfig = {
+      level: this.config.minLevel,
+      methods: levels,
+      transport: (logObject: Tracer.LogOutput): void => debugLogger[logObject.title](logObject.output)
+    };
+
+    const tracerLogger: Tracer.Logger = colorConsole(tracerConfig);
+
+    return tracerLogger;
   }
 }

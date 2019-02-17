@@ -1,4 +1,6 @@
-export function createScalar(name) {
+import { ScalarTypeDefinitionNode } from "graphql";
+
+export function createScalar(name: string): ScalarTypeDefinitionNode {
   return {
     kind: "ScalarTypeDefinition",
     name: {

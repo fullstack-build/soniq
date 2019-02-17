@@ -1,31 +1,21 @@
-import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
 import * as _ from "lodash";
+import { createIdArrayField, createIdField, getRelationMetasFromDefinition } from "../utils";
+import { IParseReadFieldContext, IParseUpdateFieldContext, IParser, IParseCreateFieldContext } from "./interfaces";
 
-function getRelations(dbMeta, relationName, tableName) {
-  const relationConnections = dbMeta.relations[relationName];
+const relationParser: IParser = {
+  parseReadField,
+  parseUpdateField,
+  parseCreateField
+};
 
-  const relationConnectionsArray: any = Object.values(relationConnections);
+export default relationParser;
 
-  const isFirstRelation = relationConnectionsArray[0].tableName === tableName;
-
-  // Determine which relation is the foreign one to get the correct columnName
-  const foreignRelation = isFirstRelation !== true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-
-  // Determine which relation is the own one to get the correct columnName
-  const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-
-  return {
-    ownRelation,
-    foreignRelation
-  };
-}
-
-export function parseReadField(ctx) {
+function parseReadField(ctx: IParseReadFieldContext) {
   const { fieldName, readExpressions, directives } = ctx;
 
   // Has field any permission-expression - without at least one expression it is not queryable at all
   if (directives.relation != null && directives.relation.name != null && readExpressions[fieldName] != null) {
-    const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, context } = ctx;
+    const { gqlFieldDefinition, localTable, defaultFieldCreator, table, getQueryArguments, permissionContext } = ctx;
     let newGqlFieldDefinition = JSON.parse(JSON.stringify(gqlFieldDefinition));
 
     let publicFieldSql = null;
@@ -34,7 +24,7 @@ export function parseReadField(ctx) {
 
     const { foreignGqlTypeName, isListType, isNonNullType } = getRelationMetasFromDefinition(gqlFieldDefinition);
 
-    const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
+    const { ownRelation, foreignRelation } = getRelations(permissionContext.dbMeta, directives.relation.name, table.tableName);
 
     const meta = {
       foreignGqlTypeName,
@@ -82,15 +72,15 @@ export function parseReadField(ctx) {
   return null;
 }
 
-export function parseUpdateField(ctx) {
+function parseUpdateField(ctx: IParseUpdateFieldContext) {
   const { view, fieldName, directives } = ctx;
 
   if (view.fields.indexOf(fieldName) >= 0 && directives.relation != null && directives.relation.name != null) {
-    const { gqlFieldDefinition, table, context } = ctx;
+    const { gqlFieldDefinition, table, permissionContext } = ctx;
 
     const { foreignGqlTypeName, isListType, isNonNullType } = getRelationMetasFromDefinition(gqlFieldDefinition);
 
-    const { ownRelation, foreignRelation } = getRelations(context.dbMeta, directives.relation.name, table.tableName);
+    const { ownRelation, foreignRelation } = getRelations(permissionContext.dbMeta, directives.relation.name, table.tableName);
 
     if (ownRelation.columnName != null) {
       if (foreignRelation != null && foreignRelation.type === "MANY" && ownRelation.type === "MANY") {
@@ -106,6 +96,25 @@ export function parseUpdateField(ctx) {
   return null;
 }
 
-export function parseCreateField(ctx) {
+function parseCreateField(ctx: IParseCreateFieldContext) {
   return parseUpdateField(ctx);
+}
+
+function getRelations(dbMeta, relationName, tableName) {
+  const relationConnections = dbMeta.relations[relationName];
+
+  const relationConnectionsArray: any = Object.values(relationConnections);
+
+  const isFirstRelation = relationConnectionsArray[0].tableName === tableName;
+
+  // Determine which relation is the foreign one to get the correct columnName
+  const foreignRelation = isFirstRelation !== true ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
+  // Determine which relation is the own one to get the correct columnName
+  const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
+
+  return {
+    ownRelation,
+    foreignRelation
+  };
 }

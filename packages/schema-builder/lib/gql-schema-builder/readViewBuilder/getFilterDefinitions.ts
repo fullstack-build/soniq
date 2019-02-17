@@ -1,4 +1,6 @@
-function getFieldArgument(fieldName) {
+import { InputValueDefinitionNode, InputObjectTypeDefinitionNode, EnumValueDefinitionNode, EnumTypeDefinitionNode } from "graphql";
+
+function getFieldArgument(fieldName: string): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -17,8 +19,8 @@ function getFieldArgument(fieldName) {
   };
 }
 
-function getWhereType(name, fieldNames) {
-  const def: any = {
+function getWhereType(name: string, fieldNames: string[]): InputObjectTypeDefinitionNode {
+  const def: InputObjectTypeDefinitionNode = {
     kind: "InputObjectTypeDefinition",
     name: {
       kind: "Name",
@@ -74,13 +76,13 @@ function getWhereType(name, fieldNames) {
   };
 
   fieldNames.forEach((fieldName) => {
-    def.fields.push(getFieldArgument(fieldName));
+    (def.fields as InputValueDefinitionNode[]).push(getFieldArgument(fieldName));
   });
 
   return def;
 }
 
-function getEnumValueDefinition(option) {
+function getEnumValueDefinition(option: string): EnumValueDefinitionNode {
   return {
     kind: "EnumValueDefinition",
     name: {
@@ -91,7 +93,7 @@ function getEnumValueDefinition(option) {
   };
 }
 
-function getOrderByEnum(name, fields) {
+function getOrderByEnum(name: string, fields: string[]): EnumTypeDefinitionNode {
   const options = [];
   fields.forEach((fieldName) => {
     options.push(`${fieldName}_ASC`);
@@ -108,6 +110,6 @@ function getOrderByEnum(name, fields) {
   };
 }
 
-export function getFilterDefinitions(fieldNames, orderByEnumName, whereFilterName) {
+export function getFilterDefinitions(fieldNames: string[], orderByEnumName: string, whereFilterName: string) {
   return [getOrderByEnum(orderByEnumName, fieldNames), getWhereType(whereFilterName, fieldNames)];
 }

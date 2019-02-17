@@ -1,4 +1,6 @@
-function getInputArgument(gqlInputTypeName) {
+import { InputValueDefinitionNode } from "graphql";
+
+function getInputArgument(gqlInputTypeName: string): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -20,6 +22,6 @@ function getInputArgument(gqlInputTypeName) {
   };
 }
 
-export function createMutationArguments(gqlInputTypeName) {
+export function createMutationArguments(gqlInputTypeName: string): ReadonlyArray<InputValueDefinitionNode> {
   return [getInputArgument(gqlInputTypeName)];
 }

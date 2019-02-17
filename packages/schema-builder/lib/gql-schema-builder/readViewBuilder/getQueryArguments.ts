@@ -1,4 +1,6 @@
-function getLimitArgument() {
+import { InputValueDefinitionNode } from "graphql";
+
+function getLimitArgument(): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -17,7 +19,7 @@ function getLimitArgument() {
   };
 }
 
-function getOffsetArgument() {
+function getOffsetArgument(): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -36,7 +38,7 @@ function getOffsetArgument() {
   };
 }
 
-function getWhereArgument(gqlTypeName) {
+function getWhereArgument(gqlTypeName: string): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -55,7 +57,7 @@ function getWhereArgument(gqlTypeName) {
   };
 }
 
-function getOrderByArgument(gqlTypeName) {
+function getOrderByArgument(gqlTypeName: string): InputValueDefinitionNode {
   return {
     kind: "InputValueDefinition",
     name: {
@@ -80,6 +82,6 @@ function getOrderByArgument(gqlTypeName) {
   };
 }
 
-export function getQueryArguments(gqlTypeName) {
+export function getQueryArguments(gqlTypeName: string): ReadonlyArray<InputValueDefinitionNode> {
   return [getWhereArgument(gqlTypeName), getOrderByArgument(gqlTypeName), getLimitArgument(), getOffsetArgument()];
 }

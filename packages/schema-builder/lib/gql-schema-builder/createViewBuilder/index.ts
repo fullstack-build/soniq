@@ -1,9 +1,12 @@
+import { ITableData, IPermissionContext } from "../interfaces";
 import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
 
+import { ICreateViewMeta, ICreateView } from "./interfaces";
 import { createView } from "./helpers";
 
-export function buildCreateView(table, view, context, extensions, config) {
+export function buildCreateView(table: ITableData, view, permissionContext: IPermissionContext, extensions: IParser[], config): ICreateView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -12,7 +15,7 @@ export function buildCreateView(table, view, context, extensions, config) {
   const returnOnlyId = view.returnOnlyId === true ? true : false;
 
   // Initialize meta object. Required for querybuilder
-  const meta: any = {
+  const meta: ICreateViewMeta = {
     name: mutationName,
     viewSchemaName: config.schemaName,
     viewName: mutationName,
@@ -54,17 +57,17 @@ export function buildCreateView(table, view, context, extensions, config) {
     const fieldName = gqlFieldDefinition.name.value;
     gqlFieldDefinition.kind = "InputValueDefinition";
 
-    const ctx = {
+    const ctx: IParseCreateFieldContext = {
       view,
       gqlFieldDefinition,
       directives,
       fieldName,
       localTable,
-      context,
+      permissionContext,
       table
     };
 
-    extensions.some((parser: any) => {
+    extensions.some((parser) => {
       if (parser.parseCreateField != null) {
         const gqlFieldDefinitions = parser.parseCreateField(ctx);
         if (gqlFieldDefinitions != null && Array.isArray(gqlFieldDefinitions)) {
@@ -80,13 +83,13 @@ export function buildCreateView(table, view, context, extensions, config) {
   });
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(context.expressions, localTable, true);
+  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(view.expressions, true);
 
-  const expressionsObject = expressionCreator.getExpressionsObject();
+  const compiledExpressions = expressionCreator.getCompiledExpressions();
 
-  const expressions = Object.values(expressionsObject).sort(orderExpressions);
+  const expressions = Object.values(compiledExpressions).sort(orderExpressions);
 
   expressions.forEach((expression: any) => {
     meta.requiresAuth = expression.requiresAuth === true ? true : meta.requiresAuth;
