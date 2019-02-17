@@ -8,13 +8,13 @@ import { CreateExpressions, orderExpressions, ICompiledExpression } from "../cre
 import { CreateDefaultField } from "./defaultFieldCreator";
 import { IReadViewMeta, IReadView } from "./interfaces";
 import { ITableData, IPermissionContext } from "../interfaces";
-import { ObjectTypeDefinitionNode } from "graphql";
+import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
 
 export function buildReadView(
   table: ITableData,
   readExpressions,
   permissionContext: IPermissionContext,
-  extensions,
+  extensions: IParser[],
   config,
   disableSecurityBarrier
 ): IReadView {
@@ -55,7 +55,7 @@ export function buildReadView(
     const directives = parseDirectives(gqlFieldDefinition.directives);
     const fieldName = gqlFieldDefinition.name.value;
 
-    const ctx = {
+    const ctx: IParseReadFieldContext = {
       readExpressions,
       gqlFieldDefinition,
       directives,
@@ -68,7 +68,7 @@ export function buildReadView(
       table
     };
 
-    extensions.some((parser: any) => {
+    extensions.some((parser) => {
       if (parser.parseReadField != null) {
         const results = parser.parseReadField(ctx);
         if (results != null && Array.isArray(results)) {

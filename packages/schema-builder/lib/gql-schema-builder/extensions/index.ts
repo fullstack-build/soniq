@@ -1,8 +1,9 @@
-import * as jsonParser from "./json";
-import * as computedParser from "./computed";
-import * as customParser from "./custom";
-import * as relationParser from "./relation";
-import * as defaultParser from "./default";
-import * as id from "./id";
+import { IParser } from "./interfaces";
+import computedParser from "./computedParser";
+import customParser from "./customParser";
+import defaultParser from "./defaultParser";
+import idParser from "./idParser";
+import jsonParser from "./jsonParser";
+import relationParser from "./relationParser";
 
-export const extensions = [id, jsonParser, computedParser, customParser, relationParser, defaultParser];
+export const extensions: IParser[] = [computedParser, customParser, defaultParser, idParser, jsonParser, relationParser];

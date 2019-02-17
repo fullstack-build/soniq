@@ -91,7 +91,7 @@ export class CreateExpressions {
         type: expression.type,
         gqlReturnType: expression.gqlReturnType,
         name: expressionName,
-        sql: expression.generate(expressionContext, params),
+        sql: null,
         requiresLateral: false,
         requiresAuth: expression.requiresAuth === true,
         dependentExpressions: [],
@@ -99,6 +99,9 @@ export class CreateExpressions {
         isRequiredAsPermissionExpression,
         excludeFromPermissionExpressions: expression.excludeFromPermissionExpressions === true
       };
+
+      // Have to be set afterwards, since expression.generate tries to access this.compiledExpressions[expressionName].requiresLateral
+      this.compiledExpressions[expressionName].sql = expression.generate(expressionContext, params);
 
       if (this.compiledExpressions[expressionName].sql.toLowerCase() === "true" && this.compiledExpressions[expressionName].requiresAuth === true) {
         throw new Error(`A expression which requires auth cannot return 'TRUE' as SQL. Found in '${name}'.`);

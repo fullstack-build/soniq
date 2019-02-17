@@ -24,7 +24,7 @@ import { IDbMeta, IDbRelation } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
 import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
-import { print, DocumentNode } from "graphql";
+import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
 import { IPermissionContext, IConfig, IResolverMeta } from "./gql-schema-builder/interfaces";
 
@@ -148,7 +148,7 @@ export class SchemaBuilder {
       data.sql.forEach((statement) => sql.push(statement));
 
       //  Reverse to get the generated queries/mutations at the beginning
-      data.gqlDocument.definitions.reverse();
+      (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;

@@ -1,11 +1,13 @@
-import { ObjectTypeDefinitionNode, DefinitionNode, DocumentNode, InputValueDefinitionNode, FieldDefinitionNode } from "graphql";
+import { ObjectTypeDefinitionNode, DefinitionNode, DocumentNode } from "graphql";
+
+import { IDbMeta } from "..";
 import { IReadViewMeta } from "./readViewBuilder/interfaces";
 import { ICreateViewMeta } from "./createViewBuilder/interfaces";
 import { IUpdateViewMeta } from "./updateViewBuilder/interfaces";
 import { IDeleteViewMeta } from "./deleteViewBuilder/interfaces";
-import { IDbMeta } from "..";
-import { IExpression, IExpressionInput, CreateExpressions } from "./createExpressions";
-import { CreateDefaultField } from "./readViewBuilder/defaultFieldCreator";
+import { IExpression, IExpressionInput } from "./createExpressions";
+
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export interface ITableData {
   gqlTypeName: string;
@@ -26,27 +28,8 @@ export interface IConfig {
   databaseName: string;
 }
 
-export interface IParseReadFieldContext {
-  readExpressions: IReadExpressions;
-  gqlFieldDefinition: FieldDefinitionNode;
-  directives: any;
-  expressionCreator: CreateExpressions;
-  defaultFieldCreator: CreateDefaultField;
-  fieldName: string;
-  localTable: string;
-  permissionContext: IPermissionContext;
-  getQueryArguments: (gqlTypeName: string) => InputValueDefinitionNode[];
-  table: ITableData;
-}
-
-export interface IParser {
-  parseReadField?: (ctx: IParseReadFieldContext) => any;
-  parseCreateField?: (ctx: IParseReadFieldContext) => any;
-  parseUpdateField?: (ctx: IParseReadFieldContext) => any;
-}
-
 export interface IPermissionContext {
-  gqlDocument: DocumentNode | any;
+  gqlDocument: DocumentNode;
   dbMeta: IDbMeta;
   expressions: IExpression[];
 }

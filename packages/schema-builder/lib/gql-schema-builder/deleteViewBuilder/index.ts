@@ -4,12 +4,13 @@ import { parseDirectives } from "../utils/parseDirectives";
 import { createView } from "./helpers";
 import { ITableData, IPermissionContext } from "../interfaces";
 import { IDeleteViewMeta, IDeleteView } from "./interfaces";
+import { IParser } from "../extensions/interfaces";
 
 export function buildDeleteView(
   table: ITableData,
   expressionsInput: IExpressionInput,
   permissionContext: IPermissionContext,
-  extensions,
+  extensions: IParser[],
   config
 ): IDeleteView {
   // Get some data from table

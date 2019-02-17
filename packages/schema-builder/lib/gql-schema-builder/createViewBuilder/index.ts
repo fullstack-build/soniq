@@ -4,8 +4,9 @@ import { parseDirectives } from "../utils/parseDirectives";
 import { ITableData, IPermissionContext } from "../interfaces";
 import { createView } from "./helpers";
 import { ICreateViewMeta, ICreateView } from "./interfaces";
+import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
 
-export function buildCreateView(table: ITableData, view, permissionContext: IPermissionContext, extensions, config): ICreateView {
+export function buildCreateView(table: ITableData, view, permissionContext: IPermissionContext, extensions: IParser[], config): ICreateView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -56,17 +57,17 @@ export function buildCreateView(table: ITableData, view, permissionContext: IPer
     const fieldName = gqlFieldDefinition.name.value;
     gqlFieldDefinition.kind = "InputValueDefinition";
 
-    const ctx = {
+    const ctx: IParseCreateFieldContext = {
       view,
       gqlFieldDefinition,
       directives,
       fieldName,
       localTable,
-      context: permissionContext,
+      permissionContext,
       table
     };
 
-    extensions.some((parser: any) => {
+    extensions.some((parser) => {
       if (parser.parseCreateField != null) {
         const gqlFieldDefinitions = parser.parseCreateField(ctx);
         if (gqlFieldDefinitions != null && Array.isArray(gqlFieldDefinitions)) {

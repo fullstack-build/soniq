@@ -4,8 +4,10 @@ import { buildUpdateView } from "./updateViewBuilder";
 import { buildCreateView } from "./createViewBuilder";
 import { buildDeleteView } from "./deleteViewBuilder";
 import { ITableData, IPermissionContext, IConfig, IPermission, IResolverMeta } from "./interfaces";
+import { IParser } from "./extensions/interfaces";
+import { DefinitionNode, ObjectTypeDefinitionNode } from "graphql";
 
-export function parsePermission(permission: IPermission, permissionContext: IPermissionContext, extensions, config: IConfig) {
+export function parsePermission(permission: IPermission, permissionContext: IPermissionContext, extensions: IParser[], config: IConfig) {
   const { gqlDocument } = permissionContext;
   const sql = [];
   const meta: IResolverMeta = {
@@ -31,13 +33,13 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
     throw new Error(`Could not find gqlTypeName '${permission.gqlTypeName}' for permission.`);
   }
 
-  const gqlTypeDefinition = gqlDocument.definitions.splice(definitionIndex, 1)[0];
+  const gqlTypeDefinition = (gqlDocument.definitions as DefinitionNode[]).splice(definitionIndex, 1)[0];
 
   const table: ITableData = {
     gqlTypeName: permission.gqlTypeName,
     schemaName: directives.table.schemaName || "public",
     tableName: directives.table.tableName || permission.gqlTypeName,
-    gqlTypeDefinition
+    gqlTypeDefinition: gqlTypeDefinition as ObjectTypeDefinitionNode
   };
 
   meta.permissionMeta[permission.gqlTypeName] = permission.meta || null;
@@ -49,14 +51,14 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
 
     meta.query[permission.gqlTypeName] = readQuery.meta;
     readQuery.sql.forEach((q) => sql.push(q));
-    readQuery.gqlDefinitions.forEach((d) => gqlDocument.definitions.push(d));
+    readQuery.gqlDefinitions.forEach((d) => (gqlDocument.definitions as DefinitionNode[]).push(d));
   }
 
   if (permission.deleteExpressions != null) {
     const deleteView = buildDeleteView(table, permission.deleteExpressions, permissionContext, extensions, config);
     meta.mutation[deleteView.meta.name] = deleteView.meta;
     deleteView.sql.forEach((q) => sql.push(q));
-    deleteView.gqlDefinitions.forEach((d) => gqlDocument.definitions.push(d));
+    deleteView.gqlDefinitions.forEach((d) => (gqlDocument.definitions as DefinitionNode[]).push(d));
   }
 
   if (permission.updateViews != null) {
@@ -66,7 +68,7 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
       const updateView = buildUpdateView(table, view, permissionContext, extensions, config);
       meta.mutation[updateView.meta.name] = updateView.meta;
       updateView.sql.forEach((q) => sql.push(q));
-      updateView.gqlDefinitions.forEach((d) => gqlDocument.definitions.push(d));
+      updateView.gqlDefinitions.forEach((d) => (gqlDocument.definitions as DefinitionNode[]).push(d));
     });
   }
 
@@ -77,7 +79,7 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
       const createView = buildCreateView(table, view, permissionContext, extensions, config);
       meta.mutation[createView.meta.name] = createView.meta;
       createView.sql.forEach((q) => sql.push(q));
-      createView.gqlDefinitions.forEach((d) => gqlDocument.definitions.push(d));
+      createView.gqlDefinitions.forEach((d) => (gqlDocument.definitions as DefinitionNode[]).push(d));
     });
   }
 

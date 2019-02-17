@@ -3,9 +3,16 @@ import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";
 import { IUpdateViewMeta, IUpdateView } from "./interfaces";
-import { ITableData, IPermissionContext } from "../interfaces";
+import { ITableData, IPermissionContext, IMutationView } from "../interfaces";
+import { IParser, IParseUpdateFieldContext } from "../extensions/interfaces";
 
-export function buildUpdateView(table: ITableData, view, permissionContext: IPermissionContext, extensions, config): IUpdateView {
+export function buildUpdateView(
+  table: ITableData,
+  view: IMutationView,
+  permissionContext: IPermissionContext,
+  extensions: IParser[],
+  config
+): IUpdateView {
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
@@ -62,17 +69,17 @@ export function buildUpdateView(table: ITableData, view, permissionContext: IPer
     const fieldName = gqlFieldDefinition.name.value;
     gqlFieldDefinition.kind = "InputValueDefinition";
 
-    const ctx = {
-      view,
-      gqlFieldDefinition,
+    const ctx: IParseUpdateFieldContext = {
       directives,
       fieldName,
+      gqlFieldDefinition,
       localTable,
-      context: permissionContext,
-      table
+      permissionContext,
+      table,
+      view
     };
 
-    extensions.some((parser: any) => {
+    extensions.some((parser) => {
       if (parser.parseUpdateField != null) {
         const gqlFieldDefinitions = parser.parseUpdateField(ctx);
         if (gqlFieldDefinitions != null && Array.isArray(gqlFieldDefinitions)) {
