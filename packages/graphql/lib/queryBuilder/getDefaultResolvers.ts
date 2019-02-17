@@ -1,6 +1,6 @@
 import { IFieldResolver } from "graphql-tools";
 
-import { IDbMeta } from "@fullstack-one/schema-builder";
+import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 import { ILogger } from "@fullstack-one/logger";
 import { DbGeneralPool } from "@fullstack-one/db";
 
@@ -12,7 +12,7 @@ import getDefaultQueryResolver from "./getDefaultQueryResolver";
 import getDefaultMutationResolver from "./getDefaultMutationResolver";
 
 export default function getDefaultResolvers(
-  resolverMeta: any,
+  resolverMeta: IResolverMeta,
   hookObject: IHookObject,
   dbMeta: IDbMeta,
   dbGeneralPool: DbGeneralPool,

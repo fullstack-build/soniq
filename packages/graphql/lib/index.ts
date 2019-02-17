@@ -9,7 +9,7 @@ import { Service, Inject } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-import { SchemaBuilder, IDbMeta } from "@fullstack-one/schema-builder";
+import { SchemaBuilder, IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
@@ -74,10 +74,10 @@ export class GraphQl {
 
     const { gqlRuntimeDocument, dbMeta, resolverMeta } = this.schemaBuilder.getGQlRuntimeObject();
 
-    const { gQlAst, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
+    const { typeDefs, operations } = this.prepareSchema(gqlRuntimeDocument, dbMeta, resolverMeta);
 
     const schemaDefinition: IExecutableSchemaDefinition = {
-      typeDefs: gQlAst,
+      typeDefs,
       resolvers: getResolvers(operations, this.resolvers)
     };
     this.apolloSchema = makeExecutableSchema(schemaDefinition);
@@ -112,7 +112,11 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public prepareSchema(gqlRuntimeDocument: DocumentNode, dbMeta: IDbMeta, resolverMeta: any): { gQlAst: string; operations: IOperationsObject } {
+  public prepareSchema(
+    gqlRuntimeDocument: DocumentNode,
+    dbMeta: IDbMeta,
+    resolverMeta: IResolverMeta
+  ): { typeDefs: string; operations: IOperationsObject } {
     const definitions = gqlRuntimeDocument.definitions as DefinitionNode[];
     definitions.push(operatorsDefinitionNode);
 
@@ -127,10 +131,10 @@ export class GraphQl {
         this.graphQlConfig.minQueryDepthToCheckCostLimit
       )
     );
-    const gQlAst = this.schemaBuilder.print(gqlRuntimeDocument);
+    const typeDefs = this.schemaBuilder.print(gqlRuntimeDocument);
     const operations = getOperationsObject(gqlRuntimeDocument);
 
-    return { gQlAst, operations };
+    return { typeDefs, operations };
   }
 
   public getApolloClient(accessToken: string = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {

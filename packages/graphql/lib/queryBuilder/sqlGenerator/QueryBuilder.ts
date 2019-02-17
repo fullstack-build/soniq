@@ -1,16 +1,16 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { IDbMeta } from "@fullstack-one/schema-builder";
+import { IDbMeta, IResolverMeta, IReadViewMeta } from "@fullstack-one/schema-builder";
 
 import generateCustomSql from "./generateCustomSql";
 import { IQueryBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
 
 export default class QueryBuilder {
-  private resolverMeta: any;
+  private resolverMeta: IResolverMeta;
   private dbMeta: IDbMeta;
   private minQueryDepthToCheckCostLimit: number;
 
-  constructor(resolverMeta, dbMeta: IDbMeta, minQueryDepthToCheckCostLimit: number) {
+  constructor(resolverMeta: IResolverMeta, dbMeta: IDbMeta, minQueryDepthToCheckCostLimit: number) {
     this.resolverMeta = resolverMeta;
     this.dbMeta = dbMeta;
     this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
@@ -43,13 +43,13 @@ export default class QueryBuilder {
   }
 
   // Create FROM expression for query (or subquery)
-  private getFromExpression(gqlTypeMeta, localName, authRequired) {
+  private getFromExpression(gqlTypeMeta: IReadViewMeta, localName: string, authRequired: boolean) {
     const viewName = authRequired === true ? gqlTypeMeta.authViewName : gqlTypeMeta.publicViewName;
     return `"${gqlTypeMeta.viewSchemaName}"."${viewName}" AS "${localName}"`;
   }
 
   // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-  private resolveTable(c, query: IParsedResolveInfo, values, isAuthenticated: boolean, match, isAggregation: boolean, costTree) {
+  private resolveTable(c: number, query: IParsedResolveInfo, values, isAuthenticated: boolean, match, isAggregation: boolean, costTree) {
     // Get the tableName from the nested query object
     const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
 

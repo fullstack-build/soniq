@@ -2,7 +2,7 @@ import { IFieldResolver } from "graphql-tools";
 
 import { DbGeneralPool } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
-import { IDbMeta } from "@fullstack-one/schema-builder";
+import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
 import { IHookObject } from "./types";
 import checkCosts from "./checkCosts";
@@ -18,7 +18,7 @@ export default function getDefaultMutationResolver(
   mutationBuilder: MutationBuilder,
   hookObject: IHookObject,
   costLimit: number,
-  resolverMeta: any,
+  resolverMeta: IResolverMeta,
   dbMeta: IDbMeta
 ): IFieldResolver<any, any> {
   return async (obj, args, context, info) => {

@@ -1,5 +1,11 @@
 import { ObjectTypeDefinitionNode, DefinitionNode, DocumentNode } from "graphql";
 
+export * from "./readViewBuilder/interfaces";
+export * from "./createViewBuilder/interfaces";
+export * from "./updateViewBuilder/interfaces";
+export * from "./deleteViewBuilder/interfaces";
+export * from "./createExpressions";
+
 import { IDbMeta } from "..";
 import { IReadViewMeta } from "./readViewBuilder/interfaces";
 import { ICreateViewMeta } from "./createViewBuilder/interfaces";
@@ -51,6 +57,7 @@ export interface IMutationView {
 
 export interface IPermissionMeta {
   disableSecurityBarrierForReadViews?: boolean;
+  disallowGenericRootLevelAggregation?: boolean;
 }
 
 export interface IPermission {

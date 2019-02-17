@@ -1,10 +1,11 @@
 import { GraphQLResolveInfo } from "graphql";
+import { IResolverMeta } from "@fullstack-one/schema-builder";
 import { IMutationBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
 
 export default class MutationBuilder {
-  private resolverMeta: any;
+  private resolverMeta: IResolverMeta;
 
-  constructor(resolverMeta: any) {
+  constructor(resolverMeta: IResolverMeta) {
     this.resolverMeta = resolverMeta;
   }
 
@@ -100,7 +101,7 @@ export default class MutationBuilder {
       case "DELETE":
         return this.resolveDeleteMutation(query, mutation);
       default:
-        throw new Error(`Mutation-Type does not exist: ${mutation.type}`);
+        throw new Error(`Mutation-Type does not exist: ${mutation}`);
     }
   }
 }
