@@ -1,5 +1,5 @@
-import { createMutationArguments } from "./createMutationArguments";
 import { ObjectTypeExtensionNode, InputValueDefinitionNode } from "graphql";
+import { createMutationArguments } from "./createMutationArguments";
 
 export function createMutation(
   name: string,

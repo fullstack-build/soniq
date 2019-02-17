@@ -1,6 +1,6 @@
 import { DefinitionNode } from "graphql";
 
-export function createSchemaBasics(): DefinitionNode[] {
+export function createSchemaBasics(): ReadonlyArray<DefinitionNode> {
   const definitions = [];
 
   definitions.push({

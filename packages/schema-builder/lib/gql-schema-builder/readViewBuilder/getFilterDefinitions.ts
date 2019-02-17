@@ -20,7 +20,7 @@ function getFieldArgument(fieldName: string): InputValueDefinitionNode {
 }
 
 function getWhereType(name: string, fieldNames: string[]): InputObjectTypeDefinitionNode {
-  const def: any = {
+  const def: InputObjectTypeDefinitionNode = {
     kind: "InputObjectTypeDefinition",
     name: {
       kind: "Name",
@@ -76,7 +76,7 @@ function getWhereType(name: string, fieldNames: string[]): InputObjectTypeDefini
   };
 
   fieldNames.forEach((fieldName) => {
-    def.fields.push(getFieldArgument(fieldName));
+    (def.fields as InputValueDefinitionNode[]).push(getFieldArgument(fieldName));
   });
 
   return def;

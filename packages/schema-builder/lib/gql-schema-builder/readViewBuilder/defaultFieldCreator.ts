@@ -1,7 +1,6 @@
-import { IExpressionInput, CreateExpressions } from "../createExpressions";
 import { FieldDefinitionNode } from "graphql";
-
-type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+import { IExpressionInput, CreateExpressions } from "../createExpressions";
+import { Mutable } from "../interfaces";
 
 export class CreateDefaultField {
   private expressionCreator: CreateExpressions;

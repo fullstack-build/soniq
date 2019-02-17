@@ -22,6 +22,6 @@ function getInputArgument(gqlInputTypeName: string): InputValueDefinitionNode {
   };
 }
 
-export function createMutationArguments(gqlInputTypeName: string): InputValueDefinitionNode[] {
+export function createMutationArguments(gqlInputTypeName: string): ReadonlyArray<InputValueDefinitionNode> {
   return [getInputArgument(gqlInputTypeName)];
 }

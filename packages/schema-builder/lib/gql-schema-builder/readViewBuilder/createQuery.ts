@@ -1,5 +1,5 @@
-import { getQueryArguments } from "./getQueryArguments";
 import { ObjectTypeExtensionNode } from "graphql";
+import { getQueryArguments } from "./getQueryArguments";
 
 export function createQuery(name, gqlTypeName): ObjectTypeExtensionNode {
   return {

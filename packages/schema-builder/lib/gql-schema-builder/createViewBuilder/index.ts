@@ -1,10 +1,10 @@
+import { ITableData, IPermissionContext } from "../interfaces";
 import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
 
-import { ITableData, IPermissionContext } from "../interfaces";
-import { createView } from "./helpers";
 import { ICreateViewMeta, ICreateView } from "./interfaces";
-import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
+import { createView } from "./helpers";
 
 export function buildCreateView(table: ITableData, view, permissionContext: IPermissionContext, extensions: IParser[], config): ICreateView {
   // Get some data from table

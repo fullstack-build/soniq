@@ -1,14 +1,12 @@
-import { parseDirectives } from "../utils/parseDirectives";
-import { getQueryArguments } from "./getQueryArguments";
-
-import { createGqlField, createView } from "./helpers";
-
 import { CreateExpressions, orderExpressions, ICompiledExpression } from "../createExpressions";
+import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
+import { ITableData, IPermissionContext } from "../interfaces";
+import { parseDirectives } from "../utils/parseDirectives";
 
 import { CreateDefaultField } from "./defaultFieldCreator";
+import { getQueryArguments } from "./getQueryArguments";
+import { createGqlField, createView } from "./helpers";
 import { IReadViewMeta, IReadView } from "./interfaces";
-import { ITableData, IPermissionContext } from "../interfaces";
-import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
 
 export function buildReadView(
   table: ITableData,
@@ -106,11 +104,11 @@ export function buildReadView(
   const compiledExpressions = expressionCreator.getCompiledExpressions();
 
   const authExpressions = Object.values(compiledExpressions).sort(orderExpressions);
-  const publicExpressions = authExpressions.filter((compiledExpression: ICompiledExpression) => {
+  const publicExpressions = authExpressions.filter((compiledExpression) => {
     return compiledExpression.requiresAuth !== true;
   });
 
-  authExpressions.forEach((compiledExpression: ICompiledExpression) => {
+  authExpressions.forEach((compiledExpression) => {
     const gqlFieldDefinition = createGqlField(compiledExpression.name, compiledExpression.gqlReturnType);
 
     authFieldsSql.push(`"${compiledExpression.name}"."${compiledExpression.name}" AS "${compiledExpression.name}"`);
@@ -125,7 +123,7 @@ export function buildReadView(
     };
   });
 
-  publicExpressions.forEach((compiledExpression: ICompiledExpression) => {
+  publicExpressions.forEach((compiledExpression) => {
     publicFieldsSql.push(`"${compiledExpression.name}"."${compiledExpression.name}" AS "${compiledExpression.name}"`);
     meta.publicFieldNames.push(compiledExpression.name);
   });
