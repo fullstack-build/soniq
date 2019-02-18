@@ -1,10 +1,5 @@
+import { DocumentNode, ObjectTypeExtensionNode, DefinitionNode, FieldDefinitionNode, ObjectTypeDefinitionNode } from "graphql";
 import { utils } from "@fullstack-one/schema-builder";
-import { DocumentNode, DirectiveNode, ObjectTypeExtensionNode, DefinitionNode, FieldDefinitionNode, ObjectTypeDefinitionNode } from "graphql";
-
-interface IDirectivesObject {
-  custom?: { params?: any; resolver: string };
-}
-const parseDirectives: (directiveNodes: ReadonlyArray<DirectiveNode>) => IDirectivesObject = utils.parseDirectives;
 
 interface IBaseOperation {
   name: string;
@@ -26,7 +21,7 @@ export interface IOperationsObject {
 
 interface IFieldNodeAndDirectivesObject {
   fieldNode: FieldDefinitionNode;
-  directivesObject: IDirectivesObject;
+  directivesObject: utils.IDirectivesObject;
 }
 
 export function getOperationsObject({ definitions }: DocumentNode): IOperationsObject {
@@ -61,11 +56,11 @@ function getFieldOperations(definitionNodes: ReadonlyArray<DefinitionNode>): TFi
 function toFieldNodeAndDirectivesObject(fieldNode: FieldDefinitionNode): IFieldNodeAndDirectivesObject {
   return {
     fieldNode,
-    directivesObject: parseDirectives(fieldNode.directives)
+    directivesObject: utils.parseDirectives(fieldNode.directives)
   };
 }
 
-function hasCustomDirective(directivesObject: IDirectivesObject): boolean {
+function hasCustomDirective(directivesObject: utils.IDirectivesObject): boolean {
   return directivesObject.custom != null && directivesObject.custom.resolver != null;
 }
 
