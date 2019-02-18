@@ -56,7 +56,7 @@ export class Auth {
     @Inject((type) => BootLoader) bootLoader,
     @Inject((type) => SchemaBuilder) schemaBuilder,
     @Inject((type) => Config) config,
-    @Inject((type) => GraphQl) graphQl,
+    @Inject((type) => GraphQl) graphQl: GraphQl,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory
   ) {
     // DI
@@ -81,8 +81,8 @@ export class Auth {
       throw new Error("No notification function has been defined.");
     };
 
-    graphQl.addHook("preQuery", this.preQueryHook.bind(this));
-    graphQl.addHook("preMutationCommit", this.preMutationCommitHook.bind(this));
+    graphQl.addHook({ type: "preQuery", hook: this.preQueryHook.bind(this) });
+    graphQl.addHook({ type: "preMutationCommit", hook: this.preMutationCommitHook.bind(this) });
 
     // add to boot loader
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));

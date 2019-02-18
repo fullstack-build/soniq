@@ -8,9 +8,9 @@ export * from "./types";
 
 @Service()
 export class HookManager {
-  private preQueryHooks: TPreQueryHookFunction[];
-  private preMutationCommitHooks: Array<TPreMutationCommitHookFunction<any, any>>;
-  private postMutationHooks: Array<TPostMutationHookFunction<any, any>>;
+  private preQueryHooks: TPreQueryHookFunction[] = [];
+  private preMutationCommitHooks: Array<TPreMutationCommitHookFunction<any, any>> = [];
+  private postMutationHooks: Array<TPostMutationHookFunction<any, any>> = [];
 
   public addHook(config: IHookConfig) {
     if (config.type === "preQuery") this.preQueryHooks.push(config.hook);
