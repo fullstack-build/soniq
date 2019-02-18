@@ -1,5 +1,6 @@
 import { GraphQLResolveInfo } from "graphql";
 import { parseResolveInfo as graphQlParseResolveInfo } from "graphql-parse-resolve-info";
+import { IMutationViewMeta } from "@fullstack-one/schema-builder";
 
 export const parseResolveInfo: (info: GraphQLResolveInfo) => IParsedResolveInfo = graphQlParseResolveInfo;
 
@@ -29,6 +30,6 @@ export interface IQueryBuild {
 export interface IMutationBuild {
   sql: string;
   values: any[];
-  mutation: any;
+  mutation: IMutationViewMeta;
   id: any;
 }

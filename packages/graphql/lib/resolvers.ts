@@ -1,4 +1,4 @@
-import * as gQlTypeJson from "graphql-type-json";
+import * as graphQLJSON from "graphql-type-json";
 import { GraphQLResolveInfo } from "graphql";
 import { IResolvers, IResolverObject, MergeInfo, IFieldResolver } from "graphql-tools";
 import { IOperationsObject } from "./operations";
@@ -40,7 +40,7 @@ export function getResolvers(operations: IOperationsObject, resolversObject: ICu
   });
 
   const resolvers: IResolvers = {
-    JSON: gQlTypeJson,
+    JSON: graphQLJSON,
     Query: queryResolvers,
     Mutation: mutationResolvers
   };

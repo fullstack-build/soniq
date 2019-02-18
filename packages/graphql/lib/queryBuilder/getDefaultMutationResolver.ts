@@ -1,17 +1,17 @@
 import { IFieldResolver } from "graphql-tools";
 
-import { DbGeneralPool } from "@fullstack-one/db";
+import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
-import { IHookObject } from "./types";
+import { IHookObject, IDefaultMutationResolverContext, IMatch, IHookInfo } from "./types";
 import checkCosts from "./checkCosts";
 import checkQueryResultForInjection from "./checkQueryResultForInjection";
 import MutationBuilder from "./sqlGenerator/MutationBuilder";
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
-import { IQueryBuild } from "./sqlGenerator/types";
+import { IQueryBuild, IMutationBuild } from "./sqlGenerator/types";
 
-export default function getDefaultMutationResolver(
+export default function getDefaultMutationResolver<TSource>(
   dbGeneralPool: DbGeneralPool,
   logger: ILogger,
   queryBuilder: QueryBuilder,
@@ -20,16 +20,16 @@ export default function getDefaultMutationResolver(
   costLimit: number,
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta
-): IFieldResolver<any, any> {
+): IFieldResolver<TSource, IDefaultMutationResolverContext> {
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
     // Generate mutation sql query
-    const mutationBuild = mutationBuilder.build(info);
+    const mutationBuild: IMutationBuild = mutationBuilder.build(info);
     context.ctx.state.includesMutation = true;
 
     // Get a pgClient from pool
-    const client = await dbGeneralPool.pgPool.connect();
+    const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
 
     try {
       await client.query("BEGIN");
@@ -48,13 +48,13 @@ export default function getDefaultMutationResolver(
         throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
       }
 
-      let returnQueryBuild: IQueryBuild;
-      let returnData;
+      let returnQueryBuild: IQueryBuild | undefined;
+      let returnData: any;
       let entityId = mutationBuild.id || null;
-      let match;
+      let match: IMatch | undefined;
 
-      // Workaround: Postgres does not return id for INSERT without SELECT  permission.
-      // Therefor we retrieve the last generated UUID in transaction.
+      // Workaround: Postgres does not return id for INSERT without SELECT permission.
+      // Therefore we retrieve the last generated UUID in transaction.
       // Our concept allows one one INSERT per transaction.
       if (entityId == null && mutationBuild.mutation.type === "CREATE") {
         const idResult = await client.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
@@ -106,7 +106,7 @@ export default function getDefaultMutationResolver(
         returnData = resultData[0];
       }
 
-      const hookInfo = {
+      const hookInfo: IHookInfo<any, TSource> = {
         returnData,
         returnQuery: returnQueryBuild,
         entityId,
@@ -122,21 +122,17 @@ export default function getDefaultMutationResolver(
         mutationQuery: mutationBuild
       };
 
-      // PreMutationCommitHook (for auth register etc.)
-      // TODO: Move this in front of mutation
+      // TODO: Move this in front of mutation. What hookInfos are needed?
       for (const fn of hookObject.preMutationCommit) {
         await fn(client, hookInfo);
       }
 
-      // Commit transaction
       await client.query("COMMIT");
 
-      // PostMutationHook (for file-storage etc.)
       for (const fn of hookObject.postMutation) {
         await fn(hookInfo, context, info);
       }
 
-      // Respond data it to pgClient
       return returnData;
     } catch (e) {
       // Rollback on any error

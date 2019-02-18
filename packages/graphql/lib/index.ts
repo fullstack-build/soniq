@@ -27,7 +27,7 @@ export { apolloServer };
 @Service()
 export class GraphQl {
   private graphQlConfig: IGraphQlConfig;
-  private apolloSchema: GraphQLSchema;
+  private apolloSchema: GraphQLSchema | null = null;
 
   // DI
   private config: Config;
@@ -46,12 +46,12 @@ export class GraphQl {
   };
 
   constructor(
-    @Inject((type) => LoggerFactory) loggerFactory,
-    @Inject((type) => Config) config,
-    @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => SchemaBuilder) schemaBuilder,
-    @Inject((type) => Server) server,
-    @Inject((type) => DbGeneralPool) dbGeneralPool
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => Config) config: Config,
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
+    @Inject((type) => Server) server: Server,
+    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool
   ) {
     this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
 
@@ -125,12 +125,12 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public getApolloClient(accessToken: string = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {
+  public getApolloClient(accessToken: string | null = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {
     if (this.apolloSchema == null) {
       throw new Error("Please call getApolloClient after booting has completed.");
     }
 
-    const schemaLinkContext = accessToken != null ? { ctx, accessToken } : { ctx: {}, accessToken: null };
+    const resolverContext = accessToken != null ? { accessToken, ctx } : { accessToken: null, ctx: undefined };
 
     // Return a new client every time because, clearing the cache (using `apolloClient.cache.reset()`) could collide with other queries
     return new ApolloClient({
@@ -138,7 +138,7 @@ export class GraphQl {
       cache: new InMemoryCache(),
       link: new SchemaLink({
         schema: this.apolloSchema,
-        context: schemaLinkContext
+        context: resolverContext
       })
     });
   }

@@ -1,17 +1,18 @@
 import { ObjectTypeDefinitionNode, DefinitionNode, DocumentNode } from "graphql";
 
-export * from "./readViewBuilder/interfaces";
-export * from "./createViewBuilder/interfaces";
-export * from "./updateViewBuilder/interfaces";
-export * from "./deleteViewBuilder/interfaces";
-export * from "./createExpressions";
-
 import { IDbMeta } from "..";
 import { IReadViewMeta } from "./readViewBuilder/interfaces";
 import { ICreateViewMeta } from "./createViewBuilder/interfaces";
 import { IUpdateViewMeta } from "./updateViewBuilder/interfaces";
 import { IDeleteViewMeta } from "./deleteViewBuilder/interfaces";
 import { IExpression, IExpressionInput } from "./createExpressions";
+
+export * from "./readViewBuilder/interfaces";
+export * from "./createViewBuilder/interfaces";
+export * from "./updateViewBuilder/interfaces";
+export * from "./deleteViewBuilder/interfaces";
+export type IMutationViewMeta = ICreateViewMeta | IUpdateViewMeta | IDeleteViewMeta;
+export * from "./createExpressions";
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
@@ -114,7 +115,7 @@ export interface IResolverMeta {
     [gqlTypeName: string]: IReadViewMeta;
   };
   mutation: {
-    [name: string]: ICreateViewMeta | IUpdateViewMeta | IDeleteViewMeta;
+    [name: string]: IMutationViewMeta;
   };
   permissionMeta: {
     [gqlTypeName: string]: IPermissionMeta;

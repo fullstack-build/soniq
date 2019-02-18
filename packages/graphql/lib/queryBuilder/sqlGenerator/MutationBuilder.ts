@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo } from "graphql";
-import { IResolverMeta } from "@fullstack-one/schema-builder";
+import { IResolverMeta, IMutationViewMeta } from "@fullstack-one/schema-builder";
 import { IMutationBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
 
 export default class MutationBuilder {
@@ -9,11 +9,11 @@ export default class MutationBuilder {
     this.resolverMeta = resolverMeta;
   }
 
-  private resolveCreateMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
+  private resolveCreateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
     const fieldNames = Object.keys(query.args.input);
     const fieldValues = Object.values(query.args.input);
 
-    const values = [];
+    const values: any[] = [];
 
     // Generate fields which will be inserted
     const f = fieldNames
@@ -43,9 +43,9 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
-    const setFields = [];
-    const values = [];
+  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+    const setFields: any[] = [];
+    const values: any[] = [];
     let entityId = null;
 
     Object.keys(query.args.input).forEach((fieldName) => {
@@ -77,7 +77,7 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: any): IMutationBuild {
+  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
     // Build delete by id query
     return {
       sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
@@ -87,11 +87,10 @@ export default class MutationBuilder {
     };
   }
 
-  public build(info: GraphQLResolveInfo) {
+  public build(info: GraphQLResolveInfo): IMutationBuild {
     const query: IParsedResolveInfo = parseResolveInfo(info);
 
-    // Get mutation information from generated Schema-data
-    const mutation = this.resolverMeta.mutation[query.name];
+    const mutation: IMutationViewMeta = this.resolverMeta.mutation[query.name];
 
     switch (mutation.type) {
       case "CREATE":
