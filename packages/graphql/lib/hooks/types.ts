@@ -3,8 +3,7 @@ import { GraphQLResolveInfo } from "graphql";
 import { IResolverMeta, IDbMeta } from "@fullstack-one/schema-builder";
 import { PgPoolClient } from "@fullstack-one/db";
 
-import { IQueryBuild, IMutationBuild } from "../queryBuilder/sqlGenerator/types";
-import { IDefaultMutationResolverContext, IMatch } from "../queryBuilder/types";
+import { IDefaultMutationResolverContext, IMatch, IQueryBuild, IMutationBuild } from "../getDefaultResolvers";
 
 export type TPreQueryHookFunction = (client: PgPoolClient, context: any, authRequired: boolean) => any;
 export type TPreMutationCommitHookFunction<TReturnData, TSource> = (client: PgPoolClient, hookInfo: IHookInfo<TReturnData, TSource>) => any;

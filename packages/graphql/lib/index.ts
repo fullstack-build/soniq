@@ -17,7 +17,7 @@ import { DbGeneralPool } from "@fullstack-one/db";
 import IGraphQlConfig from "../config/IGraphQlConfig";
 import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
-import getDefaultResolvers from "./queryBuilder/getDefaultResolvers";
+import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
 import { HookManager } from "./hooks";

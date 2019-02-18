@@ -5,8 +5,8 @@ import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
-import checkCosts from "./checkCosts";
-import checkQueryResultForInjection from "./checkQueryResultForInjection";
+import checkCosts from "./checks/checkCosts";
+import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import { HookManager } from "../hooks";
 
 const hookManager: HookManager = Container.get(HookManager);

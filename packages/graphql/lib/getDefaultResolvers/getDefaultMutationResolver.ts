@@ -7,8 +7,8 @@ import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
 import { HookManager, IHookInfo } from "../hooks";
 import { IDefaultMutationResolverContext, IMatch } from "./types";
-import checkCosts from "./checkCosts";
-import checkQueryResultForInjection from "./checkQueryResultForInjection";
+import checkCosts from "./checks/checkCosts";
+import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import MutationBuilder from "./sqlGenerator/MutationBuilder";
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
 import { IQueryBuild, IMutationBuild } from "./sqlGenerator/types";

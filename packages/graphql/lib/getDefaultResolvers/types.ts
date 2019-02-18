@@ -1,6 +1,4 @@
-import { GraphQLResolveInfo } from "graphql";
-import { IResolverMeta, IDbMeta } from "@fullstack-one/schema-builder";
-import { IQueryBuild, IMutationBuild } from "./sqlGenerator/types";
+export * from "./sqlGenerator/types";
 
 export interface IDefaultMutationResolverContext {
   accessToken: string | null;

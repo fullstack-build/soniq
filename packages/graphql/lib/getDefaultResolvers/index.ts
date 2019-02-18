@@ -10,6 +10,8 @@ import MutationBuilder from "./sqlGenerator/MutationBuilder";
 import getDefaultQueryResolver from "./getDefaultQueryResolver";
 import getDefaultMutationResolver from "./getDefaultMutationResolver";
 
+export * from "./types";
+
 export default function getDefaultResolvers(
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta,

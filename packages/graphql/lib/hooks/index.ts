@@ -1,7 +1,9 @@
 import { GraphQLResolveInfo } from "graphql";
+
 import { PgPoolClient } from "@fullstack-one/db";
 import { Service } from "@fullstack-one/di";
-import { IDefaultMutationResolverContext } from "../queryBuilder/types";
+
+import { IDefaultMutationResolverContext } from "../getDefaultResolvers";
 import { TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction, IHookConfig, IHookInfo } from "./types";
 
 export * from "./types";
