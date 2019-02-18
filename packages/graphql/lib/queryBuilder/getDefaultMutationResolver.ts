@@ -1,22 +1,25 @@
 import { IFieldResolver } from "graphql-tools";
 
 import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
+import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
-import { IHookObject, IDefaultMutationResolverContext, IMatch, IHookInfo } from "./types";
+import { HookManager, IHookInfo } from "../hooks";
+import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checkCosts";
 import checkQueryResultForInjection from "./checkQueryResultForInjection";
 import MutationBuilder from "./sqlGenerator/MutationBuilder";
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
 import { IQueryBuild, IMutationBuild } from "./sqlGenerator/types";
 
+const hookManager: HookManager = Container.get(HookManager);
+
 export default function getDefaultMutationResolver<TSource>(
   dbGeneralPool: DbGeneralPool,
   logger: ILogger,
   queryBuilder: QueryBuilder,
   mutationBuilder: MutationBuilder,
-  hookObject: IHookObject,
   costLimit: number,
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta
@@ -24,20 +27,15 @@ export default function getDefaultMutationResolver<TSource>(
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
-    // Generate mutation sql query
     const mutationBuild: IMutationBuild = mutationBuilder.build(info);
     context.ctx.state.includesMutation = true;
 
-    // Get a pgClient from pool
     const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
 
     try {
       await client.query("BEGIN");
 
-      // PreQueryHook (for auth)
-      for (const fn of hookObject.preQuery) {
-        await fn(client, context, context.accessToken != null);
-      }
+      await hookManager.executePreQueryHooks(client, context, context.accessToken != null);
 
       logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
@@ -123,23 +121,17 @@ export default function getDefaultMutationResolver<TSource>(
       };
 
       // TODO: Move this in front of mutation. What hookInfos are needed?
-      for (const fn of hookObject.preMutationCommit) {
-        await fn(client, hookInfo);
-      }
+      await hookManager.executePreMutationCommitHooks(client, hookInfo);
 
       await client.query("COMMIT");
 
-      for (const fn of hookObject.postMutation) {
-        await fn(hookInfo, context, info);
-      }
+      await hookManager.executePostMutationHooks(hookInfo, context, info);
 
       return returnData;
-    } catch (e) {
-      // Rollback on any error
+    } catch (error) {
       await client.query("ROLLBACK");
-      throw e;
+      throw error;
     } finally {
-      // Release pgClient to pool
       client.release();
     }
   };

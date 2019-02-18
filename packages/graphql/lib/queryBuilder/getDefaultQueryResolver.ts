@@ -1,18 +1,20 @@
 import { IFieldResolver } from "graphql-tools";
 
 import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
+import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
-import { IHookObject } from "./types";
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
 import checkCosts from "./checkCosts";
 import checkQueryResultForInjection from "./checkQueryResultForInjection";
+import { HookManager } from "../hooks";
+
+const hookManager: HookManager = Container.get(HookManager);
 
 export default function getDefaultQueryResolver(
   dbGeneralPool: DbGeneralPool,
   logger: ILogger,
   queryBuilder: QueryBuilder,
-  hookObject: IHookObject,
   costLimit: number
 ): IFieldResolver<any, any> {
   return async (obj, args, context, info) => {
@@ -30,9 +32,7 @@ export default function getDefaultQueryResolver(
         context.ctx.state.authRequired = true;
       }
 
-      for (const fn of hookObject.preQuery) {
-        await fn(client, context, selectQuery.authRequired);
-      }
+      await hookManager.executePreQueryHooks(client, context, selectQuery.authRequired);
 
       logger.trace("queryResolver.run", selectQuery.sql, selectQuery.values);
 

@@ -18,9 +18,10 @@ import IGraphQlConfig from "../config/IGraphQlConfig";
 import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import getDefaultResolvers from "./queryBuilder/getDefaultResolvers";
-import { IHookObject } from "./queryBuilder/types";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
+import { HookManager } from "./hooks";
+import { IHookConfig } from "./hooks/types";
 
 export { apolloServer };
 
@@ -28,9 +29,9 @@ export { apolloServer };
 export class GraphQl {
   private graphQlConfig: IGraphQlConfig;
   private apolloSchema: GraphQLSchema | null = null;
+  private readonly hookManager: HookManager;
 
   // DI
-  private config: Config;
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
@@ -39,13 +40,8 @@ export class GraphQl {
   private dbGeneralPool: DbGeneralPool;
   private resolvers: ICustomResolverObject = {};
 
-  private hookObject: IHookObject = {
-    preQuery: [],
-    preMutationCommit: [],
-    postMutation: []
-  };
-
   constructor(
+    @Inject((type) => HookManager) hookManager: HookManager,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
     @Inject((type) => BootLoader) bootLoader: BootLoader,
@@ -54,15 +50,15 @@ export class GraphQl {
     @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool
   ) {
     this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
+    this.hookManager = hookManager;
 
     this.loggerFactory = loggerFactory;
-    this.config = config;
-    this.dbGeneralPool = dbGeneralPool;
     this.server = server;
+    this.dbGeneralPool = dbGeneralPool;
     this.schemaBuilder = schemaBuilder;
 
     this.logger = this.loggerFactory.create(this.constructor.name);
-    this.ENVIRONMENT = this.config.ENVIRONMENT;
+    this.ENVIRONMENT = config.ENVIRONMENT;
 
     if (operatorsSchemaExtension !== "") this.schemaBuilder.extendSchema(operatorsSchemaExtension);
 
@@ -98,7 +94,6 @@ export class GraphQl {
   private addDefaultResolvers(resolverMeta: IResolverMeta, dbMeta: IDbMeta): void {
     const defaultResolvers = getDefaultResolvers(
       resolverMeta,
-      this.hookObject,
       dbMeta,
       this.dbGeneralPool,
       this.logger,
@@ -108,21 +103,12 @@ export class GraphQl {
     this.addResolvers(defaultResolvers);
   }
 
-  public addPreQueryHook(fn: any) {
-    // TODO: Remove
-    this.logger.warn("Function 'addPreQueryHook' is deprecated. Please use 'addHook(\"preQuery\", fn)'.");
-    this.hookObject.preQuery.push(fn);
-  }
-
-  public addHook(name: string, fn: any) {
-    if (this.hookObject[name] == null || Array.isArray(this.hookObject[name]) !== true) {
-      throw new Error(`The hook '${name}' does not exist.`);
-    }
-    this.hookObject[name].push(fn);
-  }
-
   public addResolvers(resolversObject: ICustomResolverObject) {
     this.resolvers = { ...this.resolvers, ...resolversObject };
+  }
+
+  public addHook(hookConfig: IHookConfig): void {
+    this.hookManager.addHook(hookConfig);
   }
 
   public getApolloClient(accessToken: string | null = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {

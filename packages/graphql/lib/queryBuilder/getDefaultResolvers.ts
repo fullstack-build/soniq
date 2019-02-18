@@ -5,7 +5,6 @@ import { ILogger } from "@fullstack-one/logger";
 import { DbGeneralPool } from "@fullstack-one/db";
 
 import { ICustomResolverObject, ICustomFieldResolver } from "../resolvers";
-import { IHookObject } from "./types";
 import QueryBuilder from "./sqlGenerator/QueryBuilder";
 import MutationBuilder from "./sqlGenerator/MutationBuilder";
 import getDefaultQueryResolver from "./getDefaultQueryResolver";
@@ -13,7 +12,6 @@ import getDefaultMutationResolver from "./getDefaultMutationResolver";
 
 export default function getDefaultResolvers(
   resolverMeta: IResolverMeta,
-  hookObject: IHookObject,
   dbMeta: IDbMeta,
   dbGeneralPool: DbGeneralPool,
   logger: ILogger,
@@ -23,17 +21,8 @@ export default function getDefaultResolvers(
   const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, minQueryDepthToCheckCostLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 
-  const queryResolver = getDefaultQueryResolver(dbGeneralPool, logger, queryBuilder, hookObject, costLimit);
-  const mutationResolver = getDefaultMutationResolver(
-    dbGeneralPool,
-    logger,
-    queryBuilder,
-    mutationBuilder,
-    hookObject,
-    costLimit,
-    resolverMeta,
-    dbMeta
-  );
+  const queryResolver = getDefaultQueryResolver(dbGeneralPool, logger, queryBuilder, costLimit);
+  const mutationResolver = getDefaultMutationResolver(dbGeneralPool, logger, queryBuilder, mutationBuilder, costLimit, resolverMeta, dbMeta);
 
   return {
     "@fullstack-one/graphql/queryResolver": asCustomResolver(queryResolver),
