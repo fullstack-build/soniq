@@ -1,28 +1,8 @@
 import { DocumentNode, ObjectTypeExtensionNode, DefinitionNode, FieldDefinitionNode, ObjectTypeDefinitionNode } from "graphql";
 import { utils } from "@fullstack-one/schema-builder";
 
-interface IBaseOperation {
-  name: string;
-  type: string;
-  resolver: string;
-  params: object;
-  viewName?: string;
-}
-
-export type TQueryOperation = IBaseOperation;
-export type TMutationOperation = IBaseOperation;
-export type TFieldOperation = IBaseOperation & { gqlTypeName: string; fieldName: string };
-
-export interface IOperationsObject {
-  queries: TQueryOperation[];
-  mutations: TMutationOperation[];
-  fields: TFieldOperation[];
-}
-
-interface IFieldNodeAndDirectivesObject {
-  fieldNode: FieldDefinitionNode;
-  directivesObject: utils.IDirectivesObject;
-}
+import { IOperationsObject, TQueryOperation, TMutationOperation, TFieldOperation, IBaseOperation, IFieldNodeAndDirectivesObject } from "./types";
+export * from "./types";
 
 export function getOperationsObject({ definitions }: DocumentNode): IOperationsObject {
   const queries: TQueryOperation[] = getBaseOperations(definitions, "Query");
@@ -36,7 +16,7 @@ export function getOperationsObject({ definitions }: DocumentNode): IOperationsO
   };
 }
 
-function getBaseOperations(definitionNodes: ReadonlyArray<DefinitionNode>, gqlTypeName: string): IBaseOperation[] {
+function getBaseOperations(definitionNodes: ReadonlyArray<DefinitionNode>, gqlTypeName: "Query" | "Mutation"): IBaseOperation[] {
   return definitionNodes
     .filter((definitionNode) => definitionNode.kind === "ObjectTypeExtension" && definitionNode.name.value === gqlTypeName)
     .map((definitionNode: ObjectTypeExtensionNode) => definitionNode.fields)

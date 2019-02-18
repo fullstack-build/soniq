@@ -1,7 +1,7 @@
 import * as gQlTypeJson from "graphql-type-json";
 import { GraphQLResolveInfo } from "graphql";
 import { IResolvers, IResolverObject, MergeInfo, IFieldResolver } from "graphql-tools";
-import { IOperationsObject } from "./getOperations";
+import { IOperationsObject } from "./operations";
 
 export type ICustomFieldResolver<TSource, TContext, TParams> = (
   source: TSource,

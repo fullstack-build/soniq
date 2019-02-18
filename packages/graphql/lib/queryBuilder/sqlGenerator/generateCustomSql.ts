@@ -1,5 +1,4 @@
-import { operatorsObject } from "../../compareOperators";
-import { IBooleanOperator } from "../../compareOperators/types";
+import { operatorsObject, IBooleanOperator } from "../../logicalOperators";
 
 export default function generateCustomSql(match, customs, getParam, getField): string {
   function createOperator(operatorName, fieldName, value) {

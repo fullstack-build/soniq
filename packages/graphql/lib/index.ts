@@ -19,8 +19,8 @@ import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import getDefaultResolvers from "./queryBuilder/getDefaultResolvers";
 import { IHookObject } from "./queryBuilder/types";
-import { operatorsSchemaExtension, operatorsDefinitionNode } from "./compareOperators";
-import { getOperationsObject } from "./getOperations";
+import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
+import { getOperationsObject } from "./operations";
 
 export { apolloServer };
 
