@@ -1,3 +1,4 @@
+// tslint:disable:member-ordering
 import { GraphQLResolveInfo } from "graphql";
 import { IResolverMeta, IMutationViewMeta } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, parseResolveInfo } from "../types";
@@ -10,84 +11,6 @@ export default class MutationBuilder {
 
   constructor(resolverMeta: IResolverMeta) {
     this.resolverMeta = resolverMeta;
-  }
-
-  private resolveCreateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
-    const fieldNames = Object.keys(query.args.input);
-    const fieldValues = Object.values(query.args.input);
-
-    const values: any[] = [];
-
-    // Generate fields which will be inserted
-    const f = fieldNames
-      .map((name) => {
-        return `"${name}"`;
-      })
-      .join(", ");
-
-    // Generate values to be inserted
-    const v = fieldValues
-      .map((value) => {
-        let insertValue = value;
-        if (insertValue != null && typeof insertValue === "object") {
-          insertValue = JSON.stringify(insertValue);
-        }
-        values.push(insertValue);
-        return `$${values.length}`;
-      })
-      .join(", ");
-
-    // Build insert query
-    return {
-      sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${f}) VALUES (${v});`,
-      values,
-      mutation,
-      id: query.args.input.id || null
-    };
-  }
-
-  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
-    const setFields: any[] = [];
-    const values: any[] = [];
-    let entityId = null;
-
-    Object.keys(query.args.input).forEach((fieldName) => {
-      const fieldValue = query.args.input[fieldName];
-      if (fieldName !== "id") {
-        // Add field to update set list and it's value to values
-
-        let updateValue = fieldValue;
-        if (updateValue != null && typeof updateValue === "object") {
-          updateValue = JSON.stringify(updateValue);
-        }
-        values.push(updateValue);
-        setFields.push(`"${fieldName}" = $${values.length}`);
-      } else {
-        // If field is id use it as entity identifier
-        entityId = fieldValue;
-      }
-    });
-
-    // add id to values to match it
-    values.push(entityId);
-
-    // Build update by id query
-    return {
-      sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${setFields.join(", ")} WHERE id = $${values.length};`,
-      values,
-      mutation,
-      id: query.args.input.id
-    };
-  }
-
-  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
-    // Build delete by id query
-    return {
-      sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
-      values: [query.args.input.id],
-      mutation,
-      id: query.args.input.id
-    };
   }
 
   public build(info: GraphQLResolveInfo): IMutationBuild {
@@ -105,5 +28,62 @@ export default class MutationBuilder {
       default:
         throw new Error(`Mutation-Type does not exist: ${mutation}`);
     }
+  }
+
+  private resolveCreateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+    const fieldNames = Object.keys(query.args.input)
+      .map((name) => `"${name}"`)
+      .join(", ");
+
+    const values: string[] = [];
+    const valuesString: string = Object.values(query.args.input)
+      .map((value, index) => {
+        values.push(this.parseValue(value));
+        return `$${index + 1}`;
+      })
+      .join(", ");
+
+    return {
+      sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${fieldNames}) VALUES (${valuesString});`,
+      values,
+      mutation,
+      id: query.args.input.id || null
+    };
+  }
+
+  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+    const values: string[] = [];
+
+    const fieldAssignments: string = Object.keys(query.args.input)
+      .filter((fieldName) => fieldName !== "id")
+      .map((fieldName, index) => {
+        const value: any = query.args.input[fieldName];
+        values.push(this.parseValue(value));
+        return `"${fieldName}" = $${index + 1}`;
+      })
+      .join(", ");
+
+    values.push(query.args.input.id);
+
+    return {
+      sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${fieldAssignments} WHERE id = $${values.length};`,
+      values,
+      mutation,
+      id: query.args.input.id
+    };
+  }
+
+  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+    return {
+      sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
+      values: [query.args.input.id],
+      mutation,
+      id: query.args.input.id
+    };
+  }
+
+  private parseValue(value: any): string {
+    if (value != null && typeof value === "object") return JSON.stringify(value);
+    return `${value}`;
   }
 }
