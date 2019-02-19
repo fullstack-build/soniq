@@ -17,11 +17,11 @@ enum IS_VALUE {
 }
 `;
 
-const booleanOperator: IBooleanOperator = {
+const is: IBooleanOperator = {
   name: "is",
   value: "IS_VALUE",
   schemaExtension,
-  unsafeValue: true,
+  isBooleanOperator: true,
   getSql: (context) => {
     const { field, value } = context;
     if (operators[value] == null) {
@@ -31,4 +31,4 @@ const booleanOperator: IBooleanOperator = {
   }
 };
 
-export { booleanOperator };
+export { is };

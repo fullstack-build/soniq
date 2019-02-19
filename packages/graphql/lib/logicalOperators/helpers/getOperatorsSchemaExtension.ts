@@ -1,12 +1,8 @@
-import { IOperatorObject, isBooleanOperator } from "../types";
+import { IOperatorObject } from "../types";
 
 export default function getOperatorsSchemaExtension(operatorsObject: IOperatorObject): string {
   return Object.values(operatorsObject)
-    .map((operator) => {
-      if (isBooleanOperator(operator)) {
-        return `${operator.schemaExtension}\n`;
-      }
-      return "";
-    })
-    .join("");
+    .map(({ schemaExtension }) => schemaExtension)
+    .filter((schemaExtension) => schemaExtension != null)
+    .join("\n");
 }

@@ -18,7 +18,7 @@ export interface IQueryClauseObject {
 }
 
 export interface IFilterLeaf {
-  [operatorName: string]: number;
+  [operatorName: string]: number[] | number | string;
 }
 
 export interface INestedFilter {

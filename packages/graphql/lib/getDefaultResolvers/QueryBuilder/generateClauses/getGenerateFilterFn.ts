@@ -1,5 +1,12 @@
 import { INestedFilter, IFilterLeaf } from "../types";
-import { operatorsObject, isMultiValueOperator, IBooleanOperator } from "../../../logicalOperators";
+import {
+  getOperator,
+  IMultiValueOperatorContext,
+  isSingleValueOperator,
+  ISingleValueOperatorContext,
+  isBooleanOperator,
+  IBooleanOperatorContext
+} from "../../../logicalOperators";
 
 export default function getGenerateFilterFn(
   getParam: (value: number) => string,
@@ -37,41 +44,41 @@ export default function getGenerateFilterFn(
       .join(" AND ");
   }
 
-  function generateOperatorFilter(operatorName: string, fieldName: string, value: number) {
-    if (operatorsObject[operatorName] == null) {
+  function generateOperatorFilter(operatorName: string, fieldName: string, value: number[] | number | string) {
+    const operator = getOperator(operatorName);
+    if (operator == null) {
       throw new Error(`Operator '${operatorName}' not found.`);
     }
 
-    const operator = operatorsObject[operatorName];
-    const context = {
-      field: getField(fieldName),
-      value: null,
-      values: null
-    };
-
-    if ((operator as IBooleanOperator).unsafeValue === true) {
-      if (Array.isArray(value)) {
-        context.values = value;
-      } else {
-        context.value = value;
+    if (isBooleanOperator(operator)) {
+      if (Array.isArray(value) || typeof value !== "string") {
+        throw new Error(`Operator '${operatorName}' requires a single value.`);
       }
+      const context: IBooleanOperatorContext = {
+        field: getField(fieldName),
+        value
+      };
+      return operator.getSql(context);
+    } else if (isSingleValueOperator(operator)) {
+      if (Array.isArray(value) || typeof value !== "number") {
+        throw new Error(`Operator '${operatorName}' requires a single value.`);
+      }
+      const context: ISingleValueOperatorContext = {
+        field: getField(fieldName),
+        value: getParam(value)
+      };
+
+      return operator.getSql(context);
     } else {
-      if (Array.isArray(value)) {
-        context.values = value.map(getParam);
-      } else {
-        context.value = getParam(value);
+      if (!Array.isArray(value)) {
+        throw new Error(`Operator '${operatorName}' requires an array of values.`);
       }
-    }
+      const context: IMultiValueOperatorContext = {
+        field: getField(fieldName),
+        values: value.map(getParam)
+      };
 
-    const requiresArray = isMultiValueOperator(operator);
-
-    if (requiresArray === true && context.values == null) {
-      throw new Error(`Operator '${operatorName}' requires an array of values.`);
+      return operator.getSql(context);
     }
-    if (requiresArray !== true && context.value == null) {
-      throw new Error(`Operator '${operatorName}' requires a single value.`);
-    }
-
-    return operator.getSql(context);
   }
 }

@@ -1,16 +1,24 @@
-export interface ISingleValueOperatorContext {
+interface IBaseOperatorContext {
   field: string;
+}
+
+export interface ISingleValueOperatorContext extends IBaseOperatorContext {
   value: string;
 }
 
-export interface IMultiValueOperatorContext {
-  field: string;
+export interface IBooleanOperatorContext extends IBaseOperatorContext {
+  value: string;
+}
+
+export interface IMultiValueOperatorContext extends IBaseOperatorContext {
   values: string[];
 }
 
 interface IBaseOperator {
   name: string;
   value: string;
+  schemaExtension?: string;
+  unsafeValue?: boolean;
 }
 
 export interface ISingleValueOperator extends IBaseOperator {
@@ -22,8 +30,7 @@ export interface IMultiValueOperator extends IBaseOperator {
 }
 
 export interface IBooleanOperator extends ISingleValueOperator {
-  schemaExtension: string;
-  unsafeValue: boolean;
+  isBooleanOperator: true;
 }
 
 export type IOperator = IBooleanOperator | ISingleValueOperator | IMultiValueOperator;
@@ -36,10 +43,10 @@ export function isSingleValueOperator(operator: IOperator): operator is ISingleV
   return !operator.value.startsWith("[");
 }
 
-export function isMultiValueOperator(operator: IOperator): operator is IMultiValueOperator {
-  return operator.value.startsWith("[");
+export function isBooleanOperator(operator: IOperator): operator is IBooleanOperator {
+  return (operator as IBooleanOperator).isBooleanOperator === true;
 }
 
-export function isBooleanOperator(operator: IOperator): operator is IBooleanOperator {
-  return (operator as IBooleanOperator).schemaExtension != null;
+export function isMultiValueOperator(operator: IOperator): operator is IMultiValueOperator {
+  return operator.value.startsWith("[");
 }
