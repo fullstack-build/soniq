@@ -9,3 +9,19 @@ export interface IQueryBuild {
   costTree: any;
   maxDepth: number;
 }
+
+export interface ICustoms {
+  where: INestedFilter;
+  orderBy: string[] | string;
+  limit: string;
+  offset: string;
+}
+
+export interface IFilterLeaf {
+  [operatorName: string]: number;
+}
+
+export interface INestedFilter {
+  AND: Array<INestedFilter | IFilterLeaf>;
+  OR: Array<INestedFilter | IFilterLeaf>;
+}

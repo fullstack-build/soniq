@@ -1,12 +1,13 @@
-import { operatorsObject, IBooleanOperator } from "../../logicalOperators";
+import { operatorsObject, IBooleanOperator, isMultiValueOperator } from "../../logicalOperators";
+import { ICustoms, INestedFilter, IFilterLeaf } from "./types";
 
 export default function generateCustomSql(
   hasMatch: boolean,
-  customs,
+  customs: ICustoms,
   getParam: (value: number) => string,
   getField: (fieldName: string) => string
 ): string {
-  function createOperator(operatorName, fieldName, value) {
+  function createOperator(operatorName: string, fieldName: string, value: number) {
     if (operatorsObject[operatorName] == null) {
       throw new Error(`Operator '${operatorName}' not found.`);
     }
@@ -32,7 +33,7 @@ export default function generateCustomSql(
       }
     }
 
-    const requiresArray = operatorsObject[operatorName].value[0] === "[";
+    const requiresArray = isMultiValueOperator(operator);
 
     if (requiresArray === true && context.values == null) {
       throw new Error(`Operator '${operatorName}' requires an array of values.`);
@@ -41,38 +42,34 @@ export default function generateCustomSql(
       throw new Error(`Operator '${operatorName}' requires a single value.`);
     }
 
-    return (operatorsObject[operatorName] as IBooleanOperator).getSql(context);
+    return operator.getSql(context);
   }
 
-  function createOperators(fieldName, field) {
-    return Object.keys(field)
-      .map((operatorName) => {
-        const value = field[operatorName];
-        return createOperator(operatorName, fieldName, value);
-      })
+  function createOperators(fieldName: string, field: IFilterLeaf) {
+    return Object.entries(field)
+      .map(([operatorName, value]) => createOperator(operatorName, fieldName, value))
       .join(" AND ");
   }
 
-  function createAndList(list) {
-    return list.map(createFilter).join(" AND ");
+  function createAndList(filterList: INestedFilter[]) {
+    return filterList.map(createFilter).join(" AND ");
   }
 
-  function createOrList(list) {
-    return list.map(createFilter).join(" OR ");
+  function createOrList(filterList: INestedFilter[]) {
+    return filterList.map(createFilter).join(" OR ");
   }
 
-  function createFilter(filter) {
-    const sqlList = [];
+  function createFilter(filter: INestedFilter) {
+    const sqlList: string[] = [];
 
-    Object.keys(filter).forEach((fieldName) => {
-      const field = filter[fieldName];
+    Object.entries(filter).forEach(([fieldName, field]) => {
       if (fieldName === "AND") {
-        return sqlList.push(`(${createAndList(field)})`);
+        sqlList.push(`(${createAndList(field)})`);
+      } else if (fieldName === "OR") {
+        sqlList.push(`(${createOrList(field)})`);
+      } else {
+        sqlList.push(`(${createOperators(fieldName, field)})`);
       }
-      if (fieldName === "OR") {
-        return sqlList.push(`(${createOrList(field)})`);
-      }
-      sqlList.push(`(${createOperators(fieldName, field)})`);
     });
 
     return sqlList.join(" AND ");
@@ -90,10 +87,7 @@ export default function generateCustomSql(
   }
 
   if (customs.orderBy != null) {
-    let orderBy = customs.orderBy;
-    if (Array.isArray(orderBy) !== true) {
-      orderBy = [orderBy];
-    }
+    const orderBy = Array.isArray(customs.orderBy) ? customs.orderBy : [customs.orderBy];
     const orders = orderBy.map((option) => {
       const splitted = option.split("_");
       const order = splitted.pop();
