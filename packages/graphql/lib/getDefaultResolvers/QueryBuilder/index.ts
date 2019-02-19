@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { IDbMeta, IResolverMeta, IReadViewMeta } from "@fullstack-one/schema-builder";
+import { IDbMeta, IResolverMeta, IReadViewMeta, IReadFieldData } from "@fullstack-one/schema-builder";
 
 import { IParsedResolveInfo, parseResolveInfo, IMatch } from "../types";
 import { IQueryBuild } from "./types";
@@ -179,7 +179,7 @@ export default class QueryBuilder {
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
 
     // Combine the field select expressions with the from expression to one SQL query
-    const sql: string[] = [`SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`];
+    const sqlList: string[] = [`SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`];
 
     // When the query needs to match a field add a WHERE clause
     // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
@@ -187,16 +187,16 @@ export default class QueryBuilder {
       const exp = this.getFieldExpression(match.foreignFieldName, localName);
 
       if (match.type !== "ARRAY") {
-        sql.push(`WHERE ${exp} = ${match.fieldExpression}`);
+        sqlList.push(`WHERE ${exp} = ${match.fieldExpression}`);
       } else {
-        sql.push(`WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`);
+        sqlList.push(`WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`);
       }
     }
 
-    sql.push(customQuery);
+    sqlList.push(customQuery);
 
     return {
-      sql: sql.join(" "),
+      sql: sqlList.join(" "),
       counter,
       values,
       authRequired
@@ -204,7 +204,16 @@ export default class QueryBuilder {
   }
 
   // Resolves a relation of a column/field to a new Subquery
-  private resolveRelation(c: number, query, fieldMeta, localName: string, matchIdExpression, values: number[], isAuthenticated: boolean, costTree) {
+  private resolveRelation(
+    c: number,
+    query: IParsedResolveInfo,
+    fieldMeta: IReadFieldData,
+    localName: string,
+    matchIdExpression: string,
+    values: number[],
+    isAuthenticated: boolean,
+    costTree
+  ) {
     // Get the relation from dbMeta
     const relationConnections = this.dbMeta.relations[fieldMeta.meta.relationName];
 
@@ -252,7 +261,7 @@ export default class QueryBuilder {
   }
 
   // Generates an object from a select query (This is needed for ONE relations like loading a owner of a post)
-  private rowToJson(c, query, values, isAuthenticated, match, costTree) {
+  private rowToJson(c: number, query: IParsedResolveInfo, values: number[], isAuthenticated: boolean, match: IMatch, costTree) {
     // Counter is to generate unique local aliases for all Tables (Joins of Views)
     let counter = c;
     // Generate new local alias (e.g. "_local_1_")
@@ -338,10 +347,14 @@ export default class QueryBuilder {
 
     const costTree = {};
 
-    const values = [];
+    const values: number[] = [];
 
     // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
     const { sql, authRequired } = this.jsonAgg(0, query, values, isAuthenticated, match, costTree);
+
+    console.log(JSON.stringify(costTree, undefined, 2));
+    console.log(values);
+    console.log(sql);
 
     const maxDepth = calculateMaxDepth(costTree[query.name]);
 
