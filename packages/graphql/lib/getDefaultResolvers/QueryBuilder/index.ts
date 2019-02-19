@@ -4,7 +4,7 @@ import { IDbMeta, IResolverMeta, IReadViewMeta } from "@fullstack-one/schema-bui
 
 import { IParsedResolveInfo, parseResolveInfo, IMatch } from "../types";
 import { IQueryBuild } from "./types";
-import generateCustomSql from "./generateCustomSql";
+import generateClauses from "./generateClauses";
 import calculateMaxDepth from "./calculateMaxDepth";
 
 export * from "./types";
@@ -173,7 +173,7 @@ export default class QueryBuilder {
     }
 
     // Add possible custom queries to the main query. (where/limit/offset/orderBy)
-    const customQuery: string = generateCustomSql(match != null, query.args, getParam, getField);
+    const customQuery: string = generateClauses(match != null, query.args, getParam, getField);
 
     // Get the view combination (Join of Views)
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);

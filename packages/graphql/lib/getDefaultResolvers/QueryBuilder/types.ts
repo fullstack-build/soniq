@@ -10,11 +10,11 @@ export interface IQueryBuild {
   maxDepth: number;
 }
 
-export interface ICustoms {
-  where: INestedFilter;
-  orderBy: string[] | string;
-  limit: string;
-  offset: string;
+export interface IQueryClauseObject {
+  where?: INestedFilter;
+  orderBy?: string[] | string;
+  limit?: string;
+  offset?: string;
 }
 
 export interface IFilterLeaf {
