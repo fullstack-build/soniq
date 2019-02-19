@@ -1,6 +1,11 @@
 import { operatorsObject, IBooleanOperator } from "../../logicalOperators";
 
-export default function generateCustomSql(match, customs, getParam, getField): string {
+export default function generateCustomSql(
+  hasMatch: boolean,
+  customs,
+  getParam: (value: number) => string,
+  getField: (fieldName: string) => string
+): string {
   function createOperator(operatorName, fieldName, value) {
     if (operatorsObject[operatorName] == null) {
       throw new Error(`Operator '${operatorName}' not found.`);
@@ -76,7 +81,7 @@ export default function generateCustomSql(match, customs, getParam, getField): s
   let sql = "";
 
   if (customs.where != null) {
-    if (match === true) {
+    if (hasMatch === true) {
       sql += " AND ";
     } else {
       sql += " WHERE ";

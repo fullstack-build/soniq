@@ -9,9 +9,8 @@ import { HookManager, IHookInfo } from "../hooks";
 import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
-import MutationBuilder from "./sqlGenerator/MutationBuilder";
-import QueryBuilder from "./sqlGenerator/QueryBuilder";
-import { IQueryBuild, IMutationBuild } from "./sqlGenerator/types";
+import MutationBuilder, { IMutationBuild } from "./MutationBuilder";
+import QueryBuilder, { IQueryBuild } from "./QueryBuilder";
 
 const hookManager: HookManager = Container.get(HookManager);
 

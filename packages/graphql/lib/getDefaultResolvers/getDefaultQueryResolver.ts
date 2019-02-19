@@ -4,7 +4,7 @@ import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
-import QueryBuilder from "./sqlGenerator/QueryBuilder";
+import QueryBuilder from "./QueryBuilder";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import { HookManager } from "../hooks";

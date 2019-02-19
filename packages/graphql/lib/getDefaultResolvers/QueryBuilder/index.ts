@@ -2,9 +2,12 @@ import { GraphQLResolveInfo } from "graphql";
 
 import { IDbMeta, IResolverMeta, IReadViewMeta } from "@fullstack-one/schema-builder";
 
+import { IParsedResolveInfo, parseResolveInfo, IMatch } from "../types";
+import { IQueryBuild } from "./types";
 import generateCustomSql from "./generateCustomSql";
-import { IQueryBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
-import { IMatch } from "../types";
+import calculateMaxDepth from "./calculateMaxDepth";
+
+export * from "./types";
 
 export default class QueryBuilder {
   private resolverMeta: IResolverMeta;
@@ -17,40 +20,36 @@ export default class QueryBuilder {
     this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
   }
 
-  private calculateMaxDepth(costTree: any): number {
-    let depth = 0;
-
-    if (costTree.__meta.type === "aggregation") {
-      depth += 1;
-    }
-
-    Object.keys(costTree).forEach((key) => {
-      if (key !== "__meta") {
-        depth += this.calculateMaxDepth(costTree[key]);
-      }
-    });
-
-    return depth;
-  }
-
-  // Generate local alias name for views/tables
-  private getLocalName(counter) {
+  private getLocalName(counter: number) {
     return `_local_${counter}_`;
   }
 
   // We check if a field is valid to prevent sql-injection
-  private getFieldExpression(name, localName) {
+  private getFieldExpression(name: string, localName: string): string {
     return `"${localName}"."${name}"`;
   }
 
   // Create FROM expression for query (or subquery)
-  private getFromExpression(gqlTypeMeta: IReadViewMeta, localName: string, authRequired: boolean) {
+  private getFromExpression(gqlTypeMeta: IReadViewMeta, localName: string, authRequired: boolean): string {
     const viewName = authRequired === true ? gqlTypeMeta.authViewName : gqlTypeMeta.publicViewName;
     return `"${gqlTypeMeta.viewSchemaName}"."${viewName}" AS "${localName}"`;
   }
 
   // This function basically creates a SQL query/subquery from a nested query object matching eventually a certain id-column
-  private resolveTable(c: number, query: IParsedResolveInfo, values, isAuthenticated: boolean, match: IMatch, isAggregation: boolean, costTree) {
+  private resolveTable(
+    c: number,
+    query: IParsedResolveInfo,
+    values: number[],
+    isAuthenticated: boolean,
+    match: IMatch,
+    isAggregation: boolean,
+    costTree
+  ): {
+    sql: string;
+    counter: number;
+    values: number[];
+    authRequired: boolean;
+  } {
     // Get the tableName from the nested query object
     const gqlTypeName = Object.keys(query.fieldsByTypeName)[0];
 
@@ -71,21 +70,20 @@ export default class QueryBuilder {
     const fields = query.fieldsByTypeName[gqlTypeName];
     let counter = c; // TODO: Dustin: change counter
 
-    // Generate local alias names for each table (e.g. "_local_12_")
     const localName = this.getLocalName(counter);
     counter += 1;
 
     // A list of SELECT field expressions
-    const fieldSelect = [];
+    const fieldSelect: string[] = [];
 
     // The expression to get the current entity-id for matching with relations
     const idExpression = this.getFieldExpression("id", localName);
 
-    let authRequired: any = false;
-    let authRequiredHere: any = false;
+    let authRequired: boolean = false;
+    let authRequiredHere: boolean = false;
 
     // Walk through all requested fields to generate the selected fields and their expressions
-    Object.values(fields).forEach((field: any) => {
+    Object.values(fields).forEach((field) => {
       if (gqlTypeMeta.fields[field.name] == null) {
         throw new Error(`The field '${gqlTypeName}.${field.name}' is not available.`);
       }
@@ -138,36 +136,36 @@ export default class QueryBuilder {
     });
 
     // Translate a unsecured user-input value to a parameter like $1, $2, ... and adds the value to query-values
-    const getParam = (value) => {
+    const getParam = (value: number): string => {
       values.push(value);
       return `$${values.length}`;
     };
 
     // A field can be a COALESCE of view-columns. Thus we need to get the correct expression.
-    const getField = (name) => {
-      let virtualFieldName = null;
+    const getField = (fieldName: string) => {
+      let virtualFieldName: string | null = null;
 
-      Object.keys(gqlTypeMeta.fields).some((fieldName) => {
-        const field = gqlTypeMeta.fields[fieldName];
-        if (field.nativeFieldName === name) {
-          virtualFieldName = fieldName;
+      Object.keys(gqlTypeMeta.fields).some((gqlFieldName) => {
+        const field = gqlTypeMeta.fields[gqlFieldName];
+        if (field.nativeFieldName === fieldName) {
+          virtualFieldName = gqlFieldName;
           return true;
         }
         return false;
       });
 
       if (virtualFieldName == null) {
-        throw new Error(`Field '${name}' not found.`);
+        throw new Error(`Field '${fieldName}' not found.`);
       }
 
       if (gqlTypeMeta.publicFieldNames.indexOf(virtualFieldName) < 0) {
         authRequired = true;
         authRequiredHere = true;
         if (isAuthenticated !== true) {
-          throw new Error(`The field '${gqlTypeName}.${name}' is not available without authentication.`);
+          throw new Error(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
         }
       }
-      return this.getFieldExpression(name, localName);
+      return this.getFieldExpression(fieldName, localName);
     };
 
     if (query.args.limit != null) {
@@ -175,13 +173,13 @@ export default class QueryBuilder {
     }
 
     // Add possible custom queries to the main query. (where/limit/offset/orderBy)
-    const customQuery = generateCustomSql(match != null, query.args, getParam, getField);
+    const customQuery: string = generateCustomSql(match != null, query.args, getParam, getField);
 
     // Get the view combination (Join of Views)
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
 
     // Combine the field select expressions with the from expression to one SQL query
-    let sql = `SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`;
+    const sql: string[] = [`SELECT ${fieldSelect.join(", ")} FROM ${fromExpression}`];
 
     // When the query needs to match a field add a WHERE clause
     // This is required for relations and mutation-responses (e.g. "Post.owner_User_id = User.id")
@@ -189,16 +187,16 @@ export default class QueryBuilder {
       const exp = this.getFieldExpression(match.foreignFieldName, localName);
 
       if (match.type !== "ARRAY") {
-        sql += ` WHERE ${exp} = ${match.fieldExpression}`;
+        sql.push(`WHERE ${exp} = ${match.fieldExpression}`);
       } else {
-        sql += ` WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`;
+        sql.push(`WHERE ${match.fieldExpression} @> ARRAY[${exp}]::uuid[]`);
       }
     }
 
-    sql += customQuery;
+    sql.push(customQuery);
 
     return {
-      sql,
+      sql: sql.join(" "),
       counter,
       values,
       authRequired
@@ -206,7 +204,7 @@ export default class QueryBuilder {
   }
 
   // Resolves a relation of a column/field to a new Subquery
-  private resolveRelation(c, query, fieldMeta, localName, matchIdExpression, values, isAuthenticated, costTree) {
+  private resolveRelation(c: number, query, fieldMeta, localName: string, matchIdExpression, values: number[], isAuthenticated: boolean, costTree) {
     // Get the relation from dbMeta
     const relationConnections = this.dbMeta.relations[fieldMeta.meta.relationName];
 
@@ -289,9 +287,20 @@ export default class QueryBuilder {
   }
 
   // Generates Array of Objects from a select query
-  private jsonAgg(c, query: IParsedResolveInfo, values, isAuthenticated: boolean, match: IMatch, costTree) {
+  private jsonAgg(
+    c: number,
+    query: IParsedResolveInfo,
+    values: number[],
+    isAuthenticated: boolean,
+    match: IMatch,
+    costTree
+  ): {
+    sql: string;
+    counter: number;
+    authRequired: boolean;
+  } {
     // Counter is to generate unique local aliases for all Tables (Joins of Views)
-    let counter = c;
+    let counter: number = c;
     // Generate new local alias (e.g. "_local_1_")
     const localName = this.getLocalName(counter);
     counter += 1;
@@ -319,7 +328,6 @@ export default class QueryBuilder {
     return {
       sql,
       counter,
-      values,
       authRequired
     };
   }
@@ -330,10 +338,12 @@ export default class QueryBuilder {
 
     const costTree = {};
 
-    // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
-    const { sql, values, authRequired } = this.jsonAgg(0, query, [], isAuthenticated, match, costTree);
+    const values = [];
 
-    const maxDepth = this.calculateMaxDepth(costTree[query.name]);
+    // The first query is always a aggregation (array of objects) => Just like SQL you'll always get rows
+    const { sql, authRequired } = this.jsonAgg(0, query, values, isAuthenticated, match, costTree);
+
+    const maxDepth = calculateMaxDepth(costTree[query.name]);
 
     const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
 

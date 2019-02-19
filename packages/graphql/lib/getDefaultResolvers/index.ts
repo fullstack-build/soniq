@@ -5,8 +5,8 @@ import { ILogger } from "@fullstack-one/logger";
 import { DbGeneralPool } from "@fullstack-one/db";
 
 import { ICustomResolverObject, ICustomFieldResolver } from "../resolvers";
-import QueryBuilder from "./sqlGenerator/QueryBuilder";
-import MutationBuilder from "./sqlGenerator/MutationBuilder";
+import QueryBuilder from "./QueryBuilder";
+import MutationBuilder from "./MutationBuilder";
 import getDefaultQueryResolver from "./getDefaultQueryResolver";
 import getDefaultMutationResolver from "./getDefaultMutationResolver";
 

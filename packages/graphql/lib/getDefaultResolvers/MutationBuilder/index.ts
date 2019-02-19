@@ -1,6 +1,9 @@
 import { GraphQLResolveInfo } from "graphql";
 import { IResolverMeta, IMutationViewMeta } from "@fullstack-one/schema-builder";
-import { IMutationBuild, IParsedResolveInfo, parseResolveInfo } from "./types";
+import { IParsedResolveInfo, parseResolveInfo } from "../types";
+import { IMutationBuild } from "./types";
+
+export * from "./types";
 
 export default class MutationBuilder {
   private resolverMeta: IResolverMeta;
