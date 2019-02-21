@@ -76,7 +76,7 @@ export default class QueryBuild {
         throw new Error(`The field '${gqlTypeName}.${field.name}' is not available.`);
       }
       const fieldMeta = gqlTypeMeta.fields[field.name];
-      if (gqlTypeMeta.publicFieldNames.indexOf(field.name) < 0 && fieldMeta.nativeFieldName != null) {
+      if (!gqlTypeMeta.publicFieldNames.includes(field.name) && fieldMeta.nativeFieldName != null) {
         this.authRequired = true;
         authRequiredHere = true;
         if (this.isAuthenticated !== true) {
@@ -104,7 +104,7 @@ export default class QueryBuild {
       if (readFieldData == null) throw new Error(`Field '${fieldName}' not found.`);
       const virtualFieldName: string = readFieldData.gqlFieldName;
 
-      if (gqlTypeMeta.publicFieldNames.indexOf(virtualFieldName) < 0) {
+      if (!gqlTypeMeta.publicFieldNames.includes(virtualFieldName)) {
         this.authRequired = true;
         authRequiredHere = true;
         if (this.isAuthenticated !== true) {
