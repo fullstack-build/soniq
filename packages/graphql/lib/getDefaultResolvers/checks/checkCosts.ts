@@ -1,20 +1,21 @@
 import * as crypto from "crypto";
 import { PgPoolClient } from "@fullstack-one/db";
+import { IQueryBuildOject } from "../QueryBuilder";
 
-export default async function checkCosts(client: PgPoolClient, query, costLimit: number) {
-  const currentCost = await getCurrentCosts(client, query);
+export default async function checkCosts(client: PgPoolClient, queryBuild: IQueryBuildOject, costLimit: number) {
+  const currentCost = await getCurrentCosts(client, queryBuild);
 
   if (currentCost > costLimit) {
     throw new Error(
       "This query seems to be to exprensive. Please set some limits. " +
-        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${query.cost})`
+        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${queryBuild.costTree})`
     );
   }
 
   return currentCost;
 }
 
-function sha1Base64(input: string): string {
+function toSha1Base64Hash(input: string): string {
   return crypto
     .createHash("sha1")
     .update(input)
@@ -24,8 +25,8 @@ function sha1Base64(input: string): string {
 const costCache = {};
 const COST_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // TODO Dustin put in config
 
-async function getCurrentCosts(client: PgPoolClient, query) {
-  const queryHash: string = sha1Base64(query.sql + query.values.join(""));
+async function getCurrentCosts(client: PgPoolClient, queryBuild: IQueryBuildOject) {
+  const queryHash: string = toSha1Base64Hash(queryBuild.sql + queryBuild.values.join(""));
 
   if (costCache[queryHash] != null) {
     if (costCache[queryHash].t + COST_CACHE_MAX_AGE > Date.now()) {
@@ -36,31 +37,27 @@ async function getCurrentCosts(client: PgPoolClient, query) {
     }
   }
 
-  const result = await client.query(`EXPLAIN ${query.sql}`, query.values);
+  const result = await client.query(`EXPLAIN ${queryBuild.sql}`, queryBuild.values);
 
-  const queryPlan = result.rows[0]["QUERY PLAN"];
+  const queryPlan: string = result.rows[0]["QUERY PLAN"];
 
-  const data: any = {};
+  const data: { [key: string]: string } = {};
 
   queryPlan
     .split("(")[1]
     .split(")")[0]
     .split(" ")
     .forEach((element) => {
-      const keyValue = element.split("=");
-      data[keyValue[0]] = keyValue[1];
+      const [key, value] = element.split("=");
+      data[key] = value;
     });
 
-  const costs = data.cost
+  const costs: number[] = data.cost
     .split(".")
     .filter((i) => i !== "")
     .map((i) => parseInt(i, 10));
 
-  let currentCost = 0;
-
-  costs.forEach((cost) => {
-    currentCost = cost > currentCost ? cost : currentCost;
-  });
+  const currentCost = costs.reduce((prevCost, cost) => (cost > prevCost ? cost : prevCost), 0);
 
   costCache[queryHash] = {
     c: currentCost,

@@ -9,8 +9,8 @@ import { HookManager, IHookInfo } from "../hooks";
 import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
-import MutationBuilder, { IMutationBuild } from "./MutationBuilder";
-import QueryBuilder, { IQueryBuild } from "./QueryBuilder";
+import MutationBuilder, { IMutationBuildObject } from "./MutationBuilder";
+import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 
 const hookManager: HookManager = Container.get(HookManager);
 
@@ -26,7 +26,7 @@ export default function getDefaultMutationResolver<TSource>(
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
-    const mutationBuild: IMutationBuild = mutationBuilder.build(info);
+    const mutationBuild: IMutationBuildObject = mutationBuilder.build(info);
     context.ctx.state.includesMutation = true;
 
     const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
@@ -38,14 +38,13 @@ export default function getDefaultMutationResolver<TSource>(
 
       logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
-      // Run SQL mutation (INSERT/UPDATE/DELETE) against pg
       const result = await client.query(mutationBuild.sql, mutationBuild.values);
 
       if (result.rowCount < 1) {
         throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
       }
 
-      let returnQueryBuild: IQueryBuild | undefined;
+      let returnQueryBuild: IQueryBuildOject | undefined;
       let returnData: any;
       let entityId = mutationBuild.id || null;
       let match: IMatch | undefined;
@@ -90,7 +89,7 @@ export default function getDefaultMutationResolver<TSource>(
 
         const { rows: returnRows } = returnResult;
 
-        const resultData = returnRows[0][returnQueryBuild.query.name];
+        const resultData = returnRows[0][returnQueryBuild.queryName];
 
         if (resultData.length < 1) {
           throw new Error(

@@ -20,36 +20,32 @@ export default function getDefaultQueryResolver(
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
-    const selectQuery = queryBuilder.build(info, isAuthenticated);
+    const queryBuild = queryBuilder.build(info, isAuthenticated);
 
     const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
 
     try {
       await client.query("BEGIN");
 
-      // Set authRequired in koa state for cache headers
-      if (context.accessToken != null && selectQuery.authRequired) {
-        context.ctx.state.authRequired = true;
-      }
+      setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
 
-      await hookManager.executePreQueryHooks(client, context, selectQuery.authRequired);
+      await hookManager.executePreQueryHooks(client, context, queryBuild.authRequired);
 
-      logger.trace("queryResolver.run", selectQuery.sql, selectQuery.values);
+      logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
 
-      if (selectQuery.potentialHighCost === true) {
-        const currentCost = await checkCosts(client, selectQuery, costLimit);
+      if (queryBuild.potentialHighCost === true) {
+        const currentCost = await checkCosts(client, queryBuild, costLimit);
         logger.warn(
           "The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger." +
-            ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${selectQuery.maxDepth})`
+            ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${queryBuild.maxDepth})`
         );
       }
 
-      const result = await client.query(selectQuery.sql, selectQuery.values);
+      const result = await client.query(queryBuild.sql, queryBuild.values);
       checkQueryResultForInjection(result, logger);
 
       const { rows } = result;
-      // Read JSON data from first row
-      const data = rows[0][selectQuery.query.name];
+      const data = rows[0][queryBuild.queryName];
 
       await client.query("COMMIT");
 
@@ -61,4 +57,10 @@ export default function getDefaultQueryResolver(
       client.release();
     }
   };
+}
+
+function setAuthRequiredInKoaStateForCacheHeaders(context: any, authRequired: boolean) {
+  if (context.accessToken != null && authRequired) {
+    context.ctx.state.authRequired = true;
+  }
 }

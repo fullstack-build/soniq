@@ -2,12 +2,11 @@ import { IQueryClauseObject, INestedFilter } from "../types";
 import getGenerateFilterFn from "./getGenerateFilterFn";
 
 export default function generateClauses(
-  hasMatch: boolean,
   { where, orderBy, limit, offset }: IQueryClauseObject,
   getParam: (value: number) => string,
   getField: (fieldName: string) => string
 ): string {
-  const whereClause = generateWhereClause(hasMatch, getParam, getField, where);
+  const whereClause = generateWhereClause(getParam, getField, where);
   const orderByClause = generateOrderByClause(getField, orderBy);
   const limitClause = generateLimitClause(getParam, limit);
   const offsetClause = generateOffsetClause(getParam, offset);
@@ -15,14 +14,9 @@ export default function generateClauses(
   return [whereClause, orderByClause, limitClause, offsetClause].filter((clause) => clause.length > 0).join(" ");
 }
 
-function generateWhereClause(
-  hasMatch: boolean,
-  getParam: (value: number) => string,
-  getField: (fieldName: string) => string,
-  filter?: INestedFilter
-) {
+function generateWhereClause(getParam: (value: number) => string, getField: (fieldName: string) => string, filter?: INestedFilter) {
   if (filter == null) return "";
-  return `${hasMatch ? "AND" : "WHERE"} (${getGenerateFilterFn(getParam, getField)(filter)})`;
+  return `AND (${getGenerateFilterFn(getParam, getField)(filter)})`;
 }
 
 function generateOrderByClause(getField: (fieldName: string) => string, orderBy?: string[] | string) {

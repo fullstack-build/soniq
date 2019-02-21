@@ -1,8 +1,7 @@
-// tslint:disable:member-ordering
 import { GraphQLResolveInfo } from "graphql";
 import { IResolverMeta, IMutationViewMeta } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, parseResolveInfo } from "../types";
-import { IMutationBuild } from "./types";
+import { IMutationBuildObject, IMutationInputObject } from "./types";
 
 export * from "./types";
 
@@ -13,24 +12,7 @@ export default class MutationBuilder {
     this.resolverMeta = resolverMeta;
   }
 
-  public build(info: GraphQLResolveInfo): IMutationBuild {
-    const query: IParsedResolveInfo = parseResolveInfo(info);
-
-    const mutation: IMutationViewMeta = this.resolverMeta.mutation[query.name];
-
-    switch (mutation.type) {
-      case "CREATE":
-        return this.resolveCreateMutation(query, mutation);
-      case "UPDATE":
-        return this.resolveUpdateMutation(query, mutation);
-      case "DELETE":
-        return this.resolveDeleteMutation(query, mutation);
-      default:
-        throw new Error(`Mutation-Type does not exist: ${mutation}`);
-    }
-  }
-
-  private resolveCreateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+  private resolveCreateMutation(query: IParsedResolveInfo<IMutationInputObject>, mutation: IMutationViewMeta): IMutationBuildObject {
     const fieldNames = Object.keys(query.args.input)
       .map((name) => `"${name}"`)
       .join(", ");
@@ -51,7 +33,7 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveUpdateMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+  private resolveUpdateMutation(query: IParsedResolveInfo<IMutationInputObject>, mutation: IMutationViewMeta): IMutationBuildObject {
     const values: string[] = [];
 
     const fieldAssignments: string = Object.keys(query.args.input)
@@ -73,7 +55,7 @@ export default class MutationBuilder {
     };
   }
 
-  private resolveDeleteMutation(query: IParsedResolveInfo, mutation: IMutationViewMeta): IMutationBuild {
+  private resolveDeleteMutation(query: IParsedResolveInfo<IMutationInputObject>, mutation: IMutationViewMeta): IMutationBuildObject {
     return {
       sql: `DELETE FROM "${mutation.viewSchemaName}"."${mutation.viewName}" WHERE id = $1;`,
       values: [query.args.input.id],
@@ -85,5 +67,22 @@ export default class MutationBuilder {
   private parseValue(value: any): string {
     if (value != null && typeof value === "object") return JSON.stringify(value);
     return `${value}`;
+  }
+
+  public build(info: GraphQLResolveInfo): IMutationBuildObject {
+    const query: IParsedResolveInfo<IMutationInputObject> = parseResolveInfo(info);
+
+    const mutation: IMutationViewMeta = this.resolverMeta.mutation[query.name];
+
+    switch (mutation.type) {
+      case "CREATE":
+        return this.resolveCreateMutation(query, mutation);
+      case "UPDATE":
+        return this.resolveUpdateMutation(query, mutation);
+      case "DELETE":
+        return this.resolveDeleteMutation(query, mutation);
+      default:
+        throw new Error(`Mutation-Type does not exist: ${mutation}`);
+    }
   }
 }

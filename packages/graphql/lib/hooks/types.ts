@@ -3,7 +3,7 @@ import { GraphQLResolveInfo } from "graphql";
 import { IResolverMeta, IDbMeta } from "@fullstack-one/schema-builder";
 import { PgPoolClient } from "@fullstack-one/db";
 
-import { IDefaultMutationResolverContext, IMatch, IQueryBuild, IMutationBuild } from "../getDefaultResolvers";
+import { IDefaultMutationResolverContext, IMatch, IQueryBuildOject, IMutationBuildObject } from "../getDefaultResolvers";
 
 export type TPreQueryHookFunction = (client: PgPoolClient, context: any, authRequired: boolean) => any;
 export type TPreMutationCommitHookFunction<TReturnData, TSource> = (client: PgPoolClient, hookInfo: IHookInfo<TReturnData, TSource>) => any;
@@ -12,12 +12,6 @@ export type TPostMutationHookFunction<TReturnData, TSource> = (
   context: IDefaultMutationResolverContext,
   info: GraphQLResolveInfo
 ) => any;
-
-interface IHookObject {
-  preQuery: TPreQueryHookFunction[];
-  preMutationCommit: Array<TPreMutationCommitHookFunction<any, any>>;
-  postMutation: Array<TPostMutationHookFunction<any, any>>;
-}
 
 interface IPreQueryHookConfig {
   type: "preQuery";
@@ -38,7 +32,7 @@ export type IHookConfig = IPreQueryHookConfig | IPreMutationCommitHookConfig<any
 
 export interface IHookInfo<TReturnData, TSource> {
   returnData: TReturnData;
-  returnQuery?: IQueryBuild;
+  returnQuery?: IQueryBuildOject;
   entityId: any;
   type: any;
   obj: TSource;
@@ -51,5 +45,5 @@ export interface IHookInfo<TReturnData, TSource> {
   match?: IMatch;
   resolverMeta: IResolverMeta;
   dbMeta: IDbMeta;
-  mutationQuery: IMutationBuild;
+  mutationQuery: IMutationBuildObject;
 }

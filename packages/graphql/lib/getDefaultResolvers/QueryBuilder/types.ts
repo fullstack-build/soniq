@@ -1,9 +1,7 @@
-export interface IQueryBuild {
+export interface IQueryBuildOject {
   sql: string;
   values: any[];
-  query: {
-    name: string;
-  };
+  queryName: string;
   authRequired: boolean;
   potentialHighCost: boolean;
   costTree: any;
@@ -24,4 +22,13 @@ export interface IFilterLeaf {
 export interface INestedFilter {
   AND: Array<INestedFilter | IFilterLeaf>;
   OR: Array<INestedFilter | IFilterLeaf>;
+}
+
+export interface ICostTree {
+  queryName?: string;
+  subtrees: ICostTree[];
+  type?: "aggregation" | "row";
+  tableName?: string;
+  tableSchemaName?: string;
+  limit?: string;
 }

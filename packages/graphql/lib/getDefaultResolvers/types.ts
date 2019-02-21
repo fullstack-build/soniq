@@ -3,15 +3,17 @@ import { parseResolveInfo as graphQlParseResolveInfo } from "graphql-parse-resol
 
 export * from "./MutationBuilder/types";
 export * from "./QueryBuilder/types";
-export const parseResolveInfo: (info: GraphQLResolveInfo) => IParsedResolveInfo = graphQlParseResolveInfo;
+export function parseResolveInfo<TArgs>(info: GraphQLResolveInfo): IParsedResolveInfo<TArgs> {
+  return graphQlParseResolveInfo(info);
+}
 
-export interface IParsedResolveInfo {
+export interface IParsedResolveInfo<TArgs> {
   name: string;
   alias: string;
-  args: any;
+  args: TArgs;
   fieldsByTypeName: {
     [typeName: string]: {
-      [fieldName: string]: IParsedResolveInfo;
+      [fieldName: string]: IParsedResolveInfo<TArgs>;
     };
   };
 }
