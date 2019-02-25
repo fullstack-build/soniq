@@ -9,7 +9,7 @@ import {
 } from "../../../logicalOperators";
 
 export default function getGenerateFilterFn(
-  getParam: (value: number) => string,
+  getParam: (value: number | string) => string,
   getField: (fieldName: string) => string
 ): (filter: INestedFilter) => string {
   function generateFilter(filter: INestedFilter): string {
@@ -17,11 +17,11 @@ export default function getGenerateFilterFn(
 
     Object.entries(filter).forEach(([fieldName, field]) => {
       if (fieldName === "AND") {
-        sqlList.push(`(${generateConjunktionFilter(field)})`);
+        sqlList.push(`(${generateConjunktionFilter(field as INestedFilter[])})`);
       } else if (fieldName === "OR") {
-        sqlList.push(`(${generateDisjunctionFilter(field)})`);
+        sqlList.push(`(${generateDisjunctionFilter(field as INestedFilter[])})`);
       } else {
-        sqlList.push(`(${generateOperatorsFilter(fieldName, field)})`);
+        sqlList.push(`(${generateOperatorsFilter(fieldName, field as IFilterLeaf)})`);
       }
     });
 
@@ -44,7 +44,9 @@ export default function getGenerateFilterFn(
       .join(" AND ");
   }
 
-  function generateOperatorFilter(operatorName: string, fieldName: string, value: number[] | number | string) {
+  type TNumberOrString = number | string;
+
+  function generateOperatorFilter(operatorName: string, fieldName: string, value: TNumberOrString[] | number | string) {
     const operator = getOperator(operatorName);
     if (operator == null) {
       throw new Error(`Operator '${operatorName}' not found.`);
@@ -52,7 +54,7 @@ export default function getGenerateFilterFn(
 
     if (isBooleanOperator(operator)) {
       if (Array.isArray(value) || typeof value !== "string") {
-        throw new Error(`Operator '${operatorName}' requires a single value.`);
+        throw new Error(`BooleanOperator '${operatorName}' requires a single value.`);
       }
       const context: IBooleanOperatorContext = {
         field: getField(fieldName),
@@ -60,8 +62,8 @@ export default function getGenerateFilterFn(
       };
       return operator.getSql(context);
     } else if (isSingleValueOperator(operator)) {
-      if (Array.isArray(value) || typeof value !== "number") {
-        throw new Error(`Operator '${operatorName}' requires a single value.`);
+      if (Array.isArray(value)) {
+        throw new Error(`SingleValueOperator '${operatorName}' requires a single value.`);
       }
       const context: ISingleValueOperatorContext = {
         field: getField(fieldName),
@@ -71,7 +73,7 @@ export default function getGenerateFilterFn(
       return operator.getSql(context);
     } else {
       if (!Array.isArray(value)) {
-        throw new Error(`Operator '${operatorName}' requires an array of values.`);
+        throw new Error(`MultiValueOperator '${operatorName}' requires an array of values.`);
       }
       const context: IMultiValueOperatorContext = {
         field: getField(fieldName),

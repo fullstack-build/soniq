@@ -8,7 +8,7 @@ export default class QueryBuild {
   private readonly resolverMeta: IResolverMeta;
   private readonly dbMeta: IDbMeta;
   private readonly queryName: string;
-  private readonly values: number[] = [];
+  private readonly values: Array<number | string> = [];
   private readonly isAuthenticated: boolean;
   private readonly minQueryDepthToCheckCostLimit: number;
   private readonly sql: string;
@@ -171,7 +171,7 @@ export default class QueryBuild {
     return { ownRelation, foreignRelation };
   }
 
-  private pushValueAndGetSqlParam = (value: number): string => {
+  private pushValueAndGetSqlParam = (value: number | string): string => {
     this.values.push(value);
     return `$${this.values.length}`;
   };

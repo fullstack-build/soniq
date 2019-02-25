@@ -3,7 +3,7 @@ import getGenerateFilterFn from "./getGenerateFilterFn";
 
 export default function generateClauses(
   { where, orderBy, limit, offset }: IQueryClauseObject,
-  getParam: (value: number) => string,
+  getParam: (value: number | string) => string,
   getField: (fieldName: string) => string
 ): string {
   const whereClause = generateWhereClause(getParam, getField, where);

@@ -16,12 +16,14 @@ export interface IQueryClauseObject {
 }
 
 export interface IFilterLeaf {
-  [operatorName: string]: number[] | number | string;
+  [operatorName: string]: number[] | number | string[] | string;
 }
 
 export interface INestedFilter {
-  AND: Array<INestedFilter | IFilterLeaf>;
-  OR: Array<INestedFilter | IFilterLeaf>;
+  AND?: INestedFilter[];
+  OR?: INestedFilter[];
+  // I did not find a way to say `fieldName: string excluding "AND" | "OR"`. Thus, INestedFilter[] needed to be added.
+  [fieldName: string]: IFilterLeaf | INestedFilter[];
 }
 
 export interface ICostTree {
