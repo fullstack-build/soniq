@@ -4,9 +4,10 @@ import getGenerateFilterFn from "./getGenerateFilterFn";
 export default function generateClauses(
   { where, orderBy, limit, offset }: IQueryClauseObject,
   getParam: (value: number | string) => string,
-  getField: (fieldName: string) => string
+  getField: (fieldName: string) => string,
+  extraFilter: string = ""
 ): string {
-  const whereClause = generateWhereClause(getParam, getField, where);
+  const whereClause = generateWhereClause(getParam, getField, where, extraFilter);
   const orderByClause = generateOrderByClause(getField, orderBy);
   const limitClause = generateLimitClause(getParam, limit);
   const offsetClause = generateOffsetClause(getParam, offset);
@@ -14,9 +15,17 @@ export default function generateClauses(
   return [whereClause, orderByClause, limitClause, offsetClause].filter((clause) => clause.length > 0).join(" ");
 }
 
-function generateWhereClause(getParam: (value: number) => string, getField: (fieldName: string) => string, filter?: INestedFilter) {
-  if (filter == null) return "";
-  return `AND (${getGenerateFilterFn(getParam, getField)(filter)})`;
+function generateWhereClause(
+  getParam: (value: number) => string,
+  getField: (fieldName: string) => string,
+  filter: INestedFilter,
+  extraFilterSql: string
+) {
+  const filterSql = filter != null ? getGenerateFilterFn(getParam, getField)(filter) : "";
+  if (filterSql === "" && extraFilterSql === "") return "";
+  if (filterSql === "") return `WHERE ${extraFilterSql}`;
+  if (extraFilterSql === "") return `WHERE ${filterSql}`;
+  return `WHERE (${extraFilterSql}) AND (${filterSql})`;
 }
 
 function generateOrderByClause(getField: (fieldName: string) => string, orderBy?: string[] | string) {

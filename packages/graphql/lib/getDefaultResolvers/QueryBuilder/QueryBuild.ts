@@ -13,7 +13,7 @@ export default class QueryBuild {
   private readonly minQueryDepthToCheckCostLimit: number;
   private readonly sql: string;
   private readonly rootCostTree: ICostTree;
-  private counter: number = 0;
+  private currentIndex: number = -1;
   private authRequired: boolean = false;
 
   constructor(
@@ -60,7 +60,7 @@ export default class QueryBuild {
     costTree.limit = query.args.limit;
 
     // First iteration always starts with jsonAgg and thus is an aggregation
-    const isQueryRootLevel = this.counter < 2 && match == null;
+    const isQueryRootLevel = this.currentIndex < 2 && match == null;
     if (isQueryRootLevel === true && gqlTypePermissionMeta.disallowGenericRootLevelAggregation === true) {
       throw new Error(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
     }
@@ -114,18 +114,12 @@ export default class QueryBuild {
       return this.getFieldExpression(fieldName, localName);
     };
 
+    const joinConditionSql = this.generateJoinCondition(match, localName);
     // Need to generate clauses before getFromExpression since authRequiredHere might change
-    const customQuery: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField.bind(this));
+    const clausesSql: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField.bind(this), joinConditionSql);
 
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
-    const sqlList: string[] = [`SELECT ${selectFieldExpressions.join(", ")} FROM ${fromExpression}`];
-
-    const joinCondition = this.generateJoinCondition(match, localName);
-    sqlList.push("WHERE TRUE");
-    if (joinCondition !== "") sqlList.push(joinCondition);
-    sqlList.push(customQuery);
-
-    return sqlList.join(" ");
+    return [`SELECT ${selectFieldExpressions.join(", ")} FROM ${fromExpression}`, clausesSql].filter((sql) => sql !== "").join(" ");
   }
 
   private resolveRelation(
@@ -181,15 +175,13 @@ export default class QueryBuild {
   private generateJoinCondition(match: IMatch, localName: string): string {
     if (match == null) return "";
     const fieldExpression = this.getFieldExpression(match.foreignFieldName, localName);
-    if (match.type === "SIMPLE") {
-      return `AND ${fieldExpression} = ${match.fieldExpression}`;
-    }
-    return `AND ${match.fieldExpression} @> ARRAY[${fieldExpression}]::uuid[]`;
+    if (match.type === "SIMPLE") return `${fieldExpression} = ${match.fieldExpression}`;
+    return `${match.fieldExpression} @> ARRAY[${fieldExpression}]::uuid[]`;
   }
 
   private getLocalAliasName() {
-    this.counter += 1;
-    return `_local_${this.counter}_`;
+    this.currentIndex += 1;
+    return `_local_${this.currentIndex}_`;
   }
 
   private getFieldExpression(name: string, localName: string): string {
