@@ -29,7 +29,7 @@ export default class QueryBuild {
     this.isAuthenticated = isAuthenticated;
     this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
     this.rootCostTree = { subtrees: [] };
-    this.sql = `SELECT ${this.jsonAgg(query, match, this.rootCostTree)}`;
+    this.sql = `SELECT ${this.jsonAgg(query, match, this.rootCostTree)};`;
     this.queryName = query.name;
   }
 
@@ -114,13 +114,15 @@ export default class QueryBuild {
       return this.getFieldExpression(fieldName, localName);
     };
 
+    // Need to generate clauses before getFromExpression since authRequiredHere might change
+    const customQuery: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField.bind(this));
+
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
     const sqlList: string[] = [`SELECT ${selectFieldExpressions.join(", ")} FROM ${fromExpression}`];
 
-    sqlList.push("WHERE TRUE");
     const joinCondition = this.generateJoinCondition(match, localName);
+    sqlList.push("WHERE TRUE");
     if (joinCondition !== "") sqlList.push(joinCondition);
-    const customQuery: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField);
     sqlList.push(customQuery);
 
     return sqlList.join(" ");
