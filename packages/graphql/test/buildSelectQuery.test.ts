@@ -25,7 +25,7 @@ ava("SELECT with WHERE, ORDER BY, LIMIT, OFFSET", (test) => {
   test.deepEqual(actual, expected);
 });
 
-ava.only("SELECT with sub relation to Single", (test) => {
+ava("SELECT with sub relation to Single", (test) => {
   const { expected, resolverMeta, dbMeta, query } = relationToSingleSelect;
   const queryBuild = new QueryBuild(resolverMeta, dbMeta, false, Infinity, query);
   const actual = queryBuild.getBuildObject();
