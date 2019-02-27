@@ -81,8 +81,8 @@ export class Auth {
       throw new Error("No notification function has been defined.");
     };
 
-    graphQl.addHook({ type: "preQuery", hook: this.preQueryHook.bind(this) });
-    graphQl.addHook({ type: "preMutationCommit", hook: this.preMutationCommitHook.bind(this) });
+    graphQl.addPreQueryHook(this.preQueryHook.bind(this));
+    graphQl.addPreMutationCommitHook(this.preMutationCommitHook.bind(this));
 
     // add to boot loader
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));

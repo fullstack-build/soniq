@@ -73,7 +73,7 @@ export class FileStorage {
 
     this.graphQl.addResolvers(this.getResolvers());
 
-    this.graphQl.addHook({ type: "postMutation", hook: this.postMutationHook.bind(this) });
+    this.graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
 
     this.addVerifier("DEFAULT", DefaultVerifier);
 
