@@ -35,7 +35,7 @@ export default function getDefaultQueryResolver(
 
       if (queryBuild.potentialHighCost === true) {
         const currentCost = await checkCosts(client, queryBuild, costLimit);
-        logger.warn(
+        logger.debug(
           "The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger." +
             ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${queryBuild.maxDepth})`
         );
