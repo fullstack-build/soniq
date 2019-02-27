@@ -6,7 +6,7 @@ const expectedQueryBuildObject: IQueryBuildOject = {
   sql: `SELECT (SELECT COALESCE(json_agg(row_to_json("_local_0_")), \'[]\'::json) FROM (SELECT "_local_1_"."id" "id", "_local_1_"."name" "name" FROM "_graphql"."DIRECTOR_READ_AUTH" AS "_local_1_") "_local_0_") "directors";`,
   values: [],
   queryName: "directors",
-  authRequired: false,
+  authRequired: true,
   potentialHighCost: false,
   costTree: null,
   maxDepth: 1
