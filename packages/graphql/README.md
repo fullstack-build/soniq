@@ -45,7 +45,7 @@ graphQl.addPreMutationCommitHook(...);
 graphQl.addPostMutationCommitHook(...);
 ```
 
-Find more usage details in the [code](lib) or examples in the [tests](test/hook.test.ts).
+Find more usage details in the [code](lib).
 
 ## Examples
 
