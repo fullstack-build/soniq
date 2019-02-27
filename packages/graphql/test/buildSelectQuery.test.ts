@@ -3,7 +3,8 @@ import ava from "ava";
 import QueryBuild from "../lib/getDefaultResolvers/QueryBuilder/QueryBuild";
 import simple from "./queryBuildTestData/simple";
 import filterArguments from "./queryBuildTestData/filterArguments";
-import relationSelect from "./queryBuildTestData/relationSelect";
+import relationToSingleSelect from "./queryBuildTestData/relationToSingleSelect";
+import relationToManySelect from "./queryBuildTestData/relationToManySelect";
 import simpleWithAuthentication from "./queryBuildTestData/simpleWithAuthentication";
 
 ava("Simplest SELECT", (test) => {
@@ -24,8 +25,17 @@ ava("SELECT with WHERE, ORDER BY, LIMIT, OFFSET", (test) => {
   test.deepEqual(actual, expected);
 });
 
-ava("SELECT with sub relation (n+1 problem solved by a single query)", (test) => {
-  const { expected, resolverMeta, dbMeta, query } = relationSelect;
+ava.only("SELECT with sub relation to Single", (test) => {
+  const { expected, resolverMeta, dbMeta, query } = relationToSingleSelect;
+  const queryBuild = new QueryBuild(resolverMeta, dbMeta, false, Infinity, query);
+  const actual = queryBuild.getBuildObject();
+  actual.costTree = null;
+
+  test.deepEqual(actual, expected);
+});
+
+ava("SELECT with sub relation to Many", (test) => {
+  const { expected, resolverMeta, dbMeta, query } = relationToManySelect;
   const queryBuild = new QueryBuild(resolverMeta, dbMeta, false, Infinity, query);
   const actual = queryBuild.getBuildObject();
   actual.costTree = null;
@@ -52,7 +62,3 @@ ava("SELECT with required but missing authentication", (test) => {
     test.pass();
   }
 });
-
-ava.todo("Cost tree");
-
-ava.todo("Deny expensive query");
