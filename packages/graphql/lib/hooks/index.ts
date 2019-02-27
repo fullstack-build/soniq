@@ -4,7 +4,7 @@ import { PgPoolClient } from "@fullstack-one/db";
 import { Service } from "@fullstack-one/di";
 
 import { IDefaultMutationResolverContext } from "../getDefaultResolvers";
-import { TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction, IHookConfig, IHookInfo } from "./types";
+import { TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction, IHookInfo } from "./types";
 
 export * from "./types";
 
@@ -14,10 +14,16 @@ export class HookManager {
   private preMutationCommitHooks: Array<TPreMutationCommitHookFunction<any, any>> = [];
   private postMutationHooks: Array<TPostMutationHookFunction<any, any>> = [];
 
-  public addHook(config: IHookConfig) {
-    if (config.type === "preQuery") this.preQueryHooks.push(config.hook);
-    if (config.type === "preMutationCommit") this.preMutationCommitHooks.push(config.hook);
-    if (config.type === "postMutation") this.postMutationHooks.push(config.hook);
+  public addPreQueryHook(hookFunction: TPreQueryHookFunction): void {
+    this.preQueryHooks.push(hookFunction);
+  }
+
+  public addPreMutationCommitHook(hookFunction: TPreMutationCommitHookFunction<any, any>): void {
+    this.preMutationCommitHooks.push(hookFunction);
+  }
+
+  public addPostMutationCommitHook(hookFunction: TPostMutationHookFunction<any, any>): void {
+    this.postMutationHooks.push(hookFunction);
   }
 
   public async executePreQueryHooks(client: PgPoolClient, context: IDefaultMutationResolverContext, authRequired: boolean): Promise<void> {

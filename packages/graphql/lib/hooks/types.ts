@@ -13,23 +13,6 @@ export type TPostMutationHookFunction<TReturnData, TSource> = (
   info: GraphQLResolveInfo
 ) => any;
 
-interface IPreQueryHookConfig {
-  type: "preQuery";
-  hook: TPreQueryHookFunction;
-}
-
-interface IPreMutationCommitHookConfig<TReturnData, TSource> {
-  type: "preMutationCommit";
-  hook: TPreMutationCommitHookFunction<TReturnData, TSource>;
-}
-
-interface IPostMutationCommitHookConfig<TReturnData, TSource> {
-  type: "postMutation";
-  hook: TPostMutationHookFunction<TReturnData, TSource>;
-}
-
-export type IHookConfig = IPreQueryHookConfig | IPreMutationCommitHookConfig<any, any> | IPostMutationCommitHookConfig<any, any>;
-
 export interface IHookInfo<TReturnData, TSource> {
   returnData: TReturnData;
   returnQuery?: IQueryBuildOject;

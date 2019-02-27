@@ -20,8 +20,7 @@ import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./res
 import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
-import { HookManager } from "./hooks";
-import { IHookConfig } from "./hooks/types";
+import { HookManager, TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction } from "./hooks";
 
 export { apolloServer };
 
@@ -107,8 +106,16 @@ export class GraphQl {
     this.resolvers = { ...this.resolvers, ...resolversObject };
   }
 
-  public addHook(hookConfig: IHookConfig): void {
-    this.hookManager.addHook(hookConfig);
+  public addPreQueryHook(hookFunction: TPreQueryHookFunction): void {
+    this.hookManager.addPreQueryHook(hookFunction);
+  }
+
+  public addPreMutationCommitHook(hookFunction: TPreMutationCommitHookFunction<any, any>): void {
+    this.hookManager.addPreMutationCommitHook(hookFunction);
+  }
+
+  public addPostMutationCommitHook(hookFunction: TPostMutationHookFunction<any, any>): void {
+    this.hookManager.addPostMutationCommitHook(hookFunction);
   }
 
   public getApolloClient(accessToken: string | null = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {
