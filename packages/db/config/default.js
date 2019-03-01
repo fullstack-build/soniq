@@ -2,7 +2,6 @@ module.exports = {
   automigrate:                false,
   renameInsteadOfDrop:        true,
   viewSchemaName:             "_graphql",
-  updateClientListInterval:   10000,
   appClient: {
     database:                 null,
     host:                     null,

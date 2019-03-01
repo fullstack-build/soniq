@@ -9,4 +9,3 @@ if (process.env.FULLSTACK_ONE_DEV === "true") {
 } else {
   __export(require("./dist/index.js"));
 }
-
