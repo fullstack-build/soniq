@@ -12,6 +12,7 @@ import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
 import { DbGeneralPool } from "@fullstack-one/db";
+import { DbAutoScaling } from "@fullstack-one/db-auto-scaling";
 import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth } from "@fullstack-one/auth";
 import { AuthFbToken } from "@fullstack-one/auth-fb-token";
@@ -27,6 +28,7 @@ const $auth: Auth = Container.get(Auth);
 const authfbtoken: AuthFbToken = Container.get(AuthFbToken);
 const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);
+const $dbAutoScaling: DbAutoScaling = Container.get(DbAutoScaling);
 
 $auth.setNotificationFunction(async (user, caller, meta) => {
   console.log("> NOTIFY!", user.userId, caller, meta);
