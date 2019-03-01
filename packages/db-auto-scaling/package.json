@@ -1,0 +1,61 @@
+{
+  "name": "@fullstack-one/db-auto-scaling",
+  "version": "0.4.56",
+  "description": "fullstack.one db auto scaling package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "test": "ava --verbose ./test/**/*test.ts",
+    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/boot-loader": "^0.4.56",
+    "@fullstack-one/config": "^0.4.56",
+    "@fullstack-one/db": "^0.4.56",
+    "@fullstack-one/di": "^0.4.56",
+    "@fullstack-one/events": "^0.4.56",
+    "@fullstack-one/logger": "^0.4.56"
+  },
+  "devDependencies": {
+    "ava": "^1.1.0",
+    "nyc": "^13.1.0",
+    "source-map-support": "^0.5.10"
+  },
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "nyc": {
+    "include": [
+      "lib/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+  }
+}
