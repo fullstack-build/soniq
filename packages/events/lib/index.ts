@@ -41,16 +41,21 @@ export class EventEmitter implements IEventEmitter {
 
   private readonly THIS_NODE_ID_PLACEHOLDER = "THIS_NODE";
   private nodeId: string;
-  private dbClient: DbAppClient;
+  private dbAppClient: DbAppClient;
   private readonly namespace: string;
 
   // cache during boot
   private listenersCache: IEventEmitterListenersCache = {};
   private emittersCache: IEventEmitterEventEmittedCache = {};
 
-  constructor(@Inject((type) => Config) config: Config, @Inject((type) => BootLoader) bootLoader: BootLoader) {
+  constructor(
+    @Inject((type) => Config) config: Config,
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => DbAppClient) dbAppClient: DbAppClient
+  ) {
     this.config = config.registerConfig("Events", `${__dirname}/../config`);
     this.namespace = this.config.namespace;
+    this.dbAppClient = dbAppClient;
 
     bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
   }
@@ -60,7 +65,6 @@ export class EventEmitter implements IEventEmitter {
     this.nodeId = env.nodeId;
     this.eventEmitter = new EventEmitter2(this.config.eventEmitter);
 
-    this.dbClient = Container.get(DbAppClient);
     await this.finishInitialisation();
 
     // set listeners that were cached during booting, clean cache afterwards
@@ -86,9 +90,9 @@ export class EventEmitter implements IEventEmitter {
   private async finishInitialisation() {
     try {
       // catch events from other nodes
-      this.dbClient.pgClient.on("notification", (msg: any) => this.receiveEventFromPg(msg));
+      this.dbAppClient.pgClient.on("notification", (msg: any) => this.receiveEventFromPg(msg));
 
-      this.dbClient.pgClient.query(`LISTEN ${this.namespace}`);
+      this.dbAppClient.pgClient.query(`LISTEN ${this.namespace}`);
     } catch (err) {
       throw err;
     }
@@ -138,8 +142,8 @@ export class EventEmitter implements IEventEmitter {
     };
 
     // send event to PG (if connection available)
-    if (this.dbClient != null) {
-      this.dbClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+    if (this.dbAppClient != null) {
+      this.dbAppClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
     }
   }
 
