@@ -3,6 +3,7 @@ import { Container, Service, Inject } from "@fullstack-one/di";
 import { DbAppClient } from "@fullstack-one/db";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
+import { IEventEmitterConfig } from "../config/IEventEmitterConfig";
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) => void;
@@ -35,25 +36,21 @@ interface IEventEmitterEventEmittedCache {
 
 @Service()
 export class EventEmitter implements IEventEmitter {
-  private config: Config;
-  private readonly CONFIG;
+  private readonly config: IEventEmitterConfig;
   private eventEmitter: EventEmitter2;
 
   private readonly THIS_NODE_ID_PLACEHOLDER = "THIS_NODE";
   private nodeId: string;
   private dbClient: DbAppClient;
-  private readonly namespace: string = "one";
+  private readonly namespace: string;
 
   // cache during boot
   private listenersCache: IEventEmitterListenersCache = {};
   private emittersCache: IEventEmitterEventEmittedCache = {};
 
-  constructor(@Inject((type) => Config) config, @Inject((type) => BootLoader) bootLoader) {
-    this.config = config;
-
-    // register package config
-    this.CONFIG = this.config.registerConfig("Events", `${__dirname}/../config`);
-    this.namespace = this.CONFIG.namespace;
+  constructor(@Inject((type) => Config) config: Config, @Inject((type) => BootLoader) bootLoader: BootLoader) {
+    this.config = config.registerConfig("Events", `${__dirname}/../config`);
+    this.namespace = this.config.namespace;
 
     bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
   }
@@ -61,7 +58,7 @@ export class EventEmitter implements IEventEmitter {
   private async boot() {
     const env: IEnvironment = Container.get("ENVIRONMENT");
     this.nodeId = env.nodeId;
-    this.eventEmitter = new EventEmitter2(this.CONFIG.eventEmitter);
+    this.eventEmitter = new EventEmitter2(this.config.eventEmitter);
 
     this.dbClient = Container.get(DbAppClient);
     await this.finishInitialisation();
