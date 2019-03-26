@@ -116,7 +116,7 @@ export default class QueryBuild {
 
     const joinConditionSql = this.generateJoinCondition(match, localName);
     // Need to generate clauses before getFromExpression since authRequiredHere might change
-    const clausesSql: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField.bind(this), joinConditionSql);
+    const clausesSql: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField, joinConditionSql);
 
     const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
     return [`SELECT ${selectFieldExpressions.join(", ")} FROM ${fromExpression}`, clausesSql].filter((sql) => sql !== "").join(" ");
@@ -167,10 +167,10 @@ export default class QueryBuild {
     return { ownRelation, foreignRelation };
   }
 
-  private pushValueAndGetSqlParam = (value: number | string): string => {
+  private pushValueAndGetSqlParam(value: number | string): string {
     this.values.push(value);
     return `$${this.values.length}`;
-  };
+  }
 
   private generateJoinCondition(match: IMatch, localName: string): string {
     if (match == null) return "";
