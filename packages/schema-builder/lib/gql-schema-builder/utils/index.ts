@@ -7,3 +7,5 @@ export { parseDirectiveArguments } from "./parseDirectiveArguments";
 export { parseDirectives } from "./parseDirectives";
 export { createArrayField } from "./createArrayField";
 export { getRelationMetasFromDefinition } from "./getRelationMetasFromDefinition";
+
+export { IDirectivesObject } from "./interfaces";

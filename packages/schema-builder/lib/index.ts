@@ -8,6 +8,7 @@ import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
 export * from "./db-schema-builder/IDbMeta";
+export * from "./gql-schema-builder/interfaces";
 
 import * as utils from "./gql-schema-builder/utils";
 export { utils };
