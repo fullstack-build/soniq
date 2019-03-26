@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "ava": "^1.1.0",
-    "git-hooks": "^1.1.10",
     "nyc": "^13.3.0",
     "source-map-support": "^0.5.10"
   },
