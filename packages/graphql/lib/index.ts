@@ -14,7 +14,7 @@ import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
 
-import IGraphQlConfig from "../config/IGraphQlConfig";
+import IGraphQlConfig from "./IGraphQlConfig";
 import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import getDefaultResolvers from "./getDefaultResolvers";

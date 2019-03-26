@@ -3,7 +3,7 @@ import * as apolloServer from "apollo-server-koa";
 import * as KoaRouter from "koa-router";
 import * as koaBody from "koa-bodyparser";
 
-import IGraphQlConfig from "../config/IGraphQlConfig";
+import IGraphQlConfig from "./IGraphQlConfig";
 
 export default function createGraphQlKoaRouter(
   schema: GraphQLSchema,
