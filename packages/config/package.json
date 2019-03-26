@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/config",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "fullstack.one config package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -21,7 +21,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/di": "^0.5.1",
+    "@fullstack-one/di": "^0.5.2",
     "@types/lodash": "^4.14.119",
     "lodash": "^4.17.5"
   },
