@@ -16,7 +16,7 @@
     "test": "lerna run test",
     "docker-test": "sh docker/test.sh",
     "coverage": "lerna run coverage",
-    "lerna-bootstrap": "lerna bootstrap --force-local",
+    "lerna-bootstrap": "lerna bootstrap",
     "lerna-publish": "lerna publish",
     "build": "lerna run build",
     "clean:dist": "lerna exec -- rm -rf ./dist",
