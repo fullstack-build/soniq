@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/cli",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "fullstack.one cli package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -27,12 +27,12 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.2",
-    "@fullstack-one/auth-fb-token": "^0.5.2",
+    "@fullstack-one/auth": "^0.5.3",
+    "@fullstack-one/auth-fb-token": "^0.5.3",
     "@fullstack-one/auto-migrate": "^0.5.2",
     "@fullstack-one/boot-loader": "^0.5.2",
     "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/file-storage": "^0.5.2",
+    "@fullstack-one/file-storage": "^0.5.3",
     "@fullstack-one/schema-builder": "^0.5.2",
     "@types/dotenv": "^6.1.0",
     "change-case": "^3.1.0",
