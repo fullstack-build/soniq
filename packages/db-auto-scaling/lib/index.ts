@@ -5,7 +5,7 @@ import { Config } from "@fullstack-one/config";
 import { DbAppClient, DbGeneralPool } from "@fullstack-one/db";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 
-import IDbAutoScalingConfig from "../config/IDbAutoScalingConfig";
+import IDbAutoScalingConfig from "./IDbAutoScalingConfig";
 
 @Service()
 export class DbAutoScaling {

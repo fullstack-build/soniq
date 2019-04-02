@@ -9,7 +9,7 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-import { IDbConfig, IDbGeneralPoolConfig } from "../../config/IDbConfig";
+import { IDbConfig, IDbGeneralPoolConfig } from "../IDbConfig";
 import { HookManager } from "./HookManager";
 
 @Service()

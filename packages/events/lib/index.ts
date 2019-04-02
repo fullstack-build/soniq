@@ -3,7 +3,7 @@ import { Container, Service, Inject } from "@fullstack-one/di";
 import { DbAppClient } from "@fullstack-one/db";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-import { IEventEmitterConfig } from "../config/IEventEmitterConfig";
+import { IEventEmitterConfig } from "./IEventEmitterConfig";
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) => void;
