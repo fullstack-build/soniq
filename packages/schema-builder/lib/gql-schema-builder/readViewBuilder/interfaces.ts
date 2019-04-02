@@ -26,5 +26,17 @@ export interface IReadFieldData {
   gqlFieldName: string;
   nativeFieldName: string;
   isVirtual: boolean;
-  meta: any;
+  meta?: IReadFieldMeta | null;
+}
+
+export interface IReadFieldMeta {
+  foreignGqlTypeName: string;
+  isListType: boolean;
+  isNonNullType: boolean;
+  relationName: string;
+  table: {
+    gqlTypeName: string;
+    schemaName: string;
+    tableName: string;
+  };
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.4.56",
+  "version": "0.5.7",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,14 +20,15 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.4.56",
-    "@fullstack-one/config": "^0.4.56",
-    "@fullstack-one/db": "^0.4.56",
-    "@fullstack-one/di": "^0.4.56",
-    "@fullstack-one/helper": "^0.4.56",
-    "@fullstack-one/logger": "^0.4.56",
-    "@fullstack-one/schema-builder": "^0.4.56",
-    "@fullstack-one/server": "^0.4.56",
+    "@fullstack-one/boot-loader": "^0.5.5",
+    "@fullstack-one/config": "^0.5.5",
+    "@fullstack-one/db": "^0.5.5",
+    "@fullstack-one/di": "^0.5.2",
+    "@fullstack-one/helper": "^0.5.5",
+    "@fullstack-one/logger": "^0.5.5",
+    "@fullstack-one/schema-builder": "^0.5.7",
+    "@fullstack-one/server": "^0.5.5",
+    "@types/graphql": "0.13.4",
     "apollo-cache-inmemory": "^1.2.9",
     "apollo-client": "^2.4.1",
     "apollo-link-schema": "^1.1.0",
@@ -38,13 +39,11 @@
     "graphql-type-json": "^0.1.4",
     "koa": "2.5.2",
     "koa-bodyparser": "^4.2.0",
-    "koa-router": "^7.4.0",
-    "lodash": "^4.17.10"
+    "koa-router": "^7.4.0"
   },
   "devDependencies": {
-    "@types/graphql": "^0.13.1",
     "ava": "^1.1.0",
-    "nyc": "^13.1.0",
+    "nyc": "^13.3.0",
     "source-map-support": "^0.5.10"
   },
   "ava": {

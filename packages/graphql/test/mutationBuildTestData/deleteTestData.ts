@@ -1,0 +1,37 @@
+import { IMutationBuildObject, IParsedResolveInfo, IMutationInputObject } from "../../lib/getDefaultResolvers/types";
+import { IDeleteViewMeta } from "@fullstack-one/schema-builder";
+import { IMutationBuildTestData } from "./types";
+
+const query: IParsedResolveInfo<IMutationInputObject> = {
+  name: "MOVIE_DELETE_ME",
+  alias: "MOVIE_DELETE_ME",
+  args: {
+    input: {
+      id: "movie1"
+    }
+  },
+  fieldsByTypeName: {}
+};
+
+const mutation: IDeleteViewMeta = {
+  name: "MOVIE_DELETE_ME",
+  viewSchemaName: "_graphql",
+  viewName: "MOVIE_DELETE_ME",
+  type: "DELETE",
+  requiresAuth: false,
+  gqlTypeName: "Movie",
+  gqlReturnTypeName: "ID",
+  extensions: {},
+  gqlInputTypeName: "MOVIE_DELETE_ME"
+};
+
+const expected: IMutationBuildObject = {
+  sql: `DELETE FROM "_graphql"."MOVIE_DELETE_ME" WHERE id = $1;`,
+  values: ["movie1"],
+  mutation,
+  id: "movie1"
+};
+
+const data: IMutationBuildTestData = { query, mutation, expected };
+
+export default data;

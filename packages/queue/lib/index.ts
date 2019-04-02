@@ -38,7 +38,7 @@ export class QueueFactory {
     const queueConfig = Container.get(Config).getConfig("Queue");
 
     // create new connection if set in config, otherwise use one from the pool
-    if (queueConfig != null && queueConfig.host && queueConfig.database && queueConfig.user && queueConfig.password) {
+    if (queueConfig != null && queueConfig.host != null && queueConfig.database != null && queueConfig.user != null && queueConfig.password != null) {
       // create a PGBoss instance
       boss = new PgBoss(queueConfig);
     } else {

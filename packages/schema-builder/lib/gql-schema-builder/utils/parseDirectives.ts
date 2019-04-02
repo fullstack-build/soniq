@@ -1,9 +1,6 @@
-import { parseDirectiveArguments } from "./parseDirectiveArguments";
 import { DirectiveNode } from "graphql";
-
-interface IDirectivesObject {
-  [directiveName: string]: any;
-}
+import { IDirectivesObject } from "./interfaces";
+import { parseDirectiveArguments } from "./parseDirectiveArguments";
 
 export function parseDirectives(directiveNodes: ReadonlyArray<DirectiveNode>): IDirectivesObject {
   const directivesObject: IDirectivesObject = {};
