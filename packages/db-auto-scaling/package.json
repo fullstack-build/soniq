@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/schema-builder",
-  "version": "0.5.7",
-  "description": "fullstack.one schema builder package",
+  "name": "@fullstack-one/db-auto-scaling",
+  "version": "0.5.5",
+  "description": "fullstack.one db auto scaling package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
@@ -20,22 +20,12 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.5",
     "@fullstack-one/boot-loader": "^0.5.5",
     "@fullstack-one/config": "^0.5.5",
     "@fullstack-one/db": "^0.5.5",
     "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/helper": "^0.5.5",
-    "@fullstack-one/logger": "^0.5.5",
-    "@types/graphql": "^0.13.4",
-    "@types/lodash": "^4.14.120",
-    "deep-diff": "^1.0.0",
-    "deep-equal": "^1.0.1",
-    "deepmerge": "^2.0.1",
-    "fast-glob": "^2.2.1",
-    "graphql": "^0.13.2",
-    "lodash": "^4.17.5",
-    "util": "^0.10.3"
+    "@fullstack-one/events": "^0.5.5",
+    "@fullstack-one/logger": "^0.5.5"
   },
   "devDependencies": {
     "ava": "^1.1.0",

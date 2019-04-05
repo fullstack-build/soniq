@@ -3,6 +3,7 @@ import { Container, Service, Inject } from "@fullstack-one/di";
 import { DbAppClient } from "@fullstack-one/db";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
+import { IEventEmitterConfig } from "./IEventEmitterConfig";
 
 export interface IEventEmitter {
   emit: (eventName: string, ...args: any[]) => void;
@@ -35,25 +36,26 @@ interface IEventEmitterEventEmittedCache {
 
 @Service()
 export class EventEmitter implements IEventEmitter {
-  private config: Config;
-  private readonly CONFIG;
+  private readonly config: IEventEmitterConfig;
   private eventEmitter: EventEmitter2;
 
   private readonly THIS_NODE_ID_PLACEHOLDER = "THIS_NODE";
   private nodeId: string;
-  private dbClient: DbAppClient;
-  private readonly namespace: string = "one";
+  private dbAppClient: DbAppClient;
+  private readonly namespace: string;
 
   // cache during boot
   private listenersCache: IEventEmitterListenersCache = {};
   private emittersCache: IEventEmitterEventEmittedCache = {};
 
-  constructor(@Inject((type) => Config) config, @Inject((type) => BootLoader) bootLoader) {
-    this.config = config;
-
-    // register package config
-    this.CONFIG = this.config.registerConfig("Events", `${__dirname}/../config`);
-    this.namespace = this.CONFIG.namespace;
+  constructor(
+    @Inject((type) => Config) config: Config,
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => DbAppClient) dbAppClient: DbAppClient
+  ) {
+    this.config = config.registerConfig("Events", `${__dirname}/../config`);
+    this.namespace = this.config.namespace;
+    this.dbAppClient = dbAppClient;
 
     bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
   }
@@ -61,9 +63,8 @@ export class EventEmitter implements IEventEmitter {
   private async boot() {
     const env: IEnvironment = Container.get("ENVIRONMENT");
     this.nodeId = env.nodeId;
-    this.eventEmitter = new EventEmitter2(this.CONFIG.eventEmitter);
+    this.eventEmitter = new EventEmitter2(this.config.eventEmitter);
 
-    this.dbClient = Container.get(DbAppClient);
     await this.finishInitialisation();
 
     // set listeners that were cached during booting, clean cache afterwards
@@ -89,9 +90,9 @@ export class EventEmitter implements IEventEmitter {
   private async finishInitialisation() {
     try {
       // catch events from other nodes
-      this.dbClient.pgClient.on("notification", (msg: any) => this.receiveEventFromPg(msg));
+      this.dbAppClient.pgClient.on("notification", (msg: any) => this.receiveEventFromPg(msg));
 
-      this.dbClient.pgClient.query(`LISTEN ${this.namespace}`);
+      this.dbAppClient.pgClient.query(`LISTEN ${this.namespace}`);
     } catch (err) {
       throw err;
     }
@@ -141,8 +142,8 @@ export class EventEmitter implements IEventEmitter {
     };
 
     // send event to PG (if connection available)
-    if (this.dbClient != null) {
-      this.dbClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+    if (this.dbAppClient != null) {
+      this.dbAppClient.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
     }
   }
 
