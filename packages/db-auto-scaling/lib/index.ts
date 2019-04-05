@@ -50,11 +50,9 @@ export class DbAutoScaling {
       this.eventEmitter.emit("db.application.client.connect.start", applicationName);
     });
 
-    this.dbAppClient.hookManager.addClientConnectSuccessHook(
-      ((applicationName: string) => {
-        this.eventEmitter.emit("db.application.client.connect.success", applicationName);
-      }).bind(this)
-    );
+    this.dbAppClient.hookManager.addClientConnectSuccessHook((applicationName: string) => {
+      this.eventEmitter.emit("db.application.client.connect.success", applicationName);
+    });
     this.dbAppClient.hookManager.addClientConnectErrorHook((applicationName: string, err: any) => {
       this.eventEmitter.emit("db.application.client.connect.error", applicationName, err);
     });
