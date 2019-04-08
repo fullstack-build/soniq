@@ -26,7 +26,10 @@ module.exports = {
       cookie:   process.env.AUTH_COOKIE_SECRET,
       jwtRefreshToken:   process.env.AUTH_JWT_REFRESH_TOKEN_SECRET,
       privacyAgreementAcceptanceToken:   process.env.AUTH_PRIVACY_TOKEN_SECRET,
-      authToken: process.env.AUTH_AUTH_TOKEN_SECRET
+      authToken: process.env.AUTH_AUTH_TOKEN_SECRET,
+      authProviderHashSignature: 'test1234',
+      oldAdmin: process.env.AUTH_ADMIN_SECRET,
+      encryptionKey: 'qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL'
     },
     oAuth: {
       providers: {

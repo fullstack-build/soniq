@@ -17,19 +17,19 @@ BEGIN
     -- Check if the user is admin. Raise exeption if not.
     v_is_admin := _meta.is_admin();
     IF v_is_admin = FALSE THEN
-        -- RAISE EXCEPTION 'You are not permitted to execute this operation.';
+        -- RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
     END IF;
 
 	  SELECT value INTO v_auth_factor_providers FROM _meta."Auth" WHERE key = 'auth_factor_providers';
     v_auth_factor_providers_array := regexp_split_to_array(v_auth_factor_providers, ':');
     
-    v_query := $tok$ SELECT ARRAY(SELECT provider FROM _meta."AuthFactor" WHERE "userAuthenticationId" = %L) $tok$;
+    v_query := $tok$ SELECT ARRAY(SELECT provider FROM _meta."AuthFactor" WHERE "userAuthenticationId" = %L AND "deletedAt" IS NULL); $tok$;
     EXECUTE format(v_query, i_user_authentication_id) INTO v_providers;
 
     FOREACH v_provider IN ARRAY v_providers
     LOOP
       IF NOT v_provider = ANY (v_auth_factor_providers_array) THEN
-        RAISE EXCEPTION 'Provider (%) is not allowed.', v_provider;
+        RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: Provider (%) is not allowed.', v_provider;
       END IF;
     END LOOP;
 
@@ -44,13 +44,13 @@ BEGIN
  	    v_provider_set_sorted := array_to_string(v_provider_set_array_sorted, ':');
  	  
       IF v_provider_set != v_provider_set_sorted THEN
-        RAISE EXCEPTION 'ProviderSet (%) is incorrect sorted.', v_provider_set;
+        RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: ProviderSet (%) is incorrect sorted.', v_provider_set;
       END IF;
       
       FOREACH v_provider IN ARRAY v_provider_set_array
       LOOP
         IF NOT v_provider = ANY (v_providers) THEN
-          RAISE EXCEPTION 'Provider (%) is not defined in any AuthFactor of the user.', v_provider;
+          RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: Provider (%) is not defined in any AuthFactor of the user.', v_provider;
         END IF;
       END LOOP;
     END LOOP;
@@ -63,13 +63,13 @@ BEGIN
  	    v_provider_set_sorted := array_to_string(v_provider_set_array_sorted, ':');
  	  
       IF v_provider_set != v_provider_set_sorted THEN
-        RAISE EXCEPTION 'ProviderSet (%) is incorrect sorted.', v_provider_set;
+        RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: ProviderSet (%) is incorrect sorted.', v_provider_set;
       END IF;
       
       FOREACH v_provider IN ARRAY v_provider_set_array
       LOOP
         IF NOT v_provider = ANY (v_providers) THEN
-          RAISE EXCEPTION 'Provider (%) is not defined in any AuthFactor of the user.', v_provider;
+          RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: Provider (%) is not defined in any AuthFactor of the user.', v_provider;
         END IF;
       END LOOP;
     END LOOP;

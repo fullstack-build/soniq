@@ -18,7 +18,7 @@ BEGIN
 
     -- Checks that the local variable is not null
     IF v_transaction_token IS NULL THEN
-        RAISE EXCEPTION 'Session expired or token invalid.';
+        RAISE EXCEPTION 'AUTH.THROW.AUTHENTICATION_ERROR';
     END IF;
 
     -- Split the token into its parts.
@@ -26,7 +26,7 @@ BEGIN
 
     -- A transaction_token needs to have 4 parts
     IF array_length(v_parts, 1) != 4 THEN
-    	RAISE EXCEPTION 'Session expired or token invalid.';
+    	RAISE EXCEPTION 'AUTH.THROW.AUTHENTICATION_ERROR';
     END IF;
 
     -- Write parts into function-variables
@@ -37,7 +37,7 @@ BEGIN
 
     -- Check if the variables are not null
     IF v_user_id IS NULL OR v_provider_set IS NULL OR v_timestamp IS NULL OR v_signature IS NULL THEN
-        RAISE EXCEPTION 'Session expired or token invalid.';
+        RAISE EXCEPTION 'AUTH.THROW.AUTHENTICATION_ERROR';
     END IF;
 
     -- Recreate the signature-payload to verify token
@@ -50,6 +50,6 @@ BEGIN
     END IF;
 
     -- Raise exeption because the token is not valid.
-    RAISE EXCEPTION 'Session expired or token invalid.';
+    RAISE EXCEPTION 'AUTH.THROW.AUTHENTICATION_ERROR';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;

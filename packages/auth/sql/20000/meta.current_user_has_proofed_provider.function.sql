@@ -1,5 +1,5 @@
--- current_available_providers function returns a list of providers of the current user session if the transaction_token is present and valid
-CREATE OR REPLACE FUNCTION _meta.current_available_providers() RETURNS jsonb AS $$
+-- current_user_has_proofed_provider function checks if a user has a proofed AuthFactor with the given provider-name
+CREATE OR REPLACE FUNCTION _meta.current_user_has_proofed_provider(i_provider TEXT) RETURNS BOOLEAN AS $$
 DECLARE
     v_transaction_token_secret TEXT;
     v_transaction_token TEXT;
@@ -11,7 +11,7 @@ DECLARE
     v_payload TEXT;
 
     v_query TEXT;
-    v_available_providers jsonb;
+    v_has_proofed_provider BOOLEAN;
 BEGIN
     -- Get required values from Auth-table
     SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';
@@ -49,10 +49,10 @@ BEGIN
     -- Hash payload and check if it matches the token-signature
     IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
 
-        v_query := $tok$ SELECT json_agg(row_to_json(__local_0__)) "data" FROM (SELECT "provider", "proofedAt" IS NOT NULL "proofed","proofedAt" FROM _meta."AuthFactor" WHERE "deletedAt" IS NULL AND "userAuthenticationId" = (SELECT "id" FROM _meta."UserAuthentication" WHERE "userId" = %L)) __local_0__; $tok$;
-        EXECUTE format(v_query, v_user_id) INTO v_available_providers;
+        v_query := $tok$ SELECT COALESCE((SELECT "proofedAt" IS NOT NULL FROM _meta."AuthFactor" WHERE "deletedAt" IS NULL AND "userAuthenticationId" = (SELECT "id" FROM _meta."UserAuthentication" WHERE "userId" = %L) AND "provider" = %L), FALSE); $tok$;
+        EXECUTE format(v_query, v_user_id, i_provider) INTO v_has_proofed_provider;
 
-        return v_available_providers;
+        return v_has_proofed_provider;
     END IF;
 
     -- Raise exeption because the token is not valid.

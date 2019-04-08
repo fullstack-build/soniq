@@ -10,7 +10,8 @@ export type TPreMutationCommitHookFunction<TReturnData, TSource> = (client: PgPo
 export type TPostMutationHookFunction<TReturnData, TSource> = (
   hookInfo: IHookInfo<TReturnData, TSource>,
   context: IDefaultMutationResolverContext,
-  info: GraphQLResolveInfo
+  info: GraphQLResolveInfo,
+  overwriteReturnData: (returnData: any) => any
 ) => any;
 
 export interface IHookInfo<TReturnData, TSource> {

@@ -2,11 +2,14 @@ module.exports = {
   secrets: {
     jwt:      null,
     admin:    null,
+    oldAdmin: null,
     provider: null,
     cookie:   null,
     jwtRefreshToken: null,
     privacyAgreementAcceptanceToken: null,
-    authToken: null
+    authToken: null,
+    encryptionKey: null,
+    authProviderHashSignature: null
   },
   sodium: {},
   oAuth: {
@@ -50,7 +53,10 @@ module.exports = {
   },
   privacyAgreementAcceptance: {
     tokenMaxAgeInSeconds: 86400, // One Day
-    versionToAccept: 0,
+    versionToAccept: "0",
     queryParameter: "privacyAgreementAcceptanceToken"
+  },
+  crypto: {
+    algorithm: "aes-256-cbc"
   }
 };

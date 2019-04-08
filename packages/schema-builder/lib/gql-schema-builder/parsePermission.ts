@@ -39,7 +39,8 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
     gqlTypeName: permission.gqlTypeName,
     schemaName: directives.table.schemaName || "public",
     tableName: directives.table.tableName || permission.gqlTypeName,
-    gqlTypeDefinition: gqlTypeDefinition as ObjectTypeDefinitionNode
+    gqlTypeDefinition: gqlTypeDefinition as ObjectTypeDefinitionNode,
+    directives
   };
 
   meta.permissionMeta[permission.gqlTypeName] = permission.meta || null;

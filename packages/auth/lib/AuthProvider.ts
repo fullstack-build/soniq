@@ -1,0 +1,136 @@
+import { AuthConnector } from "./AuthConnector";
+import { IAuthFactorCreation, IAuthFactorProof, IAuthFactorForProof, IProofResponse, IAuthFactorForProofResponse, IPasswordData } from "./interfaces";
+import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./crypto";
+import { getProviderSignature } from "./signHelper";
+import uuid = require("uuid");
+import { DateTime } from "luxon";
+
+export class AuthProvider {
+  private authConnector: AuthConnector;
+  public authConfig: any;
+  public readonly providerName: string;
+
+  // tslint:disable-next-line:prettier
+  constructor(providerName: string, authConnector: AuthConnector, authConfig: any) {
+    this.authConnector = authConnector;
+    this.authConfig = authConfig;
+    this.providerName = providerName;
+  }
+
+  private async createRandomAuthFactor(): Promise<{ authFactor: IAuthFactorForProof; passwordData: IPasswordData }> {
+    const randomPassword = generateRandomPassword();
+    const sodiumConfig = createConfig(this.authConfig.sodium);
+    const passwordData = await newHash(randomPassword, sodiumConfig);
+
+    const randomTime = DateTime.fromMillis(Math.round(Date.now() * Math.random()), { zone: "utc" }).toISO();
+
+    // Create a fake auth-factor
+    const authFactor = {
+      id: uuid.v4(),
+      meta: JSON.stringify({ sodiumMeta: passwordData.meta, providerMeta: {} }),
+      communicationAddress: null,
+      createdAt: randomTime,
+      userAuthenticationId: uuid.v4(),
+      userId: uuid.v4()
+    };
+
+    return {
+      authFactor,
+      passwordData
+    };
+  }
+
+  // tslint:disable-next-line:prettier
+  public async create(password: string, communicationAddress: string = null, isProofed: boolean = false, providerMeta: any = {}): Promise<string> {
+    const sodiumConfig = createConfig(this.authConfig.sodium);
+
+    const passwordData: IPasswordData = await newHash(password, sodiumConfig);
+
+    const authFactorCreation: IAuthFactorCreation = {
+      provider: this.providerName,
+      communicationAddress,
+      isProofed,
+      meta: JSON.stringify({ sodiumMeta: passwordData.meta, providerMeta }),
+      hash: passwordData.hash
+    };
+
+    console.log('Create', passwordData.hash);
+
+    return this.authConnector.createAuthFactorCreationToken(authFactorCreation);
+  }
+
+  public async proof(userIdentifier: string, getPassword: (authFactor: IAuthFactorForProof) => Promise<string>): Promise<IProofResponse> {
+    const provider = this.providerName;
+    let authFactor: IAuthFactorForProof;
+    let passwordData: IPasswordData;
+    let isFake = false;
+
+    try {
+      authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
+
+      const meta = JSON.parse(authFactor.meta);
+
+      let password = await getPassword(authFactor);
+
+      if (meta.isOldPassword === true) {
+        const providerSignature = getProviderSignature(this.authConfig.secrets.oldAdmin, "local", authFactor.userId);
+
+        password = password + providerSignature;
+      }
+
+      passwordData = await hashByMeta(password, meta.sodiumMeta);
+    } catch (err) {
+      const randomAuthFactor = await this.createRandomAuthFactor();
+      authFactor = randomAuthFactor.authFactor;
+      passwordData = randomAuthFactor.passwordData;
+      isFake = true;
+
+      try {
+        await getPassword(authFactor);
+      } catch (err) {
+        /* Ignore Error: This is only called to spent exactly the same time in case of an error as in case of validation. */
+      }
+    }
+
+    const authFactorProof: IAuthFactorProof = {
+      id: authFactor.id,
+      hash: passwordData.hash,
+      provider
+    };
+
+    console.log('IS FAKE', isFake, passwordData.hash);
+
+    return {
+      authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof),
+      isFake
+    };
+  }
+
+  /* For anyone who wants to refactor something: 
+    You may want to use this function inside the proof method. 
+    However, if you do the time spent to create a fake auth-factor would be bigger than validating a correct auth-factor.
+    Thus a attacker could detect if an AuthFactor is valid or not by just evaluating the response-time.
+  */
+  public async getAuthFactor(userIdentifier: string): Promise<IAuthFactorForProofResponse> {
+    const provider = this.providerName;
+    let authFactor: IAuthFactorForProof;
+    let isFake = false;
+
+    try {
+      authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
+    } catch (err) {
+      const randomAuthFactor = await this.createRandomAuthFactor();
+      authFactor = randomAuthFactor.authFactor;
+      isFake = true;
+    }
+
+    return {
+      authFactor,
+      isFake
+    };
+  }
+
+  public getAuthConnector(): AuthConnector {
+    return this.authConnector;
+  }
+}

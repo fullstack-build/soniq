@@ -60,7 +60,8 @@ export default function getDefaultMutationResolver<TSource>(
       // Check if this mutations returnType is ID
       // e.g. When mutationType is DELETE just return the id. Otherwise query for the new data.
       // e.g. When this is a user-creation the creator has no access to his own user before login.
-      if (mutationBuild.mutation.gqlReturnTypeName === "ID") {
+      // tslint:disable-next-line:prettier
+      if (mutationBuild.mutation.gqlReturnTypeName === "ID" || (mutationBuild.mutation.extensions != null && mutationBuild.mutation.extensions.returnOnlyId === true)) {
         returnData = entityId;
       } else {
         // Create a match to search for the new created or updated entity
@@ -123,7 +124,9 @@ export default function getDefaultMutationResolver<TSource>(
 
       await client.query("COMMIT");
 
-      await hookManager.executePostMutationHooks(hookInfo, context, info);
+      await hookManager.executePostMutationHooks(hookInfo, context, info, (overWriteReturnData) => {
+        returnData = overWriteReturnData;
+      });
 
       return returnData;
     } catch (error) {

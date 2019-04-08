@@ -13,8 +13,7 @@ import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
 import { DbGeneralPool } from "@fullstack-one/db";
 import { FileStorage } from "@fullstack-one/file-storage";
-import { Auth } from "@fullstack-one/auth";
-import { AuthFbToken } from "@fullstack-one/auth-fb-token";
+import { Auth, PasswordAuthProvider, EmailAuthProvider, OAuthAuthProvider, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
 import { NotificationsEmail } from "@fullstack-one/notifications";
 import { EventEmitter } from "@fullstack-one/events";
 
@@ -23,26 +22,40 @@ const $gql: GraphQl = Container.get(GraphQl);
 const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 const $fs: FileStorage = Container.get(FileStorage);
+
 const $auth: Auth = Container.get(Auth);
-const authfbtoken: AuthFbToken = Container.get(AuthFbToken);
+
+$auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
+  console.log('USER REGISTERED', JSON.stringify(userAuthentication, null, 2));
+})
+
+const $passwordAuthProvider = Container.get(PasswordAuthProvider);
+const $oAuthAuthProvider = Container.get(OAuthAuthProvider);
+const $emailAuthProvider = Container.get(EmailAuthProvider);
+
+$emailAuthProvider.registerSendMailCallback((mail: IProofMailPayload) => {
+  console.log('SEND PROOF MAIL', JSON.stringify(mail, null, 2));
+});
+
+
 const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);
 
-$auth.setNotificationFunction(async (user, caller, meta) => {
+/* $auth.setNotificationFunction(async (user, caller, meta) => {
   console.log("> NOTIFY!", user.userId, caller, meta);
   console.log(">", user.accessToken);
-});
+}); */
 
 (async () => {
   await $one.boot();
 
   // normal query example
-  const posts = (await $auth.adminQuery('SELECT * FROM "APost"')).rows;
+  /* const posts = (await $auth.adminQuery('SELECT * FROM "APost"')).rows;
   console.log("Posts query: ", posts);
   // admin query example
   await $auth.adminTransaction(async (dbClient) => {
     console.log("Posts transaction: ", (await dbClient.query('SELECT * FROM "APost"')).rows);
-  });
+  }); */
 
   // send mail example
   await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", null, [], "user@fullstack.one", {

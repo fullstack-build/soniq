@@ -41,10 +41,11 @@ export class HookManager {
   public async executePostMutationHooks<TSource>(
     hookInfo: IHookInfo<any, TSource>,
     context: IDefaultMutationResolverContext,
-    info: GraphQLResolveInfo
+    info: GraphQLResolveInfo,
+    overWriteReturnData: (returnData: any) => any
   ): Promise<void> {
     for (const hook of this.postMutationHooks) {
-      await hook(hookInfo, context, info);
+      await hook(hookInfo, context, info, overWriteReturnData);
     }
   }
 }
