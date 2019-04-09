@@ -79,6 +79,7 @@ export interface IAuthFactorForProofResponse {
 export interface IProofResponse {
   authFactorProofToken: string;
   isFake: boolean;
+  skippedHashSignature: boolean;
 }
 
 export interface IPasswordData {

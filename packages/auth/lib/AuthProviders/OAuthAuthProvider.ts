@@ -154,7 +154,7 @@ export class OAuthAuthProvider {
             }
 
             if (user.isFake === true) {
-              const oAuthAuthFactorCreationToken = await oAuthAuthProvider.create(profile.id, email, true, { oAuthProvider: key });
+              const oAuthAuthFactorCreationToken = await oAuthAuthProvider.create(profile.id, null, true, { oAuthProvider: key });
               const emailAuthFactorCreationToken = await this.emailAuthProvider.create(email, email, true, { oAuthProvider: key });
 
               const response = {
@@ -187,7 +187,7 @@ export class OAuthAuthProvider {
 
               if (oAuthAuthFactorProof.isFake === true) {
                 authFactorProofToken = emailAuthFactorProof.authFactorProofToken;
-                authFactorCreationToken = await oAuthAuthProvider.create(profile.id, email, true, { oAuthProvider: key });
+                authFactorCreationToken = await oAuthAuthProvider.create(profile.id, null, true, { oAuthProvider: key });
               }
 
               const userAuthentication = await authConnector.getUserAuthenticationById(user.userAuthenticationId);

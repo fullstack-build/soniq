@@ -64,6 +64,7 @@ export class AuthProvider {
     let authFactor: IAuthFactorForProof;
     let passwordData: IPasswordData;
     let isFake = false;
+    let skipHashSignature = false;
 
     try {
       authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
@@ -73,6 +74,7 @@ export class AuthProvider {
       let password = await getPassword(authFactor);
 
       if (meta.isOldPassword === true) {
+        skipHashSignature = true;
         const providerSignature = getProviderSignature(this.authConfig.secrets.oldAdmin, "local", authFactor.userId);
 
         password = password + providerSignature;
@@ -101,7 +103,7 @@ export class AuthProvider {
     };
 
     return {
-      authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof),
+      authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof, skipHashSignature),
       isFake
     };
   }
