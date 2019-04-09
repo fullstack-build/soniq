@@ -40,7 +40,11 @@ export class AuthConnector {
       authFactorProof.hash = sha512(authFactorProof.hash + authFactorProof.provider + this.authConfig.secrets.authProviderHashSignature);
     }
 
-    console.log('PROOFHASH', authFactorProof.hash);
+    authFactorProof.issuedAt = Date.now();
+    authFactorProof.maxAgeInSeconds =
+      authFactorProof.maxAgeInSeconds != null && Number.isInteger(authFactorProof.maxAgeInSeconds)
+        ? authFactorProof.maxAgeInSeconds
+        : this.authConfig.authFactorProofTokenMaxAgeInSeconds;
 
     return this.cryptoFactory.encrypt(JSON.stringify(authFactorProof));
   }
@@ -48,8 +52,21 @@ export class AuthConnector {
   private decryptAuthFactorProofToken(token: string): IAuthFactorProof {
     const authFactorProof: IAuthFactorProof = JSON.parse(this.cryptoFactory.decrypt(token));
 
-    if (authFactorProof.hash == null || authFactorProof.id == null || authFactorProof.provider == null) {
-      throw new Error("Invalid AuthFactorProofToken. Possible EncryptionKey leak!");
+    if (authFactorProof.hash == null) {
+      throw new Error("Invalid AuthFactorProofToken. 'hash' is missing. Possible EncryptionKey leak!");
+    }
+    if (authFactorProof.id == null) {
+      throw new Error("Invalid AuthFactorProofToken. 'id' is missing. Possible EncryptionKey leak!");
+    }
+    if (authFactorProof.provider == null) {
+      throw new Error("Invalid AuthFactorProofToken. 'provider' is missing. Possible EncryptionKey leak!");
+    }
+    if (authFactorProof.issuedAt == null) {
+      throw new Error("Invalid AuthFactorProofToken. 'issuedAt' is missing. Possible EncryptionKey leak!");
+    }
+    // tslint:disable-next-line:prettier
+    if ( ( authFactorProof.issuedAt + ( authFactorProof.maxAgeInSeconds * 1000 ) ) < Date.now() ) {
+      throw new Error("Expired AuthFactorProofToken.");
     }
 
     return authFactorProof;
@@ -60,31 +77,48 @@ export class AuthConnector {
 
     authFactorCreation.hash = sha512(authFactorCreation.hash + authFactorCreation.provider + this.authConfig.secrets.authProviderHashSignature);
 
-    console.log('CREATEFHASH', authFactorCreation.hash);
-
     return this.cryptoFactory.encrypt(JSON.stringify(authFactorCreation));
   }
 
   private decryptAuthFactorCreationToken(token: string): IAuthFactorCreation {
     const authFactorCreation: IAuthFactorCreation = JSON.parse(this.cryptoFactory.decrypt(token));
 
-    // tslint:disable-next-line:prettier
-    if (authFactorCreation.hash == null || authFactorCreation.meta == null || authFactorCreation.isProofed == null || authFactorCreation.provider == null) {
-      throw new Error("Invalid AuthFactorCreationToken.");
+    if (authFactorCreation.hash == null) {
+      throw new Error("Invalid AuthFactorCreationToken. 'hash' is missing.");
+    }
+    if (authFactorCreation.meta == null) {
+      throw new Error("Invalid AuthFactorCreationToken. 'meta' is missing.");
+    }
+    if (authFactorCreation.isProofed == null) {
+      throw new Error("Invalid AuthFactorCreationToken. 'isProofed' is missing.");
+    }
+    if (authFactorCreation.provider == null) {
+      throw new Error("Invalid AuthFactorCreationToken. 'provider' is missing.");
     }
 
     return authFactorCreation;
   }
 
   private encryptUserIdentifier(userIdentifier: IUserIdentifier): string {
+    userIdentifier.issuedAt = Date.now();
     return this.cryptoFactory.encrypt(JSON.stringify(userIdentifier));
   }
 
   private decryptUserIdentifier(token: string): IUserIdentifier {
     const userIdentifier: IUserIdentifier = JSON.parse(this.cryptoFactory.decrypt(token));
 
-    if (userIdentifier.userAuthenticationId == null || userIdentifier.authFactorId == null) {
-      throw new Error("Invalid UserIdentifier.");
+    if (userIdentifier.userAuthenticationId == null) {
+      throw new Error("Invalid UserIdentifier. 'userAuthenticationId' is missing.");
+    }
+    if (userIdentifier.authFactorId == null) {
+      throw new Error("Invalid UserIdentifier. 'authFactorId' is missing.");
+    }
+    if (userIdentifier.issuedAt == null) {
+      throw new Error("Invalid UserIdentifier. 'issuedAt' is missing.");
+    }
+    // tslint:disable-next-line:prettier
+    if ( ( userIdentifier.issuedAt + ( this.authConfig.userIdentifierMaxAgeInSeconds * 1000 ) ) < Date.now() ) {
+      throw new Error("Expired UserIdentifier.");
     }
 
     return userIdentifier;
@@ -127,7 +161,8 @@ export class AuthConnector {
           userId: result.userId,
           providerSet: result.providerSet,
           issuedAt: issuedAtLuxon.toISO(),
-          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO()
+          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO(),
+          accessTokenMaxAgeInSeconds: result.accessTokenMaxAgeInSeconds
         }
       };
 
@@ -157,7 +192,7 @@ export class AuthConnector {
     }
 
     // This function will always return some encrypted IDs
-    if (userIdentifier == null) {
+    if (userIdentifier == null || userIdentifier.userAuthenticationId == null || userIdentifier.authFactorId == null) {
       isFake = true;
       userIdentifier = {
         userAuthenticationId: uuid.v4(),
@@ -204,7 +239,8 @@ export class AuthConnector {
           userId: result.userId,
           providerSet: result.providerSet,
           issuedAt: issuedAtLuxon.toISO(),
-          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO()
+          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO(),
+          accessTokenMaxAgeInSeconds: result.accessTokenMaxAgeInSeconds
         }
       };
 
@@ -231,7 +267,8 @@ export class AuthConnector {
         userId: result.userId,
         providerSet: result.providerSet,
         issuedAt: issuedAtLuxon.toISO(),
-        expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO()
+        expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO(),
+        accessTokenMaxAgeInSeconds: result.accessTokenMaxAgeInSeconds
       };
 
       return tokenMeta;
@@ -260,13 +297,14 @@ export class AuthConnector {
       const issuedAtLuxon = DateTime.fromMillis(result.issuedAt, { zone: "UTC" });
 
       const loginData: ILoginData = {
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
+        accessToken: this.cryptoFactory.encrypt(result.accessToken),
+        refreshToken: result.refreshToken != null ? this.cryptoFactory.encrypt(result.refreshToken) : null,
         tokenMeta: {
           userId: result.userId,
           providerSet: result.providerSet,
           issuedAt: issuedAtLuxon.toISO(),
-          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO()
+          expiresAt: issuedAtLuxon.plus({ seconds: result.accessTokenMaxAgeInSeconds }).toISO(),
+          accessTokenMaxAgeInSeconds: result.accessTokenMaxAgeInSeconds
         }
       };
 
@@ -280,19 +318,19 @@ export class AuthConnector {
   // tslint:disable-next-line:prettier
   public async modifyAuthFactors(authFactorProofTokens: string[], isActive: boolean | null, loginProviderSets: string[] | null, modifyProviderSets: string[] | null, authFactorCreationTokens: string[] | null, removeAuthFactorIds: string[] | null): Promise<void> {
     try {
-      const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorCreationToken.bind(this));
+      const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorProofToken.bind(this));
       // tslint:disable-next-line:prettier
       const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens != null ? authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this)) : [];
 
       const values = [];
       values.push(JSON.stringify(authFactorProofs));
       values.push(isActive);
-      values.push(loginProviderSets == null ? null : JSON.stringify(loginProviderSets));
-      values.push(modifyProviderSets == null ? null : JSON.stringify(modifyProviderSets));
+      values.push(loginProviderSets);
+      values.push(modifyProviderSets);
       values.push(authFactorCreations == null ? null : JSON.stringify(authFactorCreations));
-      values.push(removeAuthFactorIds == null ? null : JSON.stringify(removeAuthFactorIds));
+      values.push(removeAuthFactorIds);
 
-      await this.authQueryHelper.adminQuery(`SELECT _meta.modify_auth_factors($1, $2, $3, $4, $5, $6);`, values);
+      await this.authQueryHelper.adminQuery(`SELECT _meta.modify_user_authentication($1, $2, $3, $4, $5, $6);`, values);
     } catch (err) {
       this.logger.trace("modifyAuthFactors.failed", err);
       throw new Error("Modify AuthFactors failed.");
@@ -334,7 +372,7 @@ export class AuthConnector {
   }
 
   public async invalidateAccessToken(accessToken: string): Promise<void> {
-    const values = [accessToken];
+    const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
       await this.authQueryHelper.adminQuery("SELECT _meta.invalidate_access_token($1);", values);
     } catch (err) {
@@ -343,7 +381,7 @@ export class AuthConnector {
   }
 
   public async invalidateAllAccessTokens(accessToken: string): Promise<void> {
-    const values = [accessToken];
+    const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
       await this.authQueryHelper.adminQuery("SELECT _meta.invalidate_all_access_tokens($1);", values);
     } catch (err) {

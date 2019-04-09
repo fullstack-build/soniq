@@ -38,7 +38,7 @@ export class EmailAuthProvider {
     schemaBuilder.extendSchema(schema);
     graphQl.addResolvers(this.getResolvers());
 
-    this.authProvider = auth.createAuthProvider("email");
+    this.authProvider = auth.createAuthProvider("email", 60 * 60 * 24);
   }
 
   private async createEmail(email: string) {

@@ -7,14 +7,16 @@ import { DateTime } from "luxon";
 
 export class AuthProvider {
   private authConnector: AuthConnector;
+  private authFactorProofTokenMaxAgeInSeconds: number = null;
   public authConfig: any;
   public readonly providerName: string;
 
   // tslint:disable-next-line:prettier
-  constructor(providerName: string, authConnector: AuthConnector, authConfig: any) {
+  constructor(providerName: string, authConnector: AuthConnector, authConfig: any, authFactorProofTokenMaxAgeInSeconds: number = null) {
     this.authConnector = authConnector;
     this.authConfig = authConfig;
     this.providerName = providerName;
+    this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
   }
 
   private async createRandomAuthFactor(): Promise<{ authFactor: IAuthFactorForProof; passwordData: IPasswordData }> {
@@ -54,8 +56,6 @@ export class AuthProvider {
       hash: passwordData.hash
     };
 
-    console.log('Create', passwordData.hash);
-
     return this.authConnector.createAuthFactorCreationToken(authFactorCreation);
   }
 
@@ -80,6 +80,7 @@ export class AuthProvider {
 
       passwordData = await hashByMeta(password, meta.sodiumMeta);
     } catch (err) {
+      // TODO: Log this
       const randomAuthFactor = await this.createRandomAuthFactor();
       authFactor = randomAuthFactor.authFactor;
       passwordData = randomAuthFactor.passwordData;
@@ -95,10 +96,9 @@ export class AuthProvider {
     const authFactorProof: IAuthFactorProof = {
       id: authFactor.id,
       hash: passwordData.hash,
-      provider
+      provider,
+      maxAgeInSeconds: this.authFactorProofTokenMaxAgeInSeconds
     };
-
-    console.log('IS FAKE', isFake, passwordData.hash);
 
     return {
       authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof),

@@ -1,5 +1,6 @@
 import { signJwt, verifyJwt } from "./signHelper";
-import { ILogger } from "../../logger/lib";
+import { ILogger } from "@fullstack-one/logger";
+import { UserInputError } from "@fullstack-one/graphql";
 
 export class PrivacyAgreementAcceptance {
   private authConfig;
@@ -14,7 +15,9 @@ export class PrivacyAgreementAcceptance {
 
   public createPrivacyAgreementAcceptanceToken(acceptedVersion) {
     if (acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-      throw new Error(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
+      const error = new UserInputError(`The accepted version is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
 
     const acceptedAtInUTC = new Date().toISOString();
@@ -64,19 +67,25 @@ export class PrivacyAgreementAcceptance {
       let tokenPayload;
       if (privacyAgreementAcceptanceToken == null) {
         this.logger.warn("validatePrivacyAgreementAcceptanceToken.error.missingPrivacyAgreementAcceptanceToken");
-        throw new Error("PrivacyAgreementAcceptanceToken missing!");
+        const error = new UserInputError("PrivacyAgreementAcceptanceToken missing!");
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       try {
         tokenPayload = verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, privacyAgreementAcceptanceToken);
       } catch (e) {
         this.logger.warn("validatePrivacyAgreementAcceptanceToken.error.invalidPrivacyAgreementAcceptanceToken");
-        throw new Error("PrivacyAgreementAcceptanceToken invalid!");
+        const error = new UserInputError("PrivacyAgreementAcceptanceToken invalid!");
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-        throw new Error(
+        const error = new UserInputError(
           "The accepted version of privacyAgreementAcceptanceToken " +
             `is not version '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`
         );
+        error.extensions.exposeDetails = true;
+        throw error;
       }
     }
   }
@@ -86,30 +95,40 @@ export class PrivacyAgreementAcceptance {
       const { privacyAgreementAcceptedAtInUTC, privacyAgreementAcceptedVersion } = this.parserMeta;
       let tokenPayload;
       if (args.input[privacyAgreementAcceptedAtInUTC] == null || args.input[privacyAgreementAcceptedVersion] == null) {
-        throw new Error(
+        const error = new UserInputError(
           `The privacy-fields ('${privacyAgreementAcceptedAtInUTC}', '${privacyAgreementAcceptedVersion}') are required for creating a user.`
         );
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       if (args.privacyAgreementAcceptanceToken == null) {
-        throw new Error("Missing privacyAgreementAcceptanceToken argument.");
+        const error = new UserInputError("Missing privacyAgreementAcceptanceToken argument.");
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       try {
         tokenPayload = verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, args.privacyAgreementAcceptanceToken);
       } catch (e) {
-        throw new Error("Invalid privacy token.");
+        const error = new UserInputError("Invalid privacy token.");
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       if (
         tokenPayload.acceptedAtInUTC !== args.input[privacyAgreementAcceptedAtInUTC] ||
         tokenPayload.acceptedVersion !== args.input[privacyAgreementAcceptedVersion]
       ) {
-        throw new Error(
+        const error = new UserInputError(
           `The privacy-fields ('${privacyAgreementAcceptedAtInUTC}', '${privacyAgreementAcceptedVersion}') must match the payload of the privacy-token.`
         );
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       if (tokenPayload.acceptedVersion !== this.authConfig.privacyAgreementAcceptance.versionToAccept) {
-        throw new Error(
+        const error = new UserInputError(
           "The accepted version of your privacy-token is not version" + ` '${this.authConfig.privacyAgreementAcceptance.versionToAccept}'.`
         );
+        error.extensions.exposeDetails = true;
+        throw error;
       }
     }
   }

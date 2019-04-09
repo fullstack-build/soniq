@@ -26,12 +26,15 @@ module.exports = {
   authToken: {
     maxAgeInSeconds: 86400 // Should be changed to one minute on production
   },
+  authFactorProofTokenMaxAgeInSeconds: 86400, // Should be changed to one minute in production
+  userIdentifierMaxAgeInSeconds: 60,
   cookie: {
     name:       "access_token",
-    maxAge:     86400000,
+    maxAge:     1209600000, // Two weeks
     overwrite:  true,
     httpOnly:   true,
-    signed:     true
+    signed:     true,
+    overwrite:  true
   },
   tokenQueryParameter:          "access_token",
   enableDefaultLocalStrategie:  true,

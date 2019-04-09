@@ -15,7 +15,8 @@ import { AuthQueryHelper } from "./AuthQueryHelper";
 import { AccessTokenParser } from "./AccessTokenParser";
 import { PrivacyAgreementAcceptance } from "./PrivacyAgreementAcceptance";
 import { AuthProvider } from "./AuthProvider";
-import { IAuthFactorForProof, IUserAuthentication } from "./interfaces";
+import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
+import { DateTime } from "luxon";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -137,7 +138,7 @@ export class Auth {
         const returnLoginData = { ...hookInfo.loginData };
 
         if (hookInfo.context.ctx.securityContext.isBrowser === true) {
-          hookInfo.context.ctx.cookies.set(this.authConfig.cookie.name, returnLoginData.accessToken, this.authConfig.cookie);
+          this.setAccessTokenCookie(hookInfo.context.ctx, returnLoginData);
 
           returnLoginData.accessToken = null;
         }
@@ -151,6 +152,20 @@ export class Auth {
     }
   }
 
+  private setAccessTokenCookie(ctx: any, loginData: ILoginData) {
+    const cookieOptions = {
+      ...this.authConfig.cookie,
+      maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000
+    };
+
+    ctx.cookies.set(this.authConfig.cookie.name, loginData.accessToken, cookieOptions);
+  }
+
+  private deleteAccessTokenCookie(ctx: any) {
+    ctx.cookies.set(this.authConfig.cookie.name, null);
+    ctx.cookies.set(`${this.authConfig.cookie.name}.sig`, null);
+  }
+
   private getResolvers() {
     return {
       "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params) => {
@@ -162,7 +177,7 @@ export class Auth {
         const loginData = await this.authConnector.login(args.authFactorProofTokens, clientIdentifier || null);
 
         if (context.ctx.securityContext.isBrowser === true) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, loginData.accessToken, this.authConfig.cookie);
+          this.setAccessTokenCookie(context.ctx, loginData);
 
           loginData.accessToken = null;
         }
@@ -178,12 +193,14 @@ export class Auth {
         return true;
       },
       "@fullstack-one/auth/invalidateAccessToken": async (obj, args, context, info, params) => {
-        context.ctx.cookies.set(this.authConfig.cookie.name, null);
-        return this.authConnector.invalidateAccessToken(context.accessToken);
+        this.deleteAccessTokenCookie(context.ctx);
+        await this.authConnector.invalidateAccessToken(context.accessToken);
+        return true;
       },
       "@fullstack-one/auth/invalidateAllAccessTokens": async (obj, args, context, info, params) => {
-        context.ctx.cookies.set(this.authConfig.cookie.name, null);
-        return this.authConnector.invalidateAllAccessTokens(context.accessToken);
+        this.deleteAccessTokenCookie(context.ctx);
+        await this.authConnector.invalidateAllAccessTokens(context.accessToken);
+        return true;
       },
       "@fullstack-one/auth/refreshAccessToken": async (obj, args, context, info, params) => {
         const clientIdentifier = context.ctx.securityContext.clientIdentifier;
@@ -191,7 +208,7 @@ export class Auth {
         const loginData = await this.authConnector.refreshAccessToken(context.accessToken, clientIdentifier || null, args.refreshToken);
 
         if (context.ctx.securityContext.isBrowser === true) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, loginData.accessToken, this.authConfig.cookie);
+          this.setAccessTokenCookie(context.ctx, loginData);
 
           loginData.accessToken = null;
         }
@@ -205,7 +222,7 @@ export class Auth {
           const tokenMeta = await this.authConnector.getTokenMeta(context.accessToken);
           return tokenMeta;
         } catch (err) {
-          context.ctx.cookies.set(this.authConfig.cookie.name, null);
+          this.deleteAccessTokenCookie(context.ctx);
           throw err;
         }
       },
@@ -226,7 +243,7 @@ export class Auth {
     this.userRegistrationCallback = callback;
   }
 
-  public createAuthProvider(providerName: string): AuthProvider {
-    return new AuthProvider(providerName, this.authConnector, this.authConfig);
+  public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
+    return new AuthProvider(providerName, this.authConnector, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
   }
 }

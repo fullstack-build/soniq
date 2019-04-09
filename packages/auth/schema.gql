@@ -45,8 +45,8 @@ type UserAuthentication {
   isActive: Boolean!
   loginProviderSets: [String!]!
   modifyProviderSets: [String!]!
-  totalLogoutTimestamp: Int!
-  invalidTokenTimestamps: [Int!]!
+  totalLogoutTimestamp: String!
+  invalidTokenTimestamps: [String!]!
   createdAt: String!
   authFactors: [AuthFactor!]!
 }

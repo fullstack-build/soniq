@@ -10,11 +10,14 @@ export interface IAuthFactorProof {
   id: string;
   hash: string;
   provider: string;
+  issuedAt?: number;
+  maxAgeInSeconds: number | null;
 }
 
 export interface IUserIdentifier {
   userAuthenticationId: string;
   authFactorId: string;
+  issuedAt?: number;
 }
 
 export interface ILoginData {
@@ -28,6 +31,7 @@ export interface ITokenMeta {
   providerSet: string | null;
   issuedAt: string | null;
   expiresAt: string | null;
+  accessTokenMaxAgeInSeconds: number;
 }
 
 export interface IUserAuthentication {
