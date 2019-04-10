@@ -1,5 +1,5 @@
 -- authenticate_transaction function sets a session for the current transaction
-CREATE OR REPLACE FUNCTION _meta.authenticate_transaction(i_access_token TEXT) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION _auth.authenticate_transaction(i_access_token TEXT) RETURNS void AS $$
 DECLARE
     v_is_admin BOOLEAN;
     v_user_authentication_data jsonb;
@@ -17,13 +17,13 @@ DECLARE
     v_transaction_token TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
+    v_is_admin := _auth.is_admin();
     IF v_is_admin = FALSE THEN
-        -- RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
+        RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
     END IF;
-    
+
     -- Check if the AccessToken is valid => This throws an error
-    v_user_authentication_data := _meta.validate_access_token(i_access_token);
+    v_user_authentication_data := _auth.validate_access_token(i_access_token);
     
     v_user_id := v_user_authentication_data->>'userId';
     v_provider_set := v_user_authentication_data->>'providerSet';
@@ -41,10 +41,10 @@ BEGIN
     -- Check if the transaction_token_secret needs to get renewed.
     IF (v_timestamp_sec - v_transaction_token_timestamp) > v_transaction_token_max_age_in_seconds THEN
         -- Create a new random transaction_token_secret.
-        UPDATE "_meta"."Auth" SET "value"=crypt(encode(gen_random_bytes(64), 'hex'), gen_salt('bf', 4)) WHERE "key"='transaction_token_secret';
+        UPDATE _meta."Auth" SET "value"=crypt(encode(gen_random_bytes(64), 'hex'), gen_salt('bf', 4)) WHERE "key"='transaction_token_secret';
 
         -- Set transaction_token_secret to the current time to flag the secret as updated.
-        UPDATE "_meta"."Auth" SET "value"=round(extract(epoch from now()))::text WHERE "key"='transaction_token_timestamp';
+        UPDATE _meta."Auth" SET "value"=round(extract(epoch from now()))::text WHERE "key"='transaction_token_timestamp';
 
         -- Reload new secret for transaction usage
         SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';

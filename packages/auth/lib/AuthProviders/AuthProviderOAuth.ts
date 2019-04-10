@@ -50,7 +50,7 @@ const oAuthCallback = (message, origins) => {
 };
 
 @Service()
-export class OAuthAuthProvider {
+export class AuthProviderOAuth {
   private emailAuthProvider: AuthProvider;
   private oAuthAuthProviders: { [key: string]: AuthProvider } = {};
 
@@ -146,11 +146,9 @@ export class OAuthAuthProvider {
             const authConnector = oAuthAuthProvider.getAuthConnector();
 
             let user = await authConnector.findUser(email, provider.tenant);
-            let userIdentifiedByEmail = true;
 
             if (user.isFake === true) {
               user = await authConnector.findUser(profile.id, provider.tenant);
-              userIdentifiedByEmail = false;
             }
 
             if (user.isFake === true) {
@@ -160,8 +158,10 @@ export class OAuthAuthProvider {
               const response = {
                 email,
                 profile,
-                oAuthAuthFactorCreationToken,
-                emailAuthFactorCreationToken
+                authFactorCreationTokens: {
+                  oAuth: oAuthAuthFactorCreationToken,
+                  email: emailAuthFactorCreationToken
+                }
               };
 
               cb(null, response);
@@ -213,8 +213,10 @@ export class OAuthAuthProvider {
               const response = {
                 email,
                 profile,
-                emailAuthFactorProofToken: emailAuthFactorProof.authFactorProofToken,
-                oAuthAuthFactorProofToken: oAuthAuthFactorProof.authFactorProofToken
+                authFactorProofTokens: {
+                  email: emailAuthFactorProof.authFactorProofToken,
+                  oAuth: oAuthAuthFactorProof.authFactorProofToken
+                }
               };
 
               cb(null, response);

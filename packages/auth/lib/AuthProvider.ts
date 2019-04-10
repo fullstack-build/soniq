@@ -46,7 +46,9 @@ export class AuthProvider {
   public async create(password: string, communicationAddress: string = null, isProofed: boolean = false, providerMeta: any = {}): Promise<string> {
     const sodiumConfig = createConfig(this.authConfig.sodium);
 
-    const passwordData: IPasswordData = await newHash(password, sodiumConfig);
+    const providerSignature = getProviderSignature(this.authConfig.secrets.authProviderHashSignature, this.providerName, "");
+
+    const passwordData: IPasswordData = await newHash(password + providerSignature, sodiumConfig);
 
     const authFactorCreation: IAuthFactorCreation = {
       provider: this.providerName,
@@ -64,23 +66,21 @@ export class AuthProvider {
     let authFactor: IAuthFactorForProof;
     let passwordData: IPasswordData;
     let isFake = false;
-    let skipHashSignature = false;
 
     try {
       authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
 
       const meta = JSON.parse(authFactor.meta);
 
-      let password = await getPassword(authFactor);
+      const password = await getPassword(authFactor);
 
-      if (meta.isOldPassword === true) {
-        skipHashSignature = true;
-        const providerSignature = getProviderSignature(this.authConfig.secrets.oldAdmin, "local", authFactor.userId);
+      const providerSignature = getProviderSignature(
+        this.authConfig.secrets.authProviderHashSignature,
+        meta.isOldPassword === true ? "local" : provider,
+        meta.isOldPassword === true ? authFactor.userId : ""
+      );
 
-        password = password + providerSignature;
-      }
-
-      passwordData = await hashByMeta(password, meta.sodiumMeta);
+      passwordData = await hashByMeta(password + providerSignature, meta.sodiumMeta);
     } catch (err) {
       // TODO: Log this
       const randomAuthFactor = await this.createRandomAuthFactor();
@@ -103,7 +103,7 @@ export class AuthProvider {
     };
 
     return {
-      authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof, skipHashSignature),
+      authFactorProofToken: this.authConnector.createAuthFactorProofToken(authFactorProof),
       isFake
     };
   }

@@ -1,5 +1,5 @@
--- current_available_providers function returns a list of providers of the current user session if the transaction_token is present and valid
-CREATE OR REPLACE FUNCTION _meta.current_available_providers() RETURNS jsonb AS $$
+-- current_user_id function returns the id of the current user if the transaction_token is present and valid
+CREATE OR REPLACE FUNCTION _auth.current_user_id() RETURNS uuid AS $$
 DECLARE
     v_transaction_token_secret TEXT;
     v_transaction_token TEXT;
@@ -9,9 +9,6 @@ DECLARE
     v_timestamp BIGINT;
     v_signature TEXT;
     v_payload TEXT;
-
-    v_query TEXT;
-    v_available_providers jsonb;
 BEGIN
     -- Get required values from Auth-table
     SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';
@@ -48,11 +45,8 @@ BEGIN
 
     -- Hash payload and check if it matches the token-signature
     IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
-
-        v_query := $tok$ SELECT json_agg(row_to_json(__local_0__)) "data" FROM (SELECT "provider", "proofedAt" IS NOT NULL "proofed","proofedAt" FROM _meta."AuthFactor" WHERE "deletedAt" IS NULL AND "userAuthenticationId" = (SELECT "id" FROM _meta."UserAuthentication" WHERE "userId" = %L)) __local_0__; $tok$;
-        EXECUTE format(v_query, v_user_id) INTO v_available_providers;
-
-        return v_available_providers;
+        -- If valid return the userId
+        RETURN v_user_id::uuid;
     END IF;
 
     -- Raise exeption because the token is not valid.

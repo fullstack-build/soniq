@@ -34,7 +34,7 @@ export default function getDefaultMutationResolver<TSource>(
     try {
       await client.query("BEGIN");
 
-      await hookManager.executePreQueryHooks(client, context, context.accessToken != null);
+      await hookManager.executePreQueryHooks(client, context, context.accessToken != null, mutationBuild);
 
       logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 

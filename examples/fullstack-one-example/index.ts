@@ -13,7 +13,7 @@ import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
 import { DbGeneralPool } from "@fullstack-one/db";
 import { FileStorage } from "@fullstack-one/file-storage";
-import { Auth, PasswordAuthProvider, EmailAuthProvider, OAuthAuthProvider, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
+import { Auth, AuthProviderPassword, AuthProviderEmail, AuthProviderOAuth, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
 import { NotificationsEmail } from "@fullstack-one/notifications";
 import { EventEmitter } from "@fullstack-one/events";
 
@@ -29,14 +29,13 @@ $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication)
   console.log('USER REGISTERED', JSON.stringify(userAuthentication, null, 2));
 })
 
-const $passwordAuthProvider = Container.get(PasswordAuthProvider);
-const $oAuthAuthProvider = Container.get(OAuthAuthProvider);
-const $emailAuthProvider = Container.get(EmailAuthProvider);
+const $authProviderPassword = Container.get(AuthProviderPassword);
+const $authProviderOAuth = Container.get(AuthProviderOAuth);
+const $authProviderEmail = Container.get(AuthProviderEmail);
 
-$emailAuthProvider.registerSendMailCallback((mail: IProofMailPayload) => {
+$authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
   console.log('SEND PROOF MAIL', JSON.stringify(mail, null, 2));
 });
-
 
 const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);

@@ -3,7 +3,7 @@
 
 -- Table Definition ----------------------------------------------
 
-CREATE TABLE IF NOT EXISTS _meta."UserAuthentication" (
+CREATE TABLE IF NOT EXISTS _auth."UserAuthentication" (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     "userId" uuid NOT NULL UNIQUE,
     "isActive" boolean NOT NULL DEFAULT true,
@@ -16,5 +16,5 @@ CREATE TABLE IF NOT EXISTS _meta."UserAuthentication" (
 
 -- Indices -------------------------------------------------------
 
-CREATE UNIQUE INDEX IF NOT EXISTS "UserAuthentication_pkey" ON _meta."UserAuthentication"(id uuid_ops);
-CREATE UNIQUE INDEX IF NOT EXISTS "UserAuthentication_userId_key" ON _meta."UserAuthentication"("userId" uuid_ops);
+CREATE UNIQUE INDEX IF NOT EXISTS "UserAuthentication_pkey" ON _auth."UserAuthentication"(id uuid_ops);
+CREATE UNIQUE INDEX IF NOT EXISTS "UserAuthentication_userId_key" ON _auth."UserAuthentication"("userId" uuid_ops);

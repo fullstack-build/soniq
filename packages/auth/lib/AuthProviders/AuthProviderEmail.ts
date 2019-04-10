@@ -5,14 +5,14 @@ import { Auth, AuthProvider, IAuthFactorForProof } from "..";
 
 const schema = `
 extend type Mutation {
-    """
-  Find a user by username and tenant, returning two encrypted uuids to identify the user
-  This will never fail. When the user could not be found it will return fake-data.
+  """
+  Creates a new email AuthFactorCreationToken for the given email-address.
   """
   createEmail(email: String!): String @custom(resolver: "@fullstack-one/auth/EmailProvider/createEmail")
 
   """
-  Login a user. Get back an accessToken and metadata about it.
+  This will send an AuthFactorProofToken via mail to the user if the user exists and has an email-address.
+  This will never fail.
   """
   initiateEmailProof(userIdentifier: String!, info: String): Boolean @custom(resolver: "@fullstack-one/auth/EmailProvider/initiateEmailProof")
 }
@@ -23,10 +23,11 @@ export interface IProofMailPayload {
   authFactorProofToken: string;
   userId: string;
   userAuthenticationId: string;
+  info: string;
 }
 
 @Service()
-export class EmailAuthProvider {
+export class AuthProviderEmail {
   private authProvider: AuthProvider;
   private sendMail: (mail: IProofMailPayload) => void;
 
@@ -59,7 +60,8 @@ export class EmailAuthProvider {
         email: currentAuthFactor.communicationAddress,
         authFactorProofToken,
         userId: currentAuthFactor.userId,
-        userAuthenticationId: currentAuthFactor.userAuthenticationId
+        userAuthenticationId: currentAuthFactor.userAuthenticationId,
+        info
       };
 
       this.sendMail(proofMailPayload);

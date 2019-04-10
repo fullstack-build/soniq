@@ -16,9 +16,9 @@ export function getProviderSignature(adminSecret, provider, userIdentifier) {
 }
 
 export function signJwt(jwtSecret, payload, expiresIn) {
-  return jwt.sign(payload, jwtSecret, { expiresIn });
+  return Buffer.from(jwt.sign(payload, jwtSecret, { expiresIn }), "utf8").toString("hex");
 }
 
 export function verifyJwt(jwtSecret, token) {
-  return jwt.verify(token, jwtSecret);
+  return jwt.verify(Buffer.from(token, "hex").toString("utf8"), jwtSecret);
 }

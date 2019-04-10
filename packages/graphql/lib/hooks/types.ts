@@ -5,7 +5,12 @@ import { PgPoolClient } from "@fullstack-one/db";
 
 import { IDefaultMutationResolverContext, IMatch, IQueryBuildOject, IMutationBuildObject } from "../getDefaultResolvers";
 
-export type TPreQueryHookFunction = (client: PgPoolClient, context: any, authRequired: boolean) => any;
+export type TPreQueryHookFunction = (
+  client: PgPoolClient,
+  context: any,
+  authRequired: boolean,
+  buildObject: IMutationBuildObject | IQueryBuildOject
+) => any;
 export type TPreMutationCommitHookFunction<TReturnData, TSource> = (client: PgPoolClient, hookInfo: IHookInfo<TReturnData, TSource>) => any;
 export type TPostMutationHookFunction<TReturnData, TSource> = (
   hookInfo: IHookInfo<TReturnData, TSource>,

@@ -1,14 +1,14 @@
 -- get_tenant_by_userid function returns the tenant
-CREATE OR REPLACE FUNCTION _meta.get_tenant_by_userid(i_user_id TEXT) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION _auth.get_tenant_by_userid(i_user_id TEXT) RETURNS TEXT AS $$
 DECLARE
     v_is_admin BOOLEAN;
     v_get_tenant_by_user_id_query TEXT;
     v_tenant TEXT;
 BEGIN
     -- Check if the user is admin. Raise exeption if not.
-    v_is_admin := _meta.is_admin();
+    v_is_admin := _auth.is_admin();
     IF v_is_admin = FALSE THEN
-        -- RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
+        RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
     END IF;
 
     -- Get required values from Auth-table

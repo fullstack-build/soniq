@@ -31,13 +31,9 @@ export class AuthConnector {
     this.cryptoFactory = new CryptoFactory(authConfig.secrets.encryptionKey, authConfig.crypto.algorithm);
   }
 
-  private encryptAuthFactorProofToken(authFactorProof: IAuthFactorProof, skipHashSignature: boolean = false): string {
+  private encryptAuthFactorProofToken(authFactorProof: IAuthFactorProof): string {
     if (authFactorProof.provider == null || typeof authFactorProof.provider !== "string") {
       throw new Error("Field 'provider' is required for creating AuthFactorProofTokens.");
-    }
-
-    if (skipHashSignature !== true) {
-      authFactorProof.hash = sha512(authFactorProof.hash + authFactorProof.provider + this.authConfig.secrets.authProviderHashSignature);
     }
 
     authFactorProof.issuedAt = Date.now();
@@ -74,8 +70,6 @@ export class AuthConnector {
 
   private encryptAuthFactorCreationToken(authFactorCreation: IAuthFactorCreation): string {
     authFactorCreation.isProofed = authFactorCreation.isProofed === true ? true : false;
-
-    authFactorCreation.hash = sha512(authFactorCreation.hash + authFactorCreation.provider + this.authConfig.secrets.authProviderHashSignature);
 
     return this.cryptoFactory.encrypt(JSON.stringify(authFactorCreation));
   }
@@ -126,7 +120,7 @@ export class AuthConnector {
 
   private async getUserIdentifier(username: string, tenant: string): Promise<IUserIdentifier> {
     const values = [username, tenant];
-    const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.find_user($1, $2) AS payload", values);
+    const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.find_user($1, $2) AS payload", values);
 
     if (rows.length < 1 || rows[0].payload == null) {
       throw new Error("User not found!");
@@ -143,7 +137,7 @@ export class AuthConnector {
       await this.authQueryHelper.setAdmin(dbClient);
 
       const values = [userId, isActive, loginProviderSets, modifyProviderSets, JSON.stringify(authFactorCreations)];
-      const { rows } = await dbClient.query(`SELECT _meta.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
+      const { rows } = await dbClient.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
 
       await this.authQueryHelper.unsetAdmin(dbClient);
 
@@ -177,8 +171,8 @@ export class AuthConnector {
     return this.encryptAuthFactorCreationToken(authFactorCreation);
   }
 
-  public createAuthFactorProofToken(authFactorProof: IAuthFactorProof, skipHashSignature: boolean = false): string {
-    return this.encryptAuthFactorProofToken(authFactorProof, skipHashSignature);
+  public createAuthFactorProofToken(authFactorProof: IAuthFactorProof): string {
+    return this.encryptAuthFactorProofToken(authFactorProof);
   }
 
   public async findUser(username: string, tenant: string): Promise<IFindUserResponse> {
@@ -210,7 +204,7 @@ export class AuthConnector {
   public async getAuthFactorForProof(userIdentifierToken: string, provider: string): Promise<IAuthFactorForProof> {
     const userIdentifier = this.decryptUserIdentifier(userIdentifierToken);
     const values = [userIdentifier.userAuthenticationId, provider];
-    const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.get_auth_factor_for_proof($1, $2) AS payload", values);
+    const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload", values);
 
     if (rows.length < 1 || rows[0].payload == null) {
       throw new Error("AuthFactor not found!");
@@ -223,7 +217,7 @@ export class AuthConnector {
     try {
       const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorProofToken.bind(this));
       const values = [JSON.stringify(authFactorProofs), clientIdentifier];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.login($1, $2) AS payload;", values);
+      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.login($1, $2) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Login failed!");
@@ -254,7 +248,7 @@ export class AuthConnector {
   public async getTokenMeta(accessToken: string): Promise<ITokenMeta> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.validate_access_token($1) AS payload;", values);
+      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.validate_access_token($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Token invalid!");
@@ -281,13 +275,13 @@ export class AuthConnector {
   public async proofAuthFactor(authFactorProofToken: string) {
     const authFactorProof = this.decryptAuthFactorProofToken(authFactorProofToken);
     const values = [JSON.stringify(authFactorProof)];
-    await this.authQueryHelper.adminQuery("SELECT _meta.proof_auth_factor($1) AS payload", values);
+    await this.authQueryHelper.adminQuery("SELECT _auth.proof_auth_factor($1) AS payload", values);
   }
 
   public async refreshAccessToken(accessToken: string, clientIdentifier: string, refreshToken: string): Promise<ILoginData> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken), clientIdentifier, this.cryptoFactory.decrypt(refreshToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.refresh_access_token($1, $2, $3) AS payload;", values);
+      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.refresh_access_token($1, $2, $3) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Refresh failed!");
@@ -330,7 +324,7 @@ export class AuthConnector {
       values.push(authFactorCreations == null ? null : JSON.stringify(authFactorCreations));
       values.push(removeAuthFactorIds);
 
-      await this.authQueryHelper.adminQuery(`SELECT _meta.modify_user_authentication($1, $2, $3, $4, $5, $6);`, values);
+      await this.authQueryHelper.adminQuery(`SELECT _auth.modify_user_authentication($1, $2, $3, $4, $5, $6);`, values);
     } catch (err) {
       this.logger.trace("modifyAuthFactors.failed", err);
       throw new Error("Modify AuthFactors failed.");
@@ -340,7 +334,7 @@ export class AuthConnector {
   public async getUserAuthentication(accessToken: string): Promise<IUserAuthentication> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.get_user_authentication($1) AS payload;", values);
+      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Request invalid.");
@@ -357,7 +351,7 @@ export class AuthConnector {
   public async getUserAuthenticationById(userAuthenticationId: string): Promise<IUserAuthentication> {
     try {
       const values = [userAuthenticationId];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _meta.get_user_authentication_by_id($1) AS payload;", values);
+      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication_by_id($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Request invalid.");
@@ -374,7 +368,7 @@ export class AuthConnector {
   public async invalidateAccessToken(accessToken: string): Promise<void> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
-      await this.authQueryHelper.adminQuery("SELECT _meta.invalidate_access_token($1);", values);
+      await this.authQueryHelper.adminQuery("SELECT _auth.invalidate_access_token($1);", values);
     } catch (err) {
       /* Igonre Error */
     }
@@ -383,7 +377,7 @@ export class AuthConnector {
   public async invalidateAllAccessTokens(accessToken: string): Promise<void> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
-      await this.authQueryHelper.adminQuery("SELECT _meta.invalidate_all_access_tokens($1);", values);
+      await this.authQueryHelper.adminQuery("SELECT _auth.invalidate_all_access_tokens($1);", values);
     } catch (err) {
       /* Igonre Error */
     }

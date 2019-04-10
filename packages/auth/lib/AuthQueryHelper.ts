@@ -54,7 +54,7 @@ export class AuthQueryHelper {
   }
 
   public async getCurrentUserIdFromClient(dbClient) {
-    return (await dbClient.query("SELECT _meta.current_user_id();")).rows[0].current_user_id;
+    return (await dbClient.query("SELECT _auth.current_user_id();")).rows[0].current_user_id;
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken) {
@@ -165,7 +165,9 @@ export class AuthQueryHelper {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
 
-      await dbClient.query("SELECT _meta.authenticate_transaction($1);", values);
+      await this.setAdmin(dbClient);
+      await dbClient.query("SELECT _auth.authenticate_transaction($1);", values);
+      await this.unsetAdmin(dbClient);
 
       return true;
     } catch (err) {

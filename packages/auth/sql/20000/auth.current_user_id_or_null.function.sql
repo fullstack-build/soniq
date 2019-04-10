@@ -1,5 +1,5 @@
 -- current_user_id function returns the id of the current user if the transaction_token is present and valid
-CREATE OR REPLACE FUNCTION _meta.current_user_id_or_null() RETURNS uuid AS $$
+CREATE OR REPLACE FUNCTION _auth.current_user_id_or_null() RETURNS uuid AS $$
 DECLARE
     v_transaction_token_secret TEXT;
     v_transaction_token TEXT;

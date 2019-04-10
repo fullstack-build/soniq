@@ -2,7 +2,6 @@ module.exports = {
   secrets: {
     jwt:      null,
     admin:    null,
-    oldAdmin: null,
     provider: null,
     cookie:   null,
     jwtRefreshToken: null,

@@ -1,5 +1,5 @@
 -- set_admin function sets a local for admin functions
-CREATE OR REPLACE FUNCTION _meta.set_admin(i_admin_token_secret TEXT) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION _auth.set_admin(i_admin_token_secret TEXT) RETURNS void AS $$
 DECLARE
     v_timestamp BIGINT;
     v_payload TEXT;

@@ -22,9 +22,9 @@ const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
 export * from "./signHelper";
 export * from "./interfaces";
-export * from "./AuthProviders/EmailAuthProvider";
-export * from "./AuthProviders/OAuthAuthProvider";
-export * from "./AuthProviders/PasswordAuthProvider";
+export * from "./AuthProviders/AuthProviderEmail";
+export * from "./AuthProviders/AuthProviderOAuth";
+export * from "./AuthProviders/AuthProviderPassword";
 export { AuthProvider, IAuthFactorForProof };
 
 @Service()
@@ -109,9 +109,23 @@ export class Auth {
     app.use(this.accessTokenParser.parse.bind(this.accessTokenParser));
   }
 
-  private async preQueryHook(dbClient, context, authRequired) {
+  private async preQueryHook(dbClient, context, authRequired, buildObject) {
+    if (
+      buildObject.mutation != null &&
+      buildObject.mutation.extensions != null &&
+      buildObject.mutation.extensions.auth === "REGISTER_USER_MUTATION"
+    ) {
+      return;
+    }
+
     if (authRequired === true && context.accessToken != null) {
-      await this.authQueryHelper.authenticateTransaction(dbClient, context.accessToken);
+      try {
+        await this.authQueryHelper.authenticateTransaction(dbClient, context.accessToken);
+      } catch (err) {
+        this.logger.trace("authenticateTransaction.failed", err);
+        this.deleteAccessTokenCookie(context.ctx);
+        throw err;
+      }
     }
   }
 

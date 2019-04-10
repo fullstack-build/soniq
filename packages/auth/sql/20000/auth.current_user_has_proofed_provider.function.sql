@@ -1,5 +1,5 @@
--- current_provider_set function returns the providerSet of the current user session if the transaction_token is present and valid
-CREATE OR REPLACE FUNCTION _meta.current_provider_set() RETURNS TEXT AS $$
+-- current_user_has_proofed_provider function checks if a user has a proofed AuthFactor with the given provider-name
+CREATE OR REPLACE FUNCTION _auth.current_user_has_proofed_provider(i_provider TEXT) RETURNS BOOLEAN AS $$
 DECLARE
     v_transaction_token_secret TEXT;
     v_transaction_token TEXT;
@@ -9,6 +9,9 @@ DECLARE
     v_timestamp BIGINT;
     v_signature TEXT;
     v_payload TEXT;
+
+    v_query TEXT;
+    v_has_proofed_provider BOOLEAN;
 BEGIN
     -- Get required values from Auth-table
     SELECT value INTO v_transaction_token_secret FROM _meta."Auth" WHERE key = 'transaction_token_secret';
@@ -45,8 +48,11 @@ BEGIN
 
     -- Hash payload and check if it matches the token-signature
     IF v_signature = encode(digest(v_payload, 'sha256'), 'hex') THEN
-        -- If valid return the v_provider_set
-        RETURN v_provider_set;
+
+        v_query := $tok$ SELECT COALESCE((SELECT "proofedAt" IS NOT NULL FROM _auth."AuthFactor" WHERE "deletedAt" IS NULL AND "userAuthenticationId" = (SELECT "id" FROM _auth."UserAuthentication" WHERE "userId" = %L) AND "provider" = %L), FALSE); $tok$;
+        EXECUTE format(v_query, v_user_id, i_provider) INTO v_has_proofed_provider;
+
+        return v_has_proofed_provider;
     END IF;
 
     -- Raise exeption because the token is not valid.

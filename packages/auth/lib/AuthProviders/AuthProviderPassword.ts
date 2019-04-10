@@ -19,7 +19,7 @@ extend type Mutation {
 `;
 
 @Service()
-export class PasswordAuthProvider {
+export class AuthProviderPassword {
   private authProvider: AuthProvider;
 
   constructor(

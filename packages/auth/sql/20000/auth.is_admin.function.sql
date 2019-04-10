@@ -1,5 +1,5 @@
 -- is_admin function checks if a user is allowed to execute other security functions like set_user and login
-CREATE OR REPLACE FUNCTION _meta.is_admin() RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION _auth.is_admin() RETURNS boolean AS $$
 DECLARE
     v_admin_token_secret TEXT;
     v_admin_token TEXT;

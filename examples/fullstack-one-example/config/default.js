@@ -28,7 +28,6 @@ module.exports = {
       privacyAgreementAcceptanceToken:   process.env.AUTH_PRIVACY_TOKEN_SECRET,
       authToken: process.env.AUTH_AUTH_TOKEN_SECRET,
       authProviderHashSignature: 'test1234',
-      oldAdmin: 'somerandomshit',
       encryptionKey: 'qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL'
     },
     oAuth: {
