@@ -6,10 +6,10 @@ CREATE OR REPLACE FUNCTION _meta.create_version() RETURNS trigger AS $$
   const jsonPatch = require('rfc6902');
   const diff = jsonPatch.createPatch({}, NEW);
 
-	const currentRoleResult = plv8.execute('SELECT current_role');
+	const currentRoleResult = plv8.execute('SELECT current_role;');
 	var currentUserId = null;
 	try {
-	  currentUserId = _meta.current_user_id();
+	  currentUserId = plv8.execute('SELECT _meta.current_user_id_or_null() id;')[0].id;
 	} catch (err){
 	  // ignore error
 	}
