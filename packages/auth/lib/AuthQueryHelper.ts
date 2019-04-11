@@ -1,7 +1,7 @@
 import { DbGeneralPool, PgClient, PgPoolClient } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
-import { SignHelper } from "./SignHelper";
+import { SignHelper } from "./SignHelpers";
 
 export class AuthQueryHelper {
   private dbGeneralPool: DbGeneralPool;
