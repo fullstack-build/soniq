@@ -1,16 +1,18 @@
-import { signJwt, verifyJwt } from "./signHelper";
 import { ILogger } from "@fullstack-one/logger";
 import { UserInputError } from "@fullstack-one/graphql";
+import { SignHelper } from "./signHelper";
 
 export class PrivacyAgreementAcceptance {
   private authConfig;
   private parserMeta;
   private logger: ILogger;
+  private signHelper: SignHelper;
 
-  constructor(authConfig, parserMeta, logger: ILogger) {
+  constructor(authConfig, parserMeta, logger: ILogger, signHelper: SignHelper) {
     this.authConfig = authConfig;
     this.parserMeta = parserMeta;
     this.logger = logger;
+    this.signHelper = signHelper;
   }
 
   public createPrivacyAgreementAcceptanceToken(acceptedVersion) {
@@ -27,7 +29,7 @@ export class PrivacyAgreementAcceptance {
       acceptedAtInUTC
     };
 
-    const token = signJwt(
+    const token = this.signHelper.signJwt(
       this.authConfig.secrets.privacyAgreementAcceptanceToken,
       payload,
       this.authConfig.privacyAgreementAcceptance.tokenMaxAgeInSeconds
@@ -56,7 +58,7 @@ export class PrivacyAgreementAcceptance {
 
     const response = {
       payload,
-      token: signJwt(this.authConfig.secrets.authToken, payload, this.authConfig.authToken.maxAgeInSeconds)
+      token: this.signHelper.signJwt(this.authConfig.secrets.authToken, payload, this.authConfig.authToken.maxAgeInSeconds)
     };
 
     return response;
@@ -72,7 +74,7 @@ export class PrivacyAgreementAcceptance {
         throw error;
       }
       try {
-        tokenPayload = verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, privacyAgreementAcceptanceToken);
+        tokenPayload = this.signHelper.verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, privacyAgreementAcceptanceToken);
       } catch (e) {
         this.logger.warn("validatePrivacyAgreementAcceptanceToken.error.invalidPrivacyAgreementAcceptanceToken");
         const error = new UserInputError("PrivacyAgreementAcceptanceToken invalid!");
@@ -107,7 +109,7 @@ export class PrivacyAgreementAcceptance {
         throw error;
       }
       try {
-        tokenPayload = verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, args.privacyAgreementAcceptanceToken);
+        tokenPayload = this.signHelper.verifyJwt(this.authConfig.secrets.privacyAgreementAcceptanceToken, args.privacyAgreementAcceptanceToken);
       } catch (e) {
         const error = new UserInputError("Invalid privacy token.");
         error.extensions.exposeDetails = true;

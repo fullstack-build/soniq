@@ -1,7 +1,7 @@
 import { DbGeneralPool, PgClient, PgPoolClient } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
-import { getAdminSignature } from "./signHelper";
 import { CryptoFactory } from "./CryptoFactory";
+import { SignHelper } from "./signHelper";
 
 export class AuthQueryHelper {
   private dbGeneralPool: DbGeneralPool;
@@ -14,13 +14,15 @@ export class AuthQueryHelper {
     "READ COMMITTED",
     "READ UNCOMMITTED"
   ];
+  private signHelper: SignHelper;
 
-  constructor(dbGeneralPool: DbGeneralPool, logger: ILogger, authConfig: any) {
+  constructor(dbGeneralPool: DbGeneralPool, logger: ILogger, authConfig: any, cryptoFactory: CryptoFactory, signHelper: SignHelper) {
     this.dbGeneralPool = dbGeneralPool;
     this.authConfig = authConfig;
     this.logger = logger;
 
-    this.cryptoFactory = new CryptoFactory(authConfig.secrets.encryptionKey, authConfig.crypto.algorithm);
+    this.cryptoFactory = cryptoFactory;
+    this.signHelper = signHelper;
   }
 
   /* DB HELPER START */
@@ -178,7 +180,7 @@ export class AuthQueryHelper {
 
   public async setAdmin(dbClient) {
     try {
-      await dbClient.query(`SET LOCAL auth.admin_token TO '${getAdminSignature(this.authConfig.secrets.admin)}';`);
+      await dbClient.query(`SET LOCAL auth.admin_token TO '${this.signHelper.getAdminSignature()}';`);
       return dbClient;
     } catch (err) {
       this.logger.warn("setAdmin.error", err);

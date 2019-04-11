@@ -1,19 +1,21 @@
 import { AuthConnector } from "./AuthConnector";
 import { IAuthFactorCreation, IAuthFactorProof, IAuthFactorForProof, IProofResponse, IAuthFactorForProofResponse, IPasswordData } from "./interfaces";
 import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./crypto";
-import { getProviderSignature } from "./signHelper";
 import uuid = require("uuid");
 import { DateTime } from "luxon";
+import { SignHelper } from "./signHelper";
 
 export class AuthProvider {
   private authConnector: AuthConnector;
+  private signHelper: SignHelper;
   private authFactorProofTokenMaxAgeInSeconds: number = null;
   public authConfig: any;
   public readonly providerName: string;
 
   // tslint:disable-next-line:prettier
-  constructor(providerName: string, authConnector: AuthConnector, authConfig: any, authFactorProofTokenMaxAgeInSeconds: number = null) {
+  constructor(providerName: string, authConnector: AuthConnector, signHelper: SignHelper, authConfig: any, authFactorProofTokenMaxAgeInSeconds: number = null) {
     this.authConnector = authConnector;
+    this.signHelper = signHelper;
     this.authConfig = authConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
@@ -46,7 +48,7 @@ export class AuthProvider {
   public async create(password: string, communicationAddress: string = null, isProofed: boolean = false, providerMeta: any = {}): Promise<string> {
     const sodiumConfig = createConfig(this.authConfig.sodium);
 
-    const providerSignature = getProviderSignature(this.authConfig.secrets.authProviderHashSignature, this.providerName, "");
+    const providerSignature = this.signHelper.getProviderSignature(this.authConfig.secrets.authProviderHashSignature, this.providerName, "");
 
     const passwordData: IPasswordData = await newHash(password + providerSignature, sodiumConfig);
 
@@ -74,7 +76,7 @@ export class AuthProvider {
 
       const password = await getPassword(authFactor);
 
-      const providerSignature = getProviderSignature(
+      const providerSignature = this.signHelper.getProviderSignature(
         this.authConfig.secrets.authProviderHashSignature,
         meta.isOldPassword === true ? "local" : provider,
         meta.isOldPassword === true ? authFactor.userId : ""

@@ -17,10 +17,12 @@ import { PrivacyAgreementAcceptance } from "./PrivacyAgreementAcceptance";
 import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { DateTime } from "luxon";
+import { CryptoFactory } from "./CryptoFactory";
+import { SignHelper } from "./signHelper";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
-export * from "./signHelper";
+export * from "./SignHelper";
 export * from "./interfaces";
 export * from "./AuthProviders/AuthProviderEmail";
 export * from "./AuthProviders/AuthProviderOAuth";
@@ -30,6 +32,8 @@ export { AuthProvider, IAuthFactorForProof };
 @Service()
 export class Auth {
   private authConfig;
+  private cryptoFactory: CryptoFactory;
+  private signHelper: SignHelper;
   private authConnector: AuthConnector;
   private authQueryHelper: AuthQueryHelper;
   private csrfProtection: CSRFProtection;
@@ -54,9 +58,12 @@ export class Auth {
 
     this.logger = loggerFactory.create(this.constructor.name);
 
-    this.authQueryHelper = new AuthQueryHelper(dbGeneralPool, this.logger, this.authConfig);
-    this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.authConfig);
-    this.privacyAgreementAcceptance = new PrivacyAgreementAcceptance(this.authConfig, this.parserMeta, this.logger);
+    this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
+    this.signHelper = new SignHelper(this.authConfig.secrets.admin, this.cryptoFactory);
+
+    this.authQueryHelper = new AuthQueryHelper(dbGeneralPool, this.logger, this.authConfig, this.cryptoFactory, this.signHelper);
+    this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, this.authConfig);
+    this.privacyAgreementAcceptance = new PrivacyAgreementAcceptance(this.authConfig, this.parserMeta, this.logger, this.signHelper);
     this.csrfProtection = new CSRFProtection(this.logger, this.authConfig);
     this.accessTokenParser = new AccessTokenParser(this.authConfig);
 
@@ -258,6 +265,6 @@ export class Auth {
   }
 
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
-    return new AuthProvider(providerName, this.authConnector, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
+    return new AuthProvider(providerName, this.authConnector, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
   }
 }

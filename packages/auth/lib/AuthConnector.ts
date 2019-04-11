@@ -16,19 +16,21 @@ import {
   ITokenMeta,
   IUserAuthentication
 } from "./interfaces";
+import { Encoder } from "./Encoder";
 
 export class AuthConnector {
   private logger: ILogger;
   private authConfig: any;
   private cryptoFactory: CryptoFactory;
   private authQueryHelper: AuthQueryHelper;
+  private encoder: Encoder = new Encoder();
 
-  constructor(authQueryHelper: AuthQueryHelper, logger: ILogger, authConfig: any) {
+  constructor(authQueryHelper: AuthQueryHelper, logger: ILogger, cryptoFactory: CryptoFactory, authConfig: any) {
     this.authConfig = authConfig;
     this.logger = logger;
     this.authQueryHelper = authQueryHelper;
 
-    this.cryptoFactory = new CryptoFactory(authConfig.secrets.encryptionKey, authConfig.crypto.algorithm);
+    this.cryptoFactory = cryptoFactory;
   }
 
   private encryptAuthFactorProofToken(authFactorProof: IAuthFactorProof): string {
@@ -41,6 +43,8 @@ export class AuthConnector {
       authFactorProof.maxAgeInSeconds != null && Number.isInteger(authFactorProof.maxAgeInSeconds)
         ? authFactorProof.maxAgeInSeconds
         : this.authConfig.authFactorProofTokenMaxAgeInSeconds;
+
+    authFactorProof.hash = this.encoder.hexToString(authFactorProof.hash);
 
     return this.cryptoFactory.encrypt(JSON.stringify(authFactorProof));
   }
@@ -65,11 +69,15 @@ export class AuthConnector {
       throw new Error("Expired AuthFactorProofToken.");
     }
 
+    authFactorProof.hash = this.encoder.stringToHex(authFactorProof.hash);
+
     return authFactorProof;
   }
 
   private encryptAuthFactorCreationToken(authFactorCreation: IAuthFactorCreation): string {
     authFactorCreation.isProofed = authFactorCreation.isProofed === true ? true : false;
+
+    authFactorCreation.hash = this.encoder.hexToString(authFactorCreation.hash);
 
     return this.cryptoFactory.encrypt(JSON.stringify(authFactorCreation));
   }
@@ -89,6 +97,8 @@ export class AuthConnector {
     if (authFactorCreation.provider == null) {
       throw new Error("Invalid AuthFactorCreationToken. 'provider' is missing.");
     }
+
+    authFactorCreation.hash = this.encoder.stringToHex(authFactorCreation.hash);
 
     return authFactorCreation;
   }

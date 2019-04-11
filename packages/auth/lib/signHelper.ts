@@ -1,24 +1,35 @@
 import { sha256, sha512 } from "./crypto";
 import * as jwt from "jsonwebtoken";
+import { CryptoFactory } from "./CryptoFactory";
 
-export function getAdminSignature(adminSecret) {
-  const ts = Date.now().toString();
+export class SignHelper {
+  private adminSecret: string;
+  private cryptoFactory: CryptoFactory;
 
-  const payload = `${ts}:${adminSecret}`;
+  constructor(adminSecret: string, cryptoFactory: CryptoFactory) {
+    this.adminSecret = adminSecret;
+    this.cryptoFactory = cryptoFactory;
+  }
 
-  return `${ts}:${sha256(payload)}`;
-}
+  public getAdminSignature() {
+    const ts = Date.now().toString();
 
-export function getProviderSignature(adminSecret, provider, userIdentifier) {
-  const payload = `${provider}:${userIdentifier}:${adminSecret}`;
+    const payload = `${ts}:${this.adminSecret}`;
 
-  return sha512(payload);
-}
+    return `${ts}:${sha256(payload)}`;
+  }
 
-export function signJwt(jwtSecret, payload, expiresIn) {
-  return Buffer.from(jwt.sign(payload, jwtSecret, { expiresIn }), "utf8").toString("hex");
-}
+  public getProviderSignature(secret, provider, userIdentifier) {
+    const payload = `${provider}:${userIdentifier}:${secret}`;
 
-export function verifyJwt(jwtSecret, token) {
-  return jwt.verify(Buffer.from(token, "hex").toString("utf8"), jwtSecret);
+    return sha512(payload);
+  }
+
+  public signJwt(jwtSecret, payload, expiresIn) {
+    return this.cryptoFactory.encrypt(jwt.sign(payload, jwtSecret, { expiresIn }));
+  }
+
+  public verifyJwt(jwtSecret, token) {
+    return jwt.verify(this.cryptoFactory.decrypt(token), jwtSecret);
+  }
 }
