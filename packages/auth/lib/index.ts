@@ -266,4 +266,8 @@ export class Auth {
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
     return new AuthProvider(providerName, this.authConnector, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
   }
+
+  public getAuthQueryHelper(): AuthQueryHelper {
+    return this.authQueryHelper;
+  }
 }

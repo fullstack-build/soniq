@@ -102,7 +102,7 @@ export class FileStorage {
   private async postMutationHook(info, context) {
     try {
       const entityId = info.entityId;
-      const result = await this.auth.adminQuery("SELECT * FROM _meta.file_todelete_by_entity($1);", [entityId]);
+      const result = await this.auth.getAuthQueryHelper().adminQuery("SELECT * FROM _meta.file_todelete_by_entity($1);", [entityId]);
       result.rows.forEach((row) => {
         const fileName = new FileName(row);
         this.deleteFileAsAdmin(fileName.name);
@@ -133,7 +133,7 @@ export class FileStorage {
 
   private async deleteFileAsAdmin(fName) {
     try {
-      await this.auth.adminTransaction(async (client) => {
+      await this.auth.getAuthQueryHelper().adminTransaction(async (client) => {
         const result = await client.query("SELECT * FROM _meta.file_deleteone_admin($1);", [fName.id]);
         if (result.rows.length < 1) {
           throw new Error("Failed to delete file 'fileId' from db.");
@@ -149,7 +149,7 @@ export class FileStorage {
 
   private async deleteFile(fName, context) {
     try {
-      await this.auth.userTransaction(context.accessToken, async (client) => {
+      await this.auth.getAuthQueryHelper().userTransaction(context.accessToken, async (client) => {
         await client.query("SELECT * FROM _meta.file_deleteone($1);", [fName.id]);
         await this.deleteObjects(fName.prefix);
       });
@@ -197,7 +197,8 @@ export class FileStorage {
           throw new Error(`A verifier for type '${type}' hasn't been defined.`);
         }
 
-        const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
+        // tslint:disable-next-line:prettier
+        const result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
 
         const fName = new FileName({
           id: result.rows[0].fileId,
@@ -220,7 +221,8 @@ export class FileStorage {
       "@fullstack-one/file-storage/verifyFile": async (obj, args, context, info, params) => {
         const fName = new FileName(args.fileName);
 
-        const result = await this.auth.userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
+        // tslint:disable-next-line:prettier
+        const result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
         const type = result.rows[0].type;
         let stat = null;
 
@@ -255,7 +257,7 @@ export class FileStorage {
 
         await this.verifierObjects[type].verify(verifyFileName, fName);
 
-        await this.auth.userQuery(context.accessToken, "SELECT _meta.file_verify($1);", [fName.id]);
+        await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT _meta.file_verify($1);", [fName.id]);
 
         // Try to clean up temp objects. However, don't care if it fails.
         try {
@@ -302,9 +304,9 @@ export class FileStorage {
 
         if (args.fileName != null) {
           const fName = new FileName(args.fieldName);
-          result = await this.auth.userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fName.id]);
+          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fName.id]);
         } else {
-          result = await this.auth.userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();");
+          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();");
         }
 
         const filesDeleted = result.rows.map((row) => new FileName(row));
