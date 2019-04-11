@@ -1,6 +1,6 @@
 import { ILogger } from "@fullstack-one/logger";
 import { UserInputError } from "@fullstack-one/graphql";
-import { SignHelper } from "./SignHelpers";
+import { SignHelper } from "./SignHelper";
 
 export class PrivacyAgreementAcceptance {
   private authConfig;

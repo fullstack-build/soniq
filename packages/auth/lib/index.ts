@@ -17,11 +17,11 @@ import { PrivacyAgreementAcceptance } from "./PrivacyAgreementAcceptance";
 import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
-import { SignHelper } from "./SignHelpers";
+import { SignHelper } from "./SignHelper";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
-export * from "./SignHelpers";
+export * from "./SignHelper";
 export * from "./interfaces";
 export * from "./AuthProviders/AuthProviderEmail";
 export * from "./AuthProviders/AuthProviderOAuth";
