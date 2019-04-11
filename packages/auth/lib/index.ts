@@ -16,9 +16,8 @@ import { AccessTokenParser } from "./AccessTokenParser";
 import { PrivacyAgreementAcceptance } from "./PrivacyAgreementAcceptance";
 import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
-import { DateTime } from "luxon";
 import { CryptoFactory } from "./CryptoFactory";
-import { SignHelper } from "./signHelper";
+import { SignHelper } from "./SignHelper";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 

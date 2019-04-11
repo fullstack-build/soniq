@@ -3,7 +3,7 @@ import { IAuthFactorCreation, IAuthFactorProof, IAuthFactorForProof, IProofRespo
 import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./crypto";
 import uuid = require("uuid");
 import { DateTime } from "luxon";
-import { SignHelper } from "./signHelper";
+import { SignHelper } from "./SignHelper";
 
 export class AuthProvider {
   private authConnector: AuthConnector;
