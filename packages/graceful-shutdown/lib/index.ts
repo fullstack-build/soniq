@@ -1,100 +1,110 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
-import { Config, IEnvironment } from "@fullstack-one/config";
+import { IEnvironment } from "@fullstack-one/config";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { DbAppClient, DbGeneralPool } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
-// graceful exit
 import * as exitHook from "async-exit-hook";
 import * as terminus from "@godaddy/terminus";
 
+type TShutdownFunction = () => Promise<void> | void;
+
+interface IShutdownItem {
+  name: string;
+  fn: TShutdownFunction;
+}
+
 @Service()
 export class GracefulShutdown {
-  private dbAppClient: DbAppClient;
-  private dbPoolObj: DbGeneralPool;
-
   private ENVIRONMENT: IEnvironment;
+  private bootLoader: BootLoader;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
+  private dbAppClient: DbAppClient;
+  private server: Server;
+
+  private readonly shutdownItems: IShutdownItem[] = [];
 
   constructor(
-    @Inject((type) => EventEmitter) eventEmitter,
-    @Inject((type) => LoggerFactory) loggerFactory,
-    @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => DbAppClient) dbAppClient,
-    @Inject((type) => DbGeneralPool) dbPoolObj,
-    @Inject((type) => Config) config
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
+    @Inject((type) => DbAppClient) dbAppClient: DbAppClient,
+    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool,
+    @Inject((type) => Server) server: Server
   ) {
+    this.bootLoader = bootLoader;
+    this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
     this.dbAppClient = dbAppClient;
-    this.dbPoolObj = dbPoolObj;
-    this.logger = loggerFactory.create(this.constructor.name);
+    this.server = server;
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // DbGeneralPool should hook in himself, when EventEmitter is no longer dependent on DbAppClient
+    this.addShutdownFunction("DbGeneralPool", () => dbGeneralPool.end());
+
+    exitHook(async (callback) => {
+      await this.shutdown();
+      return callback();
+    });
+
+    this.bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
-  private boot() {
-    // get settings from DI container
+  private boot(): void {
     this.ENVIRONMENT = Container.get("ENVIRONMENT");
-
-    terminus(Container.get(Server).getServer(), {
-      // healtcheck options
+    terminus(this.server.getServer(), {
       healthChecks: {
-        // for now we only resolve a promise to make sure the server runs
         "/_health/liveness": () => Promise.resolve(),
-        // make sure we are ready to answer requests
-        "/_health/readiness": () => Container.get(BootLoader).getReadyPromise()
+        "/_health/readiness": () => this.bootLoader.getReadyPromise()
       },
-      // cleanup options
       timeout: 1000,
       logger: this.logger.info
     });
-
-    // release resources here before node exits
-    exitHook(async (callback) => {
-      this.logger.info("exiting");
-
-      this.logger.info("starting cleanup");
-      this.emit("exiting", this.ENVIRONMENT.nodeId);
-      try {
-        // close DB connections - has to by synchronous - no await
-        // try to exit as many as possible
-        await this.disconnectDB();
-
-        this.logger.info("shutting down");
-
-        this.emit("down", this.ENVIRONMENT.nodeId);
-        // end exitHook
-        return callback();
-      } catch (err) {
-        this.logger.warn("Error occurred during clean up attempt", err);
-        this.emit("server.sigterm.error", this.ENVIRONMENT.nodeId, err);
-        throw err;
-      }
-    });
   }
 
-  private async disconnectDB() {
+  private async shutdown(): Promise<void> {
+    this.logger.info("shutdown.start");
     try {
-      // end setup pgClient and pool
-      await Promise.all([this.dbAppClient.end(), this.dbPoolObj.end()]);
-      return true;
+      await this.emit("exiting");
     } catch (err) {
-      throw err;
+      this.logger.info("shutdown.emit.exiting.error", err);
+    }
+
+    const shutdownPromises = this.shutdownItems.reverse().map(async ({ name, fn }) => {
+      this.logger.info("shutdown.function.start", name);
+      try {
+        await fn();
+        this.logger.info("shutdown.function.end", name);
+      } catch (err) {
+        this.logger.info("shutdown.function.error", name, err);
+      }
+    });
+
+    await Promise.all(shutdownPromises);
+    this.logger.info("shutdown.end");
+    try {
+      await this.emit("exited");
+      await this.dbAppClient.end();
+    } catch (err) {
+      this.logger.info("shutdown.emit.exited.error", err);
     }
   }
 
-  private emit(eventName: string, ...args: any[]): void {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-    this.eventEmitter.emit(eventNamespaceName, this.ENVIRONMENT.nodeId, ...args);
+  private emit(eventName: string): void {
+    const { namespace, nodeId } = this.ENVIRONMENT != null ? this.ENVIRONMENT : { namespace: undefined, nodeId: undefined };
+    const eventNamespaceName = `${namespace}.${eventName}`;
+    this.eventEmitter.emit(eventNamespaceName, nodeId);
   }
 
   private on(eventName: string, listener: (...args: any[]) => void) {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
+    const namespace = this.ENVIRONMENT != null ? this.ENVIRONMENT.namespace : undefined;
+    const eventNamespaceName = `${namespace}.${eventName}`;
     this.eventEmitter.on(eventNamespaceName, listener);
+  }
+
+  public addShutdownFunction(name: string, fn: TShutdownFunction): void {
+    this.shutdownItems.push({ name, fn });
   }
 }
