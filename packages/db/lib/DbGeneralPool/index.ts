@@ -1,4 +1,3 @@
-import { IDb } from "../types";
 import { Pool as PgPool, PoolConfig as PgPoolConfig, PoolClient as PgPoolClient, types as PgTypes } from "pg";
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);
@@ -9,11 +8,12 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
+import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { IDbConfig, IDbGeneralPoolConfig } from "../IDbConfig";
 import { HookManager } from "./HookManager";
 
 @Service()
-export class DbGeneralPool implements IDb {
+export class DbGeneralPool {
   private readonly logger: ILogger;
   private readonly config: IDbConfig;
   private applicationName: string;
@@ -23,6 +23,7 @@ export class DbGeneralPool implements IDb {
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
     @Inject((type) => HookManager) hookManager: HookManager
@@ -32,6 +33,7 @@ export class DbGeneralPool implements IDb {
     this.logger = loggerFactory.create(this.constructor.name);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
@@ -61,6 +63,25 @@ export class DbGeneralPool implements IDb {
     }
 
     return this.pgPool;
+  }
+
+  private async end(): Promise<void> {
+    this.logger.trace("Postgres pool ending initiated");
+    this.hookManager.executePoolEndStartHooks(this.applicationName);
+
+    try {
+      const poolEndResult = await this.pgPool.end();
+
+      this.logger.trace("Postgres pool ended successfully");
+      this.hookManager.executePoolEndSuccessHooks(this.applicationName);
+
+      return poolEndResult;
+    } catch (err) {
+      this.logger.warn("Postgres pool ended with an error", err);
+      this.hookManager.executePoolEndErrorHooks(this.applicationName, err);
+
+      throw err;
+    }
   }
 
   public async gracefullyAdjustPoolSize(totalNumberOfConnectedClients: number): Promise<PgPool> {
@@ -95,25 +116,6 @@ export class DbGeneralPool implements IDb {
       this.hookManager.executePoolCreatedHooks(this.applicationName);
 
       return this.createInitialConectionToTestThePool();
-    }
-  }
-
-  public async end(): Promise<void> {
-    this.logger.trace("Postgres pool ending initiated");
-    this.hookManager.executePoolEndStartHooks(this.applicationName);
-
-    try {
-      const poolEndResult = await this.pgPool.end();
-
-      this.logger.trace("Postgres pool ended successfully");
-      this.hookManager.executePoolEndSuccessHooks(this.applicationName);
-
-      return poolEndResult;
-    } catch (err) {
-      this.logger.warn("Postgres pool ended with an error", err);
-      this.hookManager.executePoolEndErrorHooks(this.applicationName, err);
-
-      throw err;
     }
   }
 }

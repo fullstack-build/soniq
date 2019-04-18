@@ -23,6 +23,7 @@
     "@fullstack-one/boot-loader": "^0.5.5",
     "@fullstack-one/config": "^0.5.5",
     "@fullstack-one/di": "^0.5.2",
+    "@fullstack-one/logger": "^0.5.5",
     "@types/pg": "^7.4.14",
     "eventemitter2": "^5.0.1",
     "pg": "^7.10.0"

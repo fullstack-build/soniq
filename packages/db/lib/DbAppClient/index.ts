@@ -1,9 +1,9 @@
 import { Service, Inject, Container } from "@fullstack-one/di";
+import { BootLoader } from "@fullstack-one/boot-loader";
+import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
-import { BootLoader } from "@fullstack-one/boot-loader";
-import { IDb } from "../types";
-import { Client as PgClient, ClientConfig as PgClientConfig, types as PgTypes } from "pg";
+import { Client as PgClient, types as PgTypes } from "pg";
 import { IDbConfig, IDbAppClientConfig } from "../IDbConfig";
 import { HookManager } from "./HookManager";
 // stop pg from parsing dates and timestamps without timezone
@@ -13,7 +13,7 @@ PgTypes.setTypeParser(1082, (str: any) => str);
 export { PgClient };
 
 @Service()
-export class DbAppClient implements IDb {
+export class DbAppClient {
   private applicationNamePrefix: string;
   private applicationName: string;
   private readonly credentials: IDbAppClientConfig;
@@ -27,6 +27,7 @@ export class DbAppClient implements IDb {
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
     @Inject((type) => HookManager) hookManager: HookManager
@@ -41,6 +42,7 @@ export class DbAppClient implements IDb {
     this.logger = loggerFactory.create(this.constructor.name);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
@@ -72,7 +74,7 @@ export class DbAppClient implements IDb {
     }
   }
 
-  public async end(): Promise<void> {
+  private async end(): Promise<void> {
     this.logger.trace("Postgres connection ending initiated");
     this.hookManager.executeClientConnectStartHooks(this.applicationName);
 

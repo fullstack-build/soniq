@@ -2,20 +2,27 @@ import { EventEmitter2 } from "eventemitter2";
 import { Client as PgClient, Notification } from "pg";
 import { Container, Service, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
+import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { IEventEmitterConfig, IEvent, TEventListener } from "./types";
 
 @Service()
 export class EventEmitter {
   private readonly config: IEventEmitterConfig;
+  private readonly logger: ILogger;
   private readonly eventEmitter: EventEmitter2;
   private readonly pgClient: PgClient;
 
   private readonly namespace: string;
   private readonly nodeId: string;
 
-  constructor(@Inject((type) => Config) config: Config, @Inject((type) => BootLoader) bootLoader: BootLoader) {
+  constructor(
+    @Inject((type) => Config) config: Config,
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => BootLoader) bootLoader: BootLoader
+  ) {
     this.config = config.registerConfig("Events", `${__dirname}/../config`);
+    this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = new EventEmitter2(this.config.eventEmitter);
     this.pgClient = new PgClient(this.config.pgClient);
 
@@ -29,9 +36,12 @@ export class EventEmitter {
   private async boot() {
     try {
       await this.pgClient.connect();
-      await this.pgClient.on("notification", this.handlePgNotification);
+      this.logger.debug("pgClient.connected");
+      this.pgClient.on("notification", this.handlePgNotification);
       await this.pgClient.query(`LISTEN ${this.namespace}`);
+      this.logger.debug("pgClient.listen", this.namespace);
     } catch (err) {
+      this.logger.debug("pgClient.connecting.or.listening.error", err);
       throw err;
     }
   }
@@ -95,5 +105,15 @@ export class EventEmitter {
 
   public removeAllListenersAnyInstance(eventName: string) {
     this.eventEmitter.removeAllListeners(this.getGlobalEventName(eventName));
+  }
+
+  public async end(): Promise<void> {
+    try {
+      await this.pgClient.end();
+      this.logger.debug("pgClient.ended");
+    } catch (err) {
+      this.logger.debug("pgClient.ending.error", err);
+      throw err;
+    }
   }
 }

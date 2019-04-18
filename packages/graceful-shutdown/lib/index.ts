@@ -2,7 +2,6 @@ import { Service, Container, Inject } from "@fullstack-one/di";
 import { IEnvironment } from "@fullstack-one/config";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { DbAppClient, DbGeneralPool } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
@@ -22,7 +21,6 @@ export class GracefulShutdown {
   private bootLoader: BootLoader;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
-  private dbAppClient: DbAppClient;
   private server: Server;
 
   private readonly shutdownItems: IShutdownItem[] = [];
@@ -31,18 +29,12 @@ export class GracefulShutdown {
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
-    @Inject((type) => DbAppClient) dbAppClient: DbAppClient,
-    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool,
     @Inject((type) => Server) server: Server
   ) {
     this.bootLoader = bootLoader;
     this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
-    this.dbAppClient = dbAppClient;
     this.server = server;
-
-    // DbGeneralPool should hook in himself, when EventEmitter is no longer dependent on DbAppClient
-    this.addShutdownFunction("DbGeneralPool", () => dbGeneralPool.end());
 
     exitHook(async (callback) => {
       await this.shutdown();
@@ -65,46 +57,35 @@ export class GracefulShutdown {
   }
 
   private async shutdown(): Promise<void> {
-    this.logger.info("shutdown.start");
+    this.logger.debug("shutdown.start");
     try {
-      await this.emit("exiting");
+      await this.eventEmitter.emit("exiting");
     } catch (err) {
-      this.logger.info("shutdown.emit.exiting.error", err);
+      this.logger.error("shutdown.emit.exiting.error", err);
     }
 
-    const shutdownPromises = this.shutdownItems.reverse().map(async ({ name, fn }) => {
-      this.logger.info("shutdown.function.start", name);
+    for (const shutdownItem of this.shutdownItems.reverse()) {
+      const { fn, name } = shutdownItem;
+      this.logger.debug("shutdown.function.start", name);
       try {
         await fn();
-        this.logger.info("shutdown.function.end", name);
+        this.logger.debug("shutdown.function.ended", name);
       } catch (err) {
-        this.logger.info("shutdown.function.error", name, err);
+        this.logger.error("shutdown.function.error", name, err);
       }
-    });
-
-    await Promise.all(shutdownPromises);
-    this.logger.info("shutdown.end");
-    try {
-      await this.emit("exited");
-      await this.dbAppClient.end();
-    } catch (err) {
-      this.logger.info("shutdown.emit.exited.error", err);
     }
-  }
 
-  private emit(eventName: string): void {
-    const { namespace, nodeId } = this.ENVIRONMENT != null ? this.ENVIRONMENT : { namespace: undefined, nodeId: undefined };
-    const eventNamespaceName = `${namespace}.${eventName}`;
-    this.eventEmitter.emit(eventNamespaceName, nodeId);
-  }
-
-  private on(eventName: string, listener: (...args: any[]) => void) {
-    const namespace = this.ENVIRONMENT != null ? this.ENVIRONMENT.namespace : undefined;
-    const eventNamespaceName = `${namespace}.${eventName}`;
-    this.eventEmitter.on(eventNamespaceName, listener);
+    try {
+      await this.eventEmitter.emit("exited");
+    } catch (err) {
+      this.logger.error("shutdown.emit.exited.error", err);
+    }
+    await this.eventEmitter.end();
+    this.logger.debug("shutdown.end");
   }
 
   public addShutdownFunction(name: string, fn: TShutdownFunction): void {
     this.shutdownItems.push({ name, fn });
+    this.logger.debug("shutdown.function.add", name);
   }
 }
