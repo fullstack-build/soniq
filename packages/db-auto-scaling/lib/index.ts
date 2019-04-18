@@ -54,7 +54,7 @@ export class DbAutoScaling {
       this.eventEmitter.emit("db.application.client.connect.success", applicationName);
     });
     this.dbAppClient.hookManager.addClientConnectErrorHook((applicationName: string, err: any) => {
-      this.eventEmitter.emit("db.application.client.connect.error", applicationName, err);
+      this.eventEmitter.emit("db.application.client.connect.error", { applicationName, err });
     });
 
     this.dbAppClient.hookManager.addClientEndStartHook((applicationName: string) => {
@@ -64,7 +64,7 @@ export class DbAutoScaling {
       this.eventEmitter.emit("db.application.client.end.success", applicationName);
     });
     this.dbAppClient.hookManager.addClientEndErrorHook((applicationName: string, err: any) => {
-      this.eventEmitter.emit("db.application.client.end.error", applicationName, err);
+      this.eventEmitter.emit("db.application.client.end.error", { applicationName, err });
     });
   }
 
@@ -83,7 +83,7 @@ export class DbAutoScaling {
       this.eventEmitter.emit("db.general.pool.initial.connect.released", applicationName);
     });
     this.dbGeneralPool.hookManager.addPoolInitialConnectErrorHook((applicationName: string, err: any) => {
-      this.eventEmitter.emit("db.general.pool.initial.connect.error", applicationName, err);
+      this.eventEmitter.emit("db.general.pool.initial.connect.error", { applicationName, err });
     });
 
     this.dbGeneralPool.hookManager.addPoolEndStartHook((applicationName: string) => {
@@ -94,7 +94,7 @@ export class DbAutoScaling {
       this.eventEmitter.emit("db.general.pool.end.success", applicationName);
     });
     this.dbGeneralPool.hookManager.addPoolEndErrorHook((applicationName: string, err: any) => {
-      this.eventEmitter.emit("db.general.pool.end.error", applicationName, err);
+      this.eventEmitter.emit("db.general.pool.end.error", { applicationName, err });
     });
   }
 
