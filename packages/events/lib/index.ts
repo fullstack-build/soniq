@@ -30,7 +30,7 @@ export class EventEmitter {
     this.namespace = env.namespace;
     this.nodeId = env.nodeId;
 
-    bootLoader.onBootReady(this.constructor.name, this.boot.bind(this));
+    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {
