@@ -1,8 +1,6 @@
-import { Service, Container, Inject } from "@fullstack-one/di";
-import { IEnvironment } from "@fullstack-one/config";
+import { Service, Inject } from "@fullstack-one/di";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
 import * as exitHook from "async-exit-hook";
@@ -17,42 +15,24 @@ interface IShutdownItem {
 
 @Service()
 export class GracefulShutdown {
-  private ENVIRONMENT: IEnvironment;
   private bootLoader: BootLoader;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
-  private server: Server;
 
   private readonly shutdownItems: IShutdownItem[] = [];
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
-    @Inject((type) => Server) server: Server
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter
   ) {
     this.bootLoader = bootLoader;
     this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
-    this.server = server;
 
     exitHook(async (callback) => {
       await this.shutdown();
       return callback();
-    });
-
-    this.bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
-  }
-
-  private boot(): void {
-    this.ENVIRONMENT = Container.get("ENVIRONMENT");
-    terminus(this.server.getServer(), {
-      healthChecks: {
-        "/_health/liveness": () => Promise.resolve(),
-        "/_health/readiness": () => this.bootLoader.getReadyPromise()
-      },
-      timeout: 1000,
-      logger: this.logger.info
     });
   }
 
@@ -87,5 +67,17 @@ export class GracefulShutdown {
   public addShutdownFunction(name: string, fn: TShutdownFunction): void {
     this.shutdownItems.push({ name, fn });
     this.logger.debug("shutdown.function.add", name);
+  }
+
+  public addServer<TServer>(name: string, server: TServer): void {
+    terminus(server, {
+      healthChecks: {
+        "/_health/liveness": () => Promise.resolve(),
+        "/_health/readiness": () => this.bootLoader.getReadyPromise()
+      },
+      timeout: 1000,
+      logger: this.logger.info
+    });
+    this.logger.debug("shutdown.server.addTerminus", name);
   }
 }
