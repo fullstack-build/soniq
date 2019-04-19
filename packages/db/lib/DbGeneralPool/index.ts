@@ -9,16 +9,20 @@ import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
-import { IDbConfig, IDbGeneralPoolConfig } from "../IDbConfig";
-import { HookManager } from "./HookManager";
+import { EventEmitter } from "@fullstack-one/events";
+import { IDbGeneralPoolConfig } from "../IDbConfig";
+import { DbAppClient } from "../DbAppClient";
 
 @Service()
 export class DbGeneralPool {
   private readonly logger: ILogger;
-  private readonly config: IDbConfig;
-  private applicationName: string;
-  private credentials: PgPoolConfig;
-  public readonly hookManager: HookManager;
+  private readonly config: IDbGeneralPoolConfig;
+  private readonly eventEmitter: EventEmitter;
+  private readonly applicationNamePrefix: string;
+  private readonly applicationName: string;
+  private knownNodeIds: string[] = [];
+  private connectedNodesTimer: NodeJS.Timer;
+  private readonly dbAppClient: DbAppClient;
   public pgPool: PgPool;
 
   constructor(
@@ -26,96 +30,120 @@ export class DbGeneralPool {
     @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
-    @Inject((type) => HookManager) hookManager: HookManager
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
+    @Inject((type) => DbAppClient) dbAppClient: DbAppClient
   ) {
-    this.hookManager = hookManager;
-    this.config = config.registerConfig("Db", `${__dirname}/../../config`);
     this.logger = loggerFactory.create(this.constructor.name);
+    this.eventEmitter = eventEmitter;
+    this.dbAppClient = dbAppClient;
+
+    this.config = config.registerConfig("Db", `${__dirname}/../../config`).general;
+    const env: IEnvironment = Container.get("ENVIRONMENT");
+    this.applicationNamePrefix = `${env.namespace}_pool_`;
+    this.applicationName = `${this.applicationNamePrefix}${env.nodeId}`;
+    this.knownNodeIds = [env.nodeId];
+
+    // Assume that I am the only connected node. reserve one connection for this.dbAppClient and one for this.eventEmitter
+    this.createPgPool(this.config.globalMax - 2);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
-    const env: IEnvironment = Container.get("ENVIRONMENT");
-    this.applicationName = `${env.namespace}_pool_${env.nodeId}`;
-    await this.gracefullyAdjustPoolSize(1); // assume we are the only connnected node
+    this.addEventListeners();
+    await this.setIntervalToCheckConnectedNodes();
   }
 
-  private async createInitialConectionToTestThePool(): Promise<PgPool> {
-    try {
-      this.hookManager.executePoolInitialConnectStartHooks(this.applicationName);
+  private createPgPool(max: number): void {
+    this.pgPool = new PgPool({
+      ...this.config,
+      application_name: this.applicationName,
+      max
+    });
+    this.logger.debug(`Postgres pool created (min: ${this.config.min} / max: ${max})`);
+  }
 
-      const poolClient = await this.pgPool.connect();
+  private addEventListeners(): void {
+    this.eventEmitter.onAnyInstance("db.general.pool.connect.success", this.checkConnectedNodes);
+    this.eventEmitter.onAnyInstance("db.general.pool.end.success", this.checkConnectedNodes);
+  }
 
-      this.logger.trace("Postgres pool initial connection created");
-      this.hookManager.executePoolInitialConnectSuccessHooks(this.applicationName);
+  private removeEventListeners(): void {
+    this.eventEmitter.removeListenerAnyInstance("db.general.pool.connect.success", this.checkConnectedNodes);
+    this.eventEmitter.removeListenerAnyInstance("db.general.pool.end.success", this.checkConnectedNodes);
+  }
 
-      await poolClient.release();
+  private async setIntervalToCheckConnectedNodes(): Promise<void> {
+    await this.checkConnectedNodes();
+    this.connectedNodesTimer = setInterval(this.checkConnectedNodes.bind(this), this.config.updateClientListInterval);
+  }
 
-      this.logger.trace("Postgres pool initial connection released");
-      this.hookManager.executePoolInitialConnectReleaseHooks(this.applicationName);
-    } catch (err) {
-      this.logger.warn("Postgres pool connection creation error", err);
-      this.hookManager.executePoolInitialConnectErrorHooks(this.applicationName, err);
+  private removeIntervalToCheckConnectedNodes(): void {
+    clearInterval(this.connectedNodesTimer);
+  }
 
-      throw err;
+  private async checkConnectedNodes(): Promise<void> {
+    const connectedNodeIds = await this.fetchConnectedNodes();
+    if (this.knownNodeIds.length !== connectedNodeIds.length) {
+      this.gracefullyAdjustPoolSize(connectedNodeIds.length);
+
+      this.logger.debug("Postgres number of connected clients changed", connectedNodeIds);
+      this.eventEmitter.emit("db.number.of.connected.clients.changed");
     }
+    this.knownNodeIds = connectedNodeIds;
+  }
 
-    return this.pgPool;
+  private async fetchConnectedNodes(): Promise<string[]> {
+    try {
+      const prefix = this.dbAppClient.getApplicationNamePrefix();
+      const dbNodes = await this.dbAppClient.pgClient.query(
+        `SELECT application_name FROM pg_stat_activity WHERE datname = '${this.config.database}' AND application_name LIKE '${prefix}%';`
+      );
+
+      return dbNodes.rows.map(({ application_name: name }) => name.replace(prefix, ""));
+    } catch (err) {
+      this.logger.warn("Error when fetching connected nodes", err);
+      return this.knownNodeIds;
+    }
+  }
+
+  private async gracefullyAdjustPoolSize(numberOfConnectedNodes: number): Promise<void> {
+    // reserve one connection for this.dbAppClient and one for this.eventEmitter
+    const connectionsPerInstance: number = Math.floor((this.config.globalMax - 2 * numberOfConnectedNodes) / numberOfConnectedNodes);
+    this.logger.debug(
+      `GracefullyAdjustPoolSize with ${connectionsPerInstance} connections per instance for ${numberOfConnectedNodes} connected nodes` +
+        `and a global maximum of ${this.config.globalMax}.`
+    );
+
+    // don't wait for promise, we just immediately create a new pool
+    // this one will end as soon as the last connection is released
+    (async () => {
+      if (this.pgPool != null) await this.pgPool.end();
+      this.logger.debug("Old postgres pool ended");
+    })();
+
+    this.createPgPool(connectionsPerInstance);
   }
 
   private async end(): Promise<void> {
     this.logger.trace("Postgres pool ending initiated");
-    this.hookManager.executePoolEndStartHooks(this.applicationName);
+
+    this.removeEventListeners();
+    this.removeIntervalToCheckConnectedNodes();
+
+    this.eventEmitter.emit("db.general.pool.end.start", this.applicationName);
 
     try {
-      const poolEndResult = await this.pgPool.end();
+      await this.pgPool.end();
 
       this.logger.trace("Postgres pool ended successfully");
-      this.hookManager.executePoolEndSuccessHooks(this.applicationName);
-
-      return poolEndResult;
+      this.eventEmitter.emit("db.general.pool.end.success", this.applicationName);
     } catch (err) {
       this.logger.warn("Postgres pool ended with an error", err);
-      this.hookManager.executePoolEndErrorHooks(this.applicationName, err);
+      this.eventEmitter.emit("db.general.pool.end.error", { applicationName: this.applicationName, err });
 
       throw err;
-    }
-  }
-
-  public async gracefullyAdjustPoolSize(totalNumberOfConnectedClients: number): Promise<PgPool> {
-    const configDbGeneral: IDbGeneralPoolConfig = this.config.general;
-
-    const poolMin: number = configDbGeneral.min;
-    const poolTotalMax: number = configDbGeneral.totalMax;
-    if (!Number.isInteger(poolMin) || !Number.isInteger(poolTotalMax)) {
-      throw Error("DbGeneralPool.gracefullyAdjustPoolSize.poolSize.min.and.totalMax.must.be.numbers");
-    }
-
-    // reserve one for DbAppClient connection
-    const connectionsPerInstance: number = Math.floor(poolTotalMax / totalNumberOfConnectedClients - 1);
-
-    this.logger.debug(`GracefullyAdjustPoolSize with ${connectionsPerInstance} connections per instance`);
-    if (this.credentials == null || this.credentials.max !== connectionsPerInstance) {
-      if (this.pgPool != null) {
-        // don't wait for promise, we just immediately create a new pool
-        // this one will end as soon as the last connection is released
-        this.end();
-      }
-
-      this.credentials = {
-        ...configDbGeneral,
-        application_name: this.applicationName,
-        min: poolMin,
-        max: connectionsPerInstance
-      };
-      this.pgPool = new PgPool(this.credentials);
-
-      this.logger.debug(`Postgres pool created (min: ${this.credentials.min} / max: ${this.credentials.max})`);
-      this.hookManager.executePoolCreatedHooks(this.applicationName);
-
-      return this.createInitialConectionToTestThePool();
     }
   }
 }

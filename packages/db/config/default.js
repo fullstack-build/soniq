@@ -17,10 +17,10 @@ module.exports = {
     password:                 null,
     port:                     5432,
     ssl:                      false,
-    // set pool max size to 20 (among all instances)
-    totalMax:                 10,
+    globalMax:                 20,
     // set min pool size to 4
     min:                      2,
+    updateClientListInterval: 10 * 1000
     // close idle clients after 30 seconds
     // idleTimeoutMillis:        30000, => REMOVED BECAUSE OPTIONAL
     // return an error after 3 seconds if connection could not be established

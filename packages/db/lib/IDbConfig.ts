@@ -22,6 +22,7 @@ export interface IDbGeneralPoolConfig {
   password: string;
   port: number;
   ssl: boolean;
-  totalMax: number;
+  globalMax: number;
   min: number;
+  updateClientListInterval: number;
 }
