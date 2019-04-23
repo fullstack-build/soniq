@@ -1,8 +1,8 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-// import { EventEmitter } from '@fullstack-one/events';
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
+import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 
 import * as http from "http";
 // other npm dependencies
@@ -17,20 +17,19 @@ export class Server {
   private server: http.Server;
   private app: Koa;
 
-  private config: Config;
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
-  private bootLoader: BootLoader;
+  private readonly bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
 
   constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
-    @Inject((type) => LoggerFactory) loggerFactory,
-    @Inject((type) => Config) config,
-    @Inject((tpye) => BootLoader) bootLoader
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => Config) config: Config,
+    @Inject((tpye) => BootLoader) bootLoader: BootLoader,
+    @Inject((tpye) => GracefulShutdown) gracefulShutdown: GracefulShutdown
   ) {
-    this.config = config;
     this.loggerFactory = loggerFactory;
     this.bootLoader = bootLoader;
 
@@ -43,16 +42,19 @@ export class Server {
     this.ENVIRONMENT = Container.get("ENVIRONMENT");
 
     this.bootKoa();
+    this.server = http.createServer(this.app.callback());
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    gracefulShutdown.addServer(this.constructor.name, this.server);
   }
 
   private async boot(): Promise<void> {
     try {
       // start KOA on PORT
-      this.server = http.createServer(this.app.callback()).listen(this.serverConfig.port);
+      this.server.listen(this.serverConfig.port);
 
       // emit event
       this.emit("server.up", this.serverConfig.port);
+
       // success log
       this.logger.info("Server listening on port", this.serverConfig.port);
     } catch (e) {
@@ -61,7 +63,7 @@ export class Server {
     }
   }
 
-  private async bootKoa(): Promise<void> {
+  private bootKoa(): void {
     try {
       this.app = new Koa();
       // enable compression

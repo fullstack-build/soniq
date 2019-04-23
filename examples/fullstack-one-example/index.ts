@@ -12,7 +12,6 @@ import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
 import { DbGeneralPool } from "@fullstack-one/db";
-import { DbAutoScaling } from "@fullstack-one/db-auto-scaling";
 import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth, AuthProviderPassword, AuthProviderEmail, AuthProviderOAuth, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
 import { NotificationsEmail } from "@fullstack-one/notifications";
@@ -40,7 +39,6 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
 
 const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);
-const $dbAutoScaling: DbAutoScaling = Container.get(DbAutoScaling);
 
 /* $auth.setNotificationFunction(async (user, caller, meta) => {
   console.log("> NOTIFY!", user.userId, caller, meta);
