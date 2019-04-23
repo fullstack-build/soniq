@@ -9,7 +9,7 @@ import { sha512 } from "./crypto";
 import {
   IAuthFactorProof,
   IAuthFactorCreation,
-  IUserIdentifier,
+  IUserIdentifierObject,
   ILoginData,
   IFindUserResponse,
   IAuthFactorForProof,
@@ -103,32 +103,32 @@ export class AuthConnector {
     return authFactorCreation;
   }
 
-  private encryptUserIdentifier(userIdentifier: IUserIdentifier): string {
-    userIdentifier.issuedAt = Date.now();
-    return this.cryptoFactory.encrypt(JSON.stringify(userIdentifier));
+  private encryptUserIdentifier(userIdentifierObject: IUserIdentifierObject): string {
+    userIdentifierObject.issuedAt = Date.now();
+    return this.cryptoFactory.encrypt(JSON.stringify(userIdentifierObject));
   }
 
-  private decryptUserIdentifier(token: string): IUserIdentifier {
-    const userIdentifier: IUserIdentifier = JSON.parse(this.cryptoFactory.decrypt(token));
+  private decryptUserIdentifier(token: string): IUserIdentifierObject {
+    const userIdentifierObject: IUserIdentifierObject = JSON.parse(this.cryptoFactory.decrypt(token));
 
-    if (userIdentifier.userAuthenticationId == null) {
+    if (userIdentifierObject.userAuthenticationId == null) {
       throw new Error("Invalid UserIdentifier. 'userAuthenticationId' is missing.");
     }
-    if (userIdentifier.authFactorId == null) {
+    if (userIdentifierObject.authFactorId == null) {
       throw new Error("Invalid UserIdentifier. 'authFactorId' is missing.");
     }
-    if (userIdentifier.issuedAt == null) {
+    if (userIdentifierObject.issuedAt == null) {
       throw new Error("Invalid UserIdentifier. 'issuedAt' is missing.");
     }
     // tslint:disable-next-line:prettier
-    if ( ( userIdentifier.issuedAt + ( this.authConfig.userIdentifierMaxAgeInSeconds * 1000 ) ) < Date.now() ) {
+    if ( ( userIdentifierObject.issuedAt + ( this.authConfig.userIdentifierMaxAgeInSeconds * 1000 ) ) < Date.now() ) {
       throw new Error("Expired UserIdentifier.");
     }
 
-    return userIdentifier;
+    return userIdentifierObject;
   }
 
-  private async getUserIdentifier(username: string, tenant: string): Promise<IUserIdentifier> {
+  private async getUserIdentifier(username: string, tenant: string): Promise<IUserIdentifierObject> {
     const values = [username, tenant];
     const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.find_user($1, $2) AS payload", values);
 
@@ -186,34 +186,34 @@ export class AuthConnector {
   }
 
   public async findUser(username: string, tenant: string): Promise<IFindUserResponse> {
-    let userIdentifier: IUserIdentifier = null;
+    let userIdentifierObject: IUserIdentifierObject = null;
     let isFake = false;
 
     try {
-      userIdentifier = await this.getUserIdentifier(username, tenant);
+      userIdentifierObject = await this.getUserIdentifier(username, tenant);
     } catch (err) {
       /* Ignore Error */
     }
 
     // This function will always return some encrypted IDs
-    if (userIdentifier == null || userIdentifier.userAuthenticationId == null || userIdentifier.authFactorId == null) {
+    if (userIdentifierObject == null || userIdentifierObject.userAuthenticationId == null || userIdentifierObject.authFactorId == null) {
       isFake = true;
-      userIdentifier = {
+      userIdentifierObject = {
         userAuthenticationId: uuid.v4(),
         authFactorId: uuid.v4()
       };
     }
 
     return {
-      ...userIdentifier,
-      userIdentifier: this.encryptUserIdentifier(userIdentifier),
+      ...userIdentifierObject,
+      userIdentifier: this.encryptUserIdentifier(userIdentifierObject),
       isFake
     };
   }
 
   public async getAuthFactorForProof(userIdentifierToken: string, provider: string): Promise<IAuthFactorForProof> {
-    const userIdentifier = this.decryptUserIdentifier(userIdentifierToken);
-    const values = [userIdentifier.userAuthenticationId, provider];
+    const userIdentifierObject = this.decryptUserIdentifier(userIdentifierToken);
+    const values = [userIdentifierObject.userAuthenticationId, provider];
     const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload", values);
 
     if (rows.length < 1 || rows[0].payload == null) {

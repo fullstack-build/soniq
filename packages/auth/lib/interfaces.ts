@@ -14,7 +14,7 @@ export interface IAuthFactorProof {
   maxAgeInSeconds: number | null;
 }
 
-export interface IUserIdentifier {
+export interface IUserIdentifierObject {
   userAuthenticationId: string;
   authFactorId: string;
   issuedAt?: number;
