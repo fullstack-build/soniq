@@ -6,6 +6,7 @@ export function createGrants(config: IConfig, dbMeta: IDbMeta): string[] {
   sql.push(`REVOKE ALL PRIVILEGES ON DATABASE "${config.databaseName}" FROM "${config.userName}";`);
   sql.push(`CREATE SCHEMA IF NOT EXISTS "${config.schemaName}";`);
   sql.push(`GRANT USAGE ON SCHEMA "_meta" TO "${config.userName}";`);
+  sql.push(`GRANT USAGE ON SCHEMA "_auth" TO "${config.userName}";`);
   sql.push(`GRANT USAGE ON SCHEMA "${config.schemaName}" TO "${config.userName}";`);
 
   // TODO: @Eugene: Move this to versioning.ts

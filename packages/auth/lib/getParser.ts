@@ -1,15 +1,102 @@
-function getAuthTokenArgument() {
+function getAuthFactorCreationTokensArgument() {
   return {
     kind: "InputValueDefinition",
     name: {
       kind: "Name",
-      value: "authToken"
+      value: "authFactorCreationTokens"
     },
     type: {
-      kind: "NamedType",
-      name: {
-        kind: "Name",
-        value: "String"
+      kind: "NonNullType",
+      type: {
+        kind: "ListType",
+        type: {
+          kind: "NonNullType",
+          type: {
+            kind: "NamedType",
+            name: {
+              kind: "Name",
+              value: "String"
+            }
+          }
+        }
+      }
+    },
+    defaultValue: null,
+    directives: []
+  };
+}
+
+function getLoginProviderSetsArgument() {
+  return {
+    kind: "InputValueDefinition",
+    name: {
+      kind: "Name",
+      value: "loginProviderSets"
+    },
+    type: {
+      kind: "NonNullType",
+      type: {
+        kind: "ListType",
+        type: {
+          kind: "NonNullType",
+          type: {
+            kind: "NamedType",
+            name: {
+              kind: "Name",
+              value: "String"
+            }
+          }
+        }
+      }
+    },
+    defaultValue: null,
+    directives: []
+  };
+}
+
+function getModifyProviderSetsArgument() {
+  return {
+    kind: "InputValueDefinition",
+    name: {
+      kind: "Name",
+      value: "modifyProviderSets"
+    },
+    type: {
+      kind: "NonNullType",
+      type: {
+        kind: "ListType",
+        type: {
+          kind: "NonNullType",
+          type: {
+            kind: "NamedType",
+            name: {
+              kind: "Name",
+              value: "String"
+            }
+          }
+        }
+      }
+    },
+    defaultValue: null,
+    directives: []
+  };
+}
+
+function getIsActiveArgument() {
+  return {
+    kind: "InputValueDefinition",
+    name: {
+      kind: "Name",
+      value: "isActive"
+    },
+    type: {
+      kind: "NonNullType",
+      type: {
+        kind: "NamedType",
+        name: {
+          kind: "Name",
+          value: "Boolean"
+        }
       }
     },
     defaultValue: null,
@@ -61,38 +148,38 @@ export function getParser(setParserMeta, getParserMeta) {
   parser.parseReadField = (ctx) => {
     const { fieldName, directives, table } = ctx;
 
+    if (table.directives.auth != null) {
+      setParserMeta("authTableName", table.tableName);
+      setParserMeta("authSchemaName", table.schemaName);
+      setParserMeta("authGqlTypeName", table.gqlTypeName);
+    }
+
     if (directives.privacyAgreementAcceptedVersion != null) {
       setParserMeta("privacyAgreementAcceptedVersion", fieldName);
     }
     if (directives.privacyAgreementAcceptedAtInUTC != null) {
       setParserMeta("privacyAgreementAcceptedAtInUTC", fieldName);
     }
-    if (directives.username != null) {
-      setParserMeta("username", fieldName);
-    }
-    if (directives.tenant != null) {
-      setParserMeta("tenant", fieldName);
-    }
-    if (directives.password != null) {
-      setParserMeta("password", fieldName);
-    }
-    if (directives.password != null || directives.tenant != null || directives.username != null) {
-      setParserMeta("authTableName", table.tableName);
-      setParserMeta("authSchemaName", table.schemaName);
-      setParserMeta("authGqlTypeName", table.gqlTypeName);
-    }
 
     return null;
   };
 
   parser.modifyMutation = (mutation) => {
-    if (mutation.type === "CREATE" && mutation.gqlTypeName === getParserMeta("authGqlTypeName")) {
-      mutation.gqlReturnTypeName = "ID";
+    if (mutation.type === "CREATE" && getParserMeta("authGqlTypeName") != null && mutation.gqlTypeName === getParserMeta("authGqlTypeName")) {
+      mutation.gqlReturnTypeName = "LoginData";
+      mutation.extensions.returnOnlyId = true;
       mutation.extensions.auth = "REGISTER_USER_MUTATION";
 
       return {
         mutation,
-        extendArguments: [getAuthTokenArgument(), getPrivacyAgreementAcceptanceTokenArgument(), getMetaArgument()]
+        extendArguments: [
+          getAuthFactorCreationTokensArgument(),
+          getLoginProviderSetsArgument(),
+          getModifyProviderSetsArgument(),
+          getIsActiveArgument(),
+          getPrivacyAgreementAcceptanceTokenArgument(),
+          getMetaArgument()
+        ]
       };
     }
 

@@ -6,7 +6,9 @@ module.exports = {
     cookie:   null,
     jwtRefreshToken: null,
     privacyAgreementAcceptanceToken: null,
-    authToken: null
+    authToken: null,
+    encryptionKey: null,
+    authProviderHashSignature: null
   },
   sodium: {},
   oAuth: {
@@ -23,12 +25,15 @@ module.exports = {
   authToken: {
     maxAgeInSeconds: 86400 // Should be changed to one minute on production
   },
+  authFactorProofTokenMaxAgeInSeconds: 86400, // Should be changed to one minute in production
+  userIdentifierMaxAgeInSeconds: 60,
   cookie: {
     name:       "access_token",
-    maxAge:     86400000,
+    maxAge:     1209600000, // Two weeks
     overwrite:  true,
     httpOnly:   true,
-    signed:     true
+    signed:     true,
+    overwrite:  true
   },
   tokenQueryParameter:          "access_token",
   enableDefaultLocalStrategie:  true,
@@ -50,7 +55,10 @@ module.exports = {
   },
   privacyAgreementAcceptance: {
     tokenMaxAgeInSeconds: 86400, // One Day
-    versionToAccept: 0,
+    versionToAccept: "0",
     queryParameter: "privacyAgreementAcceptanceToken"
+  },
+  crypto: {
+    algorithm: "aes-256-cbc"
   }
 };

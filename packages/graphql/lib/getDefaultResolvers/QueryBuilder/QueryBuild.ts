@@ -3,6 +3,7 @@ import { IParsedResolveInfo, IMatch } from "../types";
 import generateClauses from "./generateClauses";
 import { IQueryBuildOject, IQueryClauseObject, ICostTree } from "./types";
 import calculateMaxDepth from "./calculateMaxDepth";
+import { AuthenticationError } from "../..";
 
 export default class QueryBuild {
   private readonly resolverMeta: IResolverMeta;
@@ -80,7 +81,13 @@ export default class QueryBuild {
         this.authRequired = true;
         authRequiredHere = true;
         if (this.isAuthenticated !== true) {
-          throw new Error(`The field '${gqlTypeName}.${field.name}' is not available without authentication.`);
+          const error = new AuthenticationError(`The field '${gqlTypeName}.${field.name}' is not available without authentication.`);
+          error.extensions = {
+            ...error.extensions,
+            exposeDetails: true,
+            message: `The field '${gqlTypeName}.${field.name}' is not available without authentication.`
+          };
+          throw error;
         }
       }
       if (fieldMeta.meta != null && fieldMeta.meta.relationName != null) {
@@ -108,7 +115,14 @@ export default class QueryBuild {
         this.authRequired = true;
         authRequiredHere = true;
         if (this.isAuthenticated !== true) {
-          throw new Error(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
+          // throw new AuthenticationError(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
+          const error = new AuthenticationError(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
+          error.extensions = {
+            ...error.extensions,
+            exposeDetails: true,
+            message: `The field '${gqlTypeName}.${fieldName}' is not available without authentication.`
+          };
+          throw error;
         }
       }
       return this.getFieldExpression(fieldName, localName);

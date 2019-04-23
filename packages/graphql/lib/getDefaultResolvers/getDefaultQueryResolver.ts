@@ -4,7 +4,7 @@ import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
-import QueryBuilder from "./QueryBuilder";
+import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import { HookManager } from "../hooks";
@@ -20,7 +20,7 @@ export default function getDefaultQueryResolver(
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
-    const queryBuild = queryBuilder.build(info, isAuthenticated);
+    const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated);
 
     const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
 
@@ -29,7 +29,7 @@ export default function getDefaultQueryResolver(
 
       setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
 
-      await hookManager.executePreQueryHooks(client, context, queryBuild.authRequired);
+      await hookManager.executePreQueryHooks(client, context, queryBuild.authRequired, queryBuild);
 
       logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
 

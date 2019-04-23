@@ -15,14 +15,14 @@ const auth: Auth = Container.get(Auth);
 In your config file these fields should be set:
 
 - `auth.secrets.jwt` (min: 32, max: 64, [more is better!])
-- `auth.secrets.admin` (min: 64, [more is better but costs performance!], needs to be the same as `admin_token_secret` from `_meta.Auth` table)
+- `auth.secrets.admin` (min: 64, [more is better but costs performance!], needs to be the same as `admin_token_secret` from `_auth.Auth` table)
 - `auth.secrets.provider` 
 - `auth.secrets.cookie` 
-- `auth.secrets.jwtRefreshToken` (should be different to `refresh_token_secret` from `_meta.Auth` table)
+- `auth.secrets.jwtRefreshToken` (should be different to `refresh_token_secret` from `_auth.Auth` table)
 - `auth.secrets.privacyToken` (min: 32, max: 64, [more is better!])
 - `auth.secrets.authToken` (min: 32, max: 64, [more is better!])
 
-Furthermore you should change the values of these `_meta.Auth` table keys to some cryptographically secure random values:
+Furthermore you should change the values of these `_auth.Auth` table keys to some cryptographically secure random values:
 
 - `admin_token_secret` (min: 64, [more is better but costs performance!], needs to be the same as `auth.secrets.admin` from config)
 - `auth_pw_secret` (min: 21, [more is NOT really better])
@@ -32,11 +32,11 @@ Furthermore you should change the values of these `_meta.Auth` table keys to som
 
 ## Basics
 
-### The `_meta.Auth` table
+### The `_auth.Auth` table
 
-The auth package has multiple settings which are set inside PostgreSQL. They are saved in the `_meta.Auth` table:
+The auth package has multiple settings which are set inside PostgreSQL. They are saved in the `_auth.Auth` table:
 
-The `_meta.Auth` table is a key-value table containing these keys:
+The `_auth.Auth` table is a key-value table containing these keys:
 
 name | description | example-value
 --- | --- | ---
@@ -96,7 +96,7 @@ This token is issued after registration or a forgotten password and expires by d
 As mantioned before this token includes a `User-Token` or `User-Token-Temp` and their payload. It is issued to the user by `login` mutation, `forgotPassword` mutation, `refreshUserToken` mutation and to the notification function, which will send it in an email or something to the user.
 
 #### Refresh-Token (PG)
-The `Refresh-Token (PG)` is issued by `_meta.login()` and `_meta.refresh_user_token()` function. Combined with a valid `User-Token` the `_meta.refresh_user_token()` function will generate a new `User-Token` and `Refresh-Token (PG)`. It gets issued to the user inside a JWT token (`Refresh-Token (JWT)`).
+The `Refresh-Token (PG)` is issued by `_auth.login()` and `_auth.refresh_user_token()` function. Combined with a valid `User-Token` the `_auth.refresh_user_token()` function will generate a new `User-Token` and `Refresh-Token (PG)`. It gets issued to the user inside a JWT token (`Refresh-Token (JWT)`).
 
 #### Refresh-Token (JWT)
 A token which includes the `Refresh-Token (PG)` to be passed to `refreshUserToken` mutation.
@@ -113,7 +113,7 @@ You can see all config-fields [here]('../config/default.js').
 To get started you only need to set the following secrets:
 
 - jwt
-- admin (needs to be the same as `admin_token_secret` from `_meta.Auth`)
+- admin (needs to be the same as `admin_token_secret` from `_auth.Auth`)
 - provider
 - cookie
 - jwtRefreshToken
