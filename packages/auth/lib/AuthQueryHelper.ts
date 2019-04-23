@@ -33,7 +33,6 @@ export class AuthQueryHelper {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    // Begin transaction
     await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
     // set user (admin) for dbClient
     await this.setAdmin(dbClient);
@@ -48,7 +47,6 @@ export class AuthQueryHelper {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    // Begin transaction
     await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
     // set user for dbClient
     await this.authenticateTransaction(dbClient, accessToken);
@@ -65,7 +63,6 @@ export class AuthQueryHelper {
     });
   }
 
-  // return admin transaction
   public async adminTransaction(
     callback,
     isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
@@ -73,7 +70,6 @@ export class AuthQueryHelper {
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
-      // Begin transaction
       await this.createDbClientAdminTransaction(dbClient, isolationLevel);
 
       const result = await callback(dbClient);
@@ -85,7 +81,6 @@ export class AuthQueryHelper {
       this.logger.warn("adminTransaction.error", err);
       throw err;
     } finally {
-      // Release pgClient to pool
       dbClient.release();
     }
   }
@@ -94,12 +89,10 @@ export class AuthQueryHelper {
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
-      // Begin transaction
       await dbClient.query("BEGIN");
 
       await this.setAdmin(dbClient);
 
-      // run query
       const result = await dbClient.query.apply(dbClient, queryArguments);
 
       await dbClient.query("COMMIT");
@@ -109,12 +102,10 @@ export class AuthQueryHelper {
       this.logger.warn("adminQuery.error", err);
       throw err;
     } finally {
-      // Release pgClient to pool
       dbClient.release();
     }
   }
 
-  // return user transaction
   public async userTransaction(
     accessToken,
     callback,
@@ -123,7 +114,6 @@ export class AuthQueryHelper {
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
-      // Begin transaction
       await this.createDbClientUserTransaction(dbClient, accessToken, isolationLevel);
 
       const result = await callback(dbClient);
@@ -135,7 +125,6 @@ export class AuthQueryHelper {
       this.logger.warn("userTransaction.error", err);
       throw err;
     } finally {
-      // Release pgClient to pool
       dbClient.release();
     }
   }
@@ -144,7 +133,6 @@ export class AuthQueryHelper {
     const dbClient = await this.dbGeneralPool.pgPool.connect();
 
     try {
-      // Begin transaction
       await dbClient.query("BEGIN");
 
       await this.authenticateTransaction(dbClient, accessToken);
@@ -158,7 +146,6 @@ export class AuthQueryHelper {
       this.logger.warn("userQuery.error", err);
       throw err;
     } finally {
-      // Release pgClient to pool
       dbClient.release();
     }
   }
