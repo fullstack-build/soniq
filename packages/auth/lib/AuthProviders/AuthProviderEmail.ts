@@ -75,7 +75,7 @@ export class AuthProviderEmail {
       },
       "@fullstack-one/auth/EmailProvider/initiateEmailProof": async (obj, args, context, info, params) => {
         try {
-          // Don't await this.
+          // Don't await this. because we want to make no hint to an attacker wether a user with this email exists or not
           this.initiateEmailProof(args.userIdentifier, args.info);
         } catch (err) {
           /* Ignore Error */
