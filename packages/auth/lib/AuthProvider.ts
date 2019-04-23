@@ -111,9 +111,8 @@ export class AuthProvider {
   }
 
   /* For anyone who wants to refactor something: 
-    You may want to use this function inside the proof method. 
-    However, if you do the time spent to create a fake auth-factor would be bigger than validating a correct auth-factor.
-    Thus a attacker could detect if an AuthFactor is valid or not by just evaluating the response-time.
+    Do not use this function inside the proof method.
+    If you do, the time for creating a fake auth-factor would be bigger than the time for validating a correct auth-factor.
   */
   public async getAuthFactor(userIdentifier: string): Promise<IAuthFactorForProofResponse> {
     const provider = this.providerName;
