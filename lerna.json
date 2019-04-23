@@ -1,10 +1,10 @@
 {
   "lerna": "2.9.0",
   "packages": [
-    "packages/*",
-    "examples/fullstack-one-example"
+    "examples/fullstack-one-example",
+    "packages/*"
   ],
-  "version": "0.5.7",
+  "version": "0.5.8",
   "command": {
     "init": {
       "exact": true
