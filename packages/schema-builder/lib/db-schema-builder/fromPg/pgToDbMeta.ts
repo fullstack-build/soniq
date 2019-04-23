@@ -17,7 +17,7 @@ export class PgToDbMeta {
   private readonly DELETED_PREFIX = "_deleted:";
   private readonly KNOWN_TYPES = ["uuid", "varchar", "int4", "float8", "bool", "json", "jsonb", "relation"];
   // TODO: Eugene get schemas to ignore from a setting
-  private readonly IGNORE_SCHEMAS = ["_graphql", "_versions", "pgboss"];
+  private readonly IGNORE_SCHEMAS = ["_graphql", "_versions", "pgboss", "_auth"];
 
   private dbAppClient: DbAppClient;
 

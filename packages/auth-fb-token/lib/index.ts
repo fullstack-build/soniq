@@ -56,6 +56,8 @@ export class AuthFbToken {
   private getResolvers() {
     return {
       "@fullstack-one/auth-fb-token/createAuthTokenFromFacebookToken": async (obj, args, context, info, params) => {
+        throw new Error("Not implemented.");
+        /*
         // If the privacy token is not valid, this function will throw an error and we will not proceed any data.
         this.auth.validatePrivacyAgreementAcceptanceToken(args.privacyAgreementAcceptanceToken);
 
@@ -66,7 +68,7 @@ export class AuthFbToken {
         const profileId = profile.id;
 
         // Create an auth-token for login and registration
-        return this.auth.createAuthToken(args.privacyAgreementAcceptanceToken, email, providerName, profileId, args.tenant || "default", profile);
+        return this.auth.createAuthToken(args.privacyAgreementAcceptanceToken, email, providerName, profileId, args.tenant || "default", profile);*/
       }
     };
   }

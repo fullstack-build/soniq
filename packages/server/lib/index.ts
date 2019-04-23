@@ -9,6 +9,8 @@ import * as http from "http";
 import * as Koa from "koa";
 import * as compress from "koa-compress";
 
+export { Koa };
+
 @Service()
 export class Server {
   private serverConfig;

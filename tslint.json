@@ -18,6 +18,7 @@
     "trailing-comma": false,
     "triple-equals": [true, "allow-null-check"],
     "no-implicit-dependencies": [true, "dev"],
+    "experimentalDecorators": true,
     "member-ordering": [
       true,
       {

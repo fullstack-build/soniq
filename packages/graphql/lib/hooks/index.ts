@@ -3,7 +3,7 @@ import { GraphQLResolveInfo } from "graphql";
 import { PgPoolClient } from "@fullstack-one/db";
 import { Service } from "@fullstack-one/di";
 
-import { IDefaultMutationResolverContext } from "../getDefaultResolvers";
+import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildOject } from "../getDefaultResolvers";
 import { TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction, IHookInfo } from "./types";
 
 export * from "./types";
@@ -26,9 +26,14 @@ export class HookManager {
     this.postMutationHooks.push(hookFunction);
   }
 
-  public async executePreQueryHooks(client: PgPoolClient, context: IDefaultMutationResolverContext, authRequired: boolean): Promise<void> {
+  public async executePreQueryHooks(
+    client: PgPoolClient,
+    context: IDefaultMutationResolverContext,
+    authRequired: boolean,
+    buildObject: IMutationBuildObject | IQueryBuildOject
+  ): Promise<void> {
     for (const hook of this.preQueryHooks) {
-      await hook(client, context, authRequired);
+      await hook(client, context, authRequired, buildObject);
     }
   }
 
@@ -41,10 +46,11 @@ export class HookManager {
   public async executePostMutationHooks<TSource>(
     hookInfo: IHookInfo<any, TSource>,
     context: IDefaultMutationResolverContext,
-    info: GraphQLResolveInfo
+    info: GraphQLResolveInfo,
+    overWriteReturnData: (returnData: any) => any
   ): Promise<void> {
     for (const hook of this.postMutationHooks) {
-      await hook(hookInfo, context, info);
+      await hook(hookInfo, context, info, overWriteReturnData);
     }
   }
 }
