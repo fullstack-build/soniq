@@ -42,7 +42,7 @@ export class AuthQueryHelper {
 
   public async createDbClientUserTransaction(
     dbClient: PgPoolClient,
-    accessToken,
+    accessToken: string,
     isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
   ): Promise<PgPoolClient> {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
@@ -163,7 +163,7 @@ export class AuthQueryHelper {
     }
   }
 
-  public async authenticateTransaction(dbClient, accessToken) {
+  public async authenticateTransaction(dbClient, accessToken: string) {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
 
