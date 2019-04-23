@@ -57,7 +57,7 @@ export class DbSchemaBuilder {
   }
 
   public getMigrationDbMeta(): IDbMeta {
-    return _.cloneDeep(this.migrationObject);
+    return _.cloneDeep(this.migrationObject) as any;
   }
 
   public setPermissionSqlStatements(permissionSqlStatements) {

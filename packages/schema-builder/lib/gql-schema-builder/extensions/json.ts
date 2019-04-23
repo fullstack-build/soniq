@@ -1,5 +1,5 @@
 import { getJsonObjectBuilderExpression } from "../utils";
-import { _ } from "lodash";
+import * as _ from "lodash";
 
 const JSON_SPLIT = ".";
 

@@ -300,7 +300,7 @@ export class Auth {
       }
 
       if (ctx.securityContext.isBrowser === true) {
-        if (ctx.securityContext.sameOriginApproved.byOrigin === true && ctx.securityContext.sameOriginApproved.byReferrer === true) {
+        if (ctx.securityContext.sameOriginApproved.byOrigin === true || ctx.securityContext.sameOriginApproved.byReferrer === true) {
           return next();
         }
         if (ctx.request.method === "GET") {

@@ -151,7 +151,7 @@ export class GraphQl {
       }
 
       // If the request is approved by origin and referrer it is allowed
-      if (ctx.securityContext.sameOriginApproved.byOrigin === true && ctx.securityContext.sameOriginApproved.byReferrer === true) {
+      if (ctx.securityContext.sameOriginApproved.byOrigin === true || ctx.securityContext.sameOriginApproved.byReferrer === true) {
         return next();
       }
 
