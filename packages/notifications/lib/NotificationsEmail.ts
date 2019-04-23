@@ -183,11 +183,19 @@ export class NotificationsEmail {
     jobOptions: any = {}
   ): Promise<any> {
     // Generate an HTML email with the provided contents
-    const emailBody = this.mailGenerator.generate(template);
+    const emailBody = this.generateHtmlFromTemplate(template);
 
     // Generate the plaintext version of the e-mail (for clients that do not support HTML)
-    const emailText = text || this.mailGenerator.generatePlaintext(template);
+    const emailText = this.generatePlaintextFromTemplate(template, text);
 
     return this.sendMessage(to, subject, emailBody, emailText, attachments, from, jobOptions);
+  }
+
+  public generateHtmlFromTemplate(template: Mailgen.Content): any {
+    return this.mailGenerator.generate(template);
+  }
+
+  public generatePlaintextFromTemplate(template: Mailgen.Content, text: string = null): any {
+    return text || this.mailGenerator.generatePlaintext(template);
   }
 }

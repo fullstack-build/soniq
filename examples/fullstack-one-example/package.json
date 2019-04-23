@@ -47,6 +47,7 @@
     "@fullstack-one/auto-migrate": "^0.5.7",
     "@fullstack-one/cli": "^0.5.7",
     "@fullstack-one/db": "^0.5.5",
+    "@fullstack-one/db-auto-scaling": "^0.5.5",
     "@fullstack-one/di": "^0.5.2",
     "@fullstack-one/events": "^0.5.5",
     "@fullstack-one/file-storage": "^0.5.7",
