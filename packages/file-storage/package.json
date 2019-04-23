@@ -65,5 +65,6 @@
     ],
     "sourceMap": true,
     "instrument": true
-  }
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }
