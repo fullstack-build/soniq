@@ -8,7 +8,7 @@ DECLARE
     v_type TEXT;
     v_query TEXT;
 BEGIN
-    v_user_id := _meta.current_user_id();
+    v_user_id := _auth.current_user_id();
 
     v_query := $tok$SELECT "ownerUserId", "deletedAt", "verifiedAt", "type" FROM _meta."Files" WHERE id = %L$tok$;
     EXECUTE format(v_query, i_file_id) INTO v_owner_user_id, v_deletedAt, v_verifiedAt, v_type;
