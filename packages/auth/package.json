@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth",
-  "version": "0.5.7",
+  "version": "0.5.12",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,22 +22,28 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.5.5",
     "@fullstack-one/config": "^0.5.5",
-    "@fullstack-one/db": "^0.5.5",
+    "@fullstack-one/db": "^0.5.9",
     "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/graphql": "^0.5.7",
+    "@fullstack-one/events": "^0.5.9",
+    "@fullstack-one/graphql": "^0.5.12",
     "@fullstack-one/logger": "^0.5.5",
-    "@fullstack-one/schema-builder": "^0.5.7",
-    "@fullstack-one/server": "^0.5.5",
+    "@fullstack-one/schema-builder": "^0.5.12",
+    "@fullstack-one/server": "^0.5.9",
     "@koa/cors": "^2.2.1",
     "jsonwebtoken": "^8.2.1",
     "koa-bodyparser": "^4.2.0",
     "koa-passport": "^4.0.1",
     "koa-router": "^7.3.0",
     "koa-session": "^5.7.1",
+    "lodash": "^4.17.11",
+    "luxon": "^1.12.0",
     "passport-local": "^1.0.0",
-    "sodium-native": "^2.1.5"
+    "sodium-native": "^2.1.5",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@types/luxon": "^1.12.0",
+    "@types/uuid": "^3.4.4",
     "ava": "^1.1.0",
     "nyc": "^13.1.0",
     "source-map-support": "^0.5.10"
@@ -67,5 +73,6 @@
     ],
     "sourceMap": true,
     "instrument": true
-  }
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }

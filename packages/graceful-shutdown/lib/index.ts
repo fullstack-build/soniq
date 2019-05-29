@@ -1,100 +1,83 @@
-import { Service, Container, Inject } from "@fullstack-one/di";
-import { Config, IEnvironment } from "@fullstack-one/config";
+import { Service, Inject } from "@fullstack-one/di";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { DbAppClient, DbGeneralPool } from "@fullstack-one/db";
-import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
-// graceful exit
 import * as exitHook from "async-exit-hook";
 import * as terminus from "@godaddy/terminus";
 
+type TShutdownFunction = () => Promise<void> | void;
+
+interface IShutdownItem {
+  name: string;
+  fn: TShutdownFunction;
+}
+
 @Service()
 export class GracefulShutdown {
-  private dbAppClient: DbAppClient;
-  private dbPoolObj: DbGeneralPool;
-
-  private ENVIRONMENT: IEnvironment;
+  private bootLoader: BootLoader;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
 
-  constructor(
-    @Inject((type) => EventEmitter) eventEmitter,
-    @Inject((type) => LoggerFactory) loggerFactory,
-    @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => DbAppClient) dbAppClient,
-    @Inject((type) => DbGeneralPool) dbPoolObj,
-    @Inject((type) => Config) config
-  ) {
-    this.eventEmitter = eventEmitter;
-    this.dbAppClient = dbAppClient;
-    this.dbPoolObj = dbPoolObj;
-    this.logger = loggerFactory.create(this.constructor.name);
+  private readonly shutdownItems: IShutdownItem[] = [];
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+  constructor(
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter
+  ) {
+    this.bootLoader = bootLoader;
+    this.logger = loggerFactory.create(this.constructor.name);
+    this.eventEmitter = eventEmitter;
+
+    exitHook(async (callback) => {
+      await this.shutdown();
+      return callback();
+    });
   }
 
-  private boot() {
-    // get settings from DI container
-    this.ENVIRONMENT = Container.get("ENVIRONMENT");
+  private async shutdown(): Promise<void> {
+    this.logger.debug("shutdown.start");
+    try {
+      await this.eventEmitter.emit("exiting");
+    } catch (err) {
+      this.logger.error("shutdown.emit.exiting.error", err);
+    }
 
-    terminus(Container.get(Server).getServer(), {
-      // healtcheck options
+    for (const shutdownItem of this.shutdownItems.reverse()) {
+      const { fn, name } = shutdownItem;
+      this.logger.debug("shutdown.function.start", name);
+      try {
+        await fn();
+        this.logger.debug("shutdown.function.ended", name);
+      } catch (err) {
+        this.logger.error("shutdown.function.error", name, err);
+      }
+    }
+
+    try {
+      await this.eventEmitter.emit("exited");
+    } catch (err) {
+      this.logger.error("shutdown.emit.exited.error", err);
+    }
+    await this.eventEmitter.end();
+    this.logger.debug("shutdown.end");
+  }
+
+  public addShutdownFunction(name: string, fn: TShutdownFunction): void {
+    this.shutdownItems.push({ name, fn });
+    this.logger.debug("shutdown.function.add", name);
+  }
+
+  public addServer<TServer>(name: string, server: TServer): void {
+    terminus(server, {
       healthChecks: {
-        // for now we only resolve a promise to make sure the server runs
         "/_health/liveness": () => Promise.resolve(),
-        // make sure we are ready to answer requests
-        "/_health/readiness": () => Container.get(BootLoader).getReadyPromise()
+        "/_health/readiness": () => this.bootLoader.getReadyPromise()
       },
-      // cleanup options
       timeout: 1000,
       logger: this.logger.info
     });
-
-    // release resources here before node exits
-    exitHook(async (callback) => {
-      this.logger.info("exiting");
-
-      this.logger.info("starting cleanup");
-      this.emit("exiting", this.ENVIRONMENT.nodeId);
-      try {
-        // close DB connections - has to by synchronous - no await
-        // try to exit as many as possible
-        await this.disconnectDB();
-
-        this.logger.info("shutting down");
-
-        this.emit("down", this.ENVIRONMENT.nodeId);
-        // end exitHook
-        return callback();
-      } catch (err) {
-        this.logger.warn("Error occurred during clean up attempt", err);
-        this.emit("server.sigterm.error", this.ENVIRONMENT.nodeId, err);
-        throw err;
-      }
-    });
-  }
-
-  private async disconnectDB() {
-    try {
-      // end setup pgClient and pool
-      await Promise.all([this.dbAppClient.end(), this.dbPoolObj.end()]);
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  private emit(eventName: string, ...args: any[]): void {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-    this.eventEmitter.emit(eventNamespaceName, this.ENVIRONMENT.nodeId, ...args);
-  }
-
-  private on(eventName: string, listener: (...args: any[]) => void) {
-    // add namespace
-    const eventNamespaceName = `${this.ENVIRONMENT.namespace}.${eventName}`;
-    this.eventEmitter.on(eventNamespaceName, listener);
+    this.logger.debug("shutdown.server.addTerminus", name);
   }
 }

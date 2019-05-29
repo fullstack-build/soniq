@@ -7,7 +7,7 @@ DECLARE
     c_file_count_max BIGINT;
 BEGIN
     SELECT value INTO c_file_count_max FROM _meta."FileSettings" WHERE key = 'max_temp_files_per_user';
-    v_user_id := _meta.current_user_id();
+    v_user_id := _auth.current_user_id();
 
     EXECUTE format('SELECT count(*) FROM _meta."Files" WHERE "ownerUserId" = %L AND "entityId" IS NULL;', v_user_id) INTO v_file_count;
 

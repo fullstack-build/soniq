@@ -21,6 +21,11 @@ export interface ITableData {
   schemaName: string;
   tableName: string;
   gqlTypeDefinition: ObjectTypeDefinitionNode;
+  directives: IDirectives;
+}
+
+export interface IDirectives {
+  [name: string]: any;
 }
 
 export interface IPermissionView {

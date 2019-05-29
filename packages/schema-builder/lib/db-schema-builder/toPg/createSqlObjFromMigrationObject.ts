@@ -398,7 +398,7 @@ export class SqlObjFromMigrationObject {
         // -> even a column change could result in a view change
         // create direct access updatable view / on the down run, after the table was created
         thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
-                          SELECT * FROM ${tableNameWithSchemaUp} WHERE _meta.is_admin() = true WITH LOCAL CHECK OPTION;`);
+                          SELECT * FROM ${tableNameWithSchemaUp} WHERE _auth.is_admin() = true WITH LOCAL CHECK OPTION;`);
         // drop direct access updatable view
         thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown};`);
       }

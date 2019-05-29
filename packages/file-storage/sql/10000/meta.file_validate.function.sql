@@ -19,7 +19,7 @@ DECLARE
     v_extension TEXT;
     v_id uuid;
 BEGIN
-    v_user_id := _meta.current_user_id();
+    v_user_id := _auth.current_user_id();
 
     v_file_elements = regexp_split_to_array(i_file_name, '\.');
 

@@ -47,6 +47,51 @@ graphQl.addPostMutationCommitHook(...);
 
 Find more usage details in the [code](lib).
 
+### Errors and logging
+
+All thrown errors in resolvers will be logged by `logger.error(error)`.
+
+By default all Errors will be catched and converted to an `ApolloError` with the code `INTERNAL_SERVER_ERROR`.
+
+You can expose an error by creating an `UserInputError` like this:
+
+```ts
+import { UserInputError } from "@fullstack-one/graphql"; 
+
+function myResolver() {
+  throw new UserInputError("Something special went wrong.", { exposeDetails: true, some: "details" });
+}
+```
+
+If the user is not authenticated, you should throw an `AuthenticationError` like this:
+
+```ts
+import { AuthenticationError } from "@fullstack-one/graphql"; 
+
+function myResolver() {
+  throw new AuthenticationError("Please login first.");
+}
+```
+
+If the user is authenticated, but not permitted for this action you should throw an `ForbiddenError` like this:
+
+```ts
+import { ForbiddenError } from "@fullstack-one/graphql"; 
+
+function myResolver() {
+  throw new ForbiddenError("You cannot do this.");
+}
+```
+
+If the message of an error-object contains one of the following strings, the error will be converted to the corresponding error object:
+
+```
+"AUTH.THROW.USER_INPUT_ERROR"
+"AUTH.THROW.AUTHENTICATION_ERROR"
+"AUTH.THROW.FORBIDDEN_ERROR"
+```
+
+
 ## Examples
 
 Examples can be found in the [tests](test).

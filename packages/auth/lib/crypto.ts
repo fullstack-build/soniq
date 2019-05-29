@@ -1,3 +1,5 @@
+import { ISodiumConfig, ISodiumConfigOptional, IPasswordData } from "./interfaces";
+
 // tslint:disable-next-line:import-name
 // import sodium from 'sodium-native';
 // tslint:disable-next-line:no-var-requires
@@ -19,8 +21,8 @@ export function sha512(input) {
     .digest("hex");
 }
 
-export function createConfig(config) {
-  const c = {
+export function createConfig(config: ISodiumConfigOptional): ISodiumConfig {
+  const sodiumConfig: ISodiumConfig = {
     saltBytes: sodium.crypto_pwhash_SALTBYTES,
     hashBytes: sodium.crypto_pwhash_STRBYTES,
     opslimit: sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
@@ -28,49 +30,57 @@ export function createConfig(config) {
     algorithm: sodium.crypto_pwhash_ALG_DEFAULT
   };
 
-  Object.keys(c).forEach((key) => {
-    if (config[key] != null && typeof config[key] === typeof c[key]) {
-      c[key] = config[key];
+  Object.keys(sodiumConfig).forEach((key) => {
+    if (config[key] != null && typeof config[key] === typeof sodiumConfig[key]) {
+      sodiumConfig[key] = config[key];
     }
   });
 
-  return c;
+  return sodiumConfig;
 }
 
-export function newHash(password, config) {
+export function newHash(password: string, sodiumConfig: ISodiumConfig): Promise<IPasswordData> {
   return new Promise((resolve, reject) => {
     const passwordBuffer = Buffer.from(password);
 
-    const hashBuffer = Buffer.allocUnsafe(config.hashBytes);
+    const hashBuffer = Buffer.allocUnsafe(sodiumConfig.hashBytes);
 
-    const saltBuffer = Buffer.allocUnsafe(config.saltBytes);
+    const saltBuffer = Buffer.allocUnsafe(sodiumConfig.saltBytes);
 
     sodium.randombytes_buf(saltBuffer);
 
     const meta = {
       salt: saltBuffer.toString("hex"),
-      hashBytes: config.hashBytes,
-      opslimit: config.opslimit,
-      memlimit: config.memlimit,
-      algorithm: config.algorithm
+      hashBytes: sodiumConfig.hashBytes,
+      opslimit: sodiumConfig.opslimit,
+      memlimit: sodiumConfig.memlimit,
+      algorithm: sodiumConfig.algorithm
     };
 
-    sodium.crypto_pwhash_async(hashBuffer, passwordBuffer, saltBuffer, config.opslimit, config.memlimit, config.algorithm, (err) => {
-      if (err != null) {
-        return reject(err);
+    sodium.crypto_pwhash_async(
+      hashBuffer,
+      passwordBuffer,
+      saltBuffer,
+      sodiumConfig.opslimit,
+      sodiumConfig.memlimit,
+      sodiumConfig.algorithm,
+      (err) => {
+        if (err != null) {
+          return reject(err);
+        }
+
+        const hash = hashBuffer.toString("hex");
+
+        resolve({
+          hash,
+          meta
+        });
       }
-
-      const hash = hashBuffer.toString("hex");
-
-      resolve({
-        hash,
-        meta
-      });
-    });
+    );
   });
 }
 
-export function hashByMeta(password, meta) {
+export function hashByMeta(password, meta): Promise<IPasswordData> {
   return new Promise((resolve, reject) => {
     const passwordBuffer = Buffer.from(password);
 
@@ -91,4 +101,12 @@ export function hashByMeta(password, meta) {
       });
     });
   });
+}
+
+export function generateRandomPassword(bytes: number = 64): string {
+  const randomBuffer = Buffer.allocUnsafe(bytes);
+
+  sodium.randombytes_buf(randomBuffer);
+
+  return randomBuffer.toString("hex");
 }

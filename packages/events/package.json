@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.5.5",
+  "version": "0.5.9",
   "description": "fullstack.one events package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,9 +22,11 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.5.5",
     "@fullstack-one/config": "^0.5.5",
-    "@fullstack-one/db": "^0.5.5",
     "@fullstack-one/di": "^0.5.2",
-    "eventemitter2": "^5.0.1"
+    "@fullstack-one/logger": "^0.5.5",
+    "@types/pg": "^7.4.14",
+    "eventemitter2": "^5.0.1",
+    "pg": "^7.10.0"
   },
   "devDependencies": {
     "ava": "^1.1.0",
@@ -56,5 +58,6 @@
     ],
     "sourceMap": true,
     "instrument": true
-  }
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }

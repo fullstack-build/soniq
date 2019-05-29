@@ -21,10 +21,10 @@ module.exports = {
   },
   Queue: {
     // leaving this settings out will use a connection from the general pool
-    database: process.env.DB_DATABASE,
+    database: process.env.DB_QUEUE_DATABASE,
     host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    user: process.env.DB_QUEUE_USER,
+    password: process.env.DB_QUEUE_PASSWORD,
     port: process.env.DB_PORT,
     poolSize: 1,
     archiveCompletedJobsEvery: "2 days",
@@ -38,7 +38,9 @@ module.exports = {
       cookie:   process.env.AUTH_COOKIE_SECRET,
       jwtRefreshToken:   process.env.AUTH_JWT_REFRESH_TOKEN_SECRET,
       privacyAgreementAcceptanceToken:   process.env.AUTH_PRIVACY_TOKEN_SECRET,
-      authToken: process.env.AUTH_AUTH_TOKEN_SECRET
+      authToken: process.env.AUTH_AUTH_TOKEN_SECRET,
+      authProviderHashSignature: 'test1234',
+      encryptionKey: 'qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL'
     },
     oAuth: {
       providers: {
@@ -75,6 +77,15 @@ module.exports = {
   },
   Server: {
     port: process.env.PORT
+  },
+  Events: {
+    pgClient: {
+      database: process.env.DB_DATABASE,
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT
+    }
   },
   FileStorage: {
     minio: {

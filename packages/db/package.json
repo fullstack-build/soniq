@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/db",
-  "version": "0.5.5",
+  "version": "0.5.9",
   "description": "fullstack.one db connector package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -23,7 +23,8 @@
     "@fullstack-one/boot-loader": "^0.5.5",
     "@fullstack-one/config": "^0.5.5",
     "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/events": "^0.5.5",
+    "@fullstack-one/events": "^0.5.9",
+    "@fullstack-one/graceful-shutdown": "^0.5.9",
     "@fullstack-one/logger": "^0.5.5",
     "deepmerge": "^2.0.1",
     "pg": "^7.5.0"
@@ -59,5 +60,6 @@
     ],
     "sourceMap": true,
     "instrument": true
-  }
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }

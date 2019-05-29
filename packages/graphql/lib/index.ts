@@ -1,6 +1,6 @@
 import { GraphQLSchema, DefinitionNode } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
-import * as apolloServer from "apollo-server-koa";
+import { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "apollo-server-koa";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
@@ -15,14 +15,14 @@ import { Server } from "@fullstack-one/server";
 import { DbGeneralPool } from "@fullstack-one/db";
 
 import IGraphQlConfig from "./IGraphQlConfig";
-import createGraphQlKoaRouter from "./createGraphQlKoaRouter";
+import { applyApolloMiddleware } from "./koaMiddleware";
 import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./resolvers";
 import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
 import { HookManager, TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction } from "./hooks";
 
-export { apolloServer };
+export { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError };
 
 @Service()
 export class GraphQl {
@@ -77,11 +77,9 @@ export class GraphQl {
     const resolvers = getResolvers(operations, this.resolvers);
     this.apolloSchema = makeExecutableSchema({ typeDefs, resolvers });
 
-    const gqlKoaRouter = createGraphQlKoaRouter(this.apolloSchema, this.graphQlConfig);
-    this.server
-      .getApp()
-      .use(gqlKoaRouter.routes())
-      .use(gqlKoaRouter.allowedMethods());
+    const app = this.server.getApp();
+
+    applyApolloMiddleware(app, this.apolloSchema, this.graphQlConfig, this.logger);
   }
 
   private async addApplicationResolvers(): Promise<void> {
