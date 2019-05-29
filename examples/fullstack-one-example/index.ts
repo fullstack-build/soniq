@@ -64,7 +64,7 @@ $auth.setNotificationFunction(async (user, caller, meta) => {
 
   // event example - once (on any instance)
   // register
-  $events.onceAnyInstance("testEvent2", (nodeId, ...args) => {
+  $events.onAnyInstance("testEvent2", (nodeId, ...args) => {
     console.log(`(once) testEvent2 cought on instance '${nodeId}' with payload`, args);
   });
 
