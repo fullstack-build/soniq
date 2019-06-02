@@ -27,7 +27,8 @@
     "@fullstack-one/graceful-shutdown": "^0.5.9",
     "@fullstack-one/logger": "^0.5.5",
     "deepmerge": "^2.0.1",
-    "pg": "^7.5.0"
+    "massive": "^5.10.0",
+    "pg": "^7.11.0"
   },
   "devDependencies": {
     "@types/pg": "^7.4.7",
