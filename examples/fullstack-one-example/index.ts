@@ -11,7 +11,7 @@ import { FullstackOneCore } from "fullstack-one";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
-import { DbGeneralPool } from "@fullstack-one/db";
+import { DbGeneralPool, DAO } from "@fullstack-one/db";
 import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth, AuthProviderPassword, AuthProviderEmail, AuthProviderOAuth, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
 import { NotificationsEmail } from "@fullstack-one/notifications";
@@ -23,18 +23,20 @@ const $gs: GracefulShutdown = Container.get(GracefulShutdown);
 const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 const $fs: FileStorage = Container.get(FileStorage);
 
+const $dao: DAO = Container.get(DAO);
+
 const $auth: Auth = Container.get(Auth);
 
 $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
-  console.log('USER REGISTERED', JSON.stringify(userAuthentication, null, 2));
-})
+  console.log("USER REGISTERED", JSON.stringify(userAuthentication, null, 2));
+});
 
 const $authProviderPassword = Container.get(AuthProviderPassword);
 const $authProviderOAuth = Container.get(AuthProviderOAuth);
 const $authProviderEmail = Container.get(AuthProviderEmail);
 
 $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
-  console.log('SEND PROOF MAIL', JSON.stringify(mail, null, 2));
+  console.log("SEND PROOF MAIL", JSON.stringify(mail, null, 2));
 });
 
 const $email: NotificationsEmail = Container.get(NotificationsEmail);
