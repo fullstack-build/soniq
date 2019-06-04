@@ -1,8 +1,13 @@
 import { types as PgTypes } from "pg";
+// connection
 import { createConnection, Connection as TypeOrmConnection, ConnectionOptions } from "typeorm";
-export { BaseEntity, Entity, Column, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 // migrations
 export { MigrationInterface, QueryRunner } from "typeorm";
+
+// ORM
+export { BaseEntity } from "./BaseEntity";
+export * from "./decorators";
+import { gQlObj } from "./decorators";
 
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);
@@ -15,16 +20,8 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { DbAppClient } from "../DbAppClient";
-
-export interface IOrmConfig {
-  connection: ConnectionOptions;
-  pool: {
-    min: number;
-    max: number;
-    globalMax: number;
-    updateClientListInterval: number;
-  };
-}
+import { IOrmConfig } from "./interfaces";
+import { GQLSDL } from "./GQLSDL";
 
 @Service()
 export class ORM {
@@ -37,6 +34,7 @@ export class ORM {
   private knownNodeIds: string[] = [];
   private connectedNodesTimer: NodeJS.Timer;
   private readonly dbAppClient: DbAppClient;
+  private gQlSDL: string = null;
   public typeOrmConnection: TypeOrmConnection;
 
   constructor(
@@ -63,6 +61,8 @@ export class ORM {
 
   private async boot(): Promise<void> {
     this.addEventListeners();
+    this.gQlSDL = GQLSDL.convert(gQlObj);
+
     // Assume that I am the first connected node, try to allocate all available connections.
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
@@ -170,5 +170,9 @@ export class ORM {
 
       throw err;
     }
+  }
+
+  public get graphQlSDL(): string {
+    return this.gQlSDL;
   }
 }
