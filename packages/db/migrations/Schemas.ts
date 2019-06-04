@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from "../";
 
-export class Tables implements MigrationInterface {
+export class Schemas implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(``);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS _meta;`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<any> {

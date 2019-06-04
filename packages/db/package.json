@@ -27,10 +27,12 @@
     "@fullstack-one/graceful-shutdown": "^0.5.9",
     "@fullstack-one/logger": "^0.5.5",
     "deepmerge": "^2.0.1",
-    "massive": "^5.10.0",
-    "pg": "^7.11.0"
+    "pg": "^7.11.0",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.2.17"
   },
   "devDependencies": {
+    "@types/massive": "^5.4.3",
     "@types/pg": "^7.4.7",
     "ava": "^1.1.0",
     "nyc": "^13.1.0",

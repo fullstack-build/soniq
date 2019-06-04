@@ -25,5 +25,31 @@ module.exports = {
     // idleTimeoutMillis:        30000, => REMOVED BECAUSE OPTIONAL
     // return an error after 3 seconds if connection could not be established
     // connectionTimeoutMillis:  3000, => REMOVED BECAUSE OPTIONAL
+  },
+  orm: {
+    connection: {
+      "type": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "",
+      "database": "fullstack-one-example",
+      "synchronize": true,
+      "logging": true,
+      "entities": ["/models/*.ts"],
+      "migrations": ["/migration/**/*.ts"],
+      "cli": {
+        "migrationsDir": "migration"
+      },
+      "subscribers": ["/subscriber/**/*.ts"],
+
+    },
+    pool: {
+      "min": 3,
+      "max": 5,
+      "globalMax": 100,
+      "updateClientListInterval": 10 * 1000
+    }
+
   }
 };

@@ -4,6 +4,7 @@ export interface IDbConfig {
   viewSchemaName: string;
   appClient: IDbAppClientConfig;
   general: IDbGeneralPoolConfig;
+  orm: any;
 }
 
 export interface IDbAppClientConfig {

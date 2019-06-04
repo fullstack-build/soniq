@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "../";
 
-export class OperatorClass implements MigrationInterface {
+export class OperatorClasses implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     // optional
     try {
