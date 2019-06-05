@@ -261,6 +261,13 @@ export class DbSchemaBuilder {
           await dbClient.query(sql);
         }
 
+        // create views based on DB
+        for (const sql of Object.values(viewsSqlStatements)) {
+          // todo: check why a cast is necessary
+          const thisSql: any = sql;
+          this.logger.trace("migration.view.sql.statement", thisSql);
+          await dbClient.query(thisSql);
+        }
         // current framework db version
         const dbVersion: string = (await dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0].value;
 

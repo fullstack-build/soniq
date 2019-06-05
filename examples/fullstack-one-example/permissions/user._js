@@ -1,4 +1,5 @@
 // TODO: Dustin: Create interface for permissions (or jsonshema to validate against)
+/*
 module.exports = [
   {
     gqlTypeName: "User",
@@ -55,3 +56,4 @@ module.exports = [
     ]
   }
 ];
+*/

@@ -1,3 +1,4 @@
+/*
 module.exports = [
   {
     gqlTypeName: "Post",
@@ -37,3 +38,4 @@ module.exports = [
     ]
   }
 ];
+*/

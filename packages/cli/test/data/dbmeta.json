@@ -140,7 +140,7 @@
                 "Post_ownerId_not_null"
               ],
               "defaultValue": {
-                "value": "_meta.current_user_id()"
+                "value": "_auth.current_user_id()"
               }
             }
           }

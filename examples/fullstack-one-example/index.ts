@@ -20,7 +20,7 @@ import { EventEmitter } from "@fullstack-one/events";
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $gql: GraphQl = Container.get(GraphQl);
 const $gs: GracefulShutdown = Container.get(GracefulShutdown);
-// const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
+const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 const $fs: FileStorage = Container.get(FileStorage);
 
 const $orm: ORM = Container.get(ORM);
@@ -93,11 +93,20 @@ import { Photo } from "./models/Photo";
   console.log("### ORM");
 
   const photo = new Photo();
-  photo.name = "Misha and Bears";
+  photo.name = "Misha and the Bear";
   photo.description = "I am near polar bears";
   photo.filename = "photo-with-bears.jpg";
   photo.views = 1;
   photo.isPublished = true;
   await photo.save();
+  console.log("Photo has been saved");
+
+  const photo2 = new Photo();
+  photo2.name = "Photo of David";
+  photo2.description = "Am Strand";
+  photo2.filename = "photo-with-bears.jpg";
+  photo2.views = 1;
+  photo2.isPublished = true;
+  await photo2.save();
   console.log("Photo has been saved");
 })();

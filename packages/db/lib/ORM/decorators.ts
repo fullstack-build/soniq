@@ -2,7 +2,7 @@
 import "reflect-metadata";
 import * as typeorm from "typeorm";
 
-export const gQlObj = {};
+export const gQlObj: any = {};
 
 export function Entity(name?: string, options?: any) {
   const typeormDecorator = typeorm.Entity(name, options);

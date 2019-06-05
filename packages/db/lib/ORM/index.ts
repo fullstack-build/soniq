@@ -61,11 +61,12 @@ export class ORM {
 
   private async boot(): Promise<void> {
     this.addEventListeners();
-    this.gQlSDL = GQLSDL.convert(gQlObj);
 
     // Assume that I am the first connected node, try to allocate all available connections.
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
+
+    this.gQlSDL = GQLSDL.convert(gQlObj);
   }
 
   private async createPool(max: number = 2): Promise<void> {
@@ -143,8 +144,6 @@ export class ORM {
         `and a global maximum of ${this.config.pool.globalMax}.`
     );
 
-    // don't wait for promise, we just immediately create a new pool
-    // this one will end as soon as the last connection is released
     if (this.typeOrmConnection != null) await this.typeOrmConnection.close();
     this.logger.debug("Old postgres ORM pool ended");
     // start new pool

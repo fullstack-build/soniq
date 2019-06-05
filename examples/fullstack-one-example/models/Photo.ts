@@ -1,9 +1,8 @@
-import "reflect-metadata";
 import * as ORM from "@fullstack-one/db";
 
 @ORM.Entity("Photo")
 export class Photo extends ORM.BaseEntity {
-  @ORM.PrimaryGeneratedColumn()
+  @ORM.PrimaryGeneratedColumn("uuid")
   public id: number;
 
   @ORM.Column()
@@ -18,6 +17,6 @@ export class Photo extends ORM.BaseEntity {
   @ORM.Column()
   public views: number;
 
-  @ORM.Column()
+  @ORM.ComputedColumn()
   public isPublished: boolean;
 }

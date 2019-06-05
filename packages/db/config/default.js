@@ -41,8 +41,7 @@ module.exports = {
       "cli": {
         "migrationsDir": "migration"
       },
-      "subscribers": ["/subscriber/**/*.ts"],
-
+      "subscribers": ["/subscriber/**/*.ts"]
     },
     pool: {
       "min": 3,

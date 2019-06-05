@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION _meta.create_version() RETURNS trigger AS $$
 	const currentRoleResult = plv8.execute('SELECT current_role;');
 	var currentUserId = null;
 	try {
-	  currentUserId = plv8.execute('SELECT _meta.current_user_id_or_null() id;')[0].id;
+	  currentUserId = plv8.execute('SELECT _auth.current_user_id_or_null() id;')[0].id;
 	} catch (err){
 	  // ignore error
 	}
