@@ -7,7 +7,6 @@ export { MigrationInterface, QueryRunner } from "typeorm";
 // ORM
 export { BaseEntity } from "./BaseEntity";
 export * from "./decorators";
-import { gQlObj } from "./decorators";
 
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);
@@ -20,8 +19,8 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { DbAppClient } from "../DbAppClient";
-import { IOrmConfig } from "./interfaces";
-import { GQLSDL } from "./GQLSDL";
+import { IOrmConfig } from "./types";
+import { getSdl, logModelMeta } from "./decorators/ModelMeta";
 
 @Service()
 export class ORM {
@@ -66,7 +65,9 @@ export class ORM {
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
 
-    this.gQlSDL = GQLSDL.convert(gQlObj);
+    logModelMeta();
+    this.gQlSDL = getSdl();
+    this.logger.info("orm.generated.gql.sdl.from.entities", this.gQlSDL);
   }
 
   private async createPool(max: number = 2): Promise<void> {
