@@ -5,20 +5,18 @@ export type GqlFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID
 export interface IColumnMeta {
   name?: string;
   gqlType?: GqlFieldType;
-  isTypeormColumn?: boolean;
   isTypeormPrimaryGeneratedColumn?: boolean;
-  decoratorTarget?: object;
   directives?: string[];
   columnOptions?: typeorm.ColumnOptions;
 }
 
 export interface IEntityMeta {
-  name: string;
-  columns: {
+  name?: string;
+  columns?: {
     [columnName: string]: IColumnMeta;
   };
   isTypeormEntity?: boolean;
-  decoratorTarget?: object;
+  decoratorTarget?: () => void;
 }
 
 interface IModelMeta {
@@ -41,11 +39,17 @@ function createEntityMetaIfNotExists(entityName: string): IEntityMeta {
   return modelMeta.entities[entityName];
 }
 
+export function enhanceEntityMeta(entityName: string, entityMeta: IEntityMeta): void {
+  const currentEntityMeta = createEntityMetaIfNotExists(entityName);
+  modelMeta.entities[entityName] = { name: entityName, ...currentEntityMeta, ...entityMeta };
+}
+
 function createColumnMetaIfNotExists(entityName: string, columnName: string): IColumnMeta {
   const entitiyMeta = createEntityMetaIfNotExists(entityName);
   if (entitiyMeta.columns[columnName] == null) {
     entitiyMeta.columns[columnName] = {
       name: columnName,
+      columnOptions: {},
       directives: []
     };
   }
@@ -54,6 +58,11 @@ function createColumnMetaIfNotExists(entityName: string, columnName: string): IC
 
 export function addEntityMeta(entityName: string): void {
   createEntityMetaIfNotExists(entityName);
+}
+
+export function getColumnOptions(entityName: string, columnName: string): typeorm.ColumnOptions {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  return columnMeta.columnOptions;
 }
 
 export function enhanceColumnMeta(entityName: string, columnName: string, columnMeta: IColumnMeta): void {
@@ -71,20 +80,21 @@ export function addColumnOptions(entityName: string, columnName: string, columnO
   columnMeta.columnOptions = { ...columnMeta.columnOptions, ...columnOptions };
 }
 
-export function synchronizeDatabase(): void {
-  Object.values(modelMeta.entities).forEach((entityMeta) => {
-    Object.values(entityMeta.columns).forEach((columnMeta) => {
-      if (columnMeta.isTypeormColumn && columnMeta.decoratorTarget != null) {
-        const typeormDecorator = typeorm.Column(columnMeta.columnOptions);
-        typeormDecorator(columnMeta.decoratorTarget, columnMeta.name);
-      }
-    });
-    if (entityMeta.isTypeormEntity && entityMeta.decoratorTarget != null) {
-      const typeormDecorator = typeorm.Entity();
-      typeormDecorator(entityMeta.decoratorTarget, entityMeta.name);
-    }
-  });
-}
+// export function synchronizeDatabase(): void {
+//   Object.values(modelMeta.entities).forEach((entityMeta) => {
+//     Object.values(entityMeta.columns).forEach((columnMeta) => {
+//       if (columnMeta.isTypeormColumn && columnMeta.decoratorTarget != null) {
+//         const typeormDecorator = typeorm.Column(columnMeta.columnOptions);
+//         console.log("Return Column");
+//         typeormDecorator(columnMeta.decoratorTarget, columnMeta.name);
+//       }
+//     });
+//     // if (entityMeta.isTypeormEntity && entityMeta.decoratorTarget != null) {
+//     //   const typeormDecorator = typeorm.Entity({ name: entityMeta.name });
+//     //   typeormDecorator(entityMeta.decoratorTarget);
+//     // }
+//   });
+// }
 
 export function logModelMeta(): void {
   console.log(JSON.stringify(modelMeta, null, 2));

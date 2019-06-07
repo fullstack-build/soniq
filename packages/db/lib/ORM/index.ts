@@ -66,6 +66,7 @@ export class ORM {
     await this.setIntervalToCheckConnectedNodes();
 
     logModelMeta();
+    // synchronizeDatabase();
     this.gQlSDL = getSdl();
     this.logger.info("orm.generated.gql.sdl.from.entities", this.gQlSDL);
   }
