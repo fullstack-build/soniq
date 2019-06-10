@@ -1,0 +1,26 @@
+{
+  "type": "postgres",
+  "host": "dev-bettervest.aivencloud.com",
+  "port": 26582,
+  "ssl": true,
+  "username": "ormtest",
+  "password": "",
+  "database": "",
+  "synchronize": false,
+  "logging": true,
+  "entities": [
+    "models/*.ts"
+  ],
+  "migrations": [
+    "migrations/*.ts",
+    "node_modules/@fullstack-one/db/migrations/*.ts"
+  ],
+  "subscribers": [
+    "src/subscriber/**/*.ts"
+  ],
+  "cli": {
+    "entitiesDir": "entities",
+    "migrationsDir": "migrations",
+    "subscribersDir": "subscribers"
+  }
+}

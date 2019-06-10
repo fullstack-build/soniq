@@ -10,7 +10,6 @@ export function Entity() {
     const entityName = target.name;
     const typeormDecorator = typeorm.Entity({ name: entityName });
     ModelMeta.addEntityMeta(entityName);
-    console.log("Evaluate Entity Decorator");
     return typeormDecorator(target);
   };
   // return <TFunction extends () => void>(target: TFunction): TFunction | void => {
@@ -23,7 +22,6 @@ export function Column() {
   return (target: object, columnName: string | symbol): void => {
     const className = target.constructor.name;
     const columnOptions: typeorm.ColumnOptions = ModelMeta.getColumnOptions(className, String(columnName));
-    console.log(`Evaluate Column ${String(columnName)} Decorator`);
     const typeormDecorator = typeorm.Column(columnOptions);
     typeormDecorator(target, columnName);
   };
@@ -64,7 +62,6 @@ type TColumnDecorator = (target: object, propertyName: string | symbol) => void;
 
 export function createColumnDecorator({ directive, columnOptions }: { directive?: string; columnOptions?: typeorm.ColumnOptions }): TColumnDecorator {
   return (target: object, propertyName: string | symbol): void => {
-    console.log(`Evaluate Directive "${directive}" Decorator`);
     const className = target.constructor.name;
     if (directive != null) ModelMeta.addColumnDirective(className, String(propertyName), directive);
     if (columnOptions != null) ModelMeta.addColumnOptions(className, String(propertyName), columnOptions);
