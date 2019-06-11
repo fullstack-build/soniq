@@ -4,10 +4,11 @@ export type GqlFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID
 
 export interface IColumnMeta {
   name?: string;
-  gqlType?: GqlFieldType;
+  gqlType?: GqlFieldType | string;
   isTypeormPrimaryGeneratedColumn?: boolean;
   directives?: string[];
   columnOptions?: typeorm.ColumnOptions;
+  synchronized?: boolean;
 }
 
 export interface IEntityMeta {
@@ -17,6 +18,7 @@ export interface IEntityMeta {
   };
   isTypeormEntity?: boolean;
   decoratorTarget?: () => void;
+  synchronized?: boolean;
 }
 
 interface IModelMeta {
@@ -33,7 +35,8 @@ function createEntityMetaIfNotExists(entityName: string): IEntityMeta {
   if (modelMeta.entities[entityName] == null) {
     modelMeta.entities[entityName] = {
       name: entityName,
-      columns: {}
+      columns: {},
+      synchronized: false
     };
   }
   return modelMeta.entities[entityName];
@@ -50,7 +53,8 @@ function createColumnMetaIfNotExists(entityName: string, columnName: string): IC
     entitiyMeta.columns[columnName] = {
       name: columnName,
       columnOptions: {},
-      directives: []
+      directives: [],
+      synchronized: false
     };
   }
   return entitiyMeta.columns[columnName];
@@ -60,14 +64,19 @@ export function addEntityMeta(entityName: string): void {
   createEntityMetaIfNotExists(entityName);
 }
 
+export function setEntitySynchronizedTrue(entityName: string): void {
+  const entityMeta = createEntityMetaIfNotExists(entityName);
+  entityMeta.synchronized = true;
+}
+
 export function getColumnOptions(entityName: string, columnName: string): typeorm.ColumnOptions {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   return columnMeta.columnOptions;
 }
 
-export function enhanceColumnMeta(entityName: string, columnName: string, columnMeta: IColumnMeta): void {
-  const currentColumnMeta = createColumnMetaIfNotExists(entityName, columnName);
-  modelMeta.entities[entityName].columns[columnName] = { name: columnName, ...currentColumnMeta, ...columnMeta };
+export function setColumnGqlType(entityName: string, columnName: string, gqlType: GqlFieldType | string): void {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  columnMeta.gqlType = gqlType;
 }
 
 export function addColumnDirective(entityName: string, columnName: string, directive: string): void {
@@ -78,6 +87,16 @@ export function addColumnDirective(entityName: string, columnName: string, direc
 export function addColumnOptions(entityName: string, columnName: string, columnOptions: typeorm.ColumnOptions): void {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   columnMeta.columnOptions = { ...columnMeta.columnOptions, ...columnOptions };
+}
+
+export function setColumnSynchronizedTrue(entityName: string, columnName: string): void {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  columnMeta.synchronized = true;
+}
+
+export function isColumnSynchronized(entityName: string, columnName: string): boolean {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  return columnMeta.synchronized === true;
 }
 
 // export function synchronizeDatabase(): void {
@@ -96,8 +115,8 @@ export function addColumnOptions(entityName: string, columnName: string, columnO
 //   });
 // }
 
-export function logModelMeta(): void {
-  console.log(JSON.stringify(modelMeta, null, 2));
+export function toString(): string {
+  return JSON.stringify(modelMeta, null, 2);
 }
 
 export function getSdl(): string {

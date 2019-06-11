@@ -20,8 +20,9 @@ export function Entity() {
 
 export function Column() {
   return (target: object, columnName: string | symbol): void => {
-    const className = target.constructor.name;
-    const columnOptions: typeorm.ColumnOptions = ModelMeta.getColumnOptions(className, String(columnName));
+    const entityName = target.constructor.name;
+    ModelMeta.setColumnSynchronizedTrue(entityName, String(columnName));
+    const columnOptions: typeorm.ColumnOptions = ModelMeta.getColumnOptions(entityName, String(columnName));
     const typeormDecorator = typeorm.Column(columnOptions);
     typeormDecorator(target, columnName);
   };
@@ -31,7 +32,7 @@ export function Column() {
 export function gqlFieldType(type: ModelMeta.GqlFieldType) {
   return (target: object, propertyName: string | symbol): void => {
     const className = target.constructor.name;
-    ModelMeta.enhanceColumnMeta(className, String(propertyName), { gqlType: type });
+    ModelMeta.setColumnGqlType(className, String(propertyName), type);
   };
 }
 
@@ -48,23 +49,31 @@ type TStrategy = "increment" | "rowid" | "uuid";
 
 // TODO: Get rid of this bitch? use createColumnDecoratorFactory
 export function PrimaryGeneratedColumn(strategy: TStrategy = "uuid") {
-  const typeormDecorator = typeorm.PrimaryGeneratedColumn(strategy as any);
   return (target: object, propertyName: string | symbol) => {
+    const typeormDecorator = typeorm.PrimaryGeneratedColumn(strategy as any);
     typeormDecorator(target, propertyName);
 
     const className = target.constructor.name;
-    // GqlSdlMeta.addField(className, String(propertyName), "ID", false, decorators);
-    ModelMeta.enhanceColumnMeta(className, String(propertyName), { gqlType: "ID" });
+    ModelMeta.setColumnGqlType(className, String(propertyName), "ID");
   };
 }
 
 type TColumnDecorator = (target: object, propertyName: string | symbol) => void;
 
 export function createColumnDecorator({ directive, columnOptions }: { directive?: string; columnOptions?: typeorm.ColumnOptions }): TColumnDecorator {
-  return (target: object, propertyName: string | symbol): void => {
-    const className = target.constructor.name;
-    if (directive != null) ModelMeta.addColumnDirective(className, String(propertyName), directive);
-    if (columnOptions != null) ModelMeta.addColumnOptions(className, String(propertyName), columnOptions);
+  return (target: object, columnName: string | symbol): void => {
+    const entityName = target.constructor.name;
+    if (ModelMeta.isColumnSynchronized(entityName, String(columnName)) === true) {
+      // tslint:disable-next-line:no-console
+      console.warn(
+        `Some decorator for column "${entityName}"."${String(
+          columnName
+        )}" is not applied after Column is synchronized. Please put your decorator below @Column to be evaluated first.`
+      );
+      return;
+    }
+    if (directive != null) ModelMeta.addColumnDirective(entityName, String(columnName), directive);
+    if (columnOptions != null) ModelMeta.addColumnOptions(entityName, String(columnName), columnOptions);
   };
 }
 
@@ -81,5 +90,27 @@ export function createColumnDecoratorFactory<TParams>({
       if (getDirective != null) ModelMeta.addColumnDirective(className, String(propertyName), getDirective(params));
       if (getColumnOptions != null) ModelMeta.addColumnOptions(className, String(propertyName), getColumnOptions(params));
     };
+  };
+}
+
+export function OneToOneJoinColumn<T>(typeFunction: (type?: any) => new () => T) {
+  return (target: object, columnName: string | symbol): void => {
+    const entityName = target.constructor.name;
+    // Need to wait for the next tick so all entity classes are laoded and typeFunction is correctly intialized.
+    process.nextTick(() => {
+      const identifier = typeFunction();
+      if (identifier == null || identifier.name == null) {
+        throw Error(`OneToOneJoinColumn.identifier.is.no.constructor for ${entityName}.${String(columnName)}`);
+      }
+
+      const foreignEntityName = identifier ? identifier.name : `Unknown${Math.floor(Math.random() * 100)}`;
+      const relationName = entityName < foreignEntityName ? `${entityName}_${foreignEntityName}` : `${foreignEntityName}_${entityName}`;
+      ModelMeta.setColumnGqlType(entityName, String(columnName), foreignEntityName);
+      const directive = `@relation(name: "${relationName}")`;
+      ModelMeta.addColumnDirective(entityName, String(columnName), directive);
+
+      typeorm.JoinColumn()(target, columnName);
+      typeorm.OneToOne(typeFunction)(target, columnName);
+    });
   };
 }

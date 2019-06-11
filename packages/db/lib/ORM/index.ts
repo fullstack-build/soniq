@@ -20,7 +20,7 @@ import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { DbAppClient } from "../DbAppClient";
 import { IOrmConfig } from "./types";
-import { getSdl, logModelMeta } from "./decorators/ModelMeta";
+import { getSdl } from "./decorators/ModelMeta";
 
 @Service()
 export class ORM {
@@ -34,6 +34,7 @@ export class ORM {
   private connectedNodesTimer: NodeJS.Timer;
   private readonly dbAppClient: DbAppClient;
   private gQlSDL: string = null;
+  private readonly entities: Array<new () => any> = [];
   public typeOrmConnection: TypeOrmConnection;
 
   constructor(
@@ -65,10 +66,10 @@ export class ORM {
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
 
-    logModelMeta();
+    // logModelMeta();
     // synchronizeDatabase();
     this.gQlSDL = getSdl();
-    this.logger.info("orm.generated.gql.sdl.from.entities", this.gQlSDL);
+    this.logger.info("orm.generated.gql.sdl.from.entities:\n", this.gQlSDL);
   }
 
   private async createPool(max: number = 2): Promise<void> {
@@ -77,7 +78,7 @@ export class ORM {
     const connectionOptions: ConnectionOptions = {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
-      entities: (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+      entities: this.entities, // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
       migrations: (this.config.connection.migrations || []).map((migration: string) =>
         typeof migration === "string" ? `${path}${migration}` : migration
       ),
@@ -171,6 +172,10 @@ export class ORM {
 
       throw err;
     }
+  }
+
+  public addEntity(entity: new () => void): void {
+    this.entities.push(entity);
   }
 
   public get graphQlSDL(): string {
