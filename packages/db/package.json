@@ -29,7 +29,7 @@
     "deepmerge": "^2.0.1",
     "pg": "^7.11.0",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.2.17"
+    "typeorm": "^0.2.18"
   },
   "devDependencies": {
     "@types/pg": "^7.4.7",

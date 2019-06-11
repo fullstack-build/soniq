@@ -31,9 +31,14 @@ export function Column() {
 // TODO: It would be cool if this is created with createColumnDecoratorFactory
 export function gqlFieldType(type: ModelMeta.GqlFieldType) {
   return (target: object, propertyName: string | symbol): void => {
-    const className = target.constructor.name;
-    ModelMeta.setColumnGqlType(className, String(propertyName), type);
+    const entityName = target.constructor.name;
+    ModelMeta.setColumnGqlType(entityName, String(propertyName), type);
   };
+}
+
+export function nullable(target: object, propertyName: string | symbol): void {
+  const entityName = target.constructor.name;
+  ModelMeta.setColumnNullableTrue(entityName, String(propertyName));
 }
 
 export const pgType = {

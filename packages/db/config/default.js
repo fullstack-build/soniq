@@ -34,13 +34,10 @@ module.exports = {
       "username": "postgres",
       "password": "",
       "database": "fullstack-one-example",
-      "synchronize": true,
-      "logging": true,
+      "synchronize": false,
+      "logging": false,
       "entities": ["/models/*.ts"],
       "migrations": ["/migration/**/*.ts"],
-      "cli": {
-        "migrationsDir": "migration"
-      },
       "subscribers": ["/subscriber/**/*.ts"]
     },
     pool: {
