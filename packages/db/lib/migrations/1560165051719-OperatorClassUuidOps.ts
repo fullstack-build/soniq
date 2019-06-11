@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+// import { MigrationInterface, QueryRunner } from "typeorm";
 
 // Does need superuser access. TODO: how to migrate with _aiven? What is this class for?
 
