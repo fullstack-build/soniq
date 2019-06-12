@@ -153,7 +153,7 @@ export function getSdl(): string {
   });
 
   Object.values(modelMeta.entities).forEach(({ name, columns: fields }) => {
-    sdlLines.push(`type ${name} {`);
+    sdlLines.push(`type ${name} @table {`);
     Object.values(fields).forEach((field) => sdlLines.push(getFieldSdlLine(field)));
     sdlLines.push("}\n");
   });

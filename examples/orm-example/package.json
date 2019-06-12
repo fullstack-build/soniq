@@ -40,12 +40,14 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
+    "@fullstack-one/auth": "^0.5.12",
     "@fullstack-one/auto-migrate": "^0.5.12",
     "@fullstack-one/db": "^0.5.9",
     "@fullstack-one/di": "^0.5.2",
     "@fullstack-one/graphql": "^0.5.12",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.5",
+    "reflect-metadata": "^0.1.13",
     "typeorm": "^0.2.18"
   }
 }

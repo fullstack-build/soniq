@@ -4,12 +4,12 @@
         "es5",
         "es6"
      ],
-     "target": "es5",
+     "target": "ES5",
      "module": "commonjs",
      "moduleResolution": "node",
      "outDir": "./build",
-     "emitDecoratorMetadata": true,
      "experimentalDecorators": true,
+     "emitDecoratorMetadata": true,
      "sourceMap": true
   }
 }

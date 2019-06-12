@@ -1,11 +1,10 @@
 {
   "type": "postgres",
-  "host": "dev-bettervest.aivencloud.com",
-  "port": 26582,
-  "ssl": true,
-  "username": "ormtest",
-  "password": "",
-  "database": "",
+  "host": "localhost",
+  "port": 5432,
+  "username": "ormuser",
+  "password": "orm",
+  "database": "OrmTest",
   "synchronize": false,
   "logging": true,
   "entities": [
@@ -13,7 +12,8 @@
   ],
   "migrations": [
     "migrations/*.ts",
-    "node_modules/@fullstack-one/db/migrations/*.ts"
+    "node_modules/@fullstack-one/db/lib/migrations/*.ts",
+    "node_modules/@fullstack-one/auth/lib/migrations/*.ts"
   ],
   "subscribers": [
     "src/subscriber/**/*.ts"
