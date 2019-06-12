@@ -6,7 +6,7 @@ export type GqlFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID
 export interface IColumnMeta {
   name: string;
   gqlType?: GqlFieldType | string;
-  enum?: string;
+  enumName?: string;
   directives: string[];
   columnOptions: typeorm.ColumnOptions;
   synchronized: boolean;
@@ -110,6 +110,7 @@ export function setColumnEnum(entityName: string, columnName: string, enumObj: o
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   const enumName = Reflect.getMetadata("enum:name", enumObj);
   if (enumName == null || modelMeta.enums[enumName] == null) throw new Error(`orm.set.column.enum.unknown: ${enumName}: ${JSON.stringify(enumObj)}`);
+  columnMeta.enumName = enumName;
   columnMeta.columnOptions = { ...columnMeta.columnOptions, type: "enum", enum: modelMeta.enums[enumName].values };
 }
 
@@ -160,6 +161,8 @@ export function getSdl(): string {
   return sdlLines.join("\n");
 }
 
-function getFieldSdlLine({ name, gqlType: type, nullable, directives }: IColumnMeta): string {
+function getFieldSdlLine({ name, enumName, gqlType, nullable, directives }: IColumnMeta): string {
+  const type = enumName ? enumName : gqlType;
+  if (type == null) throw new Error(`orm.sdl.field.type.isNull: field "${name}"`);
   return `  ${name}: ${type}${nullable ? "" : "!"} ${directives ? directives.join(" ") : ""}`;
 }
