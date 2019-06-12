@@ -1,10 +1,12 @@
 import * as typeorm from "typeorm";
+import * as _ from "lodash";
 
 export type GqlFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID";
 
 export interface IColumnMeta {
   name: string;
   gqlType?: GqlFieldType | string;
+  enum?: string;
   directives: string[];
   columnOptions: typeorm.ColumnOptions;
   synchronized: boolean;
@@ -21,15 +23,39 @@ export interface IEntityMeta {
   synchronized?: boolean;
 }
 
+interface IEnum {
+  name: string;
+  values: string[];
+}
+
 interface IModelMeta {
   entities: {
     [entityName: string]: IEntityMeta;
   };
+  enums: {
+    [enumName: string]: IEnum;
+  };
 }
 
 const modelMeta: IModelMeta = {
-  entities: {}
+  entities: {},
+  enums: {}
 };
+
+export function registerEnum(name: string, enumObj: object): void {
+  const values: string[] = Object.entries(enumObj)
+    .filter(([key, value]) => typeof value === "string")
+    .map(([key, value]) => value);
+  if (modelMeta.enums[name] != null) {
+    if (_.isEqual(modelMeta.enums[name].values.sort(), values.sort()) === true) return;
+    throw Error(`
+      orm.model.meta.enum.duplicate.name: ${name} with values ${modelMeta.enums[name].values} already exists.
+      New enum with values ${values} cannot be registerd.
+    `);
+  }
+  modelMeta.enums[name] = { name, values };
+  Reflect.defineMetadata("enum:name", name, enumObj);
+}
 
 function createEntityMetaIfNotExists(entityName: string): IEntityMeta {
   if (modelMeta.entities[entityName] == null) {
@@ -80,6 +106,13 @@ export function setColumnGqlType(entityName: string, columnName: string, gqlType
   columnMeta.gqlType = gqlType;
 }
 
+export function setColumnEnum(entityName: string, columnName: string, enumObj: object): void {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  const enumName = Reflect.getMetadata("enum:name", enumObj);
+  if (enumName == null || modelMeta.enums[enumName] == null) throw new Error(`orm.set.column.enum.unknown: ${enumName}: ${JSON.stringify(enumObj)}`);
+  columnMeta.columnOptions = { ...columnMeta.columnOptions, type: "enum", enum: modelMeta.enums[enumName].values };
+}
+
 export function addColumnDirective(entityName: string, columnName: string, directive: string): void {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   columnMeta.directives.push(directive);
@@ -111,6 +144,12 @@ export function toString(): string {
 
 export function getSdl(): string {
   const sdlLines = [];
+
+  Object.values(modelMeta.enums).forEach(({ name, values }) => {
+    sdlLines.push(`enum ${name} {`);
+    values.forEach((value) => sdlLines.push(`  ${value}`));
+    sdlLines.push(`}\n`);
+  });
 
   Object.values(modelMeta.entities).forEach(({ name, columns: fields }) => {
     sdlLines.push(`type ${name} {`);

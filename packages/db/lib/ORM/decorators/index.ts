@@ -36,6 +36,14 @@ export function gqlFieldType(type: ModelMeta.GqlFieldType) {
   };
 }
 
+export function setEnum(name: string, enumObj: object) {
+  ModelMeta.registerEnum(name, enumObj);
+  return (target: object, columnName: string): void => {
+    const entityName = target.constructor.name;
+    ModelMeta.setColumnEnum(entityName, columnName, enumObj);
+  };
+}
+
 export function nullable(target: object, propertyName: string | symbol): void {
   const entityName = target.constructor.name;
   ModelMeta.setColumnNullableTrue(entityName, String(propertyName));
