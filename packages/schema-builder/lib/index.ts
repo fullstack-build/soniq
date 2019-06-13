@@ -98,7 +98,7 @@ export class SchemaBuilder {
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
       // augment with ORM SDL
-      this.gQlSdl.push(this.orm.graphQlSDL);
+      this.extendSchema(this.orm.graphQlSDL);
 
       this.logger.trace("boot", "GraphQl schema loaded");
 

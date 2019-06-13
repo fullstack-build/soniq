@@ -6,8 +6,7 @@ export { MigrationInterface, QueryRunner } from "typeorm";
 
 // ORM
 export { BaseEntity } from "./BaseEntity";
-export * from "./decorators";
-import { gQlObj } from "./decorators";
+export * from "./decorator";
 
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);
@@ -20,8 +19,8 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { DbAppClient } from "../DbAppClient";
-import { IOrmConfig } from "./interfaces";
-import { GQLSDL } from "./GQLSDL";
+import { IOrmConfig } from "./types";
+import * as modelMeta from "./model-meta";
 
 @Service()
 export class ORM {
@@ -34,7 +33,7 @@ export class ORM {
   private knownNodeIds: string[] = [];
   private connectedNodesTimer: NodeJS.Timer;
   private readonly dbAppClient: DbAppClient;
-  private gQlSDL: string = null;
+  private readonly entities: Array<new () => any> = [];
   public typeOrmConnection: TypeOrmConnection;
 
   constructor(
@@ -65,8 +64,6 @@ export class ORM {
     // Assume that I am the first connected node, try to allocate all available connections.
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
-
-    this.gQlSDL = GQLSDL.convert(gQlObj);
   }
 
   private async createPool(max: number = 2): Promise<void> {
@@ -75,7 +72,7 @@ export class ORM {
     const connectionOptions: ConnectionOptions = {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
-      entities: (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+      entities: this.entities, // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
       migrations: (this.config.connection.migrations || []).map((migration: string) =>
         typeof migration === "string" ? `${path}${migration}` : migration
       ),
@@ -171,7 +168,11 @@ export class ORM {
     }
   }
 
+  public addEntity(entity: new () => void): void {
+    this.entities.push(entity);
+  }
+
   public get graphQlSDL(): string {
-    return this.gQlSDL;
+    return modelMeta.toSdl();
   }
 }
