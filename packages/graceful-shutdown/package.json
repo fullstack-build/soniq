@@ -21,7 +21,6 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.5.5",
-    "@fullstack-one/db": "^0.5.9",
     "@fullstack-one/di": "^0.5.2",
     "@fullstack-one/events": "^0.5.9",
     "@fullstack-one/logger": "^0.5.5",
