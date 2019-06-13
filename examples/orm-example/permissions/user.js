@@ -3,11 +3,21 @@ module.exports = [
     gqlTypeName: "User",
     readExpressions: {
       id: ["Anyone"],
-      name: ["Anyone"],
-      photo: ["Anyone"],
+      firstname: ["Anyone"],
+      lastname: ["Anyone"],
       size: ["Anyone"],
-      size2: ["Anyone"],
-      iCanBeNull: ["Anyone"]
+      photo: ["Anyone"],
+      tasks: ["Anyone"],
+    },
+    createViews: {
+      me: {
+        fields: ["firstname", "lastname", "size", "photo"],
+        expressions: [
+          {
+            name: "Anyone"
+          }
+        ]
+      }
     }
   }
 ];

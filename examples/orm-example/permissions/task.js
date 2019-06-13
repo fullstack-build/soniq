@@ -1,13 +1,14 @@
 module.exports = [
   {
-    gqlTypeName: "Photo",
+    gqlTypeName: "Task",
     readExpressions: {
       id: ["Anyone"],
-      name: ["Anyone"]
+      title: ["Anyone"],
+      user: ["Anyone"]
     },
     createViews: {
       me: {
-        fields: ["name"],
+        fields: ["title", "user"],
         expressions: [
           {
             name: "Anyone"

@@ -1,9 +1,8 @@
 import "reflect-metadata";
 import * as typeorm from "typeorm";
-import { Entity, Column, PrimaryGeneratedColumn, gqlFieldType, pgType, OneToOneJoinColumn, setEnum, nullable } from "@fullstack-one/db";
+import { Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
 import Photo from "./Photo";
-
-const String = gqlFieldType("String");
+import Task from "./Task";
 
 export enum Size {
   small,
@@ -13,28 +12,21 @@ export enum Size {
 
 @Entity()
 export default class User extends typeorm.BaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn()
   public id: number;
 
-  @Column()
-  @String
-  @pgType.string
-  public name: string;
+  @Column({ gqlType: "String", type: "character varying" })
+  public firstname: string;
 
-  @OneToOneJoinColumn((type) => Photo)
-  public photo: Photo;
+  @Column({ gqlType: "String", type: "character varying" })
+  public lastname: string;
 
-  // @Column()
-  // @setEnum("Size", Size)
-  // public size?: Size;
+  @OneToOneJoinColumn((type) => Photo, { nullable: true })
+  public photo?: Photo;
 
-  // @Column()
-  // @setEnum("Size2", Size)
-  // public size2?: Size;
+  @OneToMany((type) => Task, task => task.user)
+  public tasks: Task[];
 
-  // @Column()
-  // @String
-  // @pgType.string
-  // @nullable
-  // public iCanBeNull: string;
+  @Column({ enum: Size, enumName: "Size" })
+  public size?: Size;
 }

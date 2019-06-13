@@ -6,7 +6,7 @@ export { MigrationInterface, QueryRunner } from "typeorm";
 
 // ORM
 export { BaseEntity } from "./BaseEntity";
-export * from "./decorators";
+export * from "./decorator";
 
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);
@@ -20,7 +20,7 @@ import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { DbAppClient } from "../DbAppClient";
 import { IOrmConfig } from "./types";
-import { getSdl } from "./decorators/ModelMeta";
+import * as modelMeta from "./model-meta";
 
 @Service()
 export class ORM {
@@ -33,7 +33,6 @@ export class ORM {
   private knownNodeIds: string[] = [];
   private connectedNodesTimer: NodeJS.Timer;
   private readonly dbAppClient: DbAppClient;
-  private gQlSDL: string = null;
   private readonly entities: Array<new () => any> = [];
   public typeOrmConnection: TypeOrmConnection;
 
@@ -65,11 +64,6 @@ export class ORM {
     // Assume that I am the first connected node, try to allocate all available connections.
     await this.createPool(this.config.pool.globalMax);
     await this.setIntervalToCheckConnectedNodes();
-
-    // logModelMeta();
-    // synchronizeDatabase();
-    this.gQlSDL = getSdl();
-    this.logger.info("orm.generated.gql.sdl.from.entities:\n", this.gQlSDL);
   }
 
   private async createPool(max: number = 2): Promise<void> {
@@ -179,6 +173,6 @@ export class ORM {
   }
 
   public get graphQlSDL(): string {
-    return this.gQlSDL;
+    return modelMeta.toSdl();
   }
 }

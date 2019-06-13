@@ -28,22 +28,19 @@ module.exports = {
   },
   orm: {
     connection: {
-      "type": "postgres",
-      "host": "localhost",
-      "port": 5432,
-      "username": "postgres",
-      "password": "",
-      "database": "fullstack-one-example",
-      "synchronize": false,
-      "logging": false,
-      "entities": ["/models/*.ts"],
-      "migrations": ["/migration/**/*.ts"],
-      "subscribers": ["/subscriber/**/*.ts"]
+      "type":         "postgres",
+      "host":         null,
+      "port":         null,
+      "username":     null,
+      "password":     null,
+      "database":     null,
+      "synchronize":  false,
+      "logging":      false
     },
     pool: {
-      "min": 3,
-      "max": 5,
-      "globalMax": 100,
+      "min":                      3,
+      "max":                      5,
+      "globalMax":                100,
       "updateClientListInterval": 10 * 1000
     }
 

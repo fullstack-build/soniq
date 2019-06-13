@@ -28,47 +28,46 @@ $gql.addResolvers({
 
 import Photo from "./models/Photo";
 import User from "./models/User";
+import Task from "./models/Task";
 
 $orm.addEntity(Photo);
 $orm.addEntity(User);
+$orm.addEntity(Task);
 
 (async () => {
   await $one.boot();
 
   console.log("### ORM");
 
-  const photo = new Photo();
-  photo.name = "Misha and the Bear";
-  // photo.clicks = 2;
-  // photo.hasProofedEmail = true;
-  // photo.views = 1;
-  // photo.somethingUnique = "ciao2";
-  // photo.username = "David";
-  // photo.password = "test";
-  // // photo.isPublished = true;
-  await photo.save();
-  console.log("Photo has been saved");
-
-  // const photo2 = new Photo();
-  // photo2.name = "Photo of David";
-  // photo2.clicks = 3;
-  // photo2.hasProofedEmail = false;
-  // photo2.views = 1;
-  // photo2.somethingUnique = "hallo";
-  // photo2.username = "Tim";
-  // photo2.password = "test";
-  // // photo2.isPublished = true;
-  // await photo2.save();
+  // const photo = new Photo();
+  // photo.name = "Misha and the Bear";
+  // await photo.save();
   // console.log("Photo has been saved");
 
-  const user = new User();
-  user.name = "David";
-  user.photo = photo;
-  await user.save();
-  console.log("User has been saved");
+  // const user = new User();
+  // user.firstname = "David";
+  // user.firstname = "Sparkles";
+  // user.photo = photo;
+  // await user.save();
+  // console.log("User has been saved");
+
+  // const task = new Task();
+  // user.firstname = "David";
+  // user.firstname = "Sparkles";
+  // user.photo = photo;
+  // await user.save();
+  // console.log("User has been saved");
 
   const photos = await Photo.find();
   console.log("Loaded photos: ", JSON.stringify(photos, null, 2));
   const users = await User.find();
   console.log("Loaded users: ", JSON.stringify(users, null, 2));
+  const tasks = await Task.find();
+  console.log("Loaded tasks: ", JSON.stringify(tasks, null, 2));
+
+  // const task = tasks[0];
+  // if (task != null) {
+  //   console.log("Loaded task user: ", JSON.stringify(task.user, null, 2));
+  //   console.log("Loaded task user with await: ", JSON.stringify(await task.user, null, 2));
+  // }
 })();

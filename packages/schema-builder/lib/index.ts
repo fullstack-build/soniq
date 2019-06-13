@@ -110,13 +110,7 @@ export class SchemaBuilder {
 
       // Combine all Schemas to a big one and add extensions from other modules
       const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
-      this.logger.info("===================");
-      this.logger.info(gQlSdlCombined);
-      this.logger.info("===================");
       this.gQlAst = AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
-      this.logger.info("===================");
-      this.logger.info(JSON.stringify(this.gQlAst, null, 2));
-      this.logger.info("===================");
       this.logger.trace("boot", "GraphQl schema parsed");
 
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
@@ -167,10 +161,7 @@ export class SchemaBuilder {
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
       this.dbSchemaBuilder.setPermissionSqlStatements(sql);
-      this.logger.trace("boot", "==============");
-      this.logger.trace("boot", sql);
       this.logger.trace("boot", "Permission SQL statements set");
-      this.logger.trace("boot", "==============");
 
       return this.dbMeta;
     } catch (err) {

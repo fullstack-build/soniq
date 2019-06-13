@@ -22,35 +22,30 @@ module.exports = {
   },
   Db: {
     appClient: {
-      database: process.env.DB_DATABASE,
-      host:     process.env.DB_HOST,
-      user:     process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      port:     process.env.DB_PORT
+      database: process.env.TYPEORM_DATABASE,
+      host:     process.env.TYPEORM_HOST,
+      user:     process.env.TYPEORM_USERNAME,
+      password: process.env.TYPEORM_PASSWORD,
+      port:     process.env.TYPEORM_PORT
     },
     general: {
-      database: process.env.DB_DATABASE,
-      host:     process.env.DB_HOST,
-      user:     process.env.DB_GENERAL_USER,
-      password: process.env.DB_GENERAL_PASSWORD,
-      port:     process.env.DB_PORT,
+      database: process.env.TYPEORM_DATABASE,
+      host:     process.env.TYPEORM_HOST,
+      user:     process.env.TYPEORM_USERNAME,
+      password: process.env.TYPEORM_PASSWORD,
+      port:     process.env.TYPEORM_PORT,
       totalMax: 20
     },
     orm: {
       connection: {
-        "type": "postgres",
-        "host": "localhost",
-        "port": 5432,
-        "username": "ormuser",
-        "password": "orm",
-        "database": "OrmTest",
-        "synchronize": true,
-        "logging": true,
-        "entities": ["/models/*.ts"],
-        // "migrations": ["/migration/**/*.ts"],
-        "cli": {
-          "migrationsDir": "migration"
-        }
+        "type":         process.env.TYPEORM_CONNECTION,
+        "host":         process.env.TYPEORM_HOST,
+        "port":         process.env.TYPEORM_PORT,
+        "username":     process.env.TYPEORM_USERNAME,
+        "password":     process.env.TYPEORM_PASSWORD,
+        "database":     process.env.TYPEORM_DATABASE,
+        "synchronize":  process.env.TYPEORM_SYNCHRONIZE === "true",
+        "logging":      process.env.TYPEORM_LOGGING === "true"
       },
     }
   },
@@ -59,11 +54,11 @@ module.exports = {
   },
   Events: {
     pgClient: {
-      database: process.env.DB_DATABASE,
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT
+      database: process.env.TYPEORM_DATABASE,
+      host:     process.env.TYPEORM_HOST,
+      user:     process.env.TYPEORM_USERNAME,
+      password: process.env.TYPEORM_PASSWORD,
+      port:     process.env.TYPEORM_PORT
     }
   },
   SchemaBuilder: {
