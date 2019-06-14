@@ -1,1 +1,0 @@
-DELETE FROM "_meta"."plv8_js_modules" WHERE "module" = 'rfc6902';
