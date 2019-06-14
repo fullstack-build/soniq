@@ -1,7 +1,7 @@
-// import * as typeorm from "typeorm";
 import * as _ from "lodash";
-import { IModelMeta, IEntityMeta, IColumnMeta, TColumnOptions } from "./types";
+import checkAndAdjustColumnOptions from "./check-and-adjust-column-options";
 import { generateSdl } from "./generateSdl";
+import { IModelMeta, IEntityMeta, IColumnMeta, TColumnOptions } from "./types";
 
 export { TColumnOptions } from "./types";
 
@@ -63,16 +63,16 @@ export function createColumnMeta(entityName: string, columnName: string, columnO
   if (entitiyMeta.columns[columnName] != null) throw new Error(`orm.column.already.exists: ${entityName}.${columnName}`);
   entitiyMeta.columns[columnName] = {
     name: columnName,
-    columnOptions,
+    columnOptions: { name: columnName, ...columnOptions },
     directives,
     synchronized: false
   };
   return entitiyMeta.columns[columnName];
 }
 
-export function getColumnOptions(entityName: string, columnName: string): TColumnOptions {
+export function getFinalColumnOptions(entityName: string, columnName: string): TColumnOptions {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
-  return { ...columnMeta.columnOptions };
+  return checkAndAdjustColumnOptions(columnMeta.columnOptions);
 }
 
 export function addColumnDirective(entityName: string, columnName: string, directive: string): void {

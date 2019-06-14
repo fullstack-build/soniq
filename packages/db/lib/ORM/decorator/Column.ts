@@ -7,7 +7,7 @@ export default function Column(columnOptions: ModelMeta.TColumnOptions) {
     const entityName = target.constructor.name;
     ModelMeta.addColumnOptions(entityName, columnName, columnOptions);
 
-    const typeormDecorator = typeorm.Column(ModelMeta.getColumnOptions(entityName, columnName));
+    const typeormDecorator = typeorm.Column(ModelMeta.getFinalColumnOptions(entityName, columnName));
     typeormDecorator(target, columnName);
     ModelMeta.setColumnSynchronizedTrue(entityName, columnName);
   };

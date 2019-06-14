@@ -10,6 +10,14 @@ export enum Size {
   large
 }
 
+export enum Gender {
+  male,
+  female,
+  diverse
+}
+
+console.log(Object.entries(Gender));
+
 @Entity()
 export default class User extends typeorm.BaseEntity {
   @PrimaryGeneratedColumn()
@@ -27,6 +35,9 @@ export default class User extends typeorm.BaseEntity {
   @OneToMany((type) => Task, task => task.user)
   public tasks: Task[];
 
-  @Column({ enum: Size, enumName: "Size" })
+  @Column({ enum: Size, enumName: "Size", nullable: true })
   public size?: Size;
+
+  @Column({ enum: Gender, enumName: "Gender", gqlType: "String", type: "integer", nullable: true })
+  public gender?: Gender;
 }
