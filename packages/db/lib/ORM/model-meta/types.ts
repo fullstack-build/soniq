@@ -1,4 +1,4 @@
-import { ColumnOptions } from "typeorm";
+import { ColumnOptions, EntityOptions } from "typeorm";
 
 export interface IModelMeta {
   entities: {
@@ -10,14 +10,16 @@ export interface IModelMeta {
 }
 
 export interface IEntityMeta {
-  name?: string;
-  columns?: {
+  name: string;
+  columns: {
     [columnName: string]: IColumnMeta;
   };
-  isTypeormEntity?: boolean;
-  decoratorTarget?: () => void;
-  synchronized?: boolean;
+  directives: string[];
+  entityOptions: TEntityOptions;
+  synchronized: boolean;
 }
+
+export type TEntityOptions = EntityOptions;
 
 export interface IColumnMeta {
   name: string;

@@ -21,8 +21,8 @@ function generateEnumsSdl(enumMetas: IEnumMeta[]): string {
 function generateTypesSdl(entityMetas: IEntityMeta[]): string {
   const sdlLines = [];
 
-  entityMetas.forEach(({ name, columns: fields }) => {
-    sdlLines.push(`type ${name} @table {`);
+  entityMetas.forEach(({ name, columns: fields, directives }) => {
+    sdlLines.push(`type ${name} ${directives.join(" ")} {`);
     Object.values(fields).forEach((field) => sdlLines.push(generateFieldSdl(name, field)));
     sdlLines.push("}\n");
   });
