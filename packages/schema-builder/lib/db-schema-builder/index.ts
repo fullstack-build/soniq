@@ -255,11 +255,11 @@ export class DbSchemaBuilder {
         this.logger.trace("migration.begin");
         await dbClient.query("BEGIN");
 
-        // // run migration sql
-        // for (const sql of Object.values(migrationSqlStatements)) {
-        //   this.logger.trace("migration.sql.statement", sql);
-        //   await dbClient.query(sql);
-        // }
+        // run migration sql
+        for (const sql of Object.values(migrationSqlStatements)) {
+          this.logger.trace("migration.sql.statement", sql);
+          await dbClient.query(sql);
+        }
 
         // create views based on DB
         for (const sql of Object.values(viewsSqlStatements)) {
@@ -268,12 +268,13 @@ export class DbSchemaBuilder {
           this.logger.trace("migration.view.sql.statement", thisSql);
           await dbClient.query(thisSql);
         }
-        // // current framework db version
-        // const dbVersion: string = (await dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0].value;
 
-        // // last step, save final dbMeta in _meta
-        // this.logger.trace("migration.state.saved");
-        // await dbClient.query('INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)', [dbVersion, toDbMeta]);
+        // current framework db version
+        const dbVersion: string = (await dbClient.query("SELECT value FROM _meta.info WHERE key = 'version';")).rows[0].value;
+
+        // last step, save final dbMeta in _meta
+        this.logger.trace("migration.state.saved");
+        await dbClient.query('INSERT INTO "_meta"."migrations"(version, state) VALUES($1,$2)', [dbVersion, toDbMeta]);
 
         // commit
         this.logger.trace("migration.commit");

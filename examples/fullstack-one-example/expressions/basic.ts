@@ -20,7 +20,7 @@ export = [
     gqlReturnType: "ID",
     requiresAuth: true,
     generate: (context, params): string => {
-      return `_auth.current_user_id()`;
+      return `_meta.current_user_id()`;
     }
   },
   {
