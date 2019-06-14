@@ -1,13 +1,13 @@
 {
   "name": "orm-example",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
     "node": ">=10",
     "npm": ">=6"
   },
-  "main": "index2.ts",
+  "main": "index.ts",
   "scripts": {
     "start": "ts-node .",
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
@@ -40,13 +40,13 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.12",
-    "@fullstack-one/auto-migrate": "^0.5.12",
-    "@fullstack-one/db": "^0.5.9",
+    "@fullstack-one/auth": "^0.5.13",
+    "@fullstack-one/auto-migrate": "^0.5.13",
+    "@fullstack-one/db": "^0.5.13",
     "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/graphql": "^0.5.12",
+    "@fullstack-one/graphql": "^0.5.13",
     "dotenv": "^4.0.0",
-    "fullstack-one": "^0.5.5",
+    "fullstack-one": "^0.5.13",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.2.18"
   }
