@@ -1,4 +1,4 @@
-export { createColumnDecorator, createColumnDecoratorFactory } from "./decoratorFactory";
+export { createColumnDecorator, createColumnDecoratorFactory } from "./decoratorFactoryColumn";
 
 export { default as Entity } from "./Entity";
 export { default as Column } from "./Column";

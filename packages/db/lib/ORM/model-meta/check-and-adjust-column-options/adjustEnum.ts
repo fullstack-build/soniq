@@ -1,7 +1,7 @@
-import { ILogger } from "@fullstack-one/logger";
+import logger from "../logger";
 import { TColumnOptions } from "../types";
 
-export default function adjustEnum(columnOptions: TColumnOptions, logger: ILogger): void {
+export default function adjustEnum(columnOptions: TColumnOptions): void {
   if (columnOptions.enum != null && columnOptions.enumName != null) {
     if (columnOptions.type !== "enum" && columnOptions.type != null) {
       logger.warn(

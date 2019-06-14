@@ -1,9 +1,9 @@
 import * as _ from "lodash";
 import checkAndAdjustColumnOptions from "./check-and-adjust-column-options";
 import { generateSdl } from "./generateSdl";
-import { IModelMeta, IEntityMeta, IColumnMeta, TColumnOptions } from "./types";
+import { IModelMeta, IEntityMeta, TEntityOptions, IColumnMeta, TColumnOptions } from "./types";
 
-export { TColumnOptions } from "./types";
+export { TEntityOptions, TColumnOptions } from "./types";
 
 const modelMeta: IModelMeta = {
   entities: {},
@@ -31,19 +31,31 @@ function createEntityMetaIfNotExists(entityName: string): IEntityMeta {
     modelMeta.entities[entityName] = {
       name: entityName,
       columns: {},
-      synchronized: true
+      directives: [],
+      entityOptions: {},
+      synchronized: false
     };
   }
   return modelMeta.entities[entityName];
 }
 
-export function enhanceEntityMeta(entityName: string, entityMeta: IEntityMeta): void {
-  const currentEntityMeta = createEntityMetaIfNotExists(entityName);
-  modelMeta.entities[entityName] = { name: entityName, ...currentEntityMeta, ...entityMeta };
-}
-
 export function addEntityMeta(entityName: string): void {
   createEntityMetaIfNotExists(entityName);
+}
+
+export function addEntityDirective(entityName: string, directive: string): void {
+  const entityMeta = createEntityMetaIfNotExists(entityName);
+  entityMeta.directives.push(directive);
+}
+
+export function addEntityOptions(entityName: string, entityOptions: TEntityOptions): void {
+  const entityMeta = createEntityMetaIfNotExists(entityName);
+  entityMeta.entityOptions = { ...entityMeta.entityOptions, ...entityOptions };
+}
+
+export function getFinalEntityOptions(entityName: string): TEntityOptions {
+  const entityMeta = createEntityMetaIfNotExists(entityName);
+  return { schema: "public", ...entityMeta.entityOptions };
 }
 
 export function setEntitySynchronizedTrue(entityName: string): void {
