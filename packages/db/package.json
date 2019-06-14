@@ -26,8 +26,12 @@
     "@fullstack-one/events": "^0.5.9",
     "@fullstack-one/graceful-shutdown": "^0.5.9",
     "@fullstack-one/logger": "^0.5.5",
+    "@types/lodash": "^4.14.134",
     "deepmerge": "^2.0.1",
-    "pg": "^7.5.0"
+    "lodash": "^4.17.11",
+    "pg": "^7.11.0",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.2.18"
   },
   "devDependencies": {
     "@types/pg": "^7.4.7",

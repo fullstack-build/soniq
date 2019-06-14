@@ -62,14 +62,6 @@ export class SqlObjFromMigrationObject {
     // create tables
     if (sqlMigrationObj.schemas != null) {
       Object.values(sqlMigrationObj.schemas).forEach((schemaSqlObj) => {
-        // drop all updatable views
-        if (schemaSqlObj.views != null) {
-          Object.values(schemaSqlObj.views).forEach((viewSqlObj) => {
-            // add view down statements
-            _addStatemensArrayToSqlStatements(viewSqlObj.sql.down);
-          });
-        }
-
         // no need to create schemas, they will be generated with tables
         // create tables
         if (schemaSqlObj.tables != null) {
@@ -109,14 +101,6 @@ export class SqlObjFromMigrationObject {
 
             // add table down statements
             _addStatemensArrayToSqlStatements(tableSqlObj.sql.down);
-          });
-        }
-
-        // create all updatable views
-        if (schemaSqlObj.views != null) {
-          Object.values(schemaSqlObj.views).forEach((viewSqlObj) => {
-            // add view up statements
-            _addStatemensArrayToSqlStatements(viewSqlObj.sql.up);
           });
         }
       });
@@ -299,8 +283,6 @@ export class SqlObjFromMigrationObject {
     const thisSqlObj = (sqlMigrationObj.schemas[schemaName] = sqlMigrationObj.schemas[schemaName] || this.createEmptySqlObj(schemaName));
     // add tables to schema
     thisSqlObj.tables = thisSqlObj.tables || {};
-    // add views to schema
-    thisSqlObj.views = thisSqlObj.views || {};
 
     const thisSql = thisSqlObj.sql;
 
@@ -326,13 +308,10 @@ export class SqlObjFromMigrationObject {
     // create sql object if it doesn't exist
     const thisSqlObj = (sqlMigrationObj.schemas[schemaName].tables[tableName] =
       sqlMigrationObj.schemas[schemaName].tables[tableName] || this.createEmptySqlObj(tableName));
-    const thisSqlViewObj = (sqlMigrationObj.schemas[schemaName].views[tableName] =
-      sqlMigrationObj.schemas[schemaName].views[tableName] || this.createEmptySqlObj(tableName));
 
     // add columns to table
     thisSqlObj.columns = thisSqlObj.columns || {};
     const thisSql = thisSqlObj.sql;
-    const thisSqlView = thisSqlViewObj.sql;
 
     // node
     const { action, node } = this.splitActionFromNode(tableDefinition);
@@ -341,13 +320,9 @@ export class SqlObjFromMigrationObject {
     // (in case it got removed on dbMeta merge)
     const tableNameUp = node.name || tableName;
     const tableNameDown = action.rename ? node.oldName : tableNameUp;
-    const viewNameUp = `A${tableNameUp}`;
-    const viewNameDown = `A${tableNameDown}`;
 
     const tableNameWithSchemaUp = `"${schemaName}"."${tableNameUp}"`;
-    const viewTableNameWithSchemaUp = `"${schemaName}"."${viewNameUp}"`;
     const tableNameWithSchemaDown = `"${schemaName}"."${tableNameDown}"`;
-    const viewTableNameWithSchemaDown = `"${schemaName}"."${viewNameDown}"`;
 
     // only if table needs to be created
     if (tableDefinition.name != null) {
@@ -382,7 +357,6 @@ export class SqlObjFromMigrationObject {
         }
       }
 
-      // update views on any table or nested column change
       let tableAndColumnActions = action;
       // iterate columns and merge all actions into one
       Object.values(node.columns).forEach((column: any) => {
@@ -392,16 +366,6 @@ export class SqlObjFromMigrationObject {
           tableAndColumnActions = { ...tableAndColumnActions, ...columnAction };
         }
       });
-      // recreate views for every table and/or column change
-      if (tableAndColumnActions.add || tableAndColumnActions.remove || tableAndColumnActions.rename || tableAndColumnActions.change) {
-        // create updatbale views for all tables, no matter the action
-        // -> even a column change could result in a view change
-        // create direct access updatable view / on the down run, after the table was created
-        thisSqlView.up.push(`CREATE OR REPLACE VIEW ${viewTableNameWithSchemaUp} AS
-                          SELECT * FROM ${tableNameWithSchemaUp} WHERE _auth.is_admin() = true WITH LOCAL CHECK OPTION;`);
-        // drop direct access updatable view
-        thisSqlView.down.push(`DROP VIEW IF EXISTS ${viewTableNameWithSchemaDown};`);
-      }
     }
 
     // iterate columns
