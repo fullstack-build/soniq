@@ -10,6 +10,8 @@ const modelMeta: IModelMeta = {
   enums: {}
 };
 
+// ============= Enum
+
 function registerEnum(name: string, enumObj: object): void {
   const values: string[] = Object.entries(enumObj)
     .filter(([key, value]) => typeof value === "string")

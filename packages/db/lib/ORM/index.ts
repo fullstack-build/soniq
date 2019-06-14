@@ -1,6 +1,9 @@
 import { types as PgTypes } from "pg";
 // connection
-import { createConnection, Connection as TypeOrmConnection, ConnectionOptions } from "typeorm";
+import { createConnection, Connection as TypeOrmConnection, ConnectionOptions, getConnectionManager, MigrationInterface } from "typeorm";
+
+import * as dbMigrationsObject from "../migrations";
+
 // migrations
 export { MigrationInterface, QueryRunner } from "typeorm";
 
@@ -33,6 +36,7 @@ export class ORM {
   private knownNodeIds: string[] = [];
   private connectedNodesTimer: NodeJS.Timer;
   private readonly dbAppClient: DbAppClient;
+  private readonly migrations: Array<new () => MigrationInterface> = [];
   private readonly entities: Array<new () => any> = [];
   public typeOrmConnection: TypeOrmConnection;
 
@@ -54,6 +58,8 @@ export class ORM {
     this.applicationName = `${this.applicationNamePrefix}${env.nodeId}`;
     this.knownNodeIds = [env.nodeId];
 
+    this.addMigrations(Object.values(dbMigrationsObject));
+
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
@@ -73,16 +79,12 @@ export class ORM {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
       entities: this.entities, // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
-      migrations: (this.config.connection.migrations || []).map((migration: string) =>
-        typeof migration === "string" ? `${path}${migration}` : migration
-      ),
-      subscribers: (this.config.connection.subscribers || []).map((subscriber: string) =>
-        typeof subscriber === "string" ? `${path}${subscriber}` : subscriber
-      )
+      migrations: this.migrations
     };
-    // add package migrations
-    connectionOptions.migrations.push(`${__dirname}../migrations`);
     this.typeOrmConnection = await createConnection(connectionOptions);
+    this.logger.debug("db.orm.migrations.start");
+    await this.typeOrmConnection.runMigrations({ transaction: true });
+    this.logger.debug("db.orm.migrations.end");
 
     this.typeOrmConnection.driver.afterConnect().then(() => {
       this.eventEmitter.emit("db.orm.pool.connect.success", this.applicationName);
@@ -170,6 +172,14 @@ export class ORM {
 
   public addEntity(entity: new () => void): void {
     this.entities.push(entity);
+  }
+
+  public addMigration(migration: new () => MigrationInterface): void {
+    this.migrations.push(migration);
+  }
+
+  public addMigrations(migrations: Array<new () => MigrationInterface>): void {
+    migrations.forEach((migration) => this.migrations.push(migration));
   }
 
   public get graphQlSDL(): string {
