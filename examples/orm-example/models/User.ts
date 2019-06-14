@@ -7,7 +7,8 @@ import Task from "./Task";
 export enum Size {
   small,
   medium,
-  large
+  large,
+  superLarge
 }
 
 export enum Gender {
@@ -15,8 +16,6 @@ export enum Gender {
   female,
   diverse
 }
-
-console.log(Object.entries(Gender));
 
 @Entity()
 export default class User extends typeorm.BaseEntity {
