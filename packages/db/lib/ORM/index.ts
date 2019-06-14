@@ -78,7 +78,10 @@ export class ORM {
     const connectionOptions: ConnectionOptions = {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
-      entities: this.entities, // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+      entities: [
+        ...(this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+        ...this.entities
+      ],
       migrations: this.migrations
     };
     this.typeOrmConnection = await createConnection(connectionOptions);
