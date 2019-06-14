@@ -15,7 +15,8 @@ module.exports = {
       host:     process.env.DB_HOST,
       user:     process.env.DB_GENERAL_USER,
       password: process.env.DB_GENERAL_PASSWORD,
-      port:     process.env.DB_PORT
+      port:     process.env.DB_PORT,
+      totalMax: 20
     }
   },
   Queue: {
