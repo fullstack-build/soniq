@@ -28,20 +28,20 @@ module.exports = {
   },
   orm: {
     connection: {
-      "type":         "postgres",
-      "host":         null,
-      "port":         null,
-      "username":     null,
-      "password":     null,
-      "database":     null,
-      "synchronize":  false,
-      "logging":      false
+      type:         "postgres",
+      host:         null,
+      port:         null,
+      username:     null,
+      password:     null,
+      database:     null,
+      synchronize:  false,
+      logging:      false
     },
     pool: {
-      "min":                      3,
-      "max":                      5,
-      "globalMax":                100,
-      "updateClientListInterval": 10 * 1000
+      min:                      3,
+      max:                      5,
+      globalMax:                100,
+      updateClientListInterval: 20 * 1000
     }
 
   }
