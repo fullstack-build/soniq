@@ -1,5 +1,6 @@
 import { types as PgTypes } from "pg";
-import { createConnection, Connection as TypeOrmConnection, ConnectionOptions, getConnectionManager, MigrationInterface } from "typeorm";
+import { createConnection, Connection as TypeOrmConnection, MigrationInterface, getConnection } from "typeorm";
+import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
 import * as dbMigrationsObject from "../migrations";
 import NodeJsClient from "../model/NodeJsClient";
@@ -22,6 +23,8 @@ import { EventEmitter } from "@fullstack-one/events";
 import getClientManager, { IClientManager } from "./getClientManager";
 import { IOrmConfig } from "./types";
 import * as modelMeta from "./model-meta";
+import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
+import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
 
 @Service()
 export class ORM {
@@ -32,7 +35,6 @@ export class ORM {
   private readonly clientManager: IClientManager;
   private readonly migrations: Array<new () => MigrationInterface> = [];
   private readonly entities: Array<new () => any> = [];
-  public connection: TypeOrmConnection;
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
@@ -48,7 +50,7 @@ export class ORM {
     this.applicationNamePrefix = `${environment.namespace}_orm_`;
     this.applicationName = `${this.applicationNamePrefix}${environment.nodeId}`;
 
-    this.clientManager = getClientManager(environment.nodeId, 10000, this.config.pool.updateClientListInterval, this.adjustORMPoolSize.bind(this));
+    this.clientManager = getClientManager(environment.nodeId, this.adjustORMPoolSize.bind(this));
 
     this.addMigrations(Object.values(dbMigrationsObject));
     this.addEntity(NodeJsClient);
@@ -59,7 +61,7 @@ export class ORM {
 
   private async boot(): Promise<void> {
     await this.runMigrations();
-    await this.createDefaultConnection(this.config.pool.globalMax);
+    await this.createConnection(this.config.pool.globalMax);
     await this.clientManager.start();
     await this.eventEmitter.emit("db.orm.pool.connect.success", this.applicationName);
   }
@@ -80,15 +82,15 @@ export class ORM {
     }
   }
 
-  private async createDefaultConnection(max: number = 2): Promise<void> {
-    const connectionOptions: ConnectionOptions = {
+  private async createConnection(max: number = 2): Promise<void> {
+    const connectionOptions: PostgresConnectionOptions = {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
       entities: this.entities // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
     };
-    this.connection = await createConnection(connectionOptions);
+    await createConnection(connectionOptions);
 
-    await this.connection.driver.afterConnect();
+    await getConnection().driver.afterConnect();
     this.logger.debug("db.orm.pool.connect.success", `TypeORM pool created (min: ${connectionOptions.extra.min} / max: ${max})`);
   }
 
@@ -99,9 +101,13 @@ export class ORM {
         `and a global maximum of ${this.config.pool.globalMax}.`
     );
 
-    if (this.connection != null) await this.connection.close();
-    this.logger.debug("Old postgres ORM pool ended");
-    await this.createDefaultConnection(connectionsPerInstance);
+    if (getConnection() != null) {
+      gracefullyRemoveConnection(getConnection()).then(() => {
+        this.logger.debug("db.orm.old.connection.removed");
+      });
+    }
+
+    await this.createConnection(connectionsPerInstance);
   }
 
   private async end(): Promise<void> {
@@ -111,7 +117,7 @@ export class ORM {
     await this.clientManager.stop();
 
     try {
-      await this.connection.close();
+      await getConnection().close();
 
       this.logger.trace("Postgres ORM pool ended successfully");
       this.eventEmitter.emit("db.orm.pool.end.success", this.applicationName);
@@ -136,5 +142,13 @@ export class ORM {
 
   public get graphQlSDL(): string {
     return modelMeta.toSdl();
+  }
+
+  public getConnection(): TypeOrmConnection {
+    return getConnection();
+  }
+
+  public createQueryRunner(): PostgresQueryRunner {
+    return getConnection().createQueryRunner() as PostgresQueryRunner;
   }
 }

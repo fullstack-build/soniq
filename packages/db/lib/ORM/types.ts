@@ -1,7 +1,7 @@
-import { ConnectionOptions } from "typeorm";
+import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
 export interface IOrmConfig {
-  connection: ConnectionOptions;
+  connection: PostgresConnectionOptions;
   pool: {
     min: number;
     max: number;
