@@ -1,6 +1,4 @@
-import "reflect-metadata";
-import * as typeorm from "typeorm";
-import { Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
 import Photo from "./Photo";
 import Task from "./Task";
 
@@ -18,7 +16,7 @@ export enum Gender {
 }
 
 @Entity()
-export default class User extends typeorm.BaseEntity {
+export default class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
@@ -31,7 +29,7 @@ export default class User extends typeorm.BaseEntity {
   @OneToOneJoinColumn((type) => Photo, { nullable: true })
   public photo?: Photo;
 
-  @OneToMany((type) => Task, task => task.user)
+  @OneToMany((type) => Task, (task) => task.user)
   public tasks: Task[];
 
   @Column({ enum: Size, enumName: "Size", nullable: true })
