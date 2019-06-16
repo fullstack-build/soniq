@@ -149,7 +149,14 @@ export class Auth {
       this.privacyAgreementAcceptance.validateRegisterArguments(args);
 
       // tslint:disable-next-line:prettier
-      const loginData = await this.authConnector.createUserAuthentication(dbClient, hookInfo.entityId, args.isActive || true, args.loginProviderSets, args.modifyProviderSets, args.authFactorCreationTokens);
+      const loginData = await this.authConnector.createUserAuthentication(
+        dbClient,
+        hookInfo.entityId,
+        args.isActive || true,
+        args.loginProviderSets,
+        args.modifyProviderSets,
+        args.authFactorCreationTokens
+      );
       hookInfo.loginData = loginData;
     }
   }
@@ -209,7 +216,14 @@ export class Auth {
       },
       "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params) => {
         // tslint:disable-next-line:prettier
-        await this.authConnector.modifyAuthFactors(args.authFactorProofTokens, args.isActive, args.loginProviderSets, args.modifyProviderSets, args.authFactorCreationTokens, args.removeAuthFactorIds);
+        await this.authConnector.modifyAuthFactors(
+          args.authFactorProofTokens,
+          args.isActive,
+          args.loginProviderSets,
+          args.modifyProviderSets,
+          args.authFactorCreationTokens,
+          args.removeAuthFactorIds
+        );
         return true;
       },
       "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params) => {

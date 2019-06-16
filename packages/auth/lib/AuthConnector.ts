@@ -65,7 +65,7 @@ export class AuthConnector {
       throw new Error("Invalid AuthFactorProofToken. 'issuedAt' is missing. Possible EncryptionKey leak!");
     }
     // tslint:disable-next-line:prettier
-    if ( ( authFactorProof.issuedAt + ( authFactorProof.maxAgeInSeconds * 1000 ) ) < Date.now() ) {
+    if (authFactorProof.issuedAt + authFactorProof.maxAgeInSeconds * 1000 < Date.now()) {
       throw new Error("Expired AuthFactorProofToken.");
     }
 
@@ -121,7 +121,7 @@ export class AuthConnector {
       throw new Error("Invalid UserIdentifier. 'issuedAt' is missing.");
     }
     // tslint:disable-next-line:prettier
-    if ( ( userIdentifierObject.issuedAt + ( this.authConfig.userIdentifierMaxAgeInSeconds * 1000 ) ) < Date.now() ) {
+    if (userIdentifierObject.issuedAt + this.authConfig.userIdentifierMaxAgeInSeconds * 1000 < Date.now()) {
       throw new Error("Expired UserIdentifier.");
     }
 
@@ -140,7 +140,14 @@ export class AuthConnector {
   }
 
   // tslint:disable-next-line:prettier
-  public async createUserAuthentication(dbClient: PgClient, userId: string, isActive: boolean, loginProviderSets: string[], modifyProviderSets: string[], authFactorCreationTokens: string[]): Promise<ILoginData> {
+  public async createUserAuthentication(
+    dbClient: PgClient,
+    userId: string,
+    isActive: boolean,
+    loginProviderSets: string[],
+    modifyProviderSets: string[],
+    authFactorCreationTokens: string[]
+  ): Promise<ILoginData> {
     try {
       const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this));
 
@@ -320,11 +327,19 @@ export class AuthConnector {
   }
 
   // tslint:disable-next-line:prettier
-  public async modifyAuthFactors(authFactorProofTokens: string[], isActive: boolean | null, loginProviderSets: string[] | null, modifyProviderSets: string[] | null, authFactorCreationTokens: string[] | null, removeAuthFactorIds: string[] | null): Promise<void> {
+  public async modifyAuthFactors(
+    authFactorProofTokens: string[],
+    isActive: boolean | null,
+    loginProviderSets: string[] | null,
+    modifyProviderSets: string[] | null,
+    authFactorCreationTokens: string[] | null,
+    removeAuthFactorIds: string[] | null
+  ): Promise<void> {
     try {
       const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorProofToken.bind(this));
       // tslint:disable-next-line:prettier
-      const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens != null ? authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this)) : [];
+      const authFactorCreations: IAuthFactorCreation[] =
+        authFactorCreationTokens != null ? authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this)) : [];
 
       const values = [];
       values.push(JSON.stringify(authFactorProofs));

@@ -198,7 +198,9 @@ export class FileStorage {
         }
 
         // tslint:disable-next-line:prettier
-        const result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
+        const result = await this.auth
+          .getAuthQueryHelper()
+          .userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
 
         const fName = new FileName({
           id: result.rows[0].fileId,
@@ -222,7 +224,9 @@ export class FileStorage {
         const fName = new FileName(args.fileName);
 
         // tslint:disable-next-line:prettier
-        const result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
+        const result = await this.auth
+          .getAuthQueryHelper()
+          .userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
         const type = result.rows[0].type;
         let stat = null;
 
