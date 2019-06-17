@@ -45,7 +45,6 @@
     "@fullstack-one/auth": "^0.5.12",
     "@fullstack-one/auth-fb-token": "^0.5.12",
     "@fullstack-one/auto-migrate": "^0.5.12",
-    "@fullstack-one/cli": "^0.5.12",
     "@fullstack-one/db": "^0.5.9",
     "@fullstack-one/di": "^0.5.2",
     "@fullstack-one/events": "^0.5.9",
