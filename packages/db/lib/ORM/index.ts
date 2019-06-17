@@ -1,30 +1,28 @@
 import { types as PgTypes } from "pg";
-import { createConnection, Connection as TypeOrmConnection, MigrationInterface, getConnection } from "typeorm";
+import * as typeorm from "typeorm";
+import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
-
-import * as dbMigrationsObject from "../migrations";
-import NodeJsClient from "../model/NodeJsClient";
-
-export { MigrationInterface, QueryRunner } from "typeorm";
-
-export { BaseEntity } from "./BaseEntity";
-export * from "./decorator";
-
-// stop pg from parsing dates and timestamps without timezone
-PgTypes.setTypeParser(1114, (str) => str);
-PgTypes.setTypeParser(1082, (str) => str);
-
-import { Service, Inject, Container } from "@fullstack-one/di";
+import { Service, Inject } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
+import * as dbMigrationsObject from "../migrations";
+import NodeJsClient from "../model/NodeJsClient";
 import getClientManager, { IClientManager } from "./getClientManager";
-import { IOrmConfig } from "./types";
-import * as modelMeta from "./model-meta";
-import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
+import * as modelMeta from "./model-meta";
+import { IOrmConfig } from "./types";
+
+export { Connection, ConnectionManager, MigrationInterface, QueryBuilder } from "typeorm";
+export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
+export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
+export * from "./decorator";
+
+// stop pg from parsing dates and timestamps without timezone
+PgTypes.setTypeParser(1114, (str) => str);
+PgTypes.setTypeParser(1082, (str) => str);
 
 @Service()
 export class ORM {
@@ -33,7 +31,7 @@ export class ORM {
   private readonly applicationNamePrefix: string;
   private readonly applicationName: string;
   private readonly clientManager: IClientManager;
-  private readonly migrations: Array<new () => MigrationInterface> = [];
+  private readonly migrations: Array<new () => typeorm.MigrationInterface> = [];
   private readonly entities: Array<new () => any> = [];
 
   constructor(
@@ -69,7 +67,7 @@ export class ORM {
   private async runMigrations(): Promise<void> {
     try {
       this.logger.debug("db.orm.migrations.start");
-      const connection = await createConnection({
+      const connection = await typeorm.createConnection({
         ...this.config.connection,
         name: "migration",
         migrations: this.migrations
@@ -88,9 +86,9 @@ export class ORM {
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
       entities: this.entities // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
     };
-    await createConnection(connectionOptions);
+    await typeorm.createConnection(connectionOptions);
 
-    await getConnection().driver.afterConnect();
+    await typeorm.getConnection().driver.afterConnect();
     this.logger.debug("db.orm.pool.connect.success", `TypeORM pool created (min: ${connectionOptions.extra.min} / max: ${max})`);
   }
 
@@ -101,8 +99,8 @@ export class ORM {
         `and a global maximum of ${this.config.pool.globalMax}.`
     );
 
-    if (getConnection() != null) {
-      gracefullyRemoveConnection(getConnection()).then(() => {
+    if (typeorm.getConnection() != null) {
+      gracefullyRemoveConnection(typeorm.getConnection()).then(() => {
         this.logger.debug("db.orm.old.connection.removed");
       });
     }
@@ -117,7 +115,7 @@ export class ORM {
     await this.clientManager.stop();
 
     try {
-      await getConnection().close();
+      await typeorm.getConnection().close();
 
       this.logger.trace("Postgres ORM pool ended successfully");
       this.eventEmitter.emit("db.orm.pool.end.success", this.applicationName);
@@ -132,11 +130,11 @@ export class ORM {
     this.entities.push(entity);
   }
 
-  public addMigration(migration: new () => MigrationInterface): void {
+  public addMigration(migration: new () => typeorm.MigrationInterface): void {
     this.migrations.push(migration);
   }
 
-  public addMigrations(migrations: Array<new () => MigrationInterface>): void {
+  public addMigrations(migrations: Array<new () => typeorm.MigrationInterface>): void {
     migrations.forEach((migration) => this.migrations.push(migration));
   }
 
@@ -144,11 +142,11 @@ export class ORM {
     return modelMeta.toSdl();
   }
 
-  public getConnection(): TypeOrmConnection {
-    return getConnection();
+  public getConnection(): typeorm.Connection {
+    return typeorm.getConnection();
   }
 
   public createQueryRunner(): PostgresQueryRunner {
-    return getConnection().createQueryRunner() as PostgresQueryRunner;
+    return typeorm.getConnection().createQueryRunner() as PostgresQueryRunner;
   }
 }

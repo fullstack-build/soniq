@@ -1,6 +1,5 @@
 import "reflect-metadata";
-import * as typeorm from "typeorm";
-import { Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
 import Photo from "./Photo";
 import Task from "./Task";
 
@@ -18,7 +17,7 @@ export enum Gender {
 }
 
 @Entity()
-export default class User extends typeorm.BaseEntity {
+export default class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
