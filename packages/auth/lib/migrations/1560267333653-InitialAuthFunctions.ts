@@ -1,12 +1,12 @@
-import { MigrationInterface, QueryRunner } from "@fullstack-one/db";
 import { readFileSync, readdirSync } from "fs";
+import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
 export class InitialAuthFunctions1560267333653 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(loadAuthFunctionsSql());
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
     const selectResult = await queryRunner.query(`
       SELECT 'DROP FUNCTION IF EXISTS ' || ns.nspname || '.' || proname || '(' || oidvectortypes(proargtypes) || ');'
       FROM pg_proc INNER JOIN pg_namespace ns ON (pg_proc.pronamespace = ns.oid)

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from "@fullstack-one/db";
+import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
 export class InitialMetaAuth1560267369283 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS _meta."Auth" (
           key character varying PRIMARY KEY,
@@ -31,7 +31,7 @@ export class InitialMetaAuth1560267369283 implements MigrationInterface {
     `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(`DROP TABLE IF EXISTS _meta."Auth";`);
   }
 }

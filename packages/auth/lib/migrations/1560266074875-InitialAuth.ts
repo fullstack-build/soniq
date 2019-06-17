@@ -1,14 +1,14 @@
-import { MigrationInterface, QueryRunner } from "@fullstack-one/db";
 import { readFileSync } from "fs";
+import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
 export class InitialAuth1560266074875 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(loadAuthSchemaAndTablesSql("auth.schema", "up"));
     await queryRunner.query(loadAuthSchemaAndTablesSql("UserAuthentication.table", "up"));
     await queryRunner.query(loadAuthSchemaAndTablesSql("AuthFactor.table", "up"));
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(loadAuthSchemaAndTablesSql("AuthFactor.table", "down"));
     await queryRunner.query(loadAuthSchemaAndTablesSql("UserAuthentication.table", "down"));
     await queryRunner.query(loadAuthSchemaAndTablesSql("auth.schema", "down"));
