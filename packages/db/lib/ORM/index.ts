@@ -9,7 +9,6 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import * as dbMigrationsObject from "../migrations";
-import NodeJsClient from "../model/NodeJsClient";
 import getClientManager, { IClientManager } from "./getClientManager";
 import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
 import * as modelMeta from "./model-meta";
@@ -51,7 +50,6 @@ export class ORM {
     this.clientManager = getClientManager(environment.nodeId, this.adjustORMPoolSize.bind(this));
 
     this.addMigrations(Object.values(dbMigrationsObject));
-    this.addEntity(NodeJsClient);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));

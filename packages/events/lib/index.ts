@@ -1,5 +1,5 @@
 import { EventEmitter2 } from "eventemitter2";
-import { Client as PgClient, Notification } from "pg";
+import { Client as PgClient, Notification, ClientConfig } from "pg";
 import { Container, Service, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
@@ -23,12 +23,14 @@ export class EventEmitter {
   ) {
     this.config = config.registerConfig("Events", `${__dirname}/../config`);
     this.logger = loggerFactory.create(this.constructor.name);
-    this.eventEmitter = new EventEmitter2({ ...this.config.eventEmitter, wildcard: true });
-    this.pgClient = new PgClient(this.config.pgClient);
 
     const env: IEnvironment = Container.get("ENVIRONMENT");
     this.namespace = env.namespace;
     this.nodeId = env.nodeId;
+
+    this.eventEmitter = new EventEmitter2({ ...this.config.eventEmitter, wildcard: true });
+    const clientConfig = { ...this.config.pgClient, application_name: `${this.getPgClientApplicationNamePrefix()}_${this.nodeId}` };
+    this.pgClient = new PgClient(clientConfig as ClientConfig);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
@@ -74,6 +76,10 @@ export class EventEmitter {
       payload
     };
     await this.pgClient.query(`SELECT pg_notify('${this.namespace}', '${JSON.stringify(event)}')`);
+  }
+
+  public getPgClientApplicationNamePrefix(): string {
+    return `${this.namespace}_events`;
   }
 
   public on<TPayload>(eventName: string, callback: TEventListener<TPayload>) {
