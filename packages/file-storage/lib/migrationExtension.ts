@@ -29,21 +29,22 @@ registerDirectiveParser("files", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 
 // PG
 // query parser
-registerQueryParser(async (dbClient, dbMeta) => {
-  try {
-    const { rows } = await dbClient.pgClient.query('SELECT * FROM _meta."FileFields";');
+// TODO: Use queryRunner: PostgresQueryRunner instead of dbClient from ORM package
+// registerQueryParser(async (dbClient, dbMeta) => {
+//   try {
+//     const { rows } = await dbClient.pgClient.query('SELECT * FROM _meta."FileFields";');
 
-    rows.forEach((row) => {
-      const thisColumn = dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
-      thisColumn.extensions.isFileColumn = {
-        isActive: true,
-        types: JSON.stringify(row.types)
-      };
-    });
-  } catch (err) {
-    // ignore error in case settings -> not set up yet
-  }
-});
+//     rows.forEach((row) => {
+//       const thisColumn = dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];
+//       thisColumn.extensions.isFileColumn = {
+//         isActive: true,
+//         types: JSON.stringify(row.types)
+//       };
+//     });
+//   } catch (err) {
+//     // ignore error in case settings -> not set up yet
+//   }
+// });
 // trigger parser
 registerTriggerParser((trigger: any, dbMeta: IDbMeta, schemaName: string, tableName: string) => {
   // keep reference to current table

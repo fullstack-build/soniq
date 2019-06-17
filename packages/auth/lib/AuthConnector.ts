@@ -1,4 +1,4 @@
-import { PgClient } from "@fullstack-one/db";
+import { PgPoolClient } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
@@ -140,7 +140,7 @@ export class AuthConnector {
   }
 
   // tslint:disable-next-line:prettier
-  public async createUserAuthentication(dbClient: PgClient, userId: string, isActive: boolean, loginProviderSets: string[], modifyProviderSets: string[], authFactorCreationTokens: string[]): Promise<ILoginData> {
+  public async createUserAuthentication(dbClient: PgPoolClient, userId: string, isActive: boolean, loginProviderSets: string[], modifyProviderSets: string[], authFactorCreationTokens: string[]): Promise<ILoginData> {
     try {
       const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this));
 

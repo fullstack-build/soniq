@@ -1,13 +1,14 @@
 import { IDbMeta } from "../../IDbMeta";
-import { DbAppClient } from "@fullstack-one/db";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 
-const queryParser = [];
+export type TQueryParser = (queryRunner: PostgresQueryRunner, dbMeta: IDbMeta) => void;
 
-export function registerQueryParser(callback: (dbClient: DbAppClient, dbMeta: IDbMeta) => void): void {
-  queryParser.push(callback);
+const queryParsers: TQueryParser[] = [];
+
+export function registerQueryParser(queryParser: TQueryParser): void {
+  queryParsers.push(queryParser);
 }
 
-// return all registered parser
-export function getQueryParser(): any {
-  return queryParser;
+export function getQueryParser(): TQueryParser[] {
+  return queryParsers;
 }

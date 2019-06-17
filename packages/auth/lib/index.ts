@@ -1,5 +1,5 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { DbGeneralPool, ORM } from "@fullstack-one/db";
+import { DbGeneralPool, ORM, PgPoolClient } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
@@ -136,7 +136,7 @@ export class Auth {
     }
   }
 
-  private async preMutationCommitHook(dbClient, hookInfo) {
+  private async preMutationCommitHook(dbClient: PgPoolClient, hookInfo) {
     const mutation = hookInfo.mutationQuery.mutation;
 
     if (mutation.extensions.auth === "REGISTER_USER_MUTATION") {

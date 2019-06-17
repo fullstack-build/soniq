@@ -2,7 +2,7 @@ import * as deepmerge from "deepmerge";
 
 import { Service, Inject } from "@fullstack-one/di";
 import { IDbMeta, IDbRelation } from "../IDbMeta";
-import { DbAppClient } from "@fullstack-one/db";
+import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 
 // extended parser
 import { getQueryParser } from "./queryParser";
@@ -19,7 +19,7 @@ export class PgToDbMeta {
   // TODO: Eugene get schemas to ignore from a setting
   private readonly IGNORE_SCHEMAS = ["_graphql", "_versions", "pgboss", "_auth"];
 
-  private dbAppClient: DbAppClient;
+  private queryRunner: PostgresQueryRunner;
 
   private readonly dbMeta: IDbMeta = {
     version: 1.0,
@@ -28,14 +28,12 @@ export class PgToDbMeta {
     relations: {}
   };
 
-  constructor(@Inject((type) => DbAppClient) dbAppClient?) {
-    this.dbAppClient = dbAppClient;
-  }
+  constructor(@Inject((type) => ORM) private readonly orm: ORM) {}
 
   // PRIVATE METHODS
   private async iterateAndAddSchemas(): Promise<void> {
     try {
-      const { rows } = await this.dbAppClient.pgClient.query(
+      const { rows } = await this.queryRunner.query(
         `SELECT
           schema_name
         FROM
@@ -74,7 +72,7 @@ export class PgToDbMeta {
 
   private async iterateEnumTypes(schemaName): Promise<void> {
     // iterate ENUM Types with columns its used in
-    const { rows } = await this.dbAppClient.pgClient.query(
+    const { rows } = await this.queryRunner.query(
       `SELECT
                           n.nspname as enum_schema,
                           t.typname as enum_name,
@@ -130,7 +128,7 @@ export class PgToDbMeta {
 
   private async iterateAndAddTables(schemaName): Promise<void> {
     try {
-      const { rows } = await this.dbAppClient.pgClient.query(
+      const { rows } = await this.queryRunner.query(
         `SELECT
             table_name
         FROM
@@ -183,7 +181,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     try {
-      const { rows } = await this.dbAppClient.pgClient.query(
+      const { rows } = await this.queryRunner.query(
         `SELECT
         c.column_name AS column_name,
         c.column_default AS column_default,
@@ -288,7 +286,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
-    const { rows } = await this.dbAppClient.pgClient.query(
+    const { rows } = await this.queryRunner.query(
       `SELECT
         tc.constraint_type    AS constraint_type,
         tc.constraint_name    AS constraint_name,
@@ -341,10 +339,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate indexes
-    const { rows } = await this.dbAppClient.pgClient.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [
-      schemaName,
-      tableName
-    ]);
+    const { rows } = await this.queryRunner.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [schemaName, tableName]);
 
     Object.values(rows).forEach((index: any) => {
       // check if index is a known constraint – ignore them
@@ -443,7 +438,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // load triggers for table
-    const { rows } = await this.dbAppClient.pgClient.query(
+    const { rows } = await this.queryRunner.query(
       `SELECT DISTINCT
                     trigger_name,
                     event_object_schema,
@@ -570,15 +565,17 @@ export class PgToDbMeta {
   }
 
   public async getPgDbMeta(): Promise<IDbMeta> {
+    this.queryRunner = this.orm.createQueryRunner();
     try {
+      await this.queryRunner.connect();
       // start with schemas
       await this.iterateAndAddSchemas();
 
       // run extensions parser
       if (getQueryParser() != null) {
         const parserPromises = [];
-        Object.values(getQueryParser()).forEach(async (parser: (dbClient: DbAppClient, dbMeta: IDbMeta) => void) => {
-          parserPromises.push(parser(this.dbAppClient, this.dbMeta));
+        Object.values(getQueryParser()).forEach(async (parser: (queryRunner: PostgresQueryRunner, dbMeta: IDbMeta) => void) => {
+          parserPromises.push(parser(this.queryRunner, this.dbMeta));
         });
         // await all parsers to finish their jobs
         await Promise.all(parserPromises);
@@ -589,5 +586,7 @@ export class PgToDbMeta {
     } catch (err) {
       throw err;
     }
+    await this.queryRunner.release();
+    this.queryRunner = undefined;
   }
 }

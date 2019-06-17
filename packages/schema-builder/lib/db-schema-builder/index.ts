@@ -1,15 +1,13 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
-import { DbAppClient } from "@fullstack-one/db";
+import { ORM } from "@fullstack-one/db";
 
 @Service()
 export class DbSchemaBuilder {
-  private dbAppClient: DbAppClient;
   private readonly logger: ILogger;
   private readonly graphqlViewSqlStatements: string[] = [];
 
-  constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory, @Inject((type) => DbAppClient) dbAppClient: DbAppClient) {
-    this.dbAppClient = dbAppClient;
+  constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory, @Inject((type) => ORM) private readonly orm: ORM) {
     this.logger = loggerFactory.create(this.constructor.name);
   }
 
@@ -18,23 +16,25 @@ export class DbSchemaBuilder {
   }
 
   public async migrate(): Promise<void> {
-    const dbClient = this.dbAppClient.pgClient;
+    const queryRunner = this.orm.createQueryRunner();
 
     try {
       this.logger.trace("migration.begin");
-      await dbClient.query("BEGIN");
+      await queryRunner.connect();
+      await queryRunner.query("BEGIN");
 
       for (const statement of Object.values(this.graphqlViewSqlStatements)) {
         this.logger.trace("migration.view.sql.statement", statement);
-        await dbClient.query(statement);
+        await queryRunner.query(statement);
       }
 
       this.logger.trace("migration.commit");
-      await dbClient.query("COMMIT");
+      await queryRunner.query("COMMIT");
     } catch (err) {
       this.logger.warn("migration.rollback");
-      await dbClient.query("ROLLBACK");
+      await queryRunner.query("ROLLBACK");
       throw err;
     }
+    await queryRunner.release();
   }
 }

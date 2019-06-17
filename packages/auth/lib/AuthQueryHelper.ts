@@ -1,4 +1,4 @@
-import { DbGeneralPool, PgClient, PgPoolClient } from "@fullstack-one/db";
+import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";

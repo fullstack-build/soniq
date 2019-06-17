@@ -11,7 +11,6 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
 import { IDbGeneralPoolConfig } from "../IDbConfig";
-import { DbAppClient } from "../DbAppClient";
 
 @Service()
 export class DbGeneralPool {
@@ -22,7 +21,6 @@ export class DbGeneralPool {
   private readonly applicationName: string;
   private knownNodeIds: string[] = [];
   private connectedNodesTimer: NodeJS.Timer;
-  private readonly dbAppClient: DbAppClient;
   public pgPool: PgPool;
 
   constructor(
@@ -30,12 +28,10 @@ export class DbGeneralPool {
     @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
-    @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
-    @Inject((type) => DbAppClient) dbAppClient: DbAppClient
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter
   ) {
     this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
-    this.dbAppClient = dbAppClient;
 
     this.config = config.registerConfig("Db", `${__dirname}/../../config`).general;
     const env: IEnvironment = Container.get("ENVIRONMENT");
@@ -43,8 +39,8 @@ export class DbGeneralPool {
     this.applicationName = `${this.applicationNamePrefix}${env.nodeId}`;
     this.knownNodeIds = [env.nodeId];
 
-    // Assume that I am the only connected node. reserve one connection for this.dbAppClient and one for this.eventEmitter
-    this.createPgPool(this.config.globalMax - 2);
+    // Assume that I am the only connected node. reserve one connection and one for this.eventEmitter
+    this.createPgPool(this.config.globalMax - 1);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
@@ -96,10 +92,12 @@ export class DbGeneralPool {
 
   private async fetchConnectedNodes(): Promise<string[]> {
     try {
-      const prefix = this.dbAppClient.getApplicationNamePrefix();
-      const dbNodes = await this.dbAppClient.pgClient.query(
+      const prefix = this.applicationNamePrefix;
+      const client: PgPoolClient = await this.pgPool.connect();
+      const dbNodes = await client.query(
         `SELECT application_name FROM pg_stat_activity WHERE datname = '${this.config.database}' AND application_name LIKE '${prefix}%';`
       );
+      client.release();
 
       return dbNodes.rows.map(({ application_name: name }) => name.replace(prefix, ""));
     } catch (err) {
