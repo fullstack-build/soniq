@@ -2,7 +2,11 @@ import * as typeorm from "typeorm";
 import * as ModelMeta from "../model-meta";
 
 // tslint:disable-next-line:function-name
-export default function ManyToOne<T>(typeFunction: (type?: any) => new () => T, options?: typeorm.RelationOptions) {
+export default function ManyToOne<T>(
+  typeFunction: (type?: any) => new () => T,
+  inverseSide: string | ((object: T) => any) = null,
+  options?: typeorm.RelationOptions
+) {
   return (target: object, columnName: string): void => {
     const entityName = target.constructor.name;
     // Need to wait for the next tick so all entity classes are laoded and typeFunction is correctly intialized.
@@ -17,11 +21,9 @@ export default function ManyToOne<T>(typeFunction: (type?: any) => new () => T, 
       const directive = `@relation(name: "${relationName}")`;
       ModelMeta.createColumnMeta(entityName, columnName, { gqlType: foreignEntityName }, [directive]);
 
-      typeorm.ManyToOne(typeFunction, options)(target, columnName);
+      if (inverseSide == null) typeorm.ManyToOne(typeFunction, inverseSide, options)(target, columnName);
+      else typeorm.ManyToOne(typeFunction, options)(target, columnName);
       ModelMeta.setColumnSynchronizedTrue(entityName, columnName);
     });
   };
 }
-
-// Das soll am Ende am SDL stehen:
-// tasks: [Task!]! @relation(name: "Task_User")
