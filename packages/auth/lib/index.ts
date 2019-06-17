@@ -89,9 +89,6 @@ export class Auth {
 
     graphQl.addResolvers(this.getResolvers());
 
-    // add migration path
-    schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
-
     this.addMiddleware(server);
   }
 

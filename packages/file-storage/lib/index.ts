@@ -64,8 +64,7 @@ export class FileStorage {
 
     this.logger = this.loggerFactory.create(this.constructor.name);
 
-    // add migration path
-    this.schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
+    this.logger.warn("README: Using an sql folder and addMigrationPath is obsolete and will crash. TODO: use ORM.addMigration instead");
 
     this.schemaBuilder.extendSchema(schema);
 

@@ -44,9 +44,6 @@ export class NotificationsEmail {
     // create Mailgen
     this.mailGenerator = new Mailgen(this.CONFIG.mailgen);
 
-    // add migration path
-    schemaBuilder.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
-
     // add to boot loader
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }

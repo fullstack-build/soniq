@@ -22,9 +22,8 @@ import { AGraphQlHelper } from "./helper";
 import { parsePermissions } from "./gql-schema-builder/parsePermissions";
 
 // import interfaces
-import { IDbMeta, IDbRelation } from "./db-schema-builder/IDbMeta";
+import { IDbMeta } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
-import { PgToDbMeta } from "./db-schema-builder/fromPg/pgToDbMeta";
 
 import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
@@ -55,7 +54,6 @@ export class SchemaBuilder {
   private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
   private dbSchemaBuilder: DbSchemaBuilder;
-  private pgToDbMeta: PgToDbMeta;
   private dbMeta: IDbMeta;
   private extensions: any = [];
 
@@ -71,12 +69,10 @@ export class SchemaBuilder {
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
     @Inject((type) => ORM) orm,
-    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder,
-    @Inject((type) => PgToDbMeta) pgToDbMeta
+    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder
   ) {
     this.loggerFactory = loggerFactory;
     this.dbSchemaBuilder = dbSchemaBuilder;
-    this.pgToDbMeta = pgToDbMeta;
     this.config = config;
     this.orm = orm;
 
@@ -87,8 +83,6 @@ export class SchemaBuilder {
     this.ENVIRONMENT = this.config.ENVIRONMENT;
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
-
-    this.getDbSchemaBuilder().addMigrationPath(`${__dirname}/..`);
   }
 
   private async boot(): Promise<IDbMeta> {
@@ -147,20 +141,20 @@ export class SchemaBuilder {
 
       const extensions = this.extensions;
 
-      const sql = createGrants(config, this.dbMeta);
+      const graphqlViewSqlStatements = createGrants(config, this.dbMeta);
       this.logger.trace("boot", "Grants created");
 
       const data = parsePermissions(this.permissions, context, extensions, config);
       this.logger.trace("boot", "Permissions parsed");
 
-      data.sql.forEach((statement) => sql.push(statement));
+      data.sql.forEach((statement) => graphqlViewSqlStatements.push(statement));
 
       //  Reverse to get the generated queries/mutations at the beginning
       (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
-      this.dbSchemaBuilder.setPermissionSqlStatements(sql);
+      this.dbSchemaBuilder.addGraphqlViewSqlStatements(graphqlViewSqlStatements);
       this.logger.trace("boot", "Permission SQL statements set");
 
       return this.dbMeta;
@@ -172,10 +166,6 @@ export class SchemaBuilder {
 
   public getDbSchemaBuilder(): DbSchemaBuilder {
     return this.dbSchemaBuilder;
-  }
-
-  public async getPgDbMeta(): Promise<IDbMeta> {
-    return this.pgToDbMeta.getPgDbMeta();
   }
 
   public addExtension(extension): void {
