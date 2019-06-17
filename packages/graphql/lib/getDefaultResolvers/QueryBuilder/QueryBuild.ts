@@ -1,9 +1,9 @@
+import { AuthenticationError } from "apollo-server-koa";
 import { IReadViewMeta, IResolverMeta, IReadFieldData, IDbMeta, IDbRelation } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, IMatch } from "../types";
 import generateClauses from "./generateClauses";
 import { IQueryBuildOject, IQueryClauseObject, ICostTree } from "./types";
 import calculateMaxDepth from "./calculateMaxDepth";
-import { AuthenticationError } from "../..";
 
 export default class QueryBuild {
   private readonly resolverMeta: IResolverMeta;
@@ -115,7 +115,6 @@ export default class QueryBuild {
         this.authRequired = true;
         authRequiredHere = true;
         if (this.isAuthenticated !== true) {
-          // throw new AuthenticationError(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
           const error = new AuthenticationError(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
           error.extensions = {
             ...error.extensions,
