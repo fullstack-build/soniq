@@ -12,7 +12,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { SchemaBuilder, IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
-import { DbGeneralPool, ORM } from "@fullstack-one/db";
+import { DbGeneralPool } from "@fullstack-one/db";
 
 import IGraphQlConfig from "./IGraphQlConfig";
 import { applyApolloMiddleware } from "./koaMiddleware";
@@ -46,8 +46,7 @@ export class GraphQl {
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject((type) => Server) server: Server,
-    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool,
-    @Inject((type) => ORM) orm: ORM
+    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool
   ) {
     this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
     this.hookManager = hookManager;
