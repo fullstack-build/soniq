@@ -220,18 +220,18 @@ export class SqlObjFromMigrationObject {
         // write error for many-to-many
         if (relationDefinition[0].type === "MANY" && relationDefinition[1] != null && relationDefinition[1].type === "MANY") {
           process.stdout.write(
-            `migration.relation.unsupported.type: ${relationDefinition[0].name}: ${relationDefinition[0].tableName}:${
-              relationDefinition[1].tableName
-            } => MANY:MANY\n Many to many relations are not yet supported by the query builder. Create a through table instead.\n`
+            `migration.relation.unsupported.type: ${relationDefinition[0].name}: ${relationDefinition[0].tableName}:
+              ${relationDefinition[1].tableName} => MANY:MANY\n Many to many relations are not yet supported by the
+              query builder. Create a through table instead.\n`
           );
 
           this.createSqlManyToManyRelation(sqlMigrationObj, relationDefinition[0].name, relationDefinition);
         } else {
           if (relationDefinition[0].type === "ONE" && relationDefinition[1] != null && relationDefinition[1].type === "ONE") {
             process.stdout.write(
-              `migration.relation.type.hint: ${relationDefinition[0].name}: ${relationDefinition[0].tableName}:${
-                relationDefinition[1].tableName
-              } => ONE:ONE\n Try to avoid using one to one relations.\nConsider combining both entities into one, using JSON type instead or pointing only in one direction.\n`
+              `migration.relation.type.hint: ${relationDefinition[0].name}: ${relationDefinition[0].tableName}:
+                ${relationDefinition[1].tableName} => ONE:ONE\n Try to avoid using one to one relations.
+                Consider combining both entities into one, using JSON type instead or pointing only in one direction.\n`
             );
           }
 

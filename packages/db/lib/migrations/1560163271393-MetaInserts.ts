@@ -16,5 +16,5 @@ export class MetaInserts1560163271393 implements MigrationInterface {
 }
 
 function loadMetaInsertSql(filename: string, direction: "up" | "down"): string {
-  return readFileSync(`${__dirname}/1560163271393-meta-inserts/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
+  return readFileSync(`${__dirname}/../../res/1560163271393-meta-inserts/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
 }

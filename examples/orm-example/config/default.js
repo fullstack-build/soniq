@@ -21,13 +21,6 @@ module.exports = {
     ],
   },
   Db: {
-    appClient: {
-      database: process.env.TYPEORM_DATABASE,
-      host:     process.env.TYPEORM_HOST,
-      user:     process.env.TYPEORM_USERNAME,
-      password: process.env.TYPEORM_PASSWORD,
-      port:     process.env.TYPEORM_PORT
-    },
     general: {
       database: process.env.TYPEORM_DATABASE,
       host:     process.env.TYPEORM_HOST,
