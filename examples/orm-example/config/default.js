@@ -38,8 +38,15 @@ module.exports = {
         password:     process.env.TYPEORM_PASSWORD,
         database:     process.env.TYPEORM_DATABASE,
         synchronize:  process.env.TYPEORM_SYNCHRONIZE === "true",
-        logging:      process.env.TYPEORM_LOGGING === "true"
+        logging:      process.env.TYPEORM_LOGGING === "true",
+        entities: ["/models/*.ts"]
       },
+      pool: {
+        "min":                      3,
+        "max":                      5,
+        "globalMax":                100,
+        "updateClientListInterval": 10 * 1000
+      }
     }
   },
   Server: {

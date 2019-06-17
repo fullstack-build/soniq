@@ -61,7 +61,10 @@ export default function getDefaultMutationResolver<TSource>(
       // e.g. When mutationType is DELETE just return the id. Otherwise query for the new data.
       // e.g. When this is a user-creation the creator has no access to his own user before login.
       // tslint:disable-next-line:prettier
-      if (mutationBuild.mutation.gqlReturnTypeName === "ID" || (mutationBuild.mutation.extensions != null && mutationBuild.mutation.extensions.returnOnlyId === true)) {
+      if (
+        mutationBuild.mutation.gqlReturnTypeName === "ID" ||
+        (mutationBuild.mutation.extensions != null && mutationBuild.mutation.extensions.returnOnlyId === true)
+      ) {
         returnData = entityId;
       } else {
         // Create a match to search for the new created or updated entity

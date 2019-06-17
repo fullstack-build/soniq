@@ -30,10 +30,6 @@ import Photo from "./models/Photo";
 import User from "./models/User";
 import Task from "./models/Task";
 
-$orm.addEntity(Photo);
-$orm.addEntity(User);
-$orm.addEntity(Task);
-
 (async () => {
   await $one.boot();
 
