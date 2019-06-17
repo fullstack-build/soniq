@@ -56,8 +56,9 @@ export function addEntityOptions(entityName: string, entityOptions: TEntityOptio
 }
 
 export function getFinalEntityOptions(entityName: string): TEntityOptions {
-  const entityMeta = createEntityMetaIfNotExists(entityName);
-  return { schema: "public", ...entityMeta.entityOptions };
+  const { entityOptions } = createEntityMetaIfNotExists(entityName);
+  const schema = entityOptions.schema !== "public" && entityOptions.schema != null ? entityOptions.schema : undefined;
+  return { ...entityOptions, schema };
 }
 
 export function setEntitySynchronizedTrue(entityName: string): void {

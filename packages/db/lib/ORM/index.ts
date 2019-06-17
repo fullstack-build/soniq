@@ -58,7 +58,7 @@ export class ORM {
   }
 
   private async boot(): Promise<void> {
-    await this.runMigrations();
+    // await this.runMigrations();
     await this.createConnection(this.config.pool.globalMax);
     await this.clientManager.start();
     await this.eventEmitter.emit("db.orm.pool.connect.success", this.applicationName);
@@ -69,6 +69,7 @@ export class ORM {
       this.logger.debug("db.orm.migrations.start");
       const connection = await typeorm.createConnection({
         ...this.config.connection,
+        synchronize: false,
         name: "migration",
         migrations: this.migrations
       });

@@ -7,7 +7,8 @@ export default function Entity(options?: ModelMeta.TEntityOptions) {
     const entityName = target.name;
     ModelMeta.addEntityOptions(entityName, { name: entityName, ...options });
     const finalEntityOptions = ModelMeta.getFinalEntityOptions(entityName);
-    ModelMeta.addEntityDirective(entityName, `@table(schemaName: "${finalEntityOptions.schema}")`);
+    const tableDirective = finalEntityOptions.schema != null ? `@table(schemaName: "${finalEntityOptions.schema}")` : `@table`;
+    ModelMeta.addEntityDirective(entityName, tableDirective);
     ModelMeta.setEntitySynchronizedTrue(entityName);
 
     const typeormDecorator = typeorm.Entity(finalEntityOptions);
