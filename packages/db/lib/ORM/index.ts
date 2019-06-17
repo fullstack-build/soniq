@@ -15,7 +15,7 @@ import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
 import * as modelMeta from "./model-meta";
 import { IOrmConfig } from "./types";
 
-export { Connection, ConnectionManager, MigrationInterface, QueryBuilder } from "typeorm";
+export { Connection, ConnectionManager, MigrationInterface, QueryBuilder, QueryRunner } from "typeorm";
 export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 export * from "./decorator";
