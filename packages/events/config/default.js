@@ -1,6 +1,5 @@
 module.exports = {
   eventEmitter: {
-    wildcard: true,
     delimiter: ".",
     newListener: false,
     maxListeners: 1000,

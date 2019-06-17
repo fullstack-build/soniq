@@ -23,7 +23,7 @@ export class EventEmitter {
   ) {
     this.config = config.registerConfig("Events", `${__dirname}/../config`);
     this.logger = loggerFactory.create(this.constructor.name);
-    this.eventEmitter = new EventEmitter2(this.config.eventEmitter);
+    this.eventEmitter = new EventEmitter2({ ...this.config.eventEmitter, wildcard: true });
     this.pgClient = new PgClient(this.config.pgClient);
 
     const env: IEnvironment = Container.get("ENVIRONMENT");
@@ -37,7 +37,7 @@ export class EventEmitter {
     try {
       await this.pgClient.connect();
       this.logger.debug("pgClient.connected");
-      this.pgClient.on("notification", this.handlePgNotification);
+      this.pgClient.on("notification", this.handlePgNotification.bind(this));
       await this.pgClient.query(`LISTEN ${this.namespace}`);
       this.logger.debug("pgClient.listen", this.namespace);
     } catch (err) {
@@ -65,10 +65,11 @@ export class EventEmitter {
   }
 
   public async emit<TPayload>(eventName: string, payload?: TPayload): Promise<void> {
-    this.eventEmitter.emit(this.getLocalEventName(eventName), this.nodeId, payload);
+    const localEventName = this.getLocalEventName(eventName);
+    this.eventEmitter.emit(localEventName, this.nodeId, payload);
 
     const event: IEvent<TPayload> = {
-      name: eventName,
+      name: localEventName,
       nodeId: this.nodeId,
       payload
     };

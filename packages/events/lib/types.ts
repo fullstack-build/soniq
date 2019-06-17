@@ -1,6 +1,5 @@
 export interface IEventEmitterConfig {
   eventEmitter: {
-    wildcard: boolean;
     delimiter: string;
     newListener: boolean;
     maxListeners: number;
