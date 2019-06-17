@@ -2,10 +2,10 @@ import * as typeorm from "typeorm";
 import * as ModelMeta from "../model-meta";
 
 // tslint:disable-next-line:function-name
-export default function Column(columnOptions: ModelMeta.TColumnOptions) {
+export default function Column(options?: ModelMeta.TColumnOptions) {
   return (target: object, columnName: string): void => {
     const entityName = target.constructor.name;
-    ModelMeta.addColumnOptions(entityName, columnName, columnOptions);
+    if (options != null) ModelMeta.addColumnOptions(entityName, columnName, options);
 
     const typeormDecorator = typeorm.Column(ModelMeta.getFinalColumnOptions(entityName, columnName));
     typeormDecorator(target, columnName);
