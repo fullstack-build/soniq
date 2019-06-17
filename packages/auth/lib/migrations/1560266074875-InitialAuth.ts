@@ -16,5 +16,5 @@ export class InitialAuth1560266074875 implements MigrationInterface {
 }
 
 function loadAuthSchemaAndTablesSql(filename: string, direction: "up" | "down"): string {
-  return readFileSync(`${__dirname}/1560266074875-auth-schema-and-tables/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
+  return readFileSync(`${__dirname}/../../res/1560266074875-auth-schema-and-tables/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
 }
