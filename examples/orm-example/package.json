@@ -47,6 +47,7 @@
     "@fullstack-one/graphql": "^0.5.12",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.5",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.12"
   }
 }

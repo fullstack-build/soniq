@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { createColumnDecorator, createColumnDecoratorFactory, BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
 
 const myDecorator = createColumnDecorator({ directive: "@myDirective" });
