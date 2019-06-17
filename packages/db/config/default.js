@@ -2,14 +2,6 @@ module.exports = {
   automigrate:                false,
   renameInsteadOfDrop:        true,
   viewSchemaName:             "_graphql",
-  appClient: {
-    database:                 null,
-    host:                     null,
-    user:                     null,
-    password:                 null,
-    port:                     5432,
-    ssl:                      false,
-  },
   general: {
     database:                 null,
     host:                     null,
