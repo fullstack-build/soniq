@@ -14,7 +14,7 @@ const logger = Container.get(LoggerFactory).create("ORMClientManager");
 export default function getClientManager(
   nodeId: string,
   numberOfConnectedClientsChangedCallback: (count: number) => Promise<void>,
-  keepAliveIntervalMs: number = 30 * 1000,
+  keepAliveIntervalMs: number = 5 * 60 * 1000,
   updateClientsIntervalMs: number = 60 * 1000
 ): IClientManager {
   let keepAliveTimer: NodeJS.Timer = null;
@@ -49,7 +49,7 @@ export default function getClientManager(
 
   async function updateKnownClients(): Promise<void> {
     try {
-      const connectedNodeClients = await NodeJsClient.find({ where: `"lastOnline" > now() - INTERVAL '1 minutes'` });
+      const connectedNodeClients = await NodeJsClient.find({ where: `"lastOnline" > now() - INTERVAL '10 minutes'` });
       const currentNumberOfClients = knownClientIds.length;
       const newNumberOfClients = connectedNodeClients.length;
       knownClientIds = connectedNodeClients.map((client) => client.nodeId);
@@ -63,7 +63,7 @@ export default function getClientManager(
   }
 
   async function removeOldClients(): Promise<void> {
-    const oldClients = await NodeJsClient.find({ where: `"lastOnline" < now() - INTERVAL '2 minutes'` });
+    const oldClients = await NodeJsClient.find({ where: `"lastOnline" < now() - INTERVAL '10 minutes'` });
     await NodeJsClient.remove(oldClients);
   }
 
