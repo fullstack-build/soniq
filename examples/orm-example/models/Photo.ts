@@ -1,5 +1,4 @@
-import "reflect-metadata";
-import { createColumnDecorator, createColumnDecoratorFactory, BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
+import { BaseEntity, createColumnDecorator, createColumnDecoratorFactory, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
 
 const myDecorator = createColumnDecorator({ directive: "@myDirective" });
 const myDecoratorFactory = createColumnDecoratorFactory<{ max: number }>({ getDirective: ({ max }) => `@myParamDirective(max: ${max})` });

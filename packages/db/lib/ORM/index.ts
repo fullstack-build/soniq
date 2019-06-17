@@ -28,6 +28,7 @@ PgTypes.setTypeParser(1082, (str) => str);
 export class ORM {
   private readonly logger: ILogger;
   private readonly config: IOrmConfig;
+  private readonly environment: IEnvironment;
   private readonly applicationNamePrefix: string;
   private readonly applicationName: string;
   private readonly clientManager: IClientManager;
@@ -45,6 +46,7 @@ export class ORM {
     this.logger = loggerFactory.create(this.constructor.name);
 
     this.config = config.registerConfig("Db", `${__dirname}/../../config`).orm;
+    this.environment = environment;
     this.applicationNamePrefix = `${environment.namespace}_orm_`;
     this.applicationName = `${this.applicationNamePrefix}${environment.nodeId}`;
 
@@ -82,10 +84,15 @@ export class ORM {
   }
 
   private async createConnection(max: number = 2): Promise<void> {
+    const path: string = this.environment.path;
     const connectionOptions: PostgresConnectionOptions = {
       ...this.config.connection,
       extra: { ...this.config.connection.extra, application_name: this.applicationName, min: this.config.pool.min || 1, max },
-      entities: this.entities // (this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+      entities: [
+        ...(this.config.connection.entities || []).map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)),
+        ...this.entities
+      ],
+      migrations: this.migrations
     };
     await typeorm.createConnection(connectionOptions);
 

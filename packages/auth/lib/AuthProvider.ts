@@ -13,7 +13,13 @@ export class AuthProvider {
   public readonly providerName: string;
 
   // tslint:disable-next-line:prettier
-  constructor(providerName: string, authConnector: AuthConnector, signHelper: SignHelper, authConfig: any, authFactorProofTokenMaxAgeInSeconds: number = null) {
+  constructor(
+    providerName: string,
+    authConnector: AuthConnector,
+    signHelper: SignHelper,
+    authConfig: any,
+    authFactorProofTokenMaxAgeInSeconds: number = null
+  ) {
     this.authConnector = authConnector;
     this.signHelper = signHelper;
     this.authConfig = authConfig;

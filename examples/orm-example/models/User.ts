@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
 import Photo from "./Photo";
 import Task from "./Task";
@@ -30,7 +29,7 @@ export default class User extends BaseEntity {
   @OneToOneJoinColumn((type) => Photo, { nullable: true })
   public photo?: Photo;
 
-  @OneToMany((type) => Task, task => task.user)
+  @OneToMany((type) => Task, (task) => task.user)
   public tasks: Task[];
 
   @Column({ enum: Size, enumName: "Size", nullable: true })

@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne } from "@fullstack-one/db";
 import User from "./User";
 
