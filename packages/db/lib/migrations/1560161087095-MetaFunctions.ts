@@ -28,5 +28,5 @@ export class MetaFunctions1560161087095 implements MigrationInterface {
 }
 
 function loadMetaFunctionSql(filename: string, direction: "up" | "down"): string {
-  return readFileSync(`${__dirname}/1560161087095-meta-functions/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
+  return readFileSync(`${__dirname}/../../res/1560161087095-meta-functions/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
 }

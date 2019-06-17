@@ -1,9 +1,11 @@
+import { IOrmConfig } from "./ORM/types";
+
 export interface IDbConfig {
   automigrate: boolean;
   renameInsteadOfDrop: boolean;
   viewSchemaName: string;
   general: IDbGeneralPoolConfig;
-  orm: any;
+  orm: IOrmConfig;
 }
 
 export interface IDbGeneralPoolConfig {

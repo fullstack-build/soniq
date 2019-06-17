@@ -14,5 +14,5 @@ export class MetaTypes1560164600721 implements MigrationInterface {
 }
 
 function loadMetaTypesSql(filename: string, direction: "up" | "down"): string {
-  return readFileSync(`${__dirname}/1560164600721-meta-types/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
+  return readFileSync(`${__dirname}/../../res/1560164600721-meta-types/${filename}.${direction}.sql`, { encoding: "utf-8" }).toString();
 }

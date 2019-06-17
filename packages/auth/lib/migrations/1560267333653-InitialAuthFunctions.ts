@@ -1,12 +1,12 @@
-import { MigrationInterface, QueryRunner } from "@fullstack-one/db";
 import { readFileSync, readdirSync } from "fs";
+import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
 export class InitialAuthFunctions1560267333653 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
+  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
     await queryRunner.query(loadAuthFunctionsSql());
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
+  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
     const selectResult = await queryRunner.query(`
       SELECT 'DROP FUNCTION IF EXISTS ' || ns.nspname || '.' || proname || '(' || oidvectortypes(proargtypes) || ');'
       FROM pg_proc INNER JOIN pg_namespace ns ON (pg_proc.pronamespace = ns.oid)
@@ -18,10 +18,10 @@ export class InitialAuthFunctions1560267333653 implements MigrationInterface {
 }
 
 function loadAuthFunctionsSql(): string {
-  const filenames = readdirSync(`${__dirname}/1560267333653-auth-functions`);
+  const filenames = readdirSync(`${__dirname}/../../res/1560267333653-auth-functions`);
   return filenames
     .map((filename) => {
-      return readFileSync(`${__dirname}/1560267333653-auth-functions/${String(filename)}`, { encoding: "utf-8" }).toString();
+      return readFileSync(`${__dirname}/../../res/1560267333653-auth-functions/${String(filename)}`, { encoding: "utf-8" }).toString();
     })
     .join("\n\n");
 }
