@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { PgPoolClient } from "@fullstack-one/db";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 import { Service } from "@fullstack-one/di";
 
 import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildOject } from "../getDefaultResolvers";
@@ -27,19 +27,19 @@ export class HookManager {
   }
 
   public async executePreQueryHooks(
-    client: PgPoolClient,
+    queryRunner: PostgresQueryRunner,
     context: IDefaultMutationResolverContext,
     authRequired: boolean,
     buildObject: IMutationBuildObject | IQueryBuildOject
   ): Promise<void> {
     for (const hook of this.preQueryHooks) {
-      await hook(client, context, authRequired, buildObject);
+      await hook(queryRunner, context, authRequired, buildObject);
     }
   }
 
-  public async executePreMutationCommitHooks<TSource>(client: PgPoolClient, hookInfo: IHookInfo<any, TSource>): Promise<void> {
+  public async executePreMutationCommitHooks<TSource>(queryRunner: PostgresQueryRunner, hookInfo: IHookInfo<any, TSource>): Promise<void> {
     for (const hook of this.preMutationCommitHooks) {
-      await hook(client, hookInfo);
+      await hook(queryRunner, hookInfo);
     }
   }
 

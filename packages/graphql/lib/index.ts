@@ -12,7 +12,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { SchemaBuilder, IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 import { Server } from "@fullstack-one/server";
-import { DbGeneralPool } from "@fullstack-one/db";
+import { ORM } from "@fullstack-one/db";
 
 import IGraphQlConfig from "./IGraphQlConfig";
 import { applyApolloMiddleware } from "./koaMiddleware";
@@ -36,7 +36,6 @@ export class GraphQl {
   private ENVIRONMENT: IEnvironment;
   private schemaBuilder: SchemaBuilder;
   private server: Server;
-  private dbGeneralPool: DbGeneralPool;
   private resolvers: ICustomResolverObject = {};
 
   constructor(
@@ -46,14 +45,13 @@ export class GraphQl {
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject((type) => Server) server: Server,
-    @Inject((type) => DbGeneralPool) dbGeneralPool: DbGeneralPool
+    @Inject((type) => ORM) private readonly orm: ORM
   ) {
     this.graphQlConfig = config.registerConfig("GraphQl", `${__dirname}/../config`);
     this.hookManager = hookManager;
 
     this.loggerFactory = loggerFactory;
     this.server = server;
-    this.dbGeneralPool = dbGeneralPool;
     this.schemaBuilder = schemaBuilder;
 
     this.logger = this.loggerFactory.create(this.constructor.name);
@@ -92,7 +90,7 @@ export class GraphQl {
     const defaultResolvers = getDefaultResolvers(
       resolverMeta,
       dbMeta,
-      this.dbGeneralPool,
+      this.orm,
       this.logger,
       this.graphQlConfig.queryCostLimit,
       this.graphQlConfig.minQueryDepthToCheckCostLimit

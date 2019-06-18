@@ -1,5 +1,5 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { DbGeneralPool, ORM, PgPoolClient } from "@fullstack-one/db";
+import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
@@ -46,7 +46,6 @@ export class Auth {
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   constructor(
-    @Inject((type) => DbGeneralPool) dbGeneralPool,
     @Inject((type) => ORM) orm: ORM,
     @Inject((type) => Server) server,
     @Inject((type) => SchemaBuilder) schemaBuilder,
@@ -62,7 +61,7 @@ export class Auth {
     this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
     this.signHelper = new SignHelper(this.authConfig.secrets.admin, this.cryptoFactory);
 
-    this.authQueryHelper = new AuthQueryHelper(dbGeneralPool, this.logger, this.authConfig, this.cryptoFactory, this.signHelper);
+    this.authQueryHelper = new AuthQueryHelper(orm, this.logger, this.cryptoFactory, this.signHelper);
     this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, this.authConfig);
     this.privacyAgreementAcceptance = new PrivacyAgreementAcceptance(this.authConfig, this.parserMeta, this.logger, this.signHelper);
     this.csrfProtection = new CSRFProtection(this.logger, this.authConfig);
@@ -116,7 +115,7 @@ export class Auth {
     app.use(this.accessTokenParser.parse.bind(this.accessTokenParser));
   }
 
-  private async preQueryHook(dbClient, context, authRequired, buildObject) {
+  private async preQueryHook(queryRunner: PostgresQueryRunner, context, authRequired: boolean, buildObject) {
     if (
       buildObject.mutation != null &&
       buildObject.mutation.extensions != null &&
@@ -127,7 +126,7 @@ export class Auth {
 
     if (authRequired === true && context.accessToken != null) {
       try {
-        await this.authQueryHelper.authenticateTransaction(dbClient, context.accessToken);
+        await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
       } catch (err) {
         this.logger.trace("authenticateTransaction.failed", err);
         this.deleteAccessTokenCookie(context.ctx);
@@ -136,7 +135,7 @@ export class Auth {
     }
   }
 
-  private async preMutationCommitHook(dbClient: PgPoolClient, hookInfo) {
+  private async preMutationCommitHook(queryRunner: PostgresQueryRunner, hookInfo) {
     const mutation = hookInfo.mutationQuery.mutation;
 
     if (mutation.extensions.auth === "REGISTER_USER_MUTATION") {
@@ -147,7 +146,7 @@ export class Auth {
 
       // tslint:disable-next-line:prettier
       const loginData = await this.authConnector.createUserAuthentication(
-        dbClient,
+        queryRunner,
         hookInfo.entityId,
         args.isActive || true,
         args.loginProviderSets,

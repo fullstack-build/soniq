@@ -1,9 +1,9 @@
 import * as crypto from "crypto";
-import { PgPoolClient } from "@fullstack-one/db";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 import { IQueryBuildOject } from "../QueryBuilder";
 
-export default async function checkCosts(client: PgPoolClient, queryBuild: IQueryBuildOject, costLimit: number) {
-  const currentCost = await getCurrentCosts(client, queryBuild);
+export default async function checkCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject, costLimit: number) {
+  const currentCost = await getCurrentCosts(queryRunner, queryBuild);
 
   if (currentCost > costLimit) {
     throw new Error(
@@ -25,7 +25,7 @@ function toSha1Base64Hash(input: string): string {
 const costCache = {};
 const COST_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // TODO Dustin put in config
 
-async function getCurrentCosts(client: PgPoolClient, queryBuild: IQueryBuildOject) {
+async function getCurrentCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject) {
   const queryHash: string = toSha1Base64Hash(queryBuild.sql + queryBuild.values.join(""));
 
   if (costCache[queryHash] != null) {
@@ -37,9 +37,9 @@ async function getCurrentCosts(client: PgPoolClient, queryBuild: IQueryBuildOjec
     }
   }
 
-  const result = await client.query(`EXPLAIN ${queryBuild.sql}`, queryBuild.values);
+  const result = await queryRunner.query(`EXPLAIN ${queryBuild.sql}`, queryBuild.values);
 
-  const queryPlan: string = result.rows[0]["QUERY PLAN"];
+  const queryPlan: string = result[0]["QUERY PLAN"];
 
   const data: { [key: string]: string } = {};
 

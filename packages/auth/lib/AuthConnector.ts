@@ -1,4 +1,4 @@
-import { PgPoolClient } from "@fullstack-one/db";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
@@ -141,7 +141,7 @@ export class AuthConnector {
 
   // tslint:disable-next-line:prettier
   public async createUserAuthentication(
-    dbClient: PgPoolClient,
+    queryRunner: PostgresQueryRunner,
     userId: string,
     isActive: boolean,
     loginProviderSets: string[],
@@ -151,12 +151,12 @@ export class AuthConnector {
     try {
       const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this));
 
-      await this.authQueryHelper.setAdmin(dbClient);
+      await this.authQueryHelper.setAdmin(queryRunner);
 
       const values = [userId, isActive, loginProviderSets, modifyProviderSets, JSON.stringify(authFactorCreations)];
-      const { rows } = await dbClient.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
+      const { rows } = await queryRunner.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
 
-      await this.authQueryHelper.unsetAdmin(dbClient);
+      await this.authQueryHelper.unsetAdmin(queryRunner);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Incorrect response from create_user_authentication.");

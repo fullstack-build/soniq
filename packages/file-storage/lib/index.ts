@@ -1,5 +1,4 @@
 import { Service, Inject, Container } from "@fullstack-one/di";
-import { DbGeneralPool } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
@@ -10,7 +9,6 @@ import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import * as KoaRouter from "koa-router";
 import * as koaBody from "koa-bodyparser";
 import * as Minio from "minio";
-// import { DbGeneralPool } from '@fullstack-one/db/DbGeneralPool';
 import { getParser } from "./parser";
 import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
 import { DefaultVerifier } from "./DefaultVerifier";
@@ -31,7 +29,6 @@ export class FileStorage {
   private fileStorageConfig;
 
   // DI
-  private dbGeneralPool: DbGeneralPool;
   private server: Server;
   private graphQl: GraphQl;
   private schemaBuilder: SchemaBuilder;
@@ -44,7 +41,6 @@ export class FileStorage {
 
   constructor(
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => DbGeneralPool) dbGeneralPool?,
     @Inject((type) => Server) server?,
     @Inject((type) => BootLoader) bootLoader?,
     @Inject((type) => Config) config?,
@@ -54,7 +50,6 @@ export class FileStorage {
   ) {
     this.loggerFactory = loggerFactory;
     this.server = server;
-    this.dbGeneralPool = dbGeneralPool;
     this.graphQl = graphQl;
     this.schemaBuilder = schemaBuilder;
     this.config = config;
@@ -102,7 +97,7 @@ export class FileStorage {
     try {
       const entityId = info.entityId;
       const result = await this.auth.getAuthQueryHelper().adminQuery("SELECT * FROM _meta.file_todelete_by_entity($1);", [entityId]);
-      result.rows.forEach((row) => {
+      result.forEach((row) => {
         const fileName = new FileName(row);
         this.deleteFileAsAdmin(fileName.name);
       });
@@ -134,7 +129,7 @@ export class FileStorage {
     try {
       await this.auth.getAuthQueryHelper().adminTransaction(async (client) => {
         const result = await client.query("SELECT * FROM _meta.file_deleteone_admin($1);", [fName.id]);
-        if (result.rows.length < 1) {
+        if (result.length < 1) {
           throw new Error("Failed to delete file 'fileId' from db.");
         }
         await this.deleteObjects(fName.prefix);
@@ -202,7 +197,7 @@ export class FileStorage {
           .userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
 
         const fName = new FileName({
-          id: result.rows[0].fileId,
+          id: result[0].fileId,
           type,
           extension
         });
@@ -226,7 +221,7 @@ export class FileStorage {
         const result = await this.auth
           .getAuthQueryHelper()
           .userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
-        const type = result.rows[0].type;
+        const type = result[0].type;
         let stat = null;
 
         if (this.verifierObjects[type] == null) {
@@ -312,7 +307,7 @@ export class FileStorage {
           result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();");
         }
 
-        const filesDeleted = result.rows.map((row) => new FileName(row));
+        const filesDeleted = result.map((row) => new FileName(row));
 
         filesDeleted.forEach((fName) => {
           this.deleteFile(fName, context);

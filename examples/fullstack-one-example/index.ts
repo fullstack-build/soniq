@@ -11,7 +11,7 @@ import { FullstackOneCore } from "fullstack-one";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { GraphQl } from "@fullstack-one/graphql";
 import { AutoMigrate } from "@fullstack-one/auto-migrate";
-import { DbGeneralPool, ORM } from "@fullstack-one/db";
+import { ORM } from "@fullstack-one/db";
 import { FileStorage } from "@fullstack-one/file-storage";
 import { Auth, AuthProviderPassword, AuthProviderEmail, AuthProviderOAuth, IProofMailPayload, IUserAuthentication } from "@fullstack-one/auth";
 import { NotificationsEmail } from "@fullstack-one/notifications";
@@ -52,14 +52,6 @@ import { Photo } from "./models/Photo";
 
 (async () => {
   await $one.boot();
-
-  // normal query example
-  /* const posts = (await $auth.adminQuery('SELECT * FROM "APost"')).rows;
-  console.log("Posts query: ", posts);
-  // admin query example
-  await $auth.adminTransaction(async (dbClient) => {
-    console.log("Posts transaction: ", (await dbClient.query('SELECT * FROM "APost"')).rows);
-  }); */
 
   // send mail example
   await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", null, [], "user@fullstack.one", {

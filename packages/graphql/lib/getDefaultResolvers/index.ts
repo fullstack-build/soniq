@@ -2,7 +2,7 @@ import { IFieldResolver } from "graphql-tools";
 
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 import { ILogger } from "@fullstack-one/logger";
-import { DbGeneralPool } from "@fullstack-one/db";
+import { ORM } from "@fullstack-one/db";
 
 import { ICustomResolverObject, ICustomFieldResolver } from "../resolvers";
 import QueryBuilder from "./QueryBuilder";
@@ -15,7 +15,7 @@ export * from "./types";
 export default function getDefaultResolvers(
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta,
-  dbGeneralPool: DbGeneralPool,
+  orm: ORM,
   logger: ILogger,
   costLimit: number,
   minQueryDepthToCheckCostLimit: number
@@ -23,8 +23,8 @@ export default function getDefaultResolvers(
   const queryBuilder = new QueryBuilder(resolverMeta, dbMeta, minQueryDepthToCheckCostLimit);
   const mutationBuilder = new MutationBuilder(resolverMeta);
 
-  const queryResolver = getDefaultQueryResolver(dbGeneralPool, logger, queryBuilder, costLimit);
-  const mutationResolver = getDefaultMutationResolver(dbGeneralPool, logger, queryBuilder, mutationBuilder, costLimit, resolverMeta, dbMeta);
+  const queryResolver = getDefaultQueryResolver(orm, logger, queryBuilder, costLimit);
+  const mutationResolver = getDefaultMutationResolver(orm, logger, queryBuilder, mutationBuilder, costLimit, resolverMeta, dbMeta);
 
   return {
     "@fullstack-one/graphql/queryResolver": asCustomResolver(queryResolver),
