@@ -71,7 +71,8 @@ export class ORM {
         ...this.config.connection,
         synchronize: false,
         name: "migration",
-        migrations: this.migrations
+        migrations: this.migrations,
+        migrationsTableName: "_migrations"
       });
       await connection.runMigrations();
       await connection.close();
