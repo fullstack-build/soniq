@@ -12,14 +12,14 @@ import * as dbMigrationsObject from "./migrations";
 import getClientManager, { IClientManager } from "./getClientManager";
 import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
 import * as modelMeta from "./model-meta";
-import IDbConfig from "./IDbConfig";
+import { IDbConfig } from "./IDbConfig";
 
 export { Connection, ConnectionManager, MigrationInterface, QueryBuilder } from "typeorm";
 export { IsolationLevel } from "typeorm/driver/types/IsolationLevel";
 export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 export * from "./decorator";
-export { default as IDbConfig } from "./IDbConfig";
+export { IDbConfig } from "./IDbConfig";
 
 // stop pg from parsing dates and timestamps without timezone
 PgTypes.setTypeParser(1114, (str) => str);

@@ -1,6 +1,6 @@
 import * as typeorm from "typeorm";
 
-export default interface IDbConfig {
+export interface IDbConfig {
   host: string;
   port: number;
   username: string;
