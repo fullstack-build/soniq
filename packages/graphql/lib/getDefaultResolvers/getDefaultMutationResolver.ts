@@ -92,9 +92,7 @@ export default function getDefaultMutationResolver<TSource>(
         const returnResult = await queryRunner.query(returnQueryBuild.sql, returnQueryBuild.values);
         checkQueryResultForInjection(returnResult, logger);
 
-        const { rows: returnRows } = returnResult;
-
-        const resultData = returnRows[0][returnQueryBuild.queryName];
+        const resultData = returnResult[0][returnQueryBuild.queryName];
 
         if (resultData.length < 1) {
           throw new Error(
