@@ -33,7 +33,7 @@ export class PgToDbMeta {
   // PRIVATE METHODS
   private async iterateAndAddSchemas(): Promise<void> {
     try {
-      const { rows } = await this.queryRunner.query(
+      const rows = await this.queryRunner.query(
         `SELECT
           schema_name
         FROM
@@ -72,7 +72,7 @@ export class PgToDbMeta {
 
   private async iterateEnumTypes(schemaName): Promise<void> {
     // iterate ENUM Types with columns its used in
-    const { rows } = await this.queryRunner.query(
+    const rows = await this.queryRunner.query(
       `SELECT
                           n.nspname as enum_schema,
                           t.typname as enum_name,
@@ -128,7 +128,7 @@ export class PgToDbMeta {
 
   private async iterateAndAddTables(schemaName): Promise<void> {
     try {
-      const { rows } = await this.queryRunner.query(
+      const rows = await this.queryRunner.query(
         `SELECT
             table_name
         FROM
@@ -181,7 +181,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     try {
-      const { rows } = await this.queryRunner.query(
+      const rows = await this.queryRunner.query(
         `SELECT
         c.column_name AS column_name,
         c.column_default AS column_default,
@@ -286,7 +286,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate other constraints
-    const { rows } = await this.queryRunner.query(
+    const rows = await this.queryRunner.query(
       `SELECT
         tc.constraint_type    AS constraint_type,
         tc.constraint_name    AS constraint_name,
@@ -339,7 +339,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // iterate indexes
-    const { rows } = await this.queryRunner.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [schemaName, tableName]);
+    const rows = await this.queryRunner.query(`SELECT * FROM pg_indexes WHERE schemaname = $1 AND tablename = $2;`, [schemaName, tableName]);
 
     Object.values(rows).forEach((index: any) => {
       // check if index is a known constraint – ignore them
@@ -438,7 +438,7 @@ export class PgToDbMeta {
     const currentTable = this.dbMeta.schemas[schemaName].tables[tableName];
 
     // load triggers for table
-    const { rows } = await this.queryRunner.query(
+    const rows = await this.queryRunner.query(
       `SELECT DISTINCT
                     trigger_name,
                     event_object_schema,

@@ -130,7 +130,7 @@ export class AuthConnector {
 
   private async getUserIdentifier(username: string, tenant: string): Promise<IUserIdentifierObject> {
     const values = [username, tenant];
-    const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.find_user($1, $2) AS payload", values);
+    const rows = await this.authQueryHelper.adminQuery("SELECT _auth.find_user($1, $2) AS payload", values);
 
     if (rows.length < 1 || rows[0].payload == null) {
       throw new Error("User not found!");
@@ -154,7 +154,7 @@ export class AuthConnector {
       await this.authQueryHelper.setAdmin(queryRunner);
 
       const values = [userId, isActive, loginProviderSets, modifyProviderSets, JSON.stringify(authFactorCreations)];
-      const { rows } = await queryRunner.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
+      const rows = await queryRunner.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
 
       await this.authQueryHelper.unsetAdmin(queryRunner);
 
@@ -221,7 +221,7 @@ export class AuthConnector {
   public async getAuthFactorForProof(userIdentifierToken: string, provider: string): Promise<IAuthFactorForProof> {
     const userIdentifierObject = this.decryptUserIdentifier(userIdentifierToken);
     const values = [userIdentifierObject.userAuthenticationId, provider];
-    const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload", values);
+    const rows = await this.authQueryHelper.adminQuery("SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload", values);
 
     if (rows.length < 1 || rows[0].payload == null) {
       throw new Error("AuthFactor not found!");
@@ -234,7 +234,7 @@ export class AuthConnector {
     try {
       const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorProofToken.bind(this));
       const values = [JSON.stringify(authFactorProofs), clientIdentifier];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.login($1, $2) AS payload;", values);
+      const rows = await this.authQueryHelper.adminQuery("SELECT _auth.login($1, $2) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Login failed!");
@@ -265,7 +265,7 @@ export class AuthConnector {
   public async getTokenMeta(accessToken: string): Promise<ITokenMeta> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.validate_access_token($1) AS payload;", values);
+      const rows = await this.authQueryHelper.adminQuery("SELECT _auth.validate_access_token($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Token invalid!");
@@ -298,7 +298,7 @@ export class AuthConnector {
   public async refreshAccessToken(accessToken: string, clientIdentifier: string, refreshToken: string): Promise<ILoginData> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken), clientIdentifier, this.cryptoFactory.decrypt(refreshToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.refresh_access_token($1, $2, $3) AS payload;", values);
+      const rows = await this.authQueryHelper.adminQuery("SELECT _auth.refresh_access_token($1, $2, $3) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Refresh failed!");
@@ -359,7 +359,7 @@ export class AuthConnector {
   public async getUserAuthentication(accessToken: string): Promise<IUserAuthentication> {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication($1) AS payload;", values);
+      const rows = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Request invalid.");
@@ -376,7 +376,7 @@ export class AuthConnector {
   public async getUserAuthenticationById(userAuthenticationId: string): Promise<IUserAuthentication> {
     try {
       const values = [userAuthenticationId];
-      const { rows } = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication_by_id($1) AS payload;", values);
+      const rows = await this.authQueryHelper.adminQuery("SELECT _auth.get_user_authentication_by_id($1) AS payload;", values);
 
       if (rows.length < 1 || rows[0].payload == null) {
         throw new Error("Request invalid.");
