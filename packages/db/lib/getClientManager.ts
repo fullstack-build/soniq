@@ -1,4 +1,3 @@
-import { IEnvironment } from "@fullstack-one/config";
 import { Container } from "@fullstack-one/di";
 import { EventEmitter } from "@fullstack-one/events";
 import { LoggerFactory } from "@fullstack-one/logger";

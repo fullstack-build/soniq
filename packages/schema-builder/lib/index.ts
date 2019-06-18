@@ -4,7 +4,7 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-import { ORM } from "@fullstack-one/db";
+import { IDbConfig, ORM } from "@fullstack-one/db";
 import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
@@ -124,13 +124,13 @@ export class SchemaBuilder {
       this.logger.trace("boot", "Expressions loaded");
       this.expressions = [].concat.apply([], expressionsArray);
 
-      const dbConfig: any = this.config.getConfig("Db");
+      const dbConfig: IDbConfig = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
 
       const config: IConfig = {
-        schemaName: dbConfig.viewSchemaName,
-        userName: dbConfig.general.user,
-        databaseName: dbConfig.general.database
+        schemaName: "_graphql",
+        userName: dbConfig.username,
+        databaseName: dbConfig.database
       };
 
       const context: IPermissionContext = {

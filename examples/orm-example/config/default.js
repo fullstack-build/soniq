@@ -21,33 +21,18 @@ module.exports = {
     ],
   },
   Db: {
-    general: {
-      database: process.env.TYPEORM_DATABASE,
-      host:     process.env.TYPEORM_HOST,
-      user:     process.env.TYPEORM_USERNAME,
-      password: process.env.TYPEORM_PASSWORD,
-      port:     process.env.TYPEORM_PORT,
-      totalMax: 20
-    },
-    orm: {
-      connection: {
-        type:         process.env.TYPEORM_CONNECTION,
-        host:         process.env.TYPEORM_HOST,
-        port:         process.env.TYPEORM_PORT,
-        username:     process.env.TYPEORM_USERNAME,
-        password:     process.env.TYPEORM_PASSWORD,
-        database:     process.env.TYPEORM_DATABASE,
-        synchronize:  process.env.TYPEORM_SYNCHRONIZE === "true",
-        logging:      process.env.TYPEORM_LOGGING === "true",
-        entities: ["/models/*.ts"]
-      },
-      pool: {
-        "min":                      3,
-        "max":                      5,
-        "globalMax":                100,
-        "updateClientListInterval": 10 * 1000
-      }
-    }
+    host: process.env.TYPEORM_HOST,
+    port: process.env.TYPEORM_PORT,
+    username: process.env.TYPEORM_USERNAME,
+    password: process.env.TYPEORM_PASSWORD,
+    database: process.env.TYPEORM_DATABASE,
+    entities: ["/models/*.ts"],
+    synchronize: process.env.TYPEORM_SYNCHRONIZE === "true",
+    logging: process.env.TYPEORM_LOGGING === "true",
+    min: 3,
+    max: 5,
+    globalMax: 100,
+    updateClientListInterval: 10 * 1000
   },
   Server: {
     port: process.env.PORT
