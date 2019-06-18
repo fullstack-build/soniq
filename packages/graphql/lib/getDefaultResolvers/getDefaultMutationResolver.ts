@@ -1,6 +1,6 @@
 import { IFieldResolver } from "graphql-tools";
 
-import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
+import { ORM } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
@@ -15,7 +15,7 @@ import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 const hookManager: HookManager = Container.get(HookManager);
 
 export default function getDefaultMutationResolver<TSource>(
-  dbGeneralPool: DbGeneralPool,
+  orm: ORM,
   logger: ILogger,
   queryBuilder: QueryBuilder,
   mutationBuilder: MutationBuilder,
@@ -29,16 +29,17 @@ export default function getDefaultMutationResolver<TSource>(
     const mutationBuild: IMutationBuildObject = mutationBuilder.build(info);
     context.ctx.state.includesMutation = true;
 
-    const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
+    const queryRunner = orm.createQueryRunner();
 
     try {
-      await client.query("BEGIN");
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      await hookManager.executePreQueryHooks(client, context, context.accessToken != null, mutationBuild);
+      await hookManager.executePreQueryHooks(queryRunner, context, context.accessToken != null, mutationBuild);
 
       logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
-      const result = await client.query(mutationBuild.sql, mutationBuild.values);
+      const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
       if (result.rowCount < 1) {
         throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
@@ -53,8 +54,8 @@ export default function getDefaultMutationResolver<TSource>(
       // Therefore we retrieve the last generated UUID in transaction.
       // Our concept allows one one INSERT per transaction.
       if (entityId == null && mutationBuild.mutation.type === "CREATE") {
-        const idResult = await client.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
-        entityId = idResult.rows[0].id;
+        const idResult = await queryRunner.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
+        entityId = idResult[0].id;
       }
 
       // Check if this mutations returnType is ID
@@ -80,7 +81,7 @@ export default function getDefaultMutationResolver<TSource>(
         logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
 
         if (returnQueryBuild.potentialHighCost === true) {
-          const currentCost = await checkCosts(client, returnQueryBuild, costLimit);
+          const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
           logger.warn(
             "The current query has been identified as potentially too expensive and could get denied in case the" +
               ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
@@ -88,7 +89,7 @@ export default function getDefaultMutationResolver<TSource>(
         }
 
         // Run SQL query on pg to get response-data
-        const returnResult = await client.query(returnQueryBuild.sql, returnQueryBuild.values);
+        const returnResult = await queryRunner.query(returnQueryBuild.sql, returnQueryBuild.values);
         checkQueryResultForInjection(returnResult, logger);
 
         const { rows: returnRows } = returnResult;
@@ -123,9 +124,9 @@ export default function getDefaultMutationResolver<TSource>(
       };
 
       // TODO: Move this in front of mutation. What hookInfos are needed?
-      await hookManager.executePreMutationCommitHooks(client, hookInfo);
+      await hookManager.executePreMutationCommitHooks(queryRunner, hookInfo);
 
-      await client.query("COMMIT");
+      await queryRunner.commitTransaction();
 
       await hookManager.executePostMutationHooks(hookInfo, context, info, (overWriteReturnData) => {
         returnData = overWriteReturnData;
@@ -133,10 +134,10 @@ export default function getDefaultMutationResolver<TSource>(
 
       return returnData;
     } catch (error) {
-      await client.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       throw error;
     } finally {
-      client.release();
+      await queryRunner.release();
     }
   };
 }

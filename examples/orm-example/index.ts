@@ -35,6 +35,17 @@ import Task from "./models/Task";
 
   console.log("### ORM");
 
+  const queryRunner1 = $orm.createQueryRunner();
+  await queryRunner1.connect();
+
+  const result = await queryRunner1.query(`SELECT * FROM "Photo";`);
+  console.log(`result: ${JSON.stringify(result)}`);
+  const result2 = await queryRunner1.query(`INSERT INTO public."Photo" (name) VALUES ('blub');`);
+  console.log(`result2: ${JSON.stringify(result2)}`);
+
+
+  await queryRunner1.release();
+
   // const photo = new Photo();
   // photo.name = "Misha and the Bear";
   // await photo.save();
@@ -53,6 +64,12 @@ import Task from "./models/Task";
   // user.photo = photo;
   // await user.save();
   // console.log("User has been saved");
+
+  const queryRunner = $orm.getConnection().createQueryRunner();
+  await queryRunner.connect();
+
+  const activities = await queryRunner.query("SELECT application_name FROM pg_stat_activity");
+  console.log(`Activities: ${JSON.stringify(activities)}`);
 
   const photos = await Photo.find();
   console.log("Loaded photos: ", JSON.stringify(photos, null, 2));

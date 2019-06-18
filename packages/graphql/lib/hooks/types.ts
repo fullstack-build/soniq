@@ -1,17 +1,20 @@
 import { GraphQLResolveInfo } from "graphql";
 
 import { IResolverMeta, IDbMeta } from "@fullstack-one/schema-builder";
-import { PgPoolClient } from "@fullstack-one/db";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 
 import { IDefaultMutationResolverContext, IMatch, IQueryBuildOject, IMutationBuildObject } from "../getDefaultResolvers";
 
 export type TPreQueryHookFunction = (
-  client: PgPoolClient,
+  queryRunner: PostgresQueryRunner,
   context: any,
   authRequired: boolean,
   buildObject: IMutationBuildObject | IQueryBuildOject
 ) => any;
-export type TPreMutationCommitHookFunction<TReturnData, TSource> = (client: PgPoolClient, hookInfo: IHookInfo<TReturnData, TSource>) => any;
+export type TPreMutationCommitHookFunction<TReturnData, TSource> = (
+  queryRunner: PostgresQueryRunner,
+  hookInfo: IHookInfo<TReturnData, TSource>
+) => any;
 export type TPostMutationHookFunction<TReturnData, TSource> = (
   hookInfo: IHookInfo<TReturnData, TSource>,
   context: IDefaultMutationResolverContext,

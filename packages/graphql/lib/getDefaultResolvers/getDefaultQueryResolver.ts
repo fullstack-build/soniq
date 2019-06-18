@@ -1,6 +1,6 @@
 import { IFieldResolver } from "graphql-tools";
 
-import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
+import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
@@ -11,50 +11,45 @@ import { HookManager } from "../hooks";
 
 const hookManager: HookManager = Container.get(HookManager);
 
-export default function getDefaultQueryResolver(
-  dbGeneralPool: DbGeneralPool,
-  logger: ILogger,
-  queryBuilder: QueryBuilder,
-  costLimit: number
-): IFieldResolver<any, any> {
+export default function getDefaultQueryResolver(orm: ORM, logger: ILogger, queryBuilder: QueryBuilder, costLimit: number): IFieldResolver<any, any> {
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
     const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated);
 
-    const client: PgPoolClient = await dbGeneralPool.pgPool.connect();
+    const queryRunner = orm.createQueryRunner();
 
     try {
-      await client.query("BEGIN");
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
       setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
 
-      await hookManager.executePreQueryHooks(client, context, queryBuild.authRequired, queryBuild);
+      await hookManager.executePreQueryHooks(queryRunner, context, queryBuild.authRequired, queryBuild);
 
       logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
 
       if (queryBuild.potentialHighCost === true) {
-        const currentCost = await checkCosts(client, queryBuild, costLimit);
+        const currentCost = await checkCosts(queryRunner, queryBuild, costLimit);
         logger.debug(
           "The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger." +
             ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${queryBuild.maxDepth})`
         );
       }
 
-      const result = await client.query(queryBuild.sql, queryBuild.values);
+      const result = await queryRunner.query(queryBuild.sql, queryBuild.values);
       checkQueryResultForInjection(result, logger);
 
-      const { rows } = result;
-      const data = rows[0][queryBuild.queryName];
+      const data = result[0][queryBuild.queryName];
 
-      await client.query("COMMIT");
+      await queryRunner.commitTransaction();
 
       return data;
     } catch (e) {
-      await client.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       throw e;
     } finally {
-      client.release();
+      await queryRunner.release();
     }
   };
 }

@@ -1,162 +1,151 @@
-import { DbGeneralPool, PgPoolClient } from "@fullstack-one/db";
+import { IsolationLevel, ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 
 export class AuthQueryHelper {
-  private dbGeneralPool: DbGeneralPool;
-  private logger: ILogger;
-  private authConfig: any;
-  private cryptoFactory: CryptoFactory;
-  private possibleTransactionIsolationLevels: [string, string, string, string] = [
-    "SERIALIZABLE",
-    "REPEATABLE READ",
-    "READ COMMITTED",
-    "READ UNCOMMITTED"
-  ];
-  private signHelper: SignHelper;
+  private possibleTransactionIsolationLevels: IsolationLevel[] = ["SERIALIZABLE", "REPEATABLE READ", "READ COMMITTED", "READ UNCOMMITTED"];
 
-  constructor(dbGeneralPool: DbGeneralPool, logger: ILogger, authConfig: any, cryptoFactory: CryptoFactory, signHelper: SignHelper) {
-    this.dbGeneralPool = dbGeneralPool;
-    this.authConfig = authConfig;
-    this.logger = logger;
+  constructor(
+    private readonly orm: ORM,
+    private readonly logger: ILogger,
+    private readonly cryptoFactory: CryptoFactory,
+    private readonly signHelper: SignHelper
+  ) {}
 
-    this.cryptoFactory = cryptoFactory;
-    this.signHelper = signHelper;
-  }
-
-  /* DB HELPER START */
-  public async createDbClientAdminTransaction(
-    dbClient: PgPoolClient,
-    isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
-  ): Promise<PgPoolClient> {
+  private async createQueryRunnerAdminTransaction(
+    queryRunner: PostgresQueryRunner,
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<PostgresQueryRunner> {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
-    // set user (admin) for dbClient
-    await this.setAdmin(dbClient);
-    return dbClient;
+    await queryRunner.startTransaction(isolationLevelToUse);
+    await this.setAdmin(queryRunner);
+    return queryRunner;
   }
 
-  public async createDbClientUserTransaction(
-    dbClient: PgPoolClient,
+  private async createQueryRunnerUserTransaction(
+    queryRunner: PostgresQueryRunner,
     accessToken: string,
-    isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
-  ): Promise<PgPoolClient> {
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<PostgresQueryRunner> {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    await dbClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
-    // set user for dbClient
-    await this.authenticateTransaction(dbClient, accessToken);
-    return dbClient;
+    await queryRunner.startTransaction(isolationLevelToUse);
+    await this.authenticateTransaction(queryRunner, accessToken);
+    return queryRunner;
   }
 
-  public async getCurrentUserIdFromClient(dbClient) {
-    return (await dbClient.query("SELECT _auth.current_user_id();")).rows[0].current_user_id;
+  public async getCurrentUserIdFromClient(queryRunner: PostgresQueryRunner) {
+    return (await queryRunner.query("SELECT _auth.current_user_id();"))[0].current_user_id;
   }
 
-  public async getCurrentUserIdFromAccessToken(accessToken) {
-    return this.userTransaction(accessToken, async (dbClient) => {
-      return this.getCurrentUserIdFromClient(dbClient);
+  public async getCurrentUserIdFromAccessToken(accessToken: string) {
+    return this.userTransaction(accessToken, async (queryRunner) => {
+      return this.getCurrentUserIdFromClient(queryRunner);
     });
   }
 
-  public async adminTransaction(
-    callback,
-    isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
+  public async adminTransaction<TResult = any>(
+    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
+    isolationLevel: IsolationLevel = "READ COMMITTED"
   ): Promise<any> {
-    const dbClient = await this.dbGeneralPool.pgPool.connect();
+    const queryRunner = this.orm.createQueryRunner();
 
     try {
-      await this.createDbClientAdminTransaction(dbClient, isolationLevel);
+      await queryRunner.connect();
+      await this.createQueryRunnerAdminTransaction(queryRunner, isolationLevel);
 
-      const result = await callback(dbClient);
+      const result = await callback(queryRunner);
 
-      await dbClient.query("COMMIT");
+      await queryRunner.commitTransaction();
       return result;
     } catch (err) {
-      await dbClient.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       this.logger.warn("adminTransaction.error", err);
       throw err;
     } finally {
-      dbClient.release();
+      await queryRunner.release();
     }
   }
 
-  public async adminQuery(...queryArguments: any[]): Promise<any> {
-    const dbClient = await this.dbGeneralPool.pgPool.connect();
+  public async adminQuery<TResult = any>(...queryArguments: [string, ...any[]]): Promise<TResult> {
+    const queryRunner = this.orm.createQueryRunner();
 
     try {
-      await dbClient.query("BEGIN");
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      await this.setAdmin(dbClient);
+      await this.setAdmin(queryRunner);
 
-      const result = await dbClient.query.apply(dbClient, queryArguments);
+      const result: TResult = await queryRunner.query(...queryArguments);
 
-      await dbClient.query("COMMIT");
+      await queryRunner.commitTransaction();
       return result;
     } catch (err) {
-      await dbClient.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       this.logger.warn("adminQuery.error", err);
       throw err;
     } finally {
-      dbClient.release();
+      await queryRunner.release();
     }
   }
 
-  public async userTransaction(
-    accessToken,
-    callback,
-    isolationLevel: "SERIALIZABLE" | "REPEATABLE READ" | "READ COMMITTED" | "READ UNCOMMITTED" = "READ COMMITTED"
-  ): Promise<any> {
-    const dbClient = await this.dbGeneralPool.pgPool.connect();
+  public async userTransaction<TResult = any>(
+    accessToken: string,
+    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<TResult> {
+    const queryRunner = this.orm.createQueryRunner();
 
     try {
-      await this.createDbClientUserTransaction(dbClient, accessToken, isolationLevel);
+      await queryRunner.connect();
+      await this.createQueryRunnerUserTransaction(queryRunner, accessToken, isolationLevel);
 
-      const result = await callback(dbClient);
+      const result = await callback(queryRunner);
 
-      await dbClient.query("COMMIT");
+      await queryRunner.commitTransaction();
       return result;
     } catch (err) {
-      await dbClient.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       this.logger.warn("userTransaction.error", err);
       throw err;
     } finally {
-      dbClient.release();
+      await queryRunner.release();
     }
   }
 
-  public async userQuery(accessToken, ...queryArguments: any[]): Promise<any> {
-    const dbClient = await this.dbGeneralPool.pgPool.connect();
+  public async userQuery<TResult = any>(accessToken: string, ...queryArguments: [string, ...any[]]): Promise<TResult> {
+    const queryRunner = await this.orm.createQueryRunner();
 
     try {
-      await dbClient.query("BEGIN");
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      await this.authenticateTransaction(dbClient, accessToken);
+      await this.authenticateTransaction(queryRunner, accessToken);
 
-      const result = await dbClient.query.apply(dbClient, queryArguments);
+      const result = await queryRunner.query(...queryArguments);
 
-      await dbClient.query("COMMIT");
+      await queryRunner.commitTransaction();
       return result;
     } catch (err) {
-      await dbClient.query("ROLLBACK");
+      await queryRunner.rollbackTransaction();
       this.logger.warn("userQuery.error", err);
       throw err;
     } finally {
-      dbClient.release();
+      await queryRunner.release();
     }
   }
 
-  public async authenticateTransaction(dbClient, accessToken: string) {
+  public async authenticateTransaction(queryRunner: PostgresQueryRunner, accessToken: string) {
     try {
       const values = [this.cryptoFactory.decrypt(accessToken)];
 
-      await this.setAdmin(dbClient);
-      await dbClient.query("SELECT _auth.authenticate_transaction($1);", values);
-      await this.unsetAdmin(dbClient);
+      await this.setAdmin(queryRunner);
+      await queryRunner.query("SELECT _auth.authenticate_transaction($1);", values);
+      await this.unsetAdmin(queryRunner);
 
       return true;
     } catch (err) {
@@ -165,20 +154,20 @@ export class AuthQueryHelper {
     }
   }
 
-  public async setAdmin(dbClient) {
+  public async setAdmin(queryRunner: PostgresQueryRunner) {
     try {
-      await dbClient.query(`SET LOCAL auth.admin_token TO '${this.signHelper.getAdminSignature()}';`);
-      return dbClient;
+      await queryRunner.query(`SET LOCAL auth.admin_token TO '${this.signHelper.getAdminSignature()}';`);
+      return queryRunner;
     } catch (err) {
       this.logger.warn("setAdmin.error", err);
       throw err;
     }
   }
 
-  public async unsetAdmin(dbClient) {
+  public async unsetAdmin(queryRunner: PostgresQueryRunner) {
     try {
-      await dbClient.query("RESET auth.admin_token;");
-      return dbClient;
+      await queryRunner.query("RESET auth.admin_token;");
+      return queryRunner;
     } catch (err) {
       this.logger.warn("unsetAdmin.error", err);
       throw err;

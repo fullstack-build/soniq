@@ -1,40 +1,34 @@
 import * as PgBoss from "pg-boss";
 export { PgBoss };
 
+import { BootLoader } from "@fullstack-one/boot-loader";
+import { Config } from "@fullstack-one/config";
+import { ORM } from "@fullstack-one/db";
+import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { DbGeneralPool } from "@fullstack-one/db";
-import { Config } from "@fullstack-one/config";
-import { BootLoader } from "@fullstack-one/boot-loader";
 
 @Service()
 export class QueueFactory {
   private queue: PgBoss;
-
-  // DI
-  private logger: ILogger;
-  private generalPool: DbGeneralPool;
+  private readonly logger: ILogger;
 
   constructor(
-    @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => LoggerFactory) loggerFactory,
-    @Inject((type) => DbGeneralPool) generalPool,
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => ORM) private readonly orm: ORM,
     @Inject((type) => Config) config: Config
   ) {
-    // set DI dependencies
-    this.generalPool = generalPool;
-
-    // register package config
     config.registerConfig("Queue", `${__dirname}/../config`);
-    // init logger
     this.logger = loggerFactory.create(this.constructor.name);
 
-    // add to boot loader
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
-    let boss;
+    let boss: PgBoss;
     const queueConfig = Container.get(Config).getConfig("Queue");
 
     // create new connection if set in config, otherwise use one from the pool
@@ -42,18 +36,14 @@ export class QueueFactory {
       // create a PGBoss instance
       boss = new PgBoss(queueConfig);
     } else {
-      if (this.generalPool.pgPool == null) {
-        throw Error("DB.generalPool not ready");
-      }
-
-      // get new connection from the pool
-      const pgCon = await this.generalPool.pgPool.connect();
+      const queryRunner = this.orm.createQueryRunner();
+      await queryRunner.connect();
 
       // Add `close` and `executeSql` functions for PgBoss to function
       const pgBossDB = {
-        close: pgCon.release, // Not required
+        close: () => queryRunner.release(),
         executeSql: async (...args) => {
-          return pgCon.query.apply(pgCon, args);
+          return queryRunner.query.apply(queryRunner, args);
         }
       };
 
@@ -69,6 +59,10 @@ export class QueueFactory {
     } catch (err) {
       this.logger.warn("start.error", err);
     }
+  }
+
+  private async end(): Promise<void> {
+    if (this.queue != null) await this.queue.disconnect();
   }
 
   public getQueue(): PgBoss {

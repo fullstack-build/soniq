@@ -15,6 +15,7 @@ import * as modelMeta from "./model-meta";
 import { IOrmConfig } from "./types";
 
 export { Connection, ConnectionManager, MigrationInterface, QueryBuilder } from "typeorm";
+export { IsolationLevel } from "typeorm/driver/types/IsolationLevel";
 export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 export * from "./decorator";
