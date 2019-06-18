@@ -5,7 +5,7 @@
     "examples/orm-example",
     "packages/*"
   ],
-  "version": "0.5.16",
+  "version": "0.5.17",
   "command": {
     "init": {
       "exact": true
