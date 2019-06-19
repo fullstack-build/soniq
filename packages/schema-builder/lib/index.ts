@@ -4,10 +4,7 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
-<<<<<<< HEAD
 import { IDbConfig, ORM } from "@fullstack-one/db";
-=======
->>>>>>> master
 import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
@@ -70,13 +67,8 @@ export class SchemaBuilder {
     @Inject((type) => Config) config,
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
-<<<<<<< HEAD
     @Inject((type) => ORM) orm,
     @Inject((type) => DbSchemaBuilder) dbSchemaBuilder
-=======
-    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder,
-    @Inject((type) => PgToDbMeta) pgToDbMeta
->>>>>>> master
   ) {
     this.loggerFactory = loggerFactory;
     this.dbSchemaBuilder = dbSchemaBuilder;

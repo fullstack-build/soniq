@@ -1,9 +1,5 @@
 import { Service, Inject } from "@fullstack-one/di";
-<<<<<<< HEAD
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
-=======
-import { DbGeneralPool } from "@fullstack-one/db";
->>>>>>> master
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
@@ -49,11 +45,7 @@ export class Auth {
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   constructor(
-<<<<<<< HEAD
     @Inject((type) => ORM) orm: ORM,
-=======
-    @Inject((type) => DbGeneralPool) dbGeneralPool,
->>>>>>> master
     @Inject((type) => Server) server,
     @Inject((type) => SchemaBuilder) schemaBuilder,
     @Inject((type) => Config) config,

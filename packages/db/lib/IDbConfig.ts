@@ -1,14 +1,4 @@
-<<<<<<< HEAD
 import * as typeorm from "typeorm";
-=======
-export interface IDbConfig {
-  automigrate: boolean;
-  renameInsteadOfDrop: boolean;
-  viewSchemaName: string;
-  appClient: IDbAppClientConfig;
-  general: IDbGeneralPoolConfig;
-}
->>>>>>> master
 
 export interface IDbConfig {
   host: string;

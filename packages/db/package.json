@@ -20,7 +20,6 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-<<<<<<< HEAD
     "@fullstack-one/boot-loader": "^0.5.17",
     "@fullstack-one/config": "^0.5.17",
     "@fullstack-one/di": "^0.5.15",
@@ -28,16 +27,10 @@
     "@fullstack-one/graceful-shutdown": "^0.5.17",
     "@fullstack-one/logger": "^0.5.17",
     "@types/lodash": "^4.14.134",
-=======
-    "@fullstack-one/boot-loader": "^0.5.5",
-    "@fullstack-one/config": "^0.5.5",
-    "@fullstack-one/di": "^0.5.2",
-    "@fullstack-one/events": "^0.5.9",
-    "@fullstack-one/graceful-shutdown": "^0.5.9",
-    "@fullstack-one/logger": "^0.5.5",
->>>>>>> master
     "deepmerge": "^2.0.1",
-    "pg": "^7.5.0"
+    "lodash": "^4.17.11",
+    "pg": "^7.5.0",
+    "typeorm": "^0.2.18"
   },
   "devDependencies": {
     "@types/pg": "^7.4.7",
