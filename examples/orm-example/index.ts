@@ -43,7 +43,6 @@ import Task from "./models/Task";
   const result2 = await queryRunner1.query(`INSERT INTO public."Photo" (name) VALUES ('blub');`);
   console.log(`result2: ${JSON.stringify(result2)}`);
 
-
   await queryRunner1.release();
 
   // const photo = new Photo();
