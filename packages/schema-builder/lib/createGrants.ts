@@ -15,6 +15,9 @@ export function createGrants(config: IConfig, dbMeta: IDbMeta): string[] {
 
   Object.values(dbMeta.schemas).forEach((schema: any) => {
     Object.values(schema.tables).forEach((table: any) => {
+      // sql.push(`REVOKE ALL PRIVILEGES ON "${table.schemaName}"."${table.name}" FROM ${applicationUserName};`);
+      sql.push(`GRANT SELECT, UPDATE, INSERT, DELETE ON "${table.schemaName}"."A${table.name}" TO "${config.userName}";`);
+
       // TODO: @Eugene: Move this to versioning.ts
       // Besides versioning should be a security defining trigger, executed
       // with the permissions of function-creator. Thus this Grant should be removed.

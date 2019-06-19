@@ -1,5 +1,9 @@
 import { Service, Inject } from "@fullstack-one/di";
+<<<<<<< HEAD
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
+=======
+import { DbGeneralPool } from "@fullstack-one/db";
+>>>>>>> master
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
@@ -7,7 +11,6 @@ import { GraphQl } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import * as koaCors from "@koa/cors";
 import { getParser } from "./getParser";
-import * as authMigrationsObject from "./migrations";
 
 import * as fs from "fs";
 import { CSRFProtection } from "./CSRFProtection";
@@ -46,7 +49,11 @@ export class Auth {
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   constructor(
+<<<<<<< HEAD
     @Inject((type) => ORM) orm: ORM,
+=======
+    @Inject((type) => DbGeneralPool) dbGeneralPool,
+>>>>>>> master
     @Inject((type) => Server) server,
     @Inject((type) => SchemaBuilder) schemaBuilder,
     @Inject((type) => Config) config,
@@ -70,8 +77,6 @@ export class Auth {
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
     graphQl.addPreMutationCommitHook(this.preMutationCommitHook.bind(this));
     graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
-
-    orm.addMigrations(Object.values(authMigrationsObject));
 
     schemaBuilder.extendSchema(schema);
 

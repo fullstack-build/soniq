@@ -2,7 +2,6 @@
   "lerna": "2.9.0",
   "packages": [
     "examples/fullstack-one-example",
-    "examples/orm-example",
     "packages/*"
   ],
   "version": "0.5.17",

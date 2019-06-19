@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { types as PgTypes } from "pg";
 import * as typeorm from "typeorm";
 import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
@@ -158,3 +159,7 @@ export class ORM {
     return typeorm.getConnection().createQueryRunner() as PostgresQueryRunner;
   }
 }
+=======
+export { DbAppClient, PgClient } from "./DbAppClient";
+export { DbGeneralPool, PgPool, PgPoolClient } from "./DbGeneralPool";
+>>>>>>> master

@@ -2,29 +2,29 @@
 # @default(value: "test@test.de") @validate(isEmail:null, contains: "fullstack.build")
 # @check(notGenericAddress:"(((email)::text <> 'mail@fullstack.build'::text) AND ((email)::text <> 'info@fullstack.build'::text))")
 # I removed these checks becauese with them I cannot use oAuth login with different mails
-#type User @table @auth @versioning{
-#  id: ID! @unique
-#  updatedAt: String @updatedAt
-#  createdAt: String @createdAt
-#  tenantId: String @tenant @default(value: "default")
-#  email: String @unique @username
-#  password: String @password
-#  isAdmin: Boolean @default(expression: false)
-#  #gender: Gender
-#  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
-#  payload: Payload @json @migrate(from:"payloadOld")
-#  posts: [Post!]! @relation(name: "PostOwner")
-#  #postContributions: [Post!]! @relation(name: "PostContributors")
-#  stripeAccount: String @custom(resolver: "stripeAccount")
-#  testDefault: String @type(name: "date") @default(expression: "now()")
-#  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyAgreementAcceptedAtInUTC
-#  acceptedPrivacyTermsVersion: String @privacyAgreementAcceptedVersion
-#  something: String
-#  #startTimeInUTC: String! @type(name:"timestamp")
-#  #type: UserType
-#  #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
-#  #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
-#}
+type User @table @auth @versioning{
+  id: ID! @unique
+  updatedAt: String @updatedAt
+  createdAt: String @createdAt
+  tenantId: String @tenant @default(value: "default")
+  email: String @unique @username
+  password: String @password
+  isAdmin: Boolean @default(expression: false)
+  #gender: Gender
+  firstLetterOfUserName: String @computed(expression: "FirstNOfField", params: {n: 1, field: "email"})
+  payload: Payload @json @migrate(from:"payloadOld")
+  posts: [Post!]! @relation(name: "PostOwner")
+  #postContributions: [Post!]! @relation(name: "PostContributors")
+  stripeAccount: String @custom(resolver: "stripeAccount")
+  testDefault: String @type(name: "date") @default(expression: "now()")
+  acceptedPrivacyTermsAtInUTC: String @type(name: "timestamp") @privacyAgreementAcceptedAtInUTC
+  acceptedPrivacyTermsVersion: String @privacyAgreementAcceptedVersion
+  something: String
+  #startTimeInUTC: String! @type(name:"timestamp")
+  #type: UserType
+  #privatePayload: PrivatePayload @subtype(fieldName: "type", value: "private")
+  #businessPayload: BusinessPayload @subtype(fieldName: "type", value: "business")
+}
 
 type PayloadData {
   title: String

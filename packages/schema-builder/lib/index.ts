@@ -4,7 +4,10 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
+<<<<<<< HEAD
 import { IDbConfig, ORM } from "@fullstack-one/db";
+=======
+>>>>>>> master
 import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
@@ -62,19 +65,22 @@ export class SchemaBuilder {
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
-  private orm: ORM;
 
   constructor(
     @Inject((type) => Config) config,
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
+<<<<<<< HEAD
     @Inject((type) => ORM) orm,
     @Inject((type) => DbSchemaBuilder) dbSchemaBuilder
+=======
+    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder,
+    @Inject((type) => PgToDbMeta) pgToDbMeta
+>>>>>>> master
   ) {
     this.loggerFactory = loggerFactory;
     this.dbSchemaBuilder = dbSchemaBuilder;
     this.config = config;
-    this.orm = orm;
 
     // register package config
     this.schemaBuilderConfig = this.config.registerConfig("SchemaBuilder", `${__dirname}/../config`);
@@ -91,9 +97,6 @@ export class SchemaBuilder {
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
-      // augment with ORM SDL
-      this.extendSchema(this.orm.graphQlSDL);
-
       this.logger.trace("boot", "GraphQl schema loaded");
 
       // check if any files were loaded
