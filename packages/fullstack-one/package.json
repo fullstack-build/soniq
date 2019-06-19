@@ -1,6 +1,6 @@
 {
   "name": "fullstack-one",
-  "version": "0.5.17",
+  "version": "0.5.18",
   "description": "fullstack.one main server package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,8 +20,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.5.17",
-    "@fullstack-one/config": "^0.5.17",
+    "@fullstack-one/boot-loader": "^0.5.18",
+    "@fullstack-one/config": "^0.5.18",
     "@fullstack-one/di": "^0.5.15",
     "reflect-metadata": "^0.1.12"
   },
