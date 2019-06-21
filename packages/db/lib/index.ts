@@ -91,8 +91,7 @@ export class ORM {
       ...this.config,
       type: "postgres",
       extra: { application_name: this.applicationName, min: this.config.min || 1, max },
-      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities],
-      migrations: this.migrations
+      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities]
     };
     await typeorm.createConnection(connectionOptions);
 
