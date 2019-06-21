@@ -17,25 +17,25 @@ import { NotificationsEmail } from "@fullstack-one/notifications";
 import { EventEmitter } from "@fullstack-one/events";
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
-const $gql: GraphQl = Container.get(GraphQl);
-const $gs: GracefulShutdown = Container.get(GracefulShutdown);
-const $fs: FileStorage = Container.get(FileStorage);
+// const $gql: GraphQl = Container.get(GraphQl);
+// const $gs: GracefulShutdown = Container.get(GracefulShutdown);
+// const $fs: FileStorage = Container.get(FileStorage);
 
-const $auth: Auth = Container.get(Auth);
+// const $auth: Auth = Container.get(Auth);
 
-$auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
-  console.log("USER REGISTERED", JSON.stringify(userAuthentication, null, 2));
-});
+// $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
+//   console.log("USER REGISTERED", JSON.stringify(userAuthentication, null, 2));
+// });
 
-const $authProviderPassword = Container.get(AuthProviderPassword);
-const $authProviderOAuth = Container.get(AuthProviderOAuth);
-const $authProviderEmail = Container.get(AuthProviderEmail);
+// const $authProviderPassword = Container.get(AuthProviderPassword);
+// const $authProviderOAuth = Container.get(AuthProviderOAuth);
+// const $authProviderEmail = Container.get(AuthProviderEmail);
 
-$authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
-  console.log("SEND PROOF MAIL", JSON.stringify(mail, null, 2));
-});
+// $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
+//   console.log("SEND PROOF MAIL", JSON.stringify(mail, null, 2));
+// });
 
-const $email: NotificationsEmail = Container.get(NotificationsEmail);
+// const $email: NotificationsEmail = Container.get(NotificationsEmail);
 const $events: EventEmitter = Container.get(EventEmitter);
 
 /* $auth.setNotificationFunction(async (user, caller, meta) => {
@@ -47,9 +47,9 @@ const $events: EventEmitter = Container.get(EventEmitter);
   await $one.boot();
 
   // send mail example
-  await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", null, [], "user@fullstack.one", {
-    singletonKey: "welcome:user@fullstack.one"
-  });
+  // await $email.sendMessage("user@fullstack.one", "Welcome to fullstack.one", "Hello <b>User</b>!", null, [], "user@fullstack.one", {
+  //   singletonKey: "welcome:user@fullstack.one"
+  // });
 
   // event example - multiple
   // register

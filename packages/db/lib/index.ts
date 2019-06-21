@@ -75,8 +75,13 @@ export class ORM {
         synchronize: false,
         name: "migration",
         migrations: this.migrations,
-        migrationsTableName: "_migrations"
+        migrationsTableName: "_meta.migrations"
       });
+      const queryRunner = (await connection.createQueryRunner()) as PostgresQueryRunner;
+      await queryRunner.connect();
+      await queryRunner.createSchema("_meta", true);
+      await this.recreateGraphqlSchema(queryRunner);
+      await queryRunner.release();
       await connection.runMigrations();
       await connection.close();
       this.logger.debug("db.orm.migrations.end");
@@ -85,14 +90,18 @@ export class ORM {
     }
   }
 
+  private async recreateGraphqlSchema(queryRunner: PostgresQueryRunner): Promise<void> {
+    await queryRunner.dropSchema("_graphql", true, true);
+    await queryRunner.createSchema("_graphql");
+  }
+
   private async createConnection(max: number = 2): Promise<void> {
     const path: string = this.environment.path;
     const connectionOptions: PostgresConnectionOptions = {
       ...this.config,
       type: "postgres",
       extra: { application_name: this.applicationName, min: this.config.min || 1, max },
-      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities],
-      migrations: this.migrations
+      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities]
     };
     await typeorm.createConnection(connectionOptions);
 
@@ -146,7 +155,7 @@ export class ORM {
     migrations.forEach((migration) => this.migrations.push(migration));
   }
 
-  public get graphQlSDL(): string {
+  public getGraphQlSDL(): string {
     return modelMeta.toSdl();
   }
 
