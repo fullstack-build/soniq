@@ -66,7 +66,15 @@ export = [
     type: "expression",
     gqlReturnType: "Boolean",
     generate: (context, params) => {
-      return `public.get_true()`;
+      return `true`;
+    }
+  },
+  {
+    name: "GetNumber",
+    type: "expression",
+    gqlReturnType: "Int",
+    generate: (context, params) => {
+      return `1`;
     }
   }
 ];

@@ -10,6 +10,7 @@ import { AHelper } from "@fullstack-one/helper";
 
 export * from "./db-schema-builder/IDbMeta";
 export * from "./gql-schema-builder/interfaces";
+export * from "./decorators";
 
 import * as utils from "./gql-schema-builder/utils";
 export { utils };

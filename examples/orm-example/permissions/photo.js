@@ -4,7 +4,8 @@ module.exports = [
     readExpressions: {
       id: ["Anyone"],
       name: ["Anyone"],
-      text: ["Anyone"]
+      text: ["Anyone"],
+      count: ["Anyone"]
     },
     createViews: {
       me: {
