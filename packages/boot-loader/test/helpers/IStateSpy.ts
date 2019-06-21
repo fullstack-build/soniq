@@ -1,4 +1,4 @@
-import { EBootState } from "../lib";
+import { EBootState } from "../../lib";
 
 export default interface IStateSpy {
   bootState: EBootState;

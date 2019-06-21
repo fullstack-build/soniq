@@ -5,8 +5,6 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "ava --verbose ./test/**/*test.ts",
-    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
     "start": "echo \"Error: no start specified\" && exit 1",
     "build": "tsc",
     "prepublishOnly": "npm run build"
@@ -25,35 +23,5 @@
     "@types/lodash": "^4.14.119",
     "lodash": "^4.17.5"
   },
-  "ava": {
-    "compileEnhancements": false,
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
-  },
-  "devDependencies": {
-    "ava": "^1.0.1",
-    "nyc": "^13.1.0",
-    "source-map-support": "^0.5.10"
-  },
-  "nyc": {
-    "include": [
-      "lib/**/*.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "reporter": [
-      "text-summary",
-      "html"
-    ],
-    "sourceMap": true,
-    "instrument": true
-  }
+  "devDependencies": {}
 }

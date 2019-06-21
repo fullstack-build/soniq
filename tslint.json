@@ -17,7 +17,7 @@
     "no-else-after-return": false,
     "trailing-comma": false,
     "triple-equals": [true, "allow-null-check"],
-    "no-implicit-dependencies": [true, "dev"],
+    "no-implicit-dependencies": [true, "dev", ["ava"]],
     "experimentalDecorators": true,
     "no-submodule-imports": [true, "typeorm"],
     "member-ordering": [
