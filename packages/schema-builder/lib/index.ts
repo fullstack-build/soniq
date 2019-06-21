@@ -14,8 +14,6 @@ export * from "./gql-schema-builder/interfaces";
 import * as utils from "./gql-schema-builder/utils";
 export { utils };
 
-import { createGrants } from "./createGrants";
-
 // import sub modules
 import { AGraphQlHelper } from "./helper";
 
@@ -53,11 +51,9 @@ export class SchemaBuilder {
   private expressions: IExpression[];
   private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
-  private dbSchemaBuilder: DbSchemaBuilder;
   private dbMeta: IDbMeta;
   private extensions: any = [];
 
-  // DI
   private config: Config;
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
@@ -67,14 +63,12 @@ export class SchemaBuilder {
     @Inject((type) => Config) config,
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => ORM) orm,
-    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder
+    @Inject((type) => ORM) private readonly orm: ORM,
+    @Inject((type) => DbSchemaBuilder) private readonly dbSchemaBuilder: DbSchemaBuilder
   ) {
     this.loggerFactory = loggerFactory;
-    this.dbSchemaBuilder = dbSchemaBuilder;
     this.config = config;
 
-    // register package config
     this.schemaBuilderConfig = this.config.registerConfig("SchemaBuilder", `${__dirname}/../config`);
 
     this.logger = this.loggerFactory.create(this.constructor.name);
@@ -86,6 +80,9 @@ export class SchemaBuilder {
   private async boot(): Promise<IDbMeta> {
     try {
       this.logger.trace("boot", "started");
+
+      this.extendSchema(this.orm.getGraphQlSDL());
+
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
@@ -105,19 +102,8 @@ export class SchemaBuilder {
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
       this.logger.trace("boot", "GraphQl AST parsed");
 
-      // load permissions and expressions and generate views and put them into schemas
-
-      // load permissions
-      const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
-      const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
-      this.logger.trace("boot", "Permissions loaded");
-      this.permissions = [].concat.apply([], permissionsArray);
-
-      // load expressions
-      const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
-      const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
-      this.logger.trace("boot", "Expressions loaded");
-      this.expressions = [].concat.apply([], expressionsArray);
+      await this.loadPermissions();
+      await this.loadExpressions();
 
       const dbConfig: IDbConfig = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
@@ -136,27 +122,36 @@ export class SchemaBuilder {
 
       const extensions = this.extensions;
 
-      const graphqlViewSqlStatements = createGrants(config, this.dbMeta);
-      this.logger.trace("boot", "Grants created");
-
       const data = parsePermissions(this.permissions, context, extensions, config);
       this.logger.trace("boot", "Permissions parsed");
-
-      data.sql.forEach((statement) => graphqlViewSqlStatements.push(statement));
 
       //  Reverse to get the generated queries/mutations at the beginning
       (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
-      this.dbSchemaBuilder.addGraphqlViewSqlStatements(graphqlViewSqlStatements);
       this.logger.trace("boot", "Permission SQL statements set");
+      await this.dbSchemaBuilder.createGraphqlViews(data.sql);
 
       return this.dbMeta;
     } catch (err) {
       this.logger.warn("boot.error", err);
       throw err;
     }
+  }
+
+  private async loadPermissions(): Promise<void> {
+    const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
+    const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
+    this.logger.trace("boot", "Permissions loaded");
+    this.permissions = [].concat.apply([], permissionsArray);
+  }
+
+  private async loadExpressions(): Promise<void> {
+    const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
+    const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
+    this.logger.trace("boot", "Expressions loaded");
+    this.expressions = [].concat.apply([], expressionsArray);
   }
 
   public getDbSchemaBuilder(): DbSchemaBuilder {

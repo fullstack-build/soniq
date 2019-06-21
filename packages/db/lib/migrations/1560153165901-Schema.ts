@@ -1,13 +1,14 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface } from "typeorm";
+import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 
 export class Schema1560153165901 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS _meta;`);
-    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS _versions;`);
+  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
+    await queryRunner.createSchema("_graphql", true);
+    await queryRunner.createSchema("_versions", true);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(`DROP SCHEMA IF EXISTS _versions`);
-    await queryRunner.query(`DROP SCHEMA IF EXISTS _meta`);
+  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
+    await queryRunner.dropSchema("_graphql", true);
+    await queryRunner.dropSchema("_versions", true);
   }
 }

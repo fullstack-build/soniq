@@ -75,8 +75,12 @@ export class ORM {
         synchronize: false,
         name: "migration",
         migrations: this.migrations,
-        migrationsTableName: "_migrations"
+        migrationsTableName: "_meta.migrations"
       });
+      const queryRunner = await connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.createSchema("_meta", true);
+      await queryRunner.release();
       await connection.runMigrations();
       await connection.close();
       this.logger.debug("db.orm.migrations.end");
@@ -145,7 +149,7 @@ export class ORM {
     migrations.forEach((migration) => this.migrations.push(migration));
   }
 
-  public get graphQlSDL(): string {
+  public getGraphQlSDL(): string {
     return modelMeta.toSdl();
   }
 

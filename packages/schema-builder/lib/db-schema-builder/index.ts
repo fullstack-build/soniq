@@ -5,17 +5,12 @@ import { ORM } from "@fullstack-one/db";
 @Service()
 export class DbSchemaBuilder {
   private readonly logger: ILogger;
-  private readonly graphqlViewSqlStatements: string[] = [];
 
   constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory, @Inject((type) => ORM) private readonly orm: ORM) {
     this.logger = loggerFactory.create(this.constructor.name);
   }
 
-  public addGraphqlViewSqlStatements(statements: string[]): void {
-    statements.forEach((statement) => this.graphqlViewSqlStatements.push(statement));
-  }
-
-  public async migrate(): Promise<void> {
+  public async createGraphqlViews(graphqlViewSqlStatements: string[]): Promise<void> {
     const queryRunner = this.orm.createQueryRunner();
 
     try {
@@ -23,7 +18,7 @@ export class DbSchemaBuilder {
       await queryRunner.connect();
       await queryRunner.query("BEGIN");
 
-      for (const statement of Object.values(this.graphqlViewSqlStatements)) {
+      for (const statement of Object.values(graphqlViewSqlStatements)) {
         this.logger.trace("migration.view.sql.statement", statement);
         await queryRunner.query(statement);
       }
