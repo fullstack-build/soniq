@@ -60,5 +60,13 @@ export = [
     generate: (context, params): string => {
       return `(substring(${context.getField(params.field)} from 1 for ${params.n || 1}) || '.')`;
     }
+  },
+  {
+    name: "GetTrue",
+    type: "expression",
+    gqlReturnType: "Boolean",
+    generate: (context, params) => {
+      return `public.get_true()`;
+    }
   }
 ];

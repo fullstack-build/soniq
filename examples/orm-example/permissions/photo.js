@@ -3,7 +3,8 @@ module.exports = [
     gqlTypeName: "Photo",
     readExpressions: {
       id: ["Anyone"],
-      name: ["Anyone"]
+      name: ["Anyone"],
+      text: ["Anyone"]
     },
     createViews: {
       me: {

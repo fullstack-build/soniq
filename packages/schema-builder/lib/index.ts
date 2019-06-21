@@ -25,7 +25,7 @@ import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta"
 
 import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
-import { IPermissionContext, IConfig, IResolverMeta } from "./gql-schema-builder/interfaces";
+import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -47,8 +47,6 @@ export class SchemaBuilder {
   private gQlSdl: string[];
   private gqlSdlExtensions: any = [];
   private gQlAst: DocumentNode;
-  private permissions: any;
-  private expressions: IExpression[];
   private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
   private dbMeta: IDbMeta;
@@ -102,8 +100,8 @@ export class SchemaBuilder {
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
       this.logger.trace("boot", "GraphQl AST parsed");
 
-      await this.loadPermissions();
-      await this.loadExpressions();
+      const permissions = await this.loadPermissions();
+      const expressions = await this.loadExpressions();
 
       const dbConfig: IDbConfig = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
@@ -117,12 +115,12 @@ export class SchemaBuilder {
       const context: IPermissionContext = {
         gqlDocument: this.gQlAst,
         dbMeta: this.dbMeta,
-        expressions: this.expressions
+        expressions
       };
 
       const extensions = this.extensions;
 
-      const data = parsePermissions(this.permissions, context, extensions, config);
+      const data = parsePermissions(permissions, context, extensions, config);
       this.logger.trace("boot", "Permissions parsed");
 
       //  Reverse to get the generated queries/mutations at the beginning
@@ -140,18 +138,18 @@ export class SchemaBuilder {
     }
   }
 
-  private async loadPermissions(): Promise<void> {
+  private async loadPermissions(): Promise<IPermission[]> {
     const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
     const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
     this.logger.trace("boot", "Permissions loaded");
-    this.permissions = [].concat.apply([], permissionsArray);
+    return [].concat.apply([], permissionsArray);
   }
 
-  private async loadExpressions(): Promise<void> {
+  private async loadExpressions(): Promise<IExpression[]> {
     const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
     const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
     this.logger.trace("boot", "Expressions loaded");
-    this.expressions = [].concat.apply([], expressionsArray);
+    return [].concat.apply([], expressionsArray);
   }
 
   public getDbSchemaBuilder(): DbSchemaBuilder {
