@@ -15,8 +15,7 @@
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
     "migrate-db": "one migrate-db",
     "generate-ts": "one generate-ts --output types/generated.ts",
-    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
-    "test": "echo \"No tests specified :(\" && exit 0"
+    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix"
   },
   "repository": {
     "type": "git",
@@ -36,7 +35,7 @@
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.0.57",
     "ts-node": "^4.1.0",
-    "ts-node-dev": "^1.0.0-pre.26",
+    "ts-node-dev": "^1.0.0-pre.40",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.4.2",
     "typescript": "^3.1.1"

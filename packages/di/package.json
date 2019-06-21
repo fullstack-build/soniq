@@ -5,8 +5,6 @@
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "echo \"typedi has tests. ;)\" && exit 0",
-    "coverage": "echo \"typedi has tests. ;)\" && exit 0",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
@@ -22,5 +20,6 @@
   "dependencies": {
     "reflect-metadata": "^0.1.13",
     "typedi": "^0.8.0"
-  }
+  },
+  "devDependencies": {}
 }
