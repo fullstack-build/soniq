@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -18,14 +18,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.5.18",
-    "@fullstack-one/config": "^0.5.18",
-    "@fullstack-one/db": "^0.5.18",
-    "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/helper": "^0.5.18",
-    "@fullstack-one/logger": "^0.5.18",
-    "@fullstack-one/schema-builder": "^0.5.18",
-    "@fullstack-one/server": "^0.5.18",
+    "@fullstack-one/boot-loader": "^0.5.19",
+    "@fullstack-one/config": "^0.5.19",
+    "@fullstack-one/db": "^0.5.19",
+    "@fullstack-one/di": "^0.5.19",
+    "@fullstack-one/helper": "^0.5.19",
+    "@fullstack-one/logger": "^0.5.19",
+    "@fullstack-one/schema-builder": "^0.5.19",
+    "@fullstack-one/server": "^0.5.19",
     "@types/graphql": "0.13.4",
     "@types/koa-mount": "^3.0.1",
     "@types/lodash": "^4.14.123",
@@ -42,6 +42,5 @@
     "koa-router": "^7.4.0",
     "lodash": "^4.17.11"
   },
-  "devDependencies": {},
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }

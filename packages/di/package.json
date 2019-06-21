@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/di",
-  "version": "0.5.15",
+  "version": "0.5.19",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,6 +20,5 @@
   "dependencies": {
     "reflect-metadata": "^0.1.13",
     "typedi": "^0.8.0"
-  },
-  "devDependencies": {}
+  }
 }

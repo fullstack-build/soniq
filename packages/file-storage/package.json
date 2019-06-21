@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/file-storage",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "description": "fullstack.one example package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -18,21 +18,20 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.18",
-    "@fullstack-one/boot-loader": "^0.5.18",
-    "@fullstack-one/config": "^0.5.18",
-    "@fullstack-one/db": "^0.5.18",
-    "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/graphql": "^0.5.18",
-    "@fullstack-one/logger": "^0.5.18",
-    "@fullstack-one/schema-builder": "^0.5.18",
-    "@fullstack-one/server": "^0.5.18",
+    "@fullstack-one/auth": "^0.5.19",
+    "@fullstack-one/boot-loader": "^0.5.19",
+    "@fullstack-one/config": "^0.5.19",
+    "@fullstack-one/db": "^0.5.19",
+    "@fullstack-one/di": "^0.5.19",
+    "@fullstack-one/graphql": "^0.5.19",
+    "@fullstack-one/logger": "^0.5.19",
+    "@fullstack-one/schema-builder": "^0.5.19",
+    "@fullstack-one/server": "^0.5.19",
     "jsonwebtoken": "^8.2.1",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.3.0",
     "lodash": "^4.17.11",
     "minio": "^7.0.2"
   },
-  "devDependencies": {},
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }
