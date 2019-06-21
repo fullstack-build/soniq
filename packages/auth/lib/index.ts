@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as koaCors from "@koa/cors";
 import { Service, Inject } from "@fullstack-one/di";
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
@@ -5,10 +7,8 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
 import { GraphQl } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import * as koaCors from "@koa/cors";
-import { getParser } from "./getParser";
 
-import * as fs from "fs";
+import migrations from "./migrations";
 import { CSRFProtection } from "./CSRFProtection";
 import { AuthConnector } from "./AuthConnector";
 import { AuthQueryHelper } from "./AuthQueryHelper";
@@ -18,6 +18,7 @@ import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
+import { getParser } from "./getParser";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -54,6 +55,8 @@ export class Auth {
   ) {
     // register package config
     this.authConfig = config.registerConfig("Auth", `${__dirname}/../config`);
+
+    orm.addMigrations(migrations);
 
     this.logger = loggerFactory.create(this.constructor.name);
 
