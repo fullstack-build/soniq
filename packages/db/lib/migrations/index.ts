@@ -1,5 +1,4 @@
 export { Extensions1560087843421 } from "./1560087843421-Extensions";
-export { Schema1560153165901 } from "./1560153165901-Schema";
 export { MetaInfoTable1560153367583 } from "./1560153367583-MetaInfoTable";
 export { MetaMigrationsTable1560153367683 } from "./1560153367683-MetaMigrationsTable";
 export { MetaPlv8JsModulesTable1560160652405 } from "./1560160652405-MetaPlv8JsModulesTable";

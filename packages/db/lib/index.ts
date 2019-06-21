@@ -77,9 +77,10 @@ export class ORM {
         migrations: this.migrations,
         migrationsTableName: "_meta.migrations"
       });
-      const queryRunner = await connection.createQueryRunner();
+      const queryRunner = (await connection.createQueryRunner()) as PostgresQueryRunner;
       await queryRunner.connect();
       await queryRunner.createSchema("_meta", true);
+      await this.recreateGraphqlSchema(queryRunner);
       await queryRunner.release();
       await connection.runMigrations();
       await connection.close();
@@ -87,6 +88,11 @@ export class ORM {
     } catch (err) {
       this.logger.error("db.orm.migrations.error", err);
     }
+  }
+
+  private async recreateGraphqlSchema(queryRunner: PostgresQueryRunner): Promise<void> {
+    await queryRunner.dropSchema("_graphql", true, true);
+    await queryRunner.createSchema("_graphql");
   }
 
   private async createConnection(max: number = 2): Promise<void> {
