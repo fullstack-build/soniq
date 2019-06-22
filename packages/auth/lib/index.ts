@@ -28,6 +28,7 @@ export * from "./AuthProviders/AuthProviderEmail";
 export * from "./AuthProviders/AuthProviderOAuth";
 export * from "./AuthProviders/AuthProviderPassword";
 export { AuthProvider, IAuthFactorForProof };
+export { AuthConnector };
 
 @Service()
 export class Auth {
