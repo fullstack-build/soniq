@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one-example",
-  "version": "0.5.20",
+  "version": "0.5.21",
   "description": "Example project: how to use fullstack.one",
   "private": true,
   "engines": {
@@ -41,13 +41,13 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.20",
-    "@fullstack-one/auth-fb-token": "^0.5.20",
+    "@fullstack-one/auth": "^0.5.21",
+    "@fullstack-one/auth-fb-token": "^0.5.21",
     "@fullstack-one/auto-migrate": "^0.5.17",
     "@fullstack-one/db": "^0.5.20",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.20",
-    "@fullstack-one/file-storage": "^0.5.20",
+    "@fullstack-one/file-storage": "^0.5.21",
     "@fullstack-one/graceful-shutdown": "^0.5.20",
     "@fullstack-one/graphql": "^0.5.20",
     "@fullstack-one/notifications": "^0.5.20",
