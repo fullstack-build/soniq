@@ -28,14 +28,12 @@ export * from "./AuthProviders/AuthProviderEmail";
 export * from "./AuthProviders/AuthProviderOAuth";
 export * from "./AuthProviders/AuthProviderPassword";
 export { AuthProvider, IAuthFactorForProof };
-export { AuthConnector };
 
 @Service()
 export class Auth {
   private authConfig;
   private cryptoFactory: CryptoFactory;
   private signHelper: SignHelper;
-  private authConnector: AuthConnector;
   private authQueryHelper: AuthQueryHelper;
   private csrfProtection: CSRFProtection;
   private accessTokenParser: AccessTokenParser;
@@ -45,6 +43,8 @@ export class Auth {
   private parserMeta: any = {};
   private privacyAgreementAcceptance: PrivacyAgreementAcceptance;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
+
+  public readonly authConnector: AuthConnector;
 
   constructor(
     @Inject((type) => ORM) orm: ORM,
