@@ -11,7 +11,7 @@
   "scripts": {
     "start": "ts-node .",
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
-    "dev": "ts-node-dev --notify=false .",
+    "dev": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false .",
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
     "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix"
   },
@@ -44,6 +44,7 @@
     "@fullstack-one/db": "^0.5.17",
     "@fullstack-one/di": "^0.5.15",
     "@fullstack-one/graphql": "^0.5.17",
+    "@fullstack-one/schema-builder": "^0.5.20",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.17",
     "reflect-metadata": "^0.1.13",
