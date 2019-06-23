@@ -1,5 +1,5 @@
 import { BaseEntity, createColumnDecorator, createColumnDecoratorFactory, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
-import { computed } from "../../../packages/schema-builder/lib";
+import { Computed } from "../../../packages/schema-builder/lib";
 
 const myDecorator = createColumnDecorator({ directive: "@myDirective" });
 const myDecoratorFactory = createColumnDecoratorFactory<{ max: number }>({ getDirective: ({ max }) => `@myParamDirective(max: ${max})` });
@@ -12,9 +12,9 @@ export default class Photo extends BaseEntity {
   @Column({ gqlType: "String", type: "character varying" })
   public name: string;
 
-  @computed({ expression: "GetTrue", gqlType: "Boolean" })
+  @Computed({ expression: "GetTrue", gqlType: "Boolean" })
   public text: boolean;
 
-  @computed({ expression: "GetNumber", gqlType: "Int" })
+  @Computed({ expression: "GetNumber", gqlType: "Int" })
   public count: number;
 }
