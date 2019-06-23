@@ -27,6 +27,7 @@ import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta"
 import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
 import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
+import { getDecoratorPermissions } from "./decorators";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -141,9 +142,10 @@ export class SchemaBuilder {
 
   private async loadPermissions(): Promise<IPermission[]> {
     const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
-    const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
+    const permissionsArray: IPermission[] = await AHelper.requireFilesByGlobPattern(permissionsPattern);
     this.logger.trace("boot", "Permissions loaded");
-    return [].concat.apply([], permissionsArray);
+    const decoratorPermissions = getDecoratorPermissions();
+    return [].concat.apply([], permissionsArray).concat(decoratorPermissions);
   }
 
   private async loadExpressions(): Promise<IExpression[]> {

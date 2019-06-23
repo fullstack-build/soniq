@@ -8,7 +8,7 @@ import { IParser, IParseUpdateFieldContext } from "../extensions/interfaces";
 
 export function buildUpdateView(
   table: ITableData,
-  view: IMutationView,
+  view: IMutationView<any>,
   permissionContext: IPermissionContext,
   extensions: IParser[],
   config
