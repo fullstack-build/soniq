@@ -27,7 +27,7 @@ export interface IParseCreateFieldContext {
   localTable: string;
   permissionContext: IPermissionContext;
   table: ITableData;
-  view: IMutationView;
+  view: IMutationView<any>;
 }
 
 export interface IParseUpdateFieldContext {
@@ -37,7 +37,7 @@ export interface IParseUpdateFieldContext {
   localTable: string;
   permissionContext: IPermissionContext;
   table: ITableData;
-  view: IMutationView;
+  view: IMutationView<any>;
 }
 
 export interface IModifyMutationResult {
