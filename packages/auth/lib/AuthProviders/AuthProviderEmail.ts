@@ -74,7 +74,9 @@ export class AuthProviderEmail {
     return {
       "@fullstack-one/auth/EmailProvider/createEmail": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const token = await this.createEmail(args.email);
-        returnIdHandler.setReturnId(token);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
         return token;
       },
       "@fullstack-one/auth/EmailProvider/initiateEmailProof": async (obj, args, context, info, params) => {

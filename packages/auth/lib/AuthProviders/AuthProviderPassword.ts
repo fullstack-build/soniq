@@ -39,21 +39,27 @@ export class AuthProviderPassword {
   }
 
   private async proofPassword(queryRunner: PostgresQueryRunner, userIdentifier: string, password: string): Promise<string> {
-    return (await this.authProvider.proof(queryRunner, userIdentifier, async () => {
+    const result = await this.authProvider.proof(queryRunner, userIdentifier, async () => {
       return password;
-    })).authFactorProofToken;
+    });
+
+    return result.authFactorProofToken;
   }
 
   private getResolvers() {
     return {
       "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const token = await this.createPassword(args.password);
-        returnIdHandler.setReturnId(token);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
         return token;
       },
       "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const token = await this.proofPassword(context._transactionQueryRunner, args.userIdentifier, args.password);
-        returnIdHandler.setReturnId(token);
+        const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
         return token;
       }
     };

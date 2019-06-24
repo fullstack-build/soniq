@@ -35,6 +35,7 @@ export class Auth {
   private authQueryHelper: AuthQueryHelper;
   private csrfProtection: CSRFProtection;
   private accessTokenParser: AccessTokenParser;
+  private orm: ORM;
 
   // DI
   private logger: ILogger;
@@ -64,6 +65,7 @@ export class Auth {
     this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, this.authConfig);
     this.csrfProtection = new CSRFProtection(this.logger, this.authConfig);
     this.accessTokenParser = new AccessTokenParser(this.authConfig);
+    this.orm = orm;
 
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
 
@@ -139,15 +141,23 @@ export class Auth {
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
-        return (await this.authConnector.findUser(queryRunner, args.username, args.tenant || null)).userIdentifier;
+        const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
+        if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
+          return "Token hidden because of returnId usage.";
+        }
+        return userIdentifierObject.userIdentifier;
       },
-      "@fullstack-one/auth/login": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/login": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
         const clientIdentifier = context.ctx.securityContext.clientIdentifier;
 
-        const loginData = await this.authConnector.login(queryRunner, args.authFactorProofTokens, clientIdentifier || null);
+        const loginData = await this.authConnector.login(
+          queryRunner,
+          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+          clientIdentifier || null
+        );
 
         if (context.ctx.securityContext.isBrowser === true) {
           this.setAccessTokenCookie(context.ctx, loginData);
@@ -156,23 +166,23 @@ export class Auth {
         }
         return loginData;
       },
-      "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
         // tslint:disable-next-line:prettier
         await this.authConnector.modifyAuthFactors(
           queryRunner,
-          args.authFactorProofTokens,
+          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
           args.isActive,
           args.loginProviderSets,
           args.modifyProviderSets,
-          args.authFactorCreationTokens,
-          args.removeAuthFactorIds
+          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+          args.removeAuthFactorIds.map(returnIdHandler.getReturnId.bind(returnIdHandler))
         );
         return true;
       },
-      "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
-        await this.authConnector.proofAuthFactor(queryRunner, args.authFactorProofToken);
+        await this.authConnector.proofAuthFactor(queryRunner, returnIdHandler.getReturnId(args.authFactorProofToken));
         return true;
       },
       "@fullstack-one/auth/invalidateAccessToken": async (obj, args, context, info, params) => {
@@ -213,13 +223,14 @@ export class Auth {
       "@fullstack-one/auth/createUserAuthentication": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
         // tslint:disable-next-line:prettier
+
         const userAuthenticationId = await this.authConnector.createUserAuthentication(
           queryRunner,
           returnIdHandler.getReturnId(args.userId),
           args.isActive || true,
           args.loginProviderSets,
           args.modifyProviderSets,
-          args.authFactorCreationTokens
+          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
         );
         return userAuthenticationId;
       },
@@ -237,7 +248,15 @@ export class Auth {
   }
 
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
-    return new AuthProvider(providerName, this.authConnector, this.authQueryHelper, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
+    return new AuthProvider(
+      providerName,
+      this.authConnector,
+      this.authQueryHelper,
+      this.signHelper,
+      this.orm,
+      this.authConfig,
+      authFactorProofTokenMaxAgeInSeconds
+    );
   }
 
   public getAuthQueryHelper(): AuthQueryHelper {

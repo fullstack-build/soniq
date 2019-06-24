@@ -84,7 +84,7 @@ async function rollbackAndReleaseTransaction(context) {
     await context._transactionQueryRunner.release();
     context._transactionQueryRunner = null;
   }
-  context._transactionQueryRunner.forEach(async ({ rollbackFunction, operationName }) => {
+  context._transactionRollbackFunctions.forEach(async ({ rollbackFunction, operationName }) => {
     try {
       await rollbackFunction();
     } catch (err) {
@@ -110,11 +110,14 @@ function wrapMutationResolver<TSource, TContext, TParams>(
       }
 
       try {
-        const result = customResolver(obj, args, context, info, operationParams, returnIdHandler);
+        const result = await customResolver(obj, args, context, info, operationParams, returnIdHandler);
 
         if (result instanceof RevertibleResult) {
           context._transactionRollbackFunctions.push({ rollbackFunction: result.getRollbackFunction(), operationName: operation.name });
+          return result.getResult();
         }
+
+        return result;
       } catch (err) {
         await rollbackAndReleaseTransaction(context);
         throw err;

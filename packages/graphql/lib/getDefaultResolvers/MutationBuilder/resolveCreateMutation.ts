@@ -25,6 +25,6 @@ export default function resolveCreateMutation(
     sql: `INSERT INTO "${mutation.viewSchemaName}"."${mutation.viewName}" (${fieldNames}) VALUES (${valuesString});`,
     values,
     mutation,
-    id: returnIdHandler.setReturnId(query.args.input.id || null)
+    id: returnIdHandler.getReturnId(query.args.input.id || null)
   };
 }

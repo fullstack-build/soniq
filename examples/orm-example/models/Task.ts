@@ -13,14 +13,14 @@ import User from "./User";
   updateViews: {
     me: {
       fields: ["id", "title", "user"],
-      expressions: { name: "Owner", params: { field: "user" } }
+      expressions: { name: "Owner", params: { field: "userId" } }
     },
     others: {
       fields: ["id", "user"],
       expressions: "Authenticated"
     }
   },
-  deleteExpressions: { name: "Owner", params: { field: "user" } }
+  deleteExpressions: { name: "Owner", params: { field: "userId" } }
 })
 export default class Task extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -28,7 +28,7 @@ export default class Task extends BaseEntity {
   public id: string;
 
   @Column({ gqlType: "String", type: "character varying" })
-  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "user" } }])
+  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public title: string;
 
   @ManyToOne((type) => User)
@@ -36,6 +36,6 @@ export default class Task extends BaseEntity {
   public user: User;
 
   @Column({ gqlType: "String", type: "character varying" })
-  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "user" } }])
+  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public updateTime: string;
 }
