@@ -43,7 +43,7 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
 (async () => {
   await $one.boot();
 
-  /*const queryRunner1 = $orm.createQueryRunner();
+  const queryRunner1 = $orm.createQueryRunner();
   await queryRunner1.connect();
 
   // const result = await queryRunner1.query(`SELECT * FROM "Photo";`);
@@ -51,7 +51,7 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
   // const result2 = await queryRunner1.query(`INSERT INTO public."Photo" (name) VALUES ('blub');`);
   // console.log(`result2: ${JSON.stringify(result2)}`);
 
-  await queryRunner1.release(); */
+  await queryRunner1.release();
 
   // const photo = new Photo();
   // photo.name = "Misha and the Bear";
@@ -72,7 +72,7 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
   // await user.save();
   // console.log("User has been saved");
 
-  /*const queryRunner = $orm.getConnection().createQueryRunner();
+  const queryRunner = $orm.getConnection().createQueryRunner();
   await queryRunner.connect();
 
   const activities = await queryRunner.query("SELECT application_name FROM pg_stat_activity");
@@ -83,7 +83,7 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
   const users = await User.find();
   console.log("Loaded users: ", JSON.stringify(users, null, 2));
   const tasks = await Task.find();
-  console.log("Loaded tasks: ", JSON.stringify(tasks, null, 2));*/
+  console.log("Loaded tasks: ", JSON.stringify(tasks, null, 2));
 
   // const task = tasks[0];
   // if (task != null) {
