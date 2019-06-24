@@ -32,7 +32,7 @@ export class CSRFProtection {
     if (process.env.NODE_ENV === "production") {
       if (this.authConfig.enforceHttpsOnProduction !== false && ctx.request.protocol !== "https") {
         this.logger.warn("Request rejected: Unsecure requests are not allowed here. Please use HTTPS.", ctx.securityContext);
-        // return ctx.throw(400, "Unsecure requests are not allowed here. Please use HTTPS.");
+        return ctx.throw(400, "Unsecure requests are not allowed here. Please use HTTPS.");
       }
     }
 

@@ -1,12 +1,10 @@
 {
   "name": "@fullstack-one/auth-fb-token",
-  "version": "0.5.17",
+  "version": "0.5.22",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "ava --verbose ./test/*test.ts",
-    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
@@ -20,45 +18,14 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.17",
-    "@fullstack-one/boot-loader": "^0.5.17",
-    "@fullstack-one/config": "^0.5.17",
-    "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/graphql": "^0.5.17",
-    "@fullstack-one/logger": "^0.5.17",
-    "@fullstack-one/schema-builder": "^0.5.17",
-    "axios": "^0.18.0"
-  },
-  "devDependencies": {
-    "ava": "^1.1.0",
-    "nyc": "^13.1.0",
-    "source-map-support": "^0.5.10"
-  },
-  "ava": {
-    "compileEnhancements": false,
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
-  },
-  "nyc": {
-    "include": [
-      "lib/**/*.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "reporter": [
-      "text-summary",
-      "html"
-    ],
-    "sourceMap": true,
-    "instrument": true
+    "@fullstack-one/auth": "^0.5.22",
+    "@fullstack-one/boot-loader": "^0.5.20",
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/graphql": "^0.5.22",
+    "@fullstack-one/logger": "^0.5.20",
+    "@fullstack-one/schema-builder": "^0.5.22",
+    "axios": "^0.19.0"
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }

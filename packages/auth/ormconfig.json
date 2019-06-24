@@ -1,5 +1,0 @@
-{
-  "cli": {
-    "migrationsDir": "lib/migrations"
-  }
-}

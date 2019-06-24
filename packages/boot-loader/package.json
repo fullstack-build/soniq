@@ -1,12 +1,10 @@
 {
   "name": "@fullstack-one/boot-loader",
-  "version": "0.5.17",
+  "version": "0.5.20",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "ava --verbose ./test/**/*test.ts",
-    "coverage": "nyc --reporter=html --reporter=text ava --verbose ./test/**/*test.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
@@ -20,38 +18,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/logger": "^0.5.17"
-  },
-  "devDependencies": {
-    "ava": "^1.1.0",
-    "nyc": "^13.1.0",
-    "source-map-support": "^0.5.10"
-  },
-  "ava": {
-    "compileEnhancements": false,
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
-  },
-  "nyc": {
-    "include": [
-      "lib/**/*.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "reporter": [
-      "text-summary",
-      "html"
-    ],
-    "sourceMap": true,
-    "instrument": true
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/logger": "^0.5.20"
   }
 }

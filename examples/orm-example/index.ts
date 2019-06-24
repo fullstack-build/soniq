@@ -7,15 +7,17 @@ process.on("unhandledRejection", (reason, p) => {
 import { Container } from "@fullstack-one/di";
 import { FullstackOneCore } from "fullstack-one";
 import { ORM } from "@fullstack-one/db";
-import { Auth } from "@fullstack-one/auth";
+import { Auth, IUserAuthentication, IProofMailPayload } from "@fullstack-one/auth";
+import { AuthProviderEmail } from "@fullstack-one/auth";
+import { AuthProviderPassword } from "@fullstack-one/auth";
 import { GraphQl } from "@fullstack-one/graphql";
-import { AutoMigrate } from "@fullstack-one/auto-migrate";
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
 const $orm: ORM = Container.get(ORM);
 const $auth: Auth = Container.get(Auth);
+const $authProviderEmail: AuthProviderEmail = Container.get(AuthProviderEmail);
+const $authProviderPassword: AuthProviderPassword = Container.get(AuthProviderPassword);
 const $gql: GraphQl = Container.get(GraphQl);
-const $autoMigrate: AutoMigrate = Container.get(AutoMigrate);
 
 $gql.addResolvers({
   someMutation: () => {
@@ -30,24 +32,24 @@ import Photo from "./models/Photo";
 import User from "./models/User";
 import Task from "./models/Task";
 
+$auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
+  console.log("user.registered", JSON.stringify(userAuthentication, null, 2));
+});
+
+$authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
+  console.error("authProviderEmail.sendMailCallback", JSON.stringify(mail, null, 2));
+});
+
 (async () => {
   await $one.boot();
 
-  console.log("### ORM");
-
-  /*const queryRunner1 = $orm.createQueryRunner();
+  const queryRunner1 = $orm.createQueryRunner();
   await queryRunner1.connect();
 
-
-  queryRunner1.startTransaction();
-  const result = await queryRunner1.query(`SELECT * FROM "Photo";`);
-  console.log(`result: ${JSON.stringify(result)}`);
-  const result2 = await queryRunner1.query(`INSERT INTO public."Photo" (name) VALUES ('blub');`);
-  console.log(`result2: ${JSON.stringify(result2)}`);
-  const result3 = await queryRunner1.query(`SELECT * FROM "Photo";`);
-  console.log(`result3: ${JSON.stringify(result3)}`);
-  queryRunner1.commitTransaction();
-
+  // const result = await queryRunner1.query(`SELECT * FROM "Photo";`);
+  // console.log(`result: ${JSON.stringify(result)}`);
+  // const result2 = await queryRunner1.query(`INSERT INTO public."Photo" (name) VALUES ('blub');`);
+  // console.log(`result2: ${JSON.stringify(result2)}`);
 
   await queryRunner1.release(); */
 

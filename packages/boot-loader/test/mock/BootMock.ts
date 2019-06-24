@@ -1,5 +1,5 @@
 import { BootLoader } from "../../lib/index";
-import IStateSpy from "../IStateSpy";
+import IStateSpy from "../helpers/IStateSpy";
 
 export class BootMock {
   private readonly bootLoader: BootLoader;

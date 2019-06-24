@@ -1,12 +1,10 @@
 {
   "name": "@fullstack-one/di",
-  "version": "0.5.15",
+  "version": "0.5.20",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
   "scripts": {
-    "test": "echo \"typedi has tests. ;)\" && exit 0",
-    "coverage": "echo \"typedi has tests. ;)\" && exit 0",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },

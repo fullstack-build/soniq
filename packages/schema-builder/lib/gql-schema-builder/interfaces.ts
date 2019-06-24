@@ -50,13 +50,13 @@ export interface IReadExpressions {
   [fieldName: string]: IExpressionInput;
 }
 
-export interface IMutationViewsByName {
-  [name: string]: IMutationView;
+export interface IMutationViewsByName<TClass> {
+  [name: string]: IMutationView<TClass>;
 }
 
-export interface IMutationView {
+export interface IMutationView<TClass> {
   name?: string;
-  fields: string[];
+  fields: Array<keyof TClass>;
   expressions: IExpressionInput;
   returnOnlyId?: boolean;
 }
@@ -66,12 +66,12 @@ export interface IPermissionMeta {
   disallowGenericRootLevelAggregation?: boolean;
 }
 
-export interface IPermission {
-  gqlTypeName: "Post";
-  readExpressions: IReadExpressions;
-  createViews: IMutationViewsByName;
-  updateViews: IMutationViewsByName;
-  deleteExpressions: IExpressionInput;
+export interface IPermission<TClass = any> {
+  gqlTypeName: string;
+  readExpressions?: IReadExpressions;
+  createViews?: IMutationViewsByName<TClass>;
+  updateViews?: IMutationViewsByName<TClass>;
+  deleteExpressions?: IExpressionInput;
   meta?: IPermissionMeta;
 }
 

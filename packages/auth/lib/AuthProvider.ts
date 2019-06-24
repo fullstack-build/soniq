@@ -12,7 +12,6 @@ export class AuthProvider {
   public authConfig: any;
   public readonly providerName: string;
 
-  // tslint:disable-next-line:prettier
   constructor(
     providerName: string,
     authConnector: AuthConnector,

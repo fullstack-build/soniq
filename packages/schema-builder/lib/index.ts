@@ -10,11 +10,10 @@ import { AHelper } from "@fullstack-one/helper";
 
 export * from "./db-schema-builder/IDbMeta";
 export * from "./gql-schema-builder/interfaces";
+export * from "./decorators";
 
 import * as utils from "./gql-schema-builder/utils";
 export { utils };
-
-import { createGrants } from "./createGrants";
 
 // import sub modules
 import { AGraphQlHelper } from "./helper";
@@ -27,7 +26,8 @@ import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta"
 
 import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
-import { IPermissionContext, IConfig, IResolverMeta } from "./gql-schema-builder/interfaces";
+import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
+import { getDecoratorPermissions } from "./decorators";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -49,34 +49,26 @@ export class SchemaBuilder {
   private gQlSdl: string[];
   private gqlSdlExtensions: any = [];
   private gQlAst: DocumentNode;
-  private permissions: any;
-  private expressions: IExpression[];
   private gqlRuntimeDocument: DocumentNode;
   private resolverMeta: any;
-  private dbSchemaBuilder: DbSchemaBuilder;
   private dbMeta: IDbMeta;
   private extensions: any = [];
 
-  // DI
   private config: Config;
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
-  private orm: ORM;
 
   constructor(
     @Inject((type) => Config) config,
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => ORM) orm,
-    @Inject((type) => DbSchemaBuilder) dbSchemaBuilder
+    @Inject((type) => ORM) private readonly orm: ORM,
+    @Inject((type) => DbSchemaBuilder) private readonly dbSchemaBuilder: DbSchemaBuilder
   ) {
     this.loggerFactory = loggerFactory;
-    this.dbSchemaBuilder = dbSchemaBuilder;
     this.config = config;
-    this.orm = orm;
 
-    // register package config
     this.schemaBuilderConfig = this.config.registerConfig("SchemaBuilder", `${__dirname}/../config`);
 
     this.logger = this.loggerFactory.create(this.constructor.name);
@@ -88,12 +80,12 @@ export class SchemaBuilder {
   private async boot(): Promise<IDbMeta> {
     try {
       this.logger.trace("boot", "started");
+
+      this.extendSchema(this.orm.getGraphQlSDL());
+
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
-      // augment with ORM SDL
-      this.extendSchema(this.orm.graphQlSDL);
-
       this.logger.trace("boot", "GraphQl schema loaded");
 
       // check if any files were loaded
@@ -110,19 +102,8 @@ export class SchemaBuilder {
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
       this.logger.trace("boot", "GraphQl AST parsed");
 
-      // load permissions and expressions and generate views and put them into schemas
-
-      // load permissions
-      const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
-      const permissionsArray = await AHelper.requireFilesByGlobPattern(permissionsPattern);
-      this.logger.trace("boot", "Permissions loaded");
-      this.permissions = [].concat.apply([], permissionsArray);
-
-      // load expressions
-      const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
-      const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
-      this.logger.trace("boot", "Expressions loaded");
-      this.expressions = [].concat.apply([], expressionsArray);
+      const permissions = await this.loadPermissions();
+      const expressions = await this.loadExpressions();
 
       const dbConfig: IDbConfig = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
@@ -136,32 +117,42 @@ export class SchemaBuilder {
       const context: IPermissionContext = {
         gqlDocument: this.gQlAst,
         dbMeta: this.dbMeta,
-        expressions: this.expressions
+        expressions
       };
 
       const extensions = this.extensions;
 
-      const graphqlViewSqlStatements = createGrants(config, this.dbMeta);
-      this.logger.trace("boot", "Grants created");
-
-      const data = parsePermissions(this.permissions, context, extensions, config);
+      const data = parsePermissions(permissions, context, extensions, config);
       this.logger.trace("boot", "Permissions parsed");
-
-      data.sql.forEach((statement) => graphqlViewSqlStatements.push(statement));
 
       //  Reverse to get the generated queries/mutations at the beginning
       (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
-      this.dbSchemaBuilder.addGraphqlViewSqlStatements(graphqlViewSqlStatements);
       this.logger.trace("boot", "Permission SQL statements set");
+      await this.dbSchemaBuilder.createGraphqlViews(data.sql);
 
       return this.dbMeta;
     } catch (err) {
       this.logger.warn("boot.error", err);
       throw err;
     }
+  }
+
+  private async loadPermissions(): Promise<IPermission[]> {
+    const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
+    const permissionsArray: IPermission[] = await AHelper.requireFilesByGlobPattern(permissionsPattern);
+    this.logger.trace("boot", "Permissions loaded");
+    const decoratorPermissions = getDecoratorPermissions();
+    return [].concat.apply([], permissionsArray).concat(decoratorPermissions);
+  }
+
+  private async loadExpressions(): Promise<IExpression[]> {
+    const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
+    const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
+    this.logger.trace("boot", "Expressions loaded");
+    return [].concat.apply([], expressionsArray);
   }
 
   public getDbSchemaBuilder(): DbSchemaBuilder {

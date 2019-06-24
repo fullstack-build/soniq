@@ -1,6 +1,6 @@
 {
   "name": "orm-example",
-  "version": "0.5.17",
+  "version": "0.5.22",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -13,8 +13,7 @@
     "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
     "dev": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false .",
     "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
-    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix",
-    "test": "echo \"No tests specified :(\" && exit 0"
+    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix"
   },
   "repository": {
     "type": "git",
@@ -40,11 +39,12 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.17",
+    "@fullstack-one/auth": "^0.5.22",
     "@fullstack-one/auto-migrate": "^0.5.17",
     "@fullstack-one/db": "^0.5.17",
     "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/graphql": "^0.5.17",
+    "@fullstack-one/graphql": "^0.5.22",
+    "@fullstack-one/schema-builder": "^0.5.22",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.17",
     "reflect-metadata": "^0.1.13",

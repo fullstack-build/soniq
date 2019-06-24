@@ -7,7 +7,7 @@ import { BootLoader, EBootState } from "../lib/index";
 import { bootWithTimeoutMock } from "./mock/bootFunctions";
 import { BootMock } from "./mock/BootMock";
 import { AfterBootMock } from "./mock/AfterBootMock";
-import IStateSpy from "./IStateSpy";
+import IStateSpy from "./helpers/IStateSpy";
 
 interface ITestContext {
   id: number;

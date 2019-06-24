@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as koaCors from "@koa/cors";
 import { Service, Inject } from "@fullstack-one/di";
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
@@ -5,10 +7,8 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
 import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import * as koaCors from "@koa/cors";
-import * as authMigrationsObject from "./migrations";
 
-import * as fs from "fs";
+import migrations from "./migrations";
 import { CSRFProtection } from "./CSRFProtection";
 import { AuthConnector } from "./AuthConnector";
 import { AuthQueryHelper } from "./AuthQueryHelper";
@@ -17,6 +17,7 @@ import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
+import { getParser } from "./getParser";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -32,7 +33,6 @@ export class Auth {
   private authConfig;
   private cryptoFactory: CryptoFactory;
   private signHelper: SignHelper;
-  private authConnector: AuthConnector;
   private authQueryHelper: AuthQueryHelper;
   private csrfProtection: CSRFProtection;
   private accessTokenParser: AccessTokenParser;
@@ -40,6 +40,8 @@ export class Auth {
   // DI
   private logger: ILogger;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
+
+  public readonly authConnector: AuthConnector;
 
   constructor(
     @Inject((type) => ORM) orm: ORM,
@@ -52,6 +54,8 @@ export class Auth {
     // register package config
     this.authConfig = config.registerConfig("Auth", `${__dirname}/../config`);
 
+    orm.addMigrations(migrations);
+
     this.logger = loggerFactory.create(this.constructor.name);
 
     this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
@@ -63,8 +67,6 @@ export class Auth {
     this.accessTokenParser = new AccessTokenParser(this.authConfig);
 
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
-
-    orm.addMigrations(Object.values(authMigrationsObject));
 
     schemaBuilder.extendSchema(schema);
 
