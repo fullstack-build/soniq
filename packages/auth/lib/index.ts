@@ -17,7 +17,6 @@ import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
-import { getParser } from "./getParser";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -238,7 +237,7 @@ export class Auth {
   }
 
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
-    return new AuthProvider(providerName, this.authConnector, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
+    return new AuthProvider(providerName, this.authConnector, this.authQueryHelper, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
   }
 
   public getAuthQueryHelper(): AuthQueryHelper {

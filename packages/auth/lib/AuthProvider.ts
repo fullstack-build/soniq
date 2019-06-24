@@ -4,10 +4,14 @@ import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./cry
 import uuid = require("uuid");
 import { DateTime } from "luxon";
 import { SignHelper } from "./SignHelper";
+import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
+import { AuthQueryHelper } from "./AuthQueryHelper";
 
 export class AuthProvider {
   private authConnector: AuthConnector;
+  private authQueryHelper: AuthQueryHelper;
   private signHelper: SignHelper;
+  private orm: ORM;
   private authFactorProofTokenMaxAgeInSeconds: number = null;
   public authConfig: any;
   public readonly providerName: string;
@@ -15,12 +19,16 @@ export class AuthProvider {
   constructor(
     providerName: string,
     authConnector: AuthConnector,
+    authQueryHelper: AuthQueryHelper,
     signHelper: SignHelper,
+    orm: ORM,
     authConfig: any,
     authFactorProofTokenMaxAgeInSeconds: number = null
   ) {
     this.authConnector = authConnector;
+    this.authQueryHelper = authQueryHelper;
     this.signHelper = signHelper;
+    this.orm = orm;
     this.authConfig = authConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
@@ -68,14 +76,18 @@ export class AuthProvider {
     return this.authConnector.createAuthFactorCreationToken(authFactorCreation);
   }
 
-  public async proof(userIdentifier: string, getPassword: (authFactor: IAuthFactorForProof) => Promise<string>): Promise<IProofResponse> {
+  public async proof(
+    queryRunner: PostgresQueryRunner,
+    userIdentifier: string,
+    getPassword: (authFactor: IAuthFactorForProof) => Promise<string>
+  ): Promise<IProofResponse> {
     const provider = this.providerName;
     let authFactor: IAuthFactorForProof;
     let passwordData: IPasswordData;
     let isFake = false;
 
     try {
-      authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
+      authFactor = await this.authConnector.getAuthFactorForProof(queryRunner, userIdentifier, provider);
 
       const meta = JSON.parse(authFactor.meta);
 
@@ -125,7 +137,9 @@ export class AuthProvider {
     let isFake = false;
 
     try {
-      authFactor = await this.authConnector.getAuthFactorForProof(userIdentifier, provider);
+      await this.authQueryHelper.transaction(async (queryRunner) => {
+        authFactor = await this.authConnector.getAuthFactorForProof(queryRunner, userIdentifier, provider);
+      });
     } catch (err) {
       const randomAuthFactor = await this.createRandomAuthFactor();
       authFactor = randomAuthFactor.authFactor;
@@ -140,5 +154,9 @@ export class AuthProvider {
 
   public getAuthConnector(): AuthConnector {
     return this.authConnector;
+  }
+
+  public getAuthQueryHelper(): AuthQueryHelper {
+    return this.authQueryHelper;
   }
 }

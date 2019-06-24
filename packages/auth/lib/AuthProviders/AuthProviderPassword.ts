@@ -1,7 +1,8 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { GraphQl } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { Auth, AuthProvider } from "..";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 
 const schema = `
 extend type Mutation {
@@ -37,19 +38,23 @@ export class AuthProviderPassword {
     return this.authProvider.create(password, null, true, {});
   }
 
-  private async proofPassword(userIdentifier: string, password: string): Promise<string> {
-    return (await this.authProvider.proof(userIdentifier, async () => {
+  private async proofPassword(queryRunner: PostgresQueryRunner, userIdentifier: string, password: string): Promise<string> {
+    return (await this.authProvider.proof(queryRunner, userIdentifier, async () => {
       return password;
     })).authFactorProofToken;
   }
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params) => {
-        return this.createPassword(args.password);
+      "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const token = await this.createPassword(args.password);
+        returnIdHandler.setReturnId(token);
+        return token;
       },
-      "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params) => {
-        return this.proofPassword(args.userIdentifier, args.password);
+      "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const token = await this.proofPassword(context._transactionQueryRunner, args.userIdentifier, args.password);
+        returnIdHandler.setReturnId(token);
+        return token;
       }
     };
   }

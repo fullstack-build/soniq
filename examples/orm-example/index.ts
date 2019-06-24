@@ -43,7 +43,7 @@ $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
 (async () => {
   await $one.boot();
 
-  const queryRunner1 = $orm.createQueryRunner();
+  /*const queryRunner1 = $orm.createQueryRunner();
   await queryRunner1.connect();
 
   // const result = await queryRunner1.query(`SELECT * FROM "Photo";`);

@@ -173,10 +173,10 @@ export class AuthProviderOAuth {
               await queryRunner.commitTransaction();
               cb(null, response);
             } else {
-              let emailAuthFactorProof = await this.emailAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+              let emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                 return email;
               });
-              let oAuthAuthFactorProof = await oAuthAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+              let oAuthAuthFactorProof = await oAuthAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                 return profile.id;
               });
 
@@ -215,11 +215,11 @@ export class AuthProviderOAuth {
                 );
 
                 if (emailAuthFactorProof.isFake === true) {
-                  emailAuthFactorProof = await this.emailAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+                  emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                     return email;
                   });
                 } else {
-                  oAuthAuthFactorProof = await oAuthAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+                  oAuthAuthFactorProof = await oAuthAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                     return profile.id;
                   });
                 }

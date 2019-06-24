@@ -48,6 +48,49 @@ export class AuthQueryHelper {
     });
   }
 
+  public async transaction<TResult = any>(
+    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<any> {
+    const queryRunner = this.orm.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      const result = await callback(queryRunner);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.warn("transaction.error", err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  public async query<TResult = any>(...queryArguments: [string, ...any[]]): Promise<TResult> {
+    const queryRunner = this.orm.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      const result: TResult = await queryRunner.query(...queryArguments);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.warn("query.error", err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   public async adminTransaction<TResult = any>(
     callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
     isolationLevel: IsolationLevel = "READ COMMITTED"

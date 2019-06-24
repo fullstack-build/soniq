@@ -6,14 +6,11 @@ var FullstackOne = function (apiServerAddress) {
 
 
   return {
-    oAuthLogin: function (provider, privacyAgreementAcceptanceToken, cb) {
+    oAuthLogin: function (provider, cb) {
       var message = {err: ERROR_CANCEL, data: null};
       var messageReceived = false;
       var closed = false;
       var address = apiServerAddress + "/auth/oAuth/" + encodeURIComponent(provider)
-      if (privacyAgreementAcceptanceToken != null) {
-        address += "?privacyAgreementAcceptanceToken=" + encodeURIComponent(privacyAgreementAcceptanceToken);
-      }
       var oAuthPopup = window.open(address, "_blank");
       //var oAuthPopup = window.open(apiServerAddress + "/auth/" + encodeURIComponent(provider));
 
