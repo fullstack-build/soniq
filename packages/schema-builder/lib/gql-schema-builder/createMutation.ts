@@ -57,6 +57,17 @@ export function createMutation(
                   value: "@fullstack-one/graphql/mutationResolver",
                   block: false
                 }
+              },
+              {
+                kind: "Argument",
+                name: {
+                  kind: "Name",
+                  value: "usesQueryRunnerFromContext"
+                },
+                value: {
+                  kind: "BooleanValue",
+                  value: true
+                }
               }
             ]
           }

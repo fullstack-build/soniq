@@ -5,24 +5,28 @@ import resolveDeleteMutation from "../lib/getDefaultResolvers/MutationBuilder/re
 import createTestData from "./mutationBuildTestData/createTestData";
 import updateTestData from "./mutationBuildTestData/updateTestData";
 import deleteTestData from "./mutationBuildTestData/deleteTestData";
+import { ReturnIdHandler } from "../lib/ReturnIdHandler";
 
 ava("CREATE query", (test) => {
   const { expected, query, mutation } = createTestData;
-  const actual = resolveCreateMutation(query, mutation);
+  const returnIdHandler = new ReturnIdHandler({}, "id");
+  const actual = resolveCreateMutation(query, mutation, returnIdHandler);
 
   test.deepEqual(actual, expected);
 });
 
 ava("UPDATE query", (test) => {
   const { expected, query, mutation } = updateTestData;
-  const actual = resolveUpdateMutation(query, mutation);
+  const returnIdHandler = new ReturnIdHandler({}, "id");
+  const actual = resolveUpdateMutation(query, mutation, returnIdHandler);
 
   test.deepEqual(actual, expected);
 });
 
 ava("DELETE query", (test) => {
   const { expected, query, mutation } = deleteTestData;
-  const actual = resolveDeleteMutation(query, mutation);
+  const returnIdHandler = new ReturnIdHandler({}, "id");
+  const actual = resolveDeleteMutation(query, mutation, returnIdHandler);
 
   test.deepEqual(actual, expected);
 });

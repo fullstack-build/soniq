@@ -1,20 +1,21 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { GraphQl } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { Auth, AuthProvider } from "..";
+import { PostgresQueryRunner } from "@fullstack-one/db";
 
 const schema = `
 extend type Mutation {
   """
   Creates a new password AuthFactorCreationToken for the given password.
   """
-  createPassword(password: String!): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/createPassword")
+  createPassword(password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/createPassword", usesQueryRunnerFromContext: true)
 
   """
   Creates an AuthFactorProofToken for the given user und password.
   This will never fail. When the user could not be found it will return fake-data.
   """
-  proofPassword(userIdentifier: String!, password: String!): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/proofPassword")
+  proofPassword(userIdentifier: String!, password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/proofPassword", usesQueryRunnerFromContext: true)
 }
 `;
 
@@ -37,19 +38,29 @@ export class AuthProviderPassword {
     return this.authProvider.create(password, null, true, {});
   }
 
-  private async proofPassword(userIdentifier: string, password: string): Promise<string> {
-    return (await this.authProvider.proof(userIdentifier, async () => {
+  private async proofPassword(queryRunner: PostgresQueryRunner, userIdentifier: string, password: string): Promise<string> {
+    const result = await this.authProvider.proof(queryRunner, userIdentifier, async () => {
       return password;
-    })).authFactorProofToken;
+    });
+
+    return result.authFactorProofToken;
   }
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params) => {
-        return this.createPassword(args.password);
+      "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const token = await this.createPassword(args.password);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
+        return token;
       },
-      "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params) => {
-        return this.proofPassword(args.userIdentifier, args.password);
+      "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
+        return token;
       }
     };
   }

@@ -7,6 +7,7 @@ export interface IBaseOperation {
   resolver: string;
   params: object;
   viewName?: string;
+  usesQueryRunnerFromContext?: boolean;
 }
 
 export type TQueryOperation = IBaseOperation;

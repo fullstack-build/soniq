@@ -1,4 +1,5 @@
 import { DefinitionNode } from "graphql";
+import { createBeginTransactionMutation, createCommitTransactionMutation } from "./createTransactionMutations";
 
 export function createSchemaBasics(): ReadonlyArray<DefinitionNode> {
   const definitions = [];
@@ -62,6 +63,9 @@ export function createSchemaBasics(): ReadonlyArray<DefinitionNode> {
     },
     directives: []
   });
+
+  definitions.push(createBeginTransactionMutation());
+  definitions.push(createCommitTransactionMutation());
 
   return definitions;
 }

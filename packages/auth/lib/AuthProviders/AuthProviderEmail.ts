@@ -1,6 +1,6 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { GraphQl } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { Auth, AuthProvider, IAuthFactorForProof } from "..";
 
 const schema = `
@@ -8,7 +8,7 @@ extend type Mutation {
   """
   Creates a new email AuthFactorCreationToken for the given email-address.
   """
-  createEmail(email: String!): String @custom(resolver: "@fullstack-one/auth/EmailProvider/createEmail")
+  createEmail(email: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/EmailProvider/createEmail", usesQueryRunnerFromContext: true)
 
   """
   This will send an AuthFactorProofToken via mail to the user if the user exists and has an email-address.
@@ -47,31 +47,37 @@ export class AuthProviderEmail {
   }
 
   private async initiateEmailProof(userIdentifier: string, info: string = null): Promise<void> {
-    let currentAuthFactor: IAuthFactorForProof;
+    this.authProvider.getAuthQueryHelper().transaction(async (queryRunner) => {
+      let currentAuthFactor: IAuthFactorForProof;
 
-    const authFactorProofToken = (await this.authProvider.proof(userIdentifier, async (authFactor: IAuthFactorForProof) => {
-      currentAuthFactor = authFactor;
+      const authFactorProofToken = (await this.authProvider.proof(queryRunner, userIdentifier, async (authFactor: IAuthFactorForProof) => {
+        currentAuthFactor = authFactor;
 
-      return authFactor.communicationAddress;
-    })).authFactorProofToken;
+        return authFactor.communicationAddress;
+      })).authFactorProofToken;
 
-    if (currentAuthFactor != null && currentAuthFactor.communicationAddress != null) {
-      const proofMailPayload: IProofMailPayload = {
-        email: currentAuthFactor.communicationAddress,
-        authFactorProofToken,
-        userId: currentAuthFactor.userId,
-        userAuthenticationId: currentAuthFactor.userAuthenticationId,
-        info
-      };
+      if (currentAuthFactor != null && currentAuthFactor.communicationAddress != null) {
+        const proofMailPayload: IProofMailPayload = {
+          email: currentAuthFactor.communicationAddress,
+          authFactorProofToken,
+          userId: currentAuthFactor.userId,
+          userAuthenticationId: currentAuthFactor.userAuthenticationId,
+          info
+        };
 
-      this.sendMail(proofMailPayload);
-    }
+        this.sendMail(proofMailPayload);
+      }
+    });
   }
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/EmailProvider/createEmail": async (obj, args, context, info, params) => {
-        return this.createEmail(args.email);
+      "@fullstack-one/auth/EmailProvider/createEmail": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const token = await this.createEmail(args.email);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden because of returnId usage.";
+        }
+        return token;
       },
       "@fullstack-one/auth/EmailProvider/initiateEmailProof": async (obj, args, context, info, params) => {
         try {

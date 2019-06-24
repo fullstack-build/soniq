@@ -21,8 +21,10 @@ import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
 import { HookManager, TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction } from "./hooks";
+import { ReturnIdHandler } from "./ReturnIdHandler";
+import { RevertibleResult } from "./RevertibleResult";
 
-export { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError };
+export { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError, ReturnIdHandler, RevertibleResult };
 
 @Service()
 export class GraphQl {
@@ -72,7 +74,7 @@ export class GraphQl {
 
     this.addDefaultResolvers(resolverMeta, dbMeta);
     const operations = getOperationsObject(gqlRuntimeDocument);
-    const resolvers = getResolvers(operations, this.resolvers);
+    const resolvers = getResolvers(operations, this.resolvers, this.orm.createQueryRunner);
     this.apolloSchema = makeExecutableSchema({ typeDefs, resolvers });
 
     const app = this.server.getApp();
@@ -104,14 +106,6 @@ export class GraphQl {
 
   public addPreQueryHook(hookFunction: TPreQueryHookFunction): void {
     this.hookManager.addPreQueryHook(hookFunction);
-  }
-
-  public addPreMutationCommitHook(hookFunction: TPreMutationCommitHookFunction<any, any>): void {
-    this.hookManager.addPreMutationCommitHook(hookFunction);
-  }
-
-  public addPostMutationCommitHook(hookFunction: TPostMutationHookFunction<any, any>): void {
-    this.hookManager.addPostMutationCommitHook(hookFunction);
   }
 
   public getApolloClient(accessToken: string | null = null, ctx: any = {}): ApolloClient<NormalizedCacheObject> {

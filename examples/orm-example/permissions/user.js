@@ -5,7 +5,7 @@ module.exports = [
       id: ["Anyone"],
       firstname: ["Anyone"],
       lastname: ["Anyone"],
-      size: ["Anyone"],
+      size: [{ name: "Owner", params: { field: "id" } }],
       photo: ["Anyone"],
       tasks: ["Anyone"],
     },

@@ -77,27 +77,6 @@ BEGIN
         RAISE EXCEPTION 'AUTH.THROW.USER_INPUT_ERROR: ProviderSets are not valid in combination with AuthFactors.';
     END IF;
 
-    -- Now, since the user has just been created we can safely create an access-token for the creator
-    -- However, we will not create a refresh-token
-
-    SELECT value INTO v_access_token_secret FROM _meta."Auth" WHERE key = 'access_token_secret';
-    SELECT value INTO v_access_token_bf_iter_count FROM _meta."Auth" WHERE key = 'access_token_bf_iter_count';
-    SELECT value INTO v_access_token_max_age_in_seconds FROM _meta."Auth" WHERE key = 'access_token_max_age_in_seconds';
-
-    -- For the access-token we need to get a current timestamp
-    v_issued_at := (round(extract(epoch from now())*1000))::bigint;
-
-    -- Build the payload of access-token signature
-    v_access_token_payload := v_issued_at || ';' || array_to_string(v_auth_factor_ids, ':') || ';' || array_to_string(v_auth_factor_hashes, ':') || ';' || v_access_token_secret;
-
-    -- We need to hash the payload with sha256 before bf crypt because bf only accepts up to 72 chars
-    v_access_token_signature := crypt(encode(digest(v_access_token_payload, 'sha256'), 'hex'), gen_salt('bf', v_access_token_bf_iter_count));
-
-    -- Build AccessToken for Export
-    v_access_token := v_issued_at || ';' || array_to_string(v_auth_factor_ids, ':') || ';' || v_access_token_signature;
-
-    v_refresh_token := NULL;
-
-    RETURN jsonb_build_object('accessToken', v_access_token, 'issuedAt', v_issued_at, 'refreshToken', v_refresh_token, 'userId', i_user_id, 'accessTokenMaxAgeInSeconds', v_access_token_max_age_in_seconds, 'providerSet', v_provider_set);
+    RETURN jsonb_build_object('userId', i_user_id, 'userAuthenticationId', v_user_authentication_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

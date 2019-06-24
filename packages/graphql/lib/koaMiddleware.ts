@@ -95,6 +95,8 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
   return (error: GraphQLError) => {
     // log all errors here!
     logger.error(error);
+    // tslint:disable-next-line:no-console TODO: Logger should log the stacktrace of the given error, not the one where it is called
+    console.error("->", JSON.stringify(error, null, 2));
 
     // If any Error has a exposeDetails flag just return it to the user
     if (_.get(error, "extensions.exposeDetails") === true) {

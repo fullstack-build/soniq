@@ -10,7 +10,7 @@ import * as koaBody from "koa-bodyparser";
 import * as koaSession from "koa-session";
 import * as passport from "koa-passport";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
-import { PrivacyAgreementAcceptance } from "../PrivacyAgreementAcceptance";
+import { ORM } from "@fullstack-one/db";
 
 const template = `
 <!DOCTYPE html>
@@ -56,23 +56,24 @@ export class AuthProviderOAuth {
 
   private server: Server;
   private logger: ILogger;
+  private orm: ORM;
 
   private authConfig;
-  private privacyAgreementAcceptance: PrivacyAgreementAcceptance;
 
   constructor(
     @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject((type) => GraphQl) graphQl: GraphQl,
     @Inject((type) => Auth) auth: Auth,
+    @Inject((type) => ORM) orm: ORM,
     @Inject((type) => Server) server: Server,
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => Config) config: Config,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory
   ) {
     this.server = server;
+    this.orm = orm;
     this.authConfig = config.getConfig("Auth");
     this.logger = loggerFactory.create("OAuthAuthProvider");
-    this.privacyAgreementAcceptance = auth.getPrivacyAgreementAcceptance();
 
     this.emailAuthProvider = auth.createAuthProvider("email");
 
@@ -132,6 +133,8 @@ export class AuthProviderOAuth {
 
       passport.use(
         new provider.strategy(providerConfig, async (accessToken, refreshToken, profile, cb) => {
+          const queryRunner = this.orm.createQueryRunner();
+
           try {
             let email = profile.email || profile._json.email;
             if (email == null && profile.emails != null && profile.emails[0] != null && profile.emails[0].value != null) {
@@ -145,10 +148,13 @@ export class AuthProviderOAuth {
             const oAuthAuthProvider = this.oAuthAuthProviders[key];
             const authConnector = oAuthAuthProvider.getAuthConnector();
 
-            let user = await authConnector.findUser(email, provider.tenant);
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
+
+            let user = await authConnector.findUser(queryRunner, email, provider.tenant);
 
             if (user.isFake === true) {
-              user = await authConnector.findUser(profile.id, provider.tenant);
+              user = await authConnector.findUser(queryRunner, profile.id, provider.tenant);
             }
 
             if (user.isFake === true) {
@@ -164,12 +170,13 @@ export class AuthProviderOAuth {
                 }
               };
 
+              await queryRunner.commitTransaction();
               cb(null, response);
             } else {
-              let emailAuthFactorProof = await this.emailAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+              let emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                 return email;
               });
-              let oAuthAuthFactorProof = await oAuthAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+              let oAuthAuthFactorProof = await oAuthAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                 return profile.id;
               });
 
@@ -190,21 +197,29 @@ export class AuthProviderOAuth {
                 authFactorCreationToken = await oAuthAuthProvider.create(profile.id, null, true, { oAuthProvider: key });
               }
 
-              const userAuthentication = await authConnector.getUserAuthenticationById(user.userAuthenticationId);
+              const userAuthentication = await authConnector.getUserAuthenticationById(queryRunner, user.userAuthenticationId);
               const loginProviderSets = userAuthentication.loginProviderSets;
               if (loginProviderSets.indexOf(key) < 0) {
                 loginProviderSets.push(key);
               }
 
               if (authFactorCreationToken != null) {
-                await authConnector.modifyAuthFactors([authFactorProofToken], true, loginProviderSets, null, [authFactorCreationToken], []);
+                await authConnector.modifyAuthFactors(
+                  queryRunner,
+                  [authFactorProofToken],
+                  true,
+                  loginProviderSets,
+                  null,
+                  [authFactorCreationToken],
+                  []
+                );
 
                 if (emailAuthFactorProof.isFake === true) {
-                  emailAuthFactorProof = await this.emailAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+                  emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                     return email;
                   });
                 } else {
-                  oAuthAuthFactorProof = await oAuthAuthProvider.proof(user.userIdentifier, async (authFactor) => {
+                  oAuthAuthFactorProof = await oAuthAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
                     return profile.id;
                   });
                 }
@@ -219,11 +234,19 @@ export class AuthProviderOAuth {
                 }
               };
 
+              await queryRunner.commitTransaction();
               cb(null, response);
             }
           } catch (err) {
+            try {
+              await queryRunner.rollbackTransaction();
+            } catch (e) {
+              /* don't care */
+            }
             this.logger.warn("passport.strategylogin.error", err);
             cb(err);
+          } finally {
+            queryRunner.release();
           }
         })
       );
@@ -233,18 +256,6 @@ export class AuthProviderOAuth {
         (ctx, next) => {
           const { queryParameter } = this.authConfig.privacyAgreementAcceptance;
 
-          if (this.privacyAgreementAcceptance.isPrivacyAgreementCheckActive() === true) {
-            if (ctx.request.query == null || ctx.request.query[queryParameter] == null) {
-              this.logger.warn("passport.oAuthFailure.error.missingPrivacyAgreementAcceptanceToken");
-              return ctx.redirect(`/auth/oAuthFailure/${encodeURIComponent(`Missing privacy token query parameter. '${queryParameter}'`)}`);
-            }
-            try {
-              this.privacyAgreementAcceptance.validatePrivacyAgreementAcceptanceToken(ctx.request.query[queryParameter]);
-            } catch (err) {
-              this.logger.warn("passport.oAuthFailure.error.invalidPrivacyAgreementAcceptanceToken", err);
-              return ctx.redirect(`/auth/oAuthFailure/${encodeURIComponent(err.message)}`);
-            }
-          }
           next();
         },
         passport.authenticate(key, providerOptions)

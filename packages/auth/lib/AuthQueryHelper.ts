@@ -48,6 +48,49 @@ export class AuthQueryHelper {
     });
   }
 
+  public async transaction<TResult = any>(
+    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<any> {
+    const queryRunner = this.orm.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      const result = await callback(queryRunner);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.warn("transaction.error", err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  public async query<TResult = any>(...queryArguments: [string, ...any[]]): Promise<TResult> {
+    const queryRunner = this.orm.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      const result: TResult = await queryRunner.query(...queryArguments);
+
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.warn("query.error", err);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   public async adminTransaction<TResult = any>(
     callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
     isolationLevel: IsolationLevel = "READ COMMITTED"
@@ -91,6 +134,14 @@ export class AuthQueryHelper {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  public async adminQueryWithQueryRunner<TResult = any>(queryRunner, ...queryArguments: [string, ...any[]]): Promise<TResult> {
+    await this.setAdmin(queryRunner);
+    const result: TResult = await queryRunner.query(...queryArguments);
+    await this.unsetAdmin(queryRunner);
+
+    return result;
   }
 
   public async userTransaction<TResult = any>(
@@ -150,6 +201,19 @@ export class AuthQueryHelper {
       return true;
     } catch (err) {
       this.logger.warn("authenticateTransaction.error", err);
+      throw err;
+    }
+  }
+
+  public async unauthenticateTransaction(queryRunner: PostgresQueryRunner) {
+    try {
+      await this.setAdmin(queryRunner);
+      await queryRunner.query("SELECT _auth.authenticate_transaction($1);");
+      await this.unsetAdmin(queryRunner);
+
+      return true;
+    } catch (err) {
+      this.logger.warn("unauthenticateTransaction.error", err);
       throw err;
     }
   }

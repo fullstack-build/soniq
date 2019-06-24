@@ -5,7 +5,7 @@ import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
-import { GraphQl } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 import migrations from "./migrations";
@@ -13,12 +13,10 @@ import { CSRFProtection } from "./CSRFProtection";
 import { AuthConnector } from "./AuthConnector";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { AccessTokenParser } from "./AccessTokenParser";
-import { PrivacyAgreementAcceptance } from "./PrivacyAgreementAcceptance";
 import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
-import { getParser } from "./getParser";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -37,11 +35,10 @@ export class Auth {
   private authQueryHelper: AuthQueryHelper;
   private csrfProtection: CSRFProtection;
   private accessTokenParser: AccessTokenParser;
+  private orm: ORM;
 
   // DI
   private logger: ILogger;
-  private parserMeta: any = {};
-  private privacyAgreementAcceptance: PrivacyAgreementAcceptance;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   public readonly authConnector: AuthConnector;
@@ -66,26 +63,13 @@ export class Auth {
 
     this.authQueryHelper = new AuthQueryHelper(orm, this.logger, this.cryptoFactory, this.signHelper);
     this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, this.authConfig);
-    this.privacyAgreementAcceptance = new PrivacyAgreementAcceptance(this.authConfig, this.parserMeta, this.logger, this.signHelper);
     this.csrfProtection = new CSRFProtection(this.logger, this.authConfig);
     this.accessTokenParser = new AccessTokenParser(this.authConfig);
+    this.orm = orm;
 
     graphQl.addPreQueryHook(this.preQueryHook.bind(this));
-    graphQl.addPreMutationCommitHook(this.preMutationCommitHook.bind(this));
-    graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
 
     schemaBuilder.extendSchema(schema);
-
-    schemaBuilder.addExtension(
-      getParser(
-        (key, value) => {
-          this.parserMeta[key] = value;
-        },
-        (key) => {
-          return this.parserMeta[key];
-        }
-      )
-    );
 
     graphQl.addResolvers(this.getResolvers());
 
@@ -117,66 +101,27 @@ export class Auth {
   }
 
   private async preQueryHook(queryRunner: PostgresQueryRunner, context, authRequired: boolean, buildObject) {
-    if (
-      buildObject.mutation != null &&
-      buildObject.mutation.extensions != null &&
-      buildObject.mutation.extensions.auth === "REGISTER_USER_MUTATION"
-    ) {
-      return;
-    }
-
     if (authRequired === true && context.accessToken != null) {
-      try {
-        await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
-      } catch (err) {
-        this.logger.trace("authenticateTransaction.failed", err);
-        this.deleteAccessTokenCookie(context.ctx);
-        throw err;
-      }
-    }
-  }
-
-  private async preMutationCommitHook(queryRunner: PostgresQueryRunner, hookInfo) {
-    const mutation = hookInfo.mutationQuery.mutation;
-
-    if (mutation.extensions.auth === "REGISTER_USER_MUTATION") {
-      const args = hookInfo.args;
-
-      // Validate PrivacyAgreementAcceptanceToken
-      this.privacyAgreementAcceptance.validateRegisterArguments(args);
-
-      // tslint:disable-next-line:prettier
-      const loginData = await this.authConnector.createUserAuthentication(
-        queryRunner,
-        hookInfo.entityId,
-        args.isActive || true,
-        args.loginProviderSets,
-        args.modifyProviderSets,
-        args.authFactorCreationTokens
-      );
-      hookInfo.loginData = loginData;
-    }
-  }
-
-  private async postMutationHook(hookInfo, context, info, overwriteReturnData) {
-    const mutation = hookInfo.mutationQuery.mutation;
-
-    if (mutation.extensions.auth === "REGISTER_USER_MUTATION") {
-      if (hookInfo.context != null && hookInfo.context.ctx != null) {
-        const returnLoginData = { ...hookInfo.loginData };
-
-        if (hookInfo.context.ctx.securityContext.isBrowser === true) {
-          this.setAccessTokenCookie(hookInfo.context.ctx, returnLoginData);
-
-          returnLoginData.accessToken = null;
+      if (context._transactionIsAuthenticated !== true) {
+        try {
+          await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
+          context._transactionIsAuthenticated = true;
+        } catch (err) {
+          this.logger.trace("authenticateTransaction.failed", err);
+          this.deleteAccessTokenCookie(context.ctx);
+          throw err;
         }
-
-        overwriteReturnData(returnLoginData);
       }
-
-      const userAuthentication: IUserAuthentication = await this.authConnector.getUserAuthentication(hookInfo.loginData.accessToken);
-
-      this.userRegistrationCallback(userAuthentication);
+    } else {
+      if (context._transactionIsAuthenticated === true) {
+        try {
+          await this.authQueryHelper.unauthenticateTransaction(queryRunner);
+          context._transactionIsAuthenticated = false;
+        } catch (err) {
+          this.logger.trace("unauthenticateTransaction.failed", err);
+          throw err;
+        }
+      }
     }
   }
 
@@ -196,13 +141,23 @@ export class Auth {
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params) => {
-        return (await this.authConnector.findUser(args.username, args.tenant || null)).userIdentifier;
+      "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const queryRunner = context._transactionQueryRunner;
+        const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
+        if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
+          return "Token hidden because of returnId usage.";
+        }
+        return userIdentifierObject.userIdentifier;
       },
-      "@fullstack-one/auth/login": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/login": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const queryRunner = context._transactionQueryRunner;
         const clientIdentifier = context.ctx.securityContext.clientIdentifier;
 
-        const loginData = await this.authConnector.login(args.authFactorProofTokens, clientIdentifier || null);
+        const loginData = await this.authConnector.login(
+          queryRunner,
+          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+          clientIdentifier || null
+        );
 
         if (context.ctx.securityContext.isBrowser === true) {
           this.setAccessTokenCookie(context.ctx, loginData);
@@ -211,36 +166,42 @@ export class Auth {
         }
         return loginData;
       },
-      "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const queryRunner = context._transactionQueryRunner;
         // tslint:disable-next-line:prettier
         await this.authConnector.modifyAuthFactors(
-          args.authFactorProofTokens,
+          queryRunner,
+          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
           args.isActive,
           args.loginProviderSets,
           args.modifyProviderSets,
-          args.authFactorCreationTokens,
-          args.removeAuthFactorIds
+          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+          args.removeAuthFactorIds.map(returnIdHandler.getReturnId.bind(returnIdHandler))
         );
         return true;
       },
-      "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params) => {
-        await this.authConnector.proofAuthFactor(args.authFactorProofToken);
+      "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const queryRunner = context._transactionQueryRunner;
+        await this.authConnector.proofAuthFactor(queryRunner, returnIdHandler.getReturnId(args.authFactorProofToken));
         return true;
       },
       "@fullstack-one/auth/invalidateAccessToken": async (obj, args, context, info, params) => {
+        const queryRunner = context._transactionQueryRunner;
         this.deleteAccessTokenCookie(context.ctx);
-        await this.authConnector.invalidateAccessToken(context.accessToken);
+        await this.authConnector.invalidateAccessToken(queryRunner, context.accessToken);
         return true;
       },
       "@fullstack-one/auth/invalidateAllAccessTokens": async (obj, args, context, info, params) => {
+        const queryRunner = context._transactionQueryRunner;
         this.deleteAccessTokenCookie(context.ctx);
-        await this.authConnector.invalidateAllAccessTokens(context.accessToken);
+        await this.authConnector.invalidateAllAccessTokens(queryRunner, context.accessToken);
         return true;
       },
       "@fullstack-one/auth/refreshAccessToken": async (obj, args, context, info, params) => {
+        const queryRunner = context._transactionQueryRunner;
         const clientIdentifier = context.ctx.securityContext.clientIdentifier;
 
-        const loginData = await this.authConnector.refreshAccessToken(context.accessToken, clientIdentifier || null, args.refreshToken);
+        const loginData = await this.authConnector.refreshAccessToken(queryRunner, context.accessToken, clientIdentifier || null, args.refreshToken);
 
         if (context.ctx.securityContext.isBrowser === true) {
           this.setAccessTokenCookie(context.ctx, loginData);
@@ -249,26 +210,34 @@ export class Auth {
         }
         return loginData;
       },
-      "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken": async (obj, args, context, info, params) => {
-        return this.privacyAgreementAcceptance.createPrivacyAgreementAcceptanceToken(args.acceptedVersion);
-      },
       "@fullstack-one/auth/getTokenMeta": async (obj, args, context, info, params) => {
+        const queryRunner = context._transactionQueryRunner;
         try {
-          const tokenMeta = await this.authConnector.getTokenMeta(context.accessToken);
+          const tokenMeta = await this.authConnector.getTokenMeta(queryRunner, context.accessToken);
           return tokenMeta;
         } catch (err) {
           this.deleteAccessTokenCookie(context.ctx);
           throw err;
         }
       },
+      "@fullstack-one/auth/createUserAuthentication": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+        const queryRunner = context._transactionQueryRunner;
+        // tslint:disable-next-line:prettier
+
+        const userAuthenticationId = await this.authConnector.createUserAuthentication(
+          queryRunner,
+          returnIdHandler.getReturnId(args.userId),
+          args.isActive || true,
+          args.loginProviderSets,
+          args.modifyProviderSets,
+          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
+        );
+        return userAuthenticationId;
+      },
       "@fullstack-one/auth/getUserAuthentication": async (obj, args, context, info, params) => {
-        return this.authConnector.getUserAuthentication(context.accessToken);
+        return this.authConnector.getUserAuthentication(context._transactionQueryRunner, context.accessToken);
       }
     };
-  }
-
-  public getPrivacyAgreementAcceptance(): PrivacyAgreementAcceptance {
-    return this.privacyAgreementAcceptance;
   }
 
   public registerUserRegistrationCallback(callback: (userAuthentication: IUserAuthentication) => void) {
@@ -279,7 +248,15 @@ export class Auth {
   }
 
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
-    return new AuthProvider(providerName, this.authConnector, this.signHelper, this.authConfig, authFactorProofTokenMaxAgeInSeconds);
+    return new AuthProvider(
+      providerName,
+      this.authConnector,
+      this.authQueryHelper,
+      this.signHelper,
+      this.orm,
+      this.authConfig,
+      authFactorProofTokenMaxAgeInSeconds
+    );
   }
 
   public getAuthQueryHelper(): AuthQueryHelper {
