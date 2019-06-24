@@ -67,7 +67,8 @@ export class FileStorage {
 
     this.graphQl.addResolvers(this.getResolvers());
 
-    this.graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
+    // This hook does not exist anymore
+    // this.graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
 
     this.addVerifier("DEFAULT", DefaultVerifier);
 

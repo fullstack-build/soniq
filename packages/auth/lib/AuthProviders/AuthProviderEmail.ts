@@ -8,13 +8,13 @@ extend type Mutation {
   """
   Creates a new email AuthFactorCreationToken for the given email-address.
   """
-  createEmail(email: String!): String @custom(resolver: "@fullstack-one/auth/EmailProvider/createEmail")
+  createEmail(email: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/EmailProvider/createEmail", usesQueryRunnerFromContext: true)
 
   """
   This will send an AuthFactorProofToken via mail to the user if the user exists and has an email-address.
   This will never fail.
   """
-  initiateEmailProof(userIdentifier: String!, info: String): Boolean @custom(resolver: "@fullstack-one/auth/EmailProvider/initiateEmailProof")
+  initiateEmailProof(userIdentifier: String!, info: String): Boolean @custom(resolver: "@fullstack-one/auth/EmailProvider/initiateEmailProof", usesQueryRunnerFromContext: true)
 }
 `;
 

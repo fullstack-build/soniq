@@ -93,6 +93,14 @@ export class AuthQueryHelper {
     }
   }
 
+  public async adminQueryWithQueryRunner<TResult = any>(queryRunner, ...queryArguments: [string, ...any[]]): Promise<TResult> {
+    await this.setAdmin(queryRunner);
+    const result: TResult = await queryRunner.query(...queryArguments);
+    await this.unsetAdmin(queryRunner);
+
+    return result;
+  }
+
   public async userTransaction<TResult = any>(
     accessToken: string,
     callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
@@ -150,6 +158,19 @@ export class AuthQueryHelper {
       return true;
     } catch (err) {
       this.logger.warn("authenticateTransaction.error", err);
+      throw err;
+    }
+  }
+
+  public async unauthenticateTransaction(queryRunner: PostgresQueryRunner) {
+    try {
+      await this.setAdmin(queryRunner);
+      await queryRunner.query("SELECT _auth.authenticate_transaction($1);");
+      await this.unsetAdmin(queryRunner);
+
+      return true;
+    } catch (err) {
+      this.logger.warn("unauthenticateTransaction.error", err);
       throw err;
     }
   }

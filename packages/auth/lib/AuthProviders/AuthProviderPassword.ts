@@ -8,13 +8,13 @@ extend type Mutation {
   """
   Creates a new password AuthFactorCreationToken for the given password.
   """
-  createPassword(password: String!): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/createPassword")
+  createPassword(password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/createPassword", usesQueryRunnerFromContext: true)
 
   """
   Creates an AuthFactorProofToken for the given user und password.
   This will never fail. When the user could not be found it will return fake-data.
   """
-  proofPassword(userIdentifier: String!, password: String!): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/proofPassword")
+  proofPassword(userIdentifier: String!, password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/proofPassword", usesQueryRunnerFromContext: true)
 }
 `;
 

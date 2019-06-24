@@ -11,6 +11,8 @@ import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import MutationBuilder, { IMutationBuildObject } from "./MutationBuilder";
 import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
+import { ICustomFieldResolver } from "../resolvers";
+import { ReturnIdHandler } from "../ReturnIdHandler";
 
 const hookManager: HookManager = Container.get(HookManager);
 
@@ -22,120 +24,86 @@ export default function getDefaultMutationResolver<TSource>(
   costLimit: number,
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta
-): IFieldResolver<TSource, IDefaultMutationResolverContext> {
-  return async (obj, args, context, info) => {
+): ICustomFieldResolver<TSource, IDefaultMutationResolverContext, any> {
+  return async (obj, args, context: any, info, operationParams, returnIdHandler: ReturnIdHandler) => {
     const isAuthenticated = context.accessToken != null;
 
-    const mutationBuild: IMutationBuildObject = mutationBuilder.build(info);
+    const mutationBuild: IMutationBuildObject = mutationBuilder.build(info, returnIdHandler);
     context.ctx.state.includesMutation = true;
 
-    const queryRunner = orm.createQueryRunner();
+    const queryRunner = context._transactionQueryRunner;
 
-    try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+    await hookManager.executePreQueryHooks(queryRunner, context, context.accessToken != null, mutationBuild);
 
-      await hookManager.executePreQueryHooks(queryRunner, context, context.accessToken != null, mutationBuild);
+    logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
-      logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
+    const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
-      const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
+    if (result.rowCount < 1) {
+      throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
+    }
 
-      if (result.rowCount < 1) {
-        throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
-      }
+    let returnQueryBuild: IQueryBuildOject | undefined;
+    let returnData: any;
+    let entityId = mutationBuild.id || null;
+    let match: IMatch | undefined;
 
-      let returnQueryBuild: IQueryBuildOject | undefined;
-      let returnData: any;
-      let entityId = mutationBuild.id || null;
-      let match: IMatch | undefined;
+    // Workaround: Postgres does not return id for INSERT without SELECT permission.
+    // Therefore we retrieve the last generated UUID in transaction.
+    // Our concept allows one one INSERT per transaction.
+    if (entityId == null && mutationBuild.mutation.type === "CREATE") {
+      const idResult = await queryRunner.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
+      entityId = idResult[0].id;
+    }
+    returnIdHandler.setReturnId(entityId);
 
-      // Workaround: Postgres does not return id for INSERT without SELECT permission.
-      // Therefore we retrieve the last generated UUID in transaction.
-      // Our concept allows one one INSERT per transaction.
-      if (entityId == null && mutationBuild.mutation.type === "CREATE") {
-        const idResult = await queryRunner.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
-        entityId = idResult[0].id;
-      }
-
-      // Check if this mutations returnType is ID
-      // e.g. When mutationType is DELETE just return the id. Otherwise query for the new data.
-      // e.g. When this is a user-creation the creator has no access to his own user before login.
-      // tslint:disable-next-line:prettier
-      if (
-        mutationBuild.mutation.gqlReturnTypeName === "ID" ||
-        (mutationBuild.mutation.extensions != null && mutationBuild.mutation.extensions.returnOnlyId === true)
-      ) {
-        returnData = entityId;
-      } else {
-        // Create a match to search for the new created or updated entity
-        match = {
-          type: "SIMPLE",
-          foreignFieldName: "id",
-          fieldExpression: `'${entityId}'::uuid`
-        };
-
-        // Generate sql query for response-data of the mutation
-        returnQueryBuild = queryBuilder.build(info, isAuthenticated, match);
-
-        logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
-
-        if (returnQueryBuild.potentialHighCost === true) {
-          const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
-          logger.warn(
-            "The current query has been identified as potentially too expensive and could get denied in case the" +
-              ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
-          );
-        }
-
-        // Run SQL query on pg to get response-data
-        const returnResult = await queryRunner.query(returnQueryBuild.sql, returnQueryBuild.values);
-        checkQueryResultForInjection(returnResult, logger);
-
-        const resultData = returnResult[0][returnQueryBuild.queryName];
-
-        if (resultData.length < 1) {
-          throw new Error(
-            "The return-query of this mutation has no entries. Perhaps you are not permitted to access the results." +
-              " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions."
-          );
-        }
-
-        // set data from row 0
-        returnData = resultData[0];
-      }
-
-      const hookInfo: IHookInfo<any, TSource> = {
-        returnData,
-        returnQuery: returnQueryBuild,
-        entityId,
-        type: mutationBuild.mutation.type,
-        obj,
-        args,
-        context,
-        info,
-        isAuthenticated,
-        match,
-        resolverMeta,
-        dbMeta,
-        mutationQuery: mutationBuild
+    // Check if this mutations returnType is ID
+    // e.g. When mutationType is DELETE just return the id. Otherwise query for the new data.
+    // e.g. When this is a user-creation the creator has no access to his own user before login.
+    // tslint:disable-next-line:prettier
+    if (
+      mutationBuild.mutation.gqlReturnTypeName === "ID" ||
+      (mutationBuild.mutation.extensions != null && mutationBuild.mutation.extensions.returnOnlyId === true)
+    ) {
+      returnData = entityId;
+    } else {
+      // Create a match to search for the new created or updated entity
+      match = {
+        type: "SIMPLE",
+        foreignFieldName: "id",
+        fieldExpression: `'${entityId}'::uuid`
       };
 
-      // TODO: Move this in front of mutation. What hookInfos are needed?
-      await hookManager.executePreMutationCommitHooks(queryRunner, hookInfo);
+      // Generate sql query for response-data of the mutation
+      returnQueryBuild = queryBuilder.build(info, isAuthenticated, match);
 
-      await queryRunner.commitTransaction();
+      logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
 
-      await hookManager.executePostMutationHooks(hookInfo, context, info, (overWriteReturnData) => {
-        returnData = overWriteReturnData;
-      });
+      if (returnQueryBuild.potentialHighCost === true) {
+        const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
+        logger.warn(
+          "The current query has been identified as potentially too expensive and could get denied in case the" +
+            ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
+        );
+      }
 
-      return returnData;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
+      // Run SQL query on pg to get response-data
+      const returnResult = await queryRunner.query(returnQueryBuild.sql, returnQueryBuild.values);
+      checkQueryResultForInjection(returnResult, logger);
+
+      const resultData = returnResult[0][returnQueryBuild.queryName];
+
+      if (resultData.length < 1) {
+        throw new Error(
+          "The return-query of this mutation has no entries. Perhaps you are not permitted to access the results." +
+            " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions."
+        );
+      }
+
+      // set data from row 0
+      returnData = resultData[0];
     }
+
+    return returnData;
   };
 }

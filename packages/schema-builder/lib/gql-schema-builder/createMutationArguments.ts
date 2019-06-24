@@ -22,6 +22,25 @@ function getInputArgument(gqlInputTypeName: string): InputValueDefinitionNode {
   };
 }
 
+function getReturnIdArgument(): InputValueDefinitionNode {
+  return {
+    kind: "InputValueDefinition",
+    name: {
+      kind: "Name",
+      value: "returnId"
+    },
+    type: {
+      kind: "NamedType",
+      name: {
+        kind: "Name",
+        value: "String"
+      }
+    },
+    defaultValue: null,
+    directives: []
+  };
+}
+
 export function createMutationArguments(gqlInputTypeName: string): ReadonlyArray<InputValueDefinitionNode> {
-  return [getInputArgument(gqlInputTypeName)];
+  return [getInputArgument(gqlInputTypeName), getReturnIdArgument()];
 }

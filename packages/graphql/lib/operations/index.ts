@@ -49,7 +49,8 @@ function toBaseOperation({ fieldNode, directivesObject }: IFieldNodeAndDirective
     name: fieldNode.name.value,
     type: gqlTypeName,
     resolver: directivesObject.custom.resolver,
-    params: directivesObject.custom.params || {}
+    params: directivesObject.custom.params || {},
+    usesQueryRunnerFromContext: directivesObject.custom.usesQueryRunnerFromContext === true
   };
 }
 

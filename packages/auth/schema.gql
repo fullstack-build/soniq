@@ -66,51 +66,54 @@ extend type Mutation {
   Find a user by username and tenant, returning two encrypted uuids to identify the user
   This will never fail. When the user could not be found it will return fake-data.
   """
-  getUserIdentifier(username: String!, tenant: String): String! @custom(resolver: "@fullstack-one/auth/getUserIdentifier")
+  getUserIdentifier(username: String!, tenant: String, returnId: ID): String! @custom(resolver: "@fullstack-one/auth/getUserIdentifier", usesQueryRunnerFromContext: true)
 
   """
   Login a user. Get back an accessToken and metadata about it.
   """
-  login(authFactorProofTokens: [String!]!): LoginData! @custom(resolver: "@fullstack-one/auth/login")
+  login(authFactorProofTokens: [String!]!): LoginData! @custom(resolver: "@fullstack-one/auth/login", usesQueryRunnerFromContext: true)
 
   """
   Creates a temporary token and sends it to the user, to create a new password.
 
   You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...). Another use-case could be to use this mutation to re-send a registration-email.
   """
-  modifyAuthFactors(authFactorProofTokens: [String!]!, isActive: Boolean, loginProviderSets: [String!], modifyProviderSets: [String!], authFactorCreationTokens: [String!], removeAuthFactorIds: [String!]): Boolean! @custom(resolver: "@fullstack-one/auth/modifyAuthFactors")
+  modifyAuthFactors(authFactorProofTokens: [String!]!, isActive: Boolean, loginProviderSets: [String!], modifyProviderSets: [String!], authFactorCreationTokens: [String!], removeAuthFactorIds: [String!]): Boolean! @custom(resolver: "@fullstack-one/auth/modifyAuthFactors", usesQueryRunnerFromContext: true)
 
   """
   Set a new password with a temporary token. This will invalidate all other sessions.
   """
-  proofAuthFactor(authFactorProofToken: String!): Boolean! @custom(resolver: "@fullstack-one/auth/proofAuthFactor")
+  proofAuthFactor(authFactorProofToken: String!): Boolean! @custom(resolver: "@fullstack-one/auth/proofAuthFactor", usesQueryRunnerFromContext: true)
 
   """
   Invalidates the given accessToken and deletes the auth cookie if set.
   """
-  invalidateAccessToken: Boolean! @custom(resolver: "@fullstack-one/auth/invalidateAccessToken")
+  invalidateAccessToken: Boolean! @custom(resolver: "@fullstack-one/auth/invalidateAccessToken", usesQueryRunnerFromContext: true)
 
   """
   Invalidates all accessTokens ever issued to the user and deletes the auth cookie if set.
   """
-  invalidateAllAccessTokens: Boolean! @custom(resolver: "@fullstack-one/auth/invalidateAllAccessTokens")
+  invalidateAllAccessTokens: Boolean! @custom(resolver: "@fullstack-one/auth/invalidateAllAccessTokens", usesQueryRunnerFromContext: true)
 
   """
   Sets the given accessToken into a cookie. With a set cookie, normal queries an mutations are authorized. However, auth mutations will ignore this cookie.
   """
-  refreshAccessToken(refreshToken: String!): LoginData! @custom(resolver: "@fullstack-one/auth/refreshAccessToken")
-
-  """
-  Creates a JWT-Token which verifies the user-approval of the privacy terms
-  """
-  createPrivacyAgreementAcceptanceToken(acceptedVersion: String!): PrivacyAgreementAcceptanceToken! @custom(resolver: "@fullstack-one/auth/createPrivacyAgreementAcceptanceToken")
+  refreshAccessToken(refreshToken: String!): LoginData! @custom(resolver: "@fullstack-one/auth/refreshAccessToken", usesQueryRunnerFromContext: true)
 
   """
   Tells if the given token is valid and gives some meta information.
 
   Removes the cookie if invalid.
   """
-  getTokenMeta: TokenMeta! @custom(resolver: "@fullstack-one/auth/getTokenMeta")
+  getTokenMeta: TokenMeta! @custom(resolver: "@fullstack-one/auth/getTokenMeta", usesQueryRunnerFromContext: true)
+
+  """
+  Creates a temporary token and sends it to the user, to create a new password.
+
+  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...). Another use-case could be to use this mutation to re-send a registration-email.
+  """
+  createUserAuthentication(userId: ID!, isActive: Boolean, loginProviderSets: [String!]!, modifyProviderSets: [String!]!, authFactorCreationTokens: [String!]!, meta: String): ID! @custom(resolver: "@fullstack-one/auth/createUserAuthentication", usesQueryRunnerFromContext: true)
+
 }
 
 extend type Query {
