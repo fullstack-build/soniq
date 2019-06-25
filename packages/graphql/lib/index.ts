@@ -74,7 +74,7 @@ export class GraphQl {
 
     this.addDefaultResolvers(resolverMeta, dbMeta);
     const operations = getOperationsObject(gqlRuntimeDocument);
-    const resolvers = getResolvers(operations, this.resolvers, this.orm.createQueryRunner);
+    const resolvers = getResolvers(operations, this.resolvers, this.orm.createQueryRunner, this.logger);
     this.apolloSchema = makeExecutableSchema({ typeDefs, resolvers });
 
     const app = this.server.getApp();
