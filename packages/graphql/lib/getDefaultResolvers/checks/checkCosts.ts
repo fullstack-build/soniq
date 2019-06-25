@@ -1,15 +1,18 @@
 import * as crypto from "crypto";
 import { PostgresQueryRunner } from "@fullstack-one/db";
 import { IQueryBuildOject } from "../QueryBuilder";
+import { UserInputError } from "../..";
 
 export default async function checkCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject, costLimit: number) {
   const currentCost = await getCurrentCosts(queryRunner, queryBuild);
 
   if (currentCost > costLimit) {
-    throw new Error(
+    const error = new UserInputError(
       "This query seems to be to exprensive. Please set some limits. " +
         `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${queryBuild.costTree})`
     );
+    error.extensions.exposeDetails = true;
+    throw error;
   }
 
   return currentCost;
