@@ -20,7 +20,7 @@ import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./res
 import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
-import { HookManager, TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction } from "./hooks";
+import { HookManager, TPreQueryHookFunction } from "./hooks";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
 

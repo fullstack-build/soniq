@@ -4,15 +4,13 @@ import { PostgresQueryRunner } from "@fullstack-one/db";
 import { Service } from "@fullstack-one/di";
 
 import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildOject } from "../getDefaultResolvers";
-import { TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction, IHookInfo } from "./types";
+import { TPreQueryHookFunction } from "./types";
 
 export * from "./types";
 
 @Service()
 export class HookManager {
   private preQueryHooks: TPreQueryHookFunction[] = [];
-  private preMutationCommitHooks: Array<TPreMutationCommitHookFunction<any, any>> = [];
-  private postMutationHooks: Array<TPostMutationHookFunction<any, any>> = [];
 
   public addPreQueryHook(hookFunction: TPreQueryHookFunction): void {
     this.preQueryHooks.push(hookFunction);

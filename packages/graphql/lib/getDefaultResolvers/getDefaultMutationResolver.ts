@@ -5,7 +5,7 @@ import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
-import { HookManager, IHookInfo } from "../hooks";
+import { HookManager } from "../hooks";
 import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
