@@ -81,7 +81,7 @@ export default function getDefaultMutationResolver<TSource>(
 
       if (returnQueryBuild.potentialHighCost === true) {
         const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
-        logger.warn(
+        logger.trace(
           "The current query has been identified as potentially too expensive and could get denied in case the" +
             ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
         );
