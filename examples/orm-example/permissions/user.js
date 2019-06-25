@@ -8,6 +8,8 @@ module.exports = [
       size: [{ name: "Owner", params: { field: "id" } }],
       photo: ["Anyone"],
       tasks: ["Anyone"],
+      prinzipalRepresent: ["Anyone"],
+      agentRepresent: ["Anyone"]
     },
     createViews: {
       me: {

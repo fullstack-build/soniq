@@ -1,6 +1,7 @@
 import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, OneToOneJoinColumn, OneToMany } from "@fullstack-one/db";
 import Photo from "./Photo";
 import Task from "./Task";
+import Represent from "./Represent";
 
 export enum Size {
   small,
@@ -29,7 +30,7 @@ export default class User extends BaseEntity {
   @OneToOneJoinColumn((type) => Photo, { nullable: true })
   public photo?: Photo;
 
-  @OneToMany((type) => Task, (task) => task.user)
+  @OneToMany((type) => Task, "user")
   public tasks: Task[];
 
   @Column({ enum: Size, enumName: "Size", nullable: true })
@@ -37,4 +38,10 @@ export default class User extends BaseEntity {
 
   @Column({ enum: Gender, enumName: "Gender", gqlType: "String", type: "integer", nullable: true })
   public gender?: Gender;
+
+  @OneToMany((type) => Represent, "prinzipal")
+  public prinzipalRepresent: Represent;
+
+  @OneToMany((type) => Represent, "agent")
+  public agentRepresent: Represent;
 }
