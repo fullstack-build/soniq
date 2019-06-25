@@ -6,12 +6,14 @@ import { DateTime } from "luxon";
 import { SignHelper } from "./SignHelper";
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { AuthQueryHelper } from "./AuthQueryHelper";
+import { ILogger } from "@fullstack-one/logger";
 
 export class AuthProvider {
   private authConnector: AuthConnector;
   private authQueryHelper: AuthQueryHelper;
   private signHelper: SignHelper;
   private orm: ORM;
+  private logger: ILogger;
   private authFactorProofTokenMaxAgeInSeconds: number = null;
   public authConfig: any;
   public readonly providerName: string;
@@ -22,6 +24,7 @@ export class AuthProvider {
     authQueryHelper: AuthQueryHelper,
     signHelper: SignHelper,
     orm: ORM,
+    logger: ILogger,
     authConfig: any,
     authFactorProofTokenMaxAgeInSeconds: number = null
   ) {
@@ -29,6 +32,7 @@ export class AuthProvider {
     this.authQueryHelper = authQueryHelper;
     this.signHelper = signHelper;
     this.orm = orm;
+    this.logger = logger;
     this.authConfig = authConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
@@ -101,7 +105,7 @@ export class AuthProvider {
 
       passwordData = await hashByMeta(password + providerSignature, meta.sodiumMeta);
     } catch (err) {
-      // TODO: Log this
+      this.logger.trace(`Password proof failed.`);
       const randomAuthFactor = await this.createRandomAuthFactor();
       authFactor = randomAuthFactor.authFactor;
       passwordData = randomAuthFactor.passwordData;

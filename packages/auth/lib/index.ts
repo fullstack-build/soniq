@@ -39,6 +39,7 @@ export class Auth {
 
   // DI
   private logger: ILogger;
+  private loggerFactory: LoggerFactory;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   public readonly authConnector: AuthConnector;
@@ -56,6 +57,7 @@ export class Auth {
 
     orm.addMigrations(migrations);
 
+    this.loggerFactory = loggerFactory;
     this.logger = loggerFactory.create(this.constructor.name);
 
     this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
@@ -254,6 +256,7 @@ export class Auth {
       this.authQueryHelper,
       this.signHelper,
       this.orm,
+      this.loggerFactory.create(`${this.constructor.name}.AuthProvider.${providerName}`),
       this.authConfig,
       authFactorProofTokenMaxAgeInSeconds
     );
