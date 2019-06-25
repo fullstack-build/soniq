@@ -2,7 +2,7 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { Server } from "@fullstack-one/server";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
-import { GraphQl } from "@fullstack-one/graphql";
+import { GraphQl, UserInputError } from "@fullstack-one/graphql";
 import { Auth } from "@fullstack-one/auth";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
@@ -94,6 +94,8 @@ export class FileStorage {
     }
   }
 
+  // This is currently not used. However, we still need it
+  // TODO: Call this somewhere
   private async postMutationHook(info, context) {
     try {
       const entityId = info.entityId;
@@ -189,7 +191,9 @@ export class FileStorage {
         const type = args.type || "DEFAULT";
 
         if (this.verifierObjects[type] == null) {
-          throw new Error(`A verifier for type '${type}' hasn't been defined.`);
+          const error = new UserInputError(`A verifier for type '${type}' hasn't been defined.`);
+          error.extensions.exposeDetails = true;
+          throw error;
         }
 
         // tslint:disable-next-line:prettier
@@ -226,18 +230,24 @@ export class FileStorage {
         let stat = null;
 
         if (this.verifierObjects[type] == null) {
-          throw new Error(`A verifier for type '${type}' hasn't been defined.`);
+          const error = new UserInputError(`A verifier for type '${type}' hasn't been defined.`);
+          error.extensions.exposeDetails = true;
+          throw error;
         }
 
         if (type !== fName.type) {
-          throw new Error(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`);
+          const error = new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`);
+          error.extensions.exposeDetails = true;
+          throw error;
         }
 
         try {
           stat = await this.client.statObject(this.fileStorageConfig.bucket, fName.uploadName);
         } catch (e) {
           if (e.message.toLowerCase().indexOf("not found") >= 0) {
-            throw new Error("Please upload a file before verifying.");
+            const error = new UserInputError("Please upload a file before verifying.");
+            error.extensions.exposeDetails = true;
+            throw error;
           }
           throw e;
         }
@@ -391,12 +401,16 @@ export class FileStorage {
     const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
     const regexp = new RegExp(regex);
     if (regexp.test(type) !== true) {
-      throw new Error(`The type '${type}' has to match RegExp '${regex}'.`);
+      const error = new UserInputError(`The type '${type}' has to match RegExp '${regex}'.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
     if (this.verifiers[type] == null) {
       this.verifiers[type] = fn;
     } else {
-      throw new Error(`A verifier for type '${type}' already exists.`);
+      const error = new UserInputError(`A verifier for type '${type}' already exists.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
   }
 }
