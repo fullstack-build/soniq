@@ -1,4 +1,4 @@
-import { AuthenticationError } from "apollo-server-koa";
+import { AuthenticationError, UserInputError } from "apollo-server-koa";
 import { IReadViewMeta, IResolverMeta, IReadFieldData, IDbMeta, IDbRelation } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, IMatch } from "../types";
 import generateClauses from "./generateClauses";
@@ -63,7 +63,9 @@ export default class QueryBuild {
     // First iteration always starts with jsonAgg and thus is an aggregation
     const isQueryRootLevel = this.currentIndex < 2 && match == null;
     if (isQueryRootLevel === true && gqlTypePermissionMeta.disallowGenericRootLevelAggregation === true) {
-      throw new Error(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
+      const error = new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
     const fields = query.fieldsByTypeName[gqlTypeName];
 
@@ -74,7 +76,9 @@ export default class QueryBuild {
 
     Object.values(fields).forEach((field) => {
       if (gqlTypeMeta.fields[field.name] == null) {
-        throw new Error(`The field '${gqlTypeName}.${field.name}' is not available.`);
+        const error = new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`);
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       const fieldMeta = gqlTypeMeta.fields[field.name];
       if (!gqlTypeMeta.publicFieldNames.includes(field.name) && fieldMeta.nativeFieldName != null) {
