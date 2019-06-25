@@ -24,6 +24,10 @@ export class LoggerFactory {
     const tracerConfig: Tracer.LoggerConfig = {
       level: this.config.minLevel,
       methods: levels,
+      inspectOpt: {
+        showHidden: true,
+        depth: null
+      },
       transport: (logObject: Tracer.LogOutput): void => debugLogger[logObject.title](logObject.output)
     };
 
