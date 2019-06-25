@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/db",
-  "version": "0.5.20",
+  "version": "0.5.24",
   "description": "fullstack.one db connector package",
   "main": "index.js",
   "types": "lib/index.ts",
