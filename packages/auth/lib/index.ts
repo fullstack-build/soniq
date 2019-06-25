@@ -147,7 +147,7 @@ export class Auth {
         const queryRunner = context._transactionQueryRunner;
         const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
         if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
-          return "Token hidden because of returnId usage.";
+          return "Token hidden due to returnId usage.";
         }
         return userIdentifierObject.userIdentifier;
       },
