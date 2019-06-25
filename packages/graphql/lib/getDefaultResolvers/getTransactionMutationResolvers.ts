@@ -10,12 +10,16 @@ export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger):
     }
     context._transactionQueryRunner = orm.createQueryRunner();
     context._transactionRollbackFunctions = [];
+    context._transactionRunning = true;
 
-    let rows = [];
+    let txidCurrent = "TransactionId is not available in production.";
     try {
       await context._transactionQueryRunner.connect();
       await context._transactionQueryRunner.startTransaction();
-      rows = await context._transactionQueryRunner.query("SELECT txid_current();");
+      if (process.env.NODE_ENV !== "production") {
+        const rows = await context._transactionQueryRunner.query("SELECT txid_current();");
+        txidCurrent = rows[0].txid_current;
+      }
     } catch (err) {
       logger.error("Failed to connect and create transaction.");
       try {
@@ -32,18 +36,21 @@ export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger):
       }
       throw err;
     }
-    return rows[0].txid_current;
+    return txidCurrent;
   };
 }
 
 export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger): IFieldResolver<TSource, IDefaultMutationResolverContext> {
   return async (obj, args, context: any, info) => {
-    if (context._transactionQueryRunner == null) {
+    if (context._transactionRunning !== true) {
       throw new Error("You cannot commit a not existing transaction.");
     }
-    let rows = [];
+    let txidCurrent = "TransactionId is not available in production.";
     try {
-      rows = await context._transactionQueryRunner.query("SELECT txid_current();");
+      if (process.env.NODE_ENV !== "production") {
+        const rows = await context._transactionQueryRunner.query("SELECT txid_current();");
+        txidCurrent = rows[0].txid_current;
+      }
       await context._transactionQueryRunner.commitTransaction();
     } catch (err) {
       logger.error("Failed to commit transaction.");
@@ -62,6 +69,6 @@ export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger)
         context._transactionQueryRunner = null;
       }
     }
-    return rows[0].txid_current;
+    return txidCurrent;
   };
 }
