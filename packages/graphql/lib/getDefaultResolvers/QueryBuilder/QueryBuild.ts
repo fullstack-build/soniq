@@ -1,4 +1,4 @@
-import { AuthenticationError, UserInputError } from "apollo-server-koa";
+import { AuthenticationError, UserInputError } from "../../GraphqlErrors";
 import { IReadViewMeta, IResolverMeta, IReadFieldData, IDbMeta, IDbRelation } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, IMatch } from "../types";
 import generateClauses from "./generateClauses";

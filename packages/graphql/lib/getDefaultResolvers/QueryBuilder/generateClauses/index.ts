@@ -1,6 +1,6 @@
 import { IQueryClauseObject, INestedFilter } from "../types";
 import getGenerateFilterFn from "./getGenerateFilterFn";
-import { UserInputError } from "../../..";
+import { UserInputError } from "../../../GraphqlErrors";
 
 export default function generateClauses(
   { where, orderBy, limit, offset }: IQueryClauseObject,

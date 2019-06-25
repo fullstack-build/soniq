@@ -13,7 +13,7 @@ import MutationBuilder, { IMutationBuildObject } from "./MutationBuilder";
 import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 import { ICustomFieldResolver } from "../resolvers";
 import { ReturnIdHandler } from "../ReturnIdHandler";
-import { UserInputError } from "..";
+import { UserInputError } from "../GraphqlErrors";
 
 const hookManager: HookManager = Container.get(HookManager);
 

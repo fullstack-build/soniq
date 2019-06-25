@@ -1,6 +1,6 @@
 import { GraphQLSchema, DefinitionNode } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
-import { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "apollo-server-koa";
+import { ApolloServer } from "apollo-server-koa";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
@@ -23,6 +23,7 @@ import { getOperationsObject } from "./operations";
 import { HookManager, TPreQueryHookFunction } from "./hooks";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
+import { AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "./GraphqlErrors";
 
 export { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError, ReturnIdHandler, RevertibleResult };
 

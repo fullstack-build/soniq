@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import { PostgresQueryRunner } from "@fullstack-one/db";
 import { IQueryBuildOject } from "../QueryBuilder";
-import { UserInputError } from "../..";
+import { UserInputError } from "../../GraphqlErrors";
 
 export default async function checkCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject, costLimit: number) {
   const currentCost = await getCurrentCosts(queryRunner, queryBuild);

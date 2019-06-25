@@ -7,7 +7,7 @@ import {
   isBooleanOperator,
   IBooleanOperatorContext
 } from "../../../logicalOperators";
-import { UserInputError } from "../../..";
+import { UserInputError } from "../../../GraphqlErrors";
 
 export default function getGenerateFilterFn(
   getParam: (value: number | string) => string,

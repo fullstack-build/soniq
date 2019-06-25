@@ -1,5 +1,5 @@
 import { IBooleanOperator } from "./types";
-import { UserInputError } from "..";
+import { UserInputError } from "../GraphqlErrors";
 
 const operators = {
   NULL: "IS NULL",

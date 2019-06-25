@@ -1,5 +1,5 @@
 import { ILogger } from "@fullstack-one/logger";
-import { UserInputError } from "../..";
+import { UserInputError } from "../../GraphqlErrors";
 
 export default function checkQueryResultForInjection(result: any[], logger: ILogger): void {
   if (result == null) {

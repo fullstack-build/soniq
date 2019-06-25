@@ -5,7 +5,7 @@ import { IOperationsObject, IBaseOperation } from "./operations";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
 import { ILogger } from "@fullstack-one/logger";
-import { UserInputError } from ".";
+import { UserInputError } from "./GraphqlErrors";
 
 export type ICustomFieldResolver<TSource, TContext, TParams> = (
   source: TSource,
