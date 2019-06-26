@@ -10,6 +10,7 @@ export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger):
     }
     context._transactionQueryRunner = orm.createQueryRunner();
     context._transactionRollbackFunctions = [];
+    context._transactionOnCommitedHandlers = [];
     context._transactionRunning = true;
 
     let txidCurrent = "TransactionId is not available in production.";
@@ -51,7 +52,16 @@ export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger)
         const rows = await context._transactionQueryRunner.query("SELECT txid_current();");
         txidCurrent = rows[0].txid_current;
       }
+
       await context._transactionQueryRunner.commitTransaction();
+
+      context._transactionOnCommitedHandlers.forEach(async ({ onCommitedHandler, operationName }) => {
+        try {
+          await onCommitedHandler();
+        } catch (err) {
+          logger.error(`Failed to call onCommitedHandler of operation '${operationName}'.`, err);
+        }
+      });
     } catch (err) {
       logger.error("Failed to commit transaction.");
       try {
@@ -69,6 +79,10 @@ export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger)
         context._transactionQueryRunner = null;
       }
     }
+    context._transactionRunning = false;
+    context._transactionRollbackFunctions = [];
+    context._transactionOnCommitedHandlers = [];
+
     return txidCurrent;
   };
 }

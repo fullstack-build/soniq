@@ -93,23 +93,28 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: ILogger): C
 
 function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => GraphQLFormattedError {
   return (error: GraphQLError) => {
+    const errorCode = _.get(error, "extensions.code");
     // If any Error has a exposeDetails flag just return it to the user
-    if (_.get(error, "extensions.exposeDetails") === true) {
+    if (
+      (errorCode === "BAD_USER_INPUT" || errorCode === "UNAUTHENTICATED" || errorCode === "FORBIDDEN") &&
+      (_.get(error, "extensions.exposeDetails") === true || _.get(error, "extensions.exception.exposeDetails") === true)
+    ) {
       logger.trace(error);
-      _.set(error, "extensions.exception", null);
+      // Always hide the stacktrace. There is no reason to send it.
+      _.set(error, "extensions.exception.stacktrace", null);
       return error;
     }
 
     // For Apollo predefined errors keep the type but hide all details.
-    if (_.get(error, "extensions.code") === "BAD_USER_INPUT") {
+    if (errorCode === "BAD_USER_INPUT") {
       logger.trace(error);
       return new UserInputError("Bad user input.");
     }
-    if (_.get(error, "extensions.code") === "UNAUTHENTICATED") {
+    if (errorCode === "UNAUTHENTICATED") {
       logger.trace(error);
       return new AuthenticationError("Authentication required.");
     }
-    if (_.get(error, "extensions.code") === "FORBIDDEN") {
+    if (errorCode === "FORBIDDEN") {
       logger.trace(error);
       return new ForbiddenError("Access forbidden.");
     }

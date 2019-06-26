@@ -7,12 +7,11 @@ export default async function checkCosts(queryRunner: PostgresQueryRunner, query
   const currentCost = await getCurrentCosts(queryRunner, queryBuild);
 
   if (currentCost > costLimit) {
-    const error = new UserInputError(
+    throw new UserInputError(
       "This query seems to be to exprensive. Please set some limits. " +
-        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${queryBuild.costTree})`
+        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${queryBuild.costTree})`,
+      { exposeDetails: true }
     );
-    error.extensions.exposeDetails = true;
-    throw error;
   }
 
   return currentCost;

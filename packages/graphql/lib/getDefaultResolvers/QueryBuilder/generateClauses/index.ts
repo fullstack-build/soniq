@@ -38,9 +38,7 @@ function generateOrderByClause(getField: (fieldName: string) => string, orderBy?
     const order = splitted.pop();
     const fieldName = splitted.join("_");
     if (order !== "ASC" && order !== "DESC") {
-      const error = new UserInputError(`OrderBy has an invalid value '${option}'.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`OrderBy has an invalid value '${option}'.`, { exposeDetails: true });
     }
     return `${getField(fieldName)} ${order}`;
   });

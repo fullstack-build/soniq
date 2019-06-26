@@ -63,9 +63,7 @@ export default class QueryBuild {
     // First iteration always starts with jsonAgg and thus is an aggregation
     const isQueryRootLevel = this.currentIndex < 2 && match == null;
     if (isQueryRootLevel === true && gqlTypePermissionMeta.disallowGenericRootLevelAggregation === true) {
-      const error = new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`, { exposeDetails: true });
     }
     const fields = query.fieldsByTypeName[gqlTypeName];
 
@@ -76,9 +74,7 @@ export default class QueryBuild {
 
     Object.values(fields).forEach((field) => {
       if (gqlTypeMeta.fields[field.name] == null) {
-        const error = new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`);
-        error.extensions.exposeDetails = true;
-        throw error;
+        throw new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`, { exposeDetails: true });
       }
       const fieldMeta = gqlTypeMeta.fields[field.name];
       if (!gqlTypeMeta.publicFieldNames.includes(field.name) && fieldMeta.nativeFieldName != null) {

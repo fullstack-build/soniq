@@ -26,9 +26,7 @@ const is: IBooleanOperator = {
   getSql: (context) => {
     const { field, value } = context;
     if (operators[value] == null) {
-      const error = new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`, { exposeDetails: true });
     }
     return `${field} ${operators[value]}`;
   }
