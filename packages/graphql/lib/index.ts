@@ -1,6 +1,6 @@
 import { GraphQLSchema, DefinitionNode } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
-import { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "apollo-server-koa";
+import { ApolloServer } from "apollo-server-koa";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
@@ -20,9 +20,10 @@ import { getResolvers, ICustomFieldResolver, ICustomResolverObject } from "./res
 import getDefaultResolvers from "./getDefaultResolvers";
 import { operatorsSchemaExtension, operatorsDefinitionNode } from "./logicalOperators";
 import { getOperationsObject } from "./operations";
-import { HookManager, TPreQueryHookFunction, TPreMutationCommitHookFunction, TPostMutationHookFunction } from "./hooks";
+import { HookManager, TPreQueryHookFunction } from "./hooks";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
+import { AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "./GraphqlErrors";
 
 export { ApolloServer, AuthenticationError, ForbiddenError, UserInputError, ApolloError, ReturnIdHandler, RevertibleResult };
 
@@ -74,7 +75,7 @@ export class GraphQl {
 
     this.addDefaultResolvers(resolverMeta, dbMeta);
     const operations = getOperationsObject(gqlRuntimeDocument);
-    const resolvers = getResolvers(operations, this.resolvers, this.orm.createQueryRunner);
+    const resolvers = getResolvers(operations, this.resolvers, this.orm.createQueryRunner, this.logger);
     this.apolloSchema = makeExecutableSchema({ typeDefs, resolvers });
 
     const app = this.server.getApp();

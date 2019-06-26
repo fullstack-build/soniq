@@ -5,7 +5,7 @@ import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
-import { HookManager, IHookInfo } from "../hooks";
+import { HookManager } from "../hooks";
 import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
@@ -13,6 +13,7 @@ import MutationBuilder, { IMutationBuildObject } from "./MutationBuilder";
 import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 import { ICustomFieldResolver } from "../resolvers";
 import { ReturnIdHandler } from "../ReturnIdHandler";
+import { UserInputError } from "../GraphqlErrors";
 
 const hookManager: HookManager = Container.get(HookManager);
 
@@ -40,7 +41,9 @@ export default function getDefaultMutationResolver<TSource>(
     const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
     if (result.rowCount < 1) {
-      throw new Error("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
+      const error = new UserInputError("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
+      error.extensions.exposeDetails = true;
+      throw error;
     }
 
     let returnQueryBuild: IQueryBuildOject | undefined;
@@ -81,7 +84,7 @@ export default function getDefaultMutationResolver<TSource>(
 
       if (returnQueryBuild.potentialHighCost === true) {
         const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
-        logger.warn(
+        logger.trace(
           "The current query has been identified as potentially too expensive and could get denied in case the" +
             ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
         );
@@ -94,10 +97,12 @@ export default function getDefaultMutationResolver<TSource>(
       const resultData = returnResult[0][returnQueryBuild.queryName];
 
       if (resultData.length < 1) {
-        throw new Error(
+        const error = new UserInputError(
           "The return-query of this mutation has no entries. Perhaps you are not permitted to access the results." +
             " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions."
         );
+        error.extensions.exposeDetails = true;
+        throw error;
       }
 
       // set data from row 0

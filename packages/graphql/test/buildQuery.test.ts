@@ -12,8 +12,8 @@ ava("Simplest SELECT", (test) => {
   const queryBuild = new QueryBuild(resolverMeta, dbMeta, false, Infinity, query);
   const actual = queryBuild.getBuildObject();
   actual.costTree = null;
-
   test.deepEqual(actual, expected);
+  test.is(false, false);
 });
 
 ava("SELECT with WHERE, ORDER BY, LIMIT, OFFSET", (test) => {

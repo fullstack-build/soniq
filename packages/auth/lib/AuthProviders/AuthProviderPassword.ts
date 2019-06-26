@@ -51,14 +51,14 @@ export class AuthProviderPassword {
       "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const token = await this.createPassword(args.password);
         if (returnIdHandler.setReturnId(token)) {
-          return "Token hidden because of returnId usage.";
+          return "Token hidden due to returnId usage.";
         }
         return token;
       },
       "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
         if (returnIdHandler.setReturnId(token)) {
-          return "Token hidden because of returnId usage.";
+          return "Token hidden due to returnId usage.";
         }
         return token;
       }

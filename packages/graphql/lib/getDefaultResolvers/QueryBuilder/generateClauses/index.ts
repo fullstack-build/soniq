@@ -1,5 +1,6 @@
 import { IQueryClauseObject, INestedFilter } from "../types";
 import getGenerateFilterFn from "./getGenerateFilterFn";
+import { UserInputError } from "../../../GraphqlErrors";
 
 export default function generateClauses(
   { where, orderBy, limit, offset }: IQueryClauseObject,
@@ -37,7 +38,9 @@ function generateOrderByClause(getField: (fieldName: string) => string, orderBy?
     const order = splitted.pop();
     const fieldName = splitted.join("_");
     if (order !== "ASC" && order !== "DESC") {
-      throw new Error(`OrderBy has an invalid value '${option}'.`);
+      const error = new UserInputError(`OrderBy has an invalid value '${option}'.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
     return `${getField(fieldName)} ${order}`;
   });

@@ -7,6 +7,7 @@ import {
   isBooleanOperator,
   IBooleanOperatorContext
 } from "../../../logicalOperators";
+import { UserInputError } from "../../../GraphqlErrors";
 
 export default function getGenerateFilterFn(
   getParam: (value: number | string) => string,
@@ -49,12 +50,16 @@ export default function getGenerateFilterFn(
   function generateOperatorFilter(operatorName: string, fieldName: string, value: TNumberOrString[] | number | string) {
     const operator = getOperator(operatorName);
     if (operator == null) {
-      throw new Error(`Operator '${operatorName}' not found.`);
+      const error = new UserInputError(`Operator '${operatorName}' not found.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
 
     if (isBooleanOperator(operator)) {
       if (Array.isArray(value) || typeof value !== "string") {
-        throw new Error(`BooleanOperator '${operatorName}' requires a single value.`);
+        const error = new UserInputError(`BooleanOperator '${operatorName}' requires a single value.`);
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       const context: IBooleanOperatorContext = {
         field: getField(fieldName),
@@ -63,7 +68,9 @@ export default function getGenerateFilterFn(
       return operator.getSql(context);
     } else if (isSingleValueOperator(operator)) {
       if (Array.isArray(value)) {
-        throw new Error(`SingleValueOperator '${operatorName}' requires a single value.`);
+        const error = new UserInputError(`SingleValueOperator '${operatorName}' requires a single value.`);
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       const context: ISingleValueOperatorContext = {
         field: getField(fieldName),
@@ -73,7 +80,9 @@ export default function getGenerateFilterFn(
       return operator.getSql(context);
     } else {
       if (!Array.isArray(value)) {
-        throw new Error(`MultiValueOperator '${operatorName}' requires an array of values.`);
+        const error = new UserInputError(`MultiValueOperator '${operatorName}' requires an array of values.`);
+        error.extensions.exposeDetails = true;
+        throw error;
       }
       const context: IMultiValueOperatorContext = {
         field: getField(fieldName),

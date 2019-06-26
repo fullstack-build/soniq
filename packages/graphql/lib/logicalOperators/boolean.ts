@@ -1,4 +1,5 @@
 import { IBooleanOperator } from "./types";
+import { UserInputError } from "../GraphqlErrors";
 
 const operators = {
   NULL: "IS NULL",
@@ -25,7 +26,9 @@ const is: IBooleanOperator = {
   getSql: (context) => {
     const { field, value } = context;
     if (operators[value] == null) {
-      throw new Error(`Operator '${value}' not found for generating where clause 'in'.`);
+      const error = new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`);
+      error.extensions.exposeDetails = true;
+      throw error;
     }
     return `${field} ${operators[value]}`;
   }

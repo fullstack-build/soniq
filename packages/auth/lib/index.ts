@@ -39,6 +39,7 @@ export class Auth {
 
   // DI
   private logger: ILogger;
+  private loggerFactory: LoggerFactory;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
   public readonly authConnector: AuthConnector;
@@ -56,6 +57,7 @@ export class Auth {
 
     orm.addMigrations(migrations);
 
+    this.loggerFactory = loggerFactory;
     this.logger = loggerFactory.create(this.constructor.name);
 
     this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
@@ -145,7 +147,7 @@ export class Auth {
         const queryRunner = context._transactionQueryRunner;
         const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
         if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
-          return "Token hidden because of returnId usage.";
+          return "Token hidden due to returnId usage.";
         }
         return userIdentifierObject.userIdentifier;
       },
@@ -254,6 +256,7 @@ export class Auth {
       this.authQueryHelper,
       this.signHelper,
       this.orm,
+      this.loggerFactory.create(`${this.constructor.name}.AuthProvider.${providerName}`),
       this.authConfig,
       authFactorProofTokenMaxAgeInSeconds
     );

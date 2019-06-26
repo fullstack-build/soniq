@@ -93,38 +93,42 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: ILogger): C
 
 function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => GraphQLFormattedError {
   return (error: GraphQLError) => {
-    // log all errors here!
-    logger.error(error);
-    // tslint:disable-next-line:no-console TODO: Logger should log the stacktrace of the given error, not the one where it is called
-    console.error("->", JSON.stringify(error, null, 2));
-
     // If any Error has a exposeDetails flag just return it to the user
     if (_.get(error, "extensions.exposeDetails") === true) {
+      logger.trace(error);
       _.set(error, "extensions.exception", null);
       return error;
     }
 
     // For Apollo predefined errors keep the type but hide all details.
     if (_.get(error, "extensions.code") === "BAD_USER_INPUT") {
+      logger.trace(error);
       return new UserInputError("Bad user input.");
     }
     if (_.get(error, "extensions.code") === "UNAUTHENTICATED") {
+      logger.trace(error);
       return new AuthenticationError("Authentication required.");
     }
     if (_.get(error, "extensions.code") === "FORBIDDEN") {
+      logger.trace(error);
       return new ForbiddenError("Access forbidden.");
     }
 
-    // Try to map other errors to Apollo predefined errors.
+    // Try to map other errors to Apollo predefined errors. Useful when writing pg-functions which cannot return a specific Error Object
     if (error.message.indexOf("AUTH.THROW.USER_INPUT_ERROR") >= 0) {
+      logger.trace(error);
       return new UserInputError("Bad user input.");
     }
     if (error.message.indexOf("AUTH.THROW.AUTHENTICATION_ERROR") >= 0) {
+      logger.trace(error);
       return new AuthenticationError("Authentication required.");
     }
     if (error.message.indexOf("AUTH.THROW.FORBIDDEN_ERROR") >= 0) {
+      logger.trace(error);
       return new ForbiddenError("Access forbidden.");
     }
+    // Log all internal errors as error here => Everything else is just trace
+    logger.error(error);
 
     // For all other errors just return a Internal server error
     return new ApolloError("Internal server error", "INTERNAL_SERVER_ERROR");

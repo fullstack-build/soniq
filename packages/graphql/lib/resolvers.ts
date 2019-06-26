@@ -4,6 +4,8 @@ import { IResolvers, IResolverObject, MergeInfo, IFieldResolver } from "graphql-
 import { IOperationsObject, IBaseOperation } from "./operations";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
+import { ILogger } from "@fullstack-one/logger";
+import { UserInputError } from "./GraphqlErrors";
 
 export type ICustomFieldResolver<TSource, TContext, TParams> = (
   source: TSource,
@@ -22,7 +24,12 @@ export interface ICustomResolverObject<TSource = any, TContext = any, TParams = 
   [key: string]: ICustomFieldResolver<TSource, TContext, TParams>;
 }
 
-export function getResolvers(operations: IOperationsObject, resolversObject: ICustomResolverObject, createQueryRunner: any): IResolvers {
+export function getResolvers(
+  operations: IOperationsObject,
+  resolversObject: ICustomResolverObject,
+  createQueryRunner: any,
+  logger: ILogger
+): IResolvers {
   const queryResolvers: IResolverObject = {};
   const mutationResolvers: IResolverObject = {};
 
@@ -39,7 +46,13 @@ export function getResolvers(operations: IOperationsObject, resolversObject: ICu
       throw new Error(`The resolver "${operation.resolver}" is not defined. You used it in custom Mutation "${operation.name}".`);
     }
 
-    mutationResolvers[operation.name] = wrapMutationResolver(resolversObject[operation.resolver], operation.params, operation, createQueryRunner);
+    mutationResolvers[operation.name] = wrapMutationResolver(
+      resolversObject[operation.resolver],
+      operation.params,
+      operation,
+      createQueryRunner,
+      logger
+    );
   });
 
   const resolvers: IResolvers = {
@@ -74,22 +87,19 @@ function wrapResolver<TSource, TContext, TParams>(
   };
 }
 
-async function rollbackAndReleaseTransaction(context) {
+async function rollbackAndReleaseTransaction(context, logger: ILogger) {
   try {
     await context._transactionQueryRunner.rollbackTransaction();
-  } catch (err) {
-    // tslint:disable-next-line:no-console => TODO: Import logger
-    console.error("Failed to rollback transaction queryRunnter.", err);
-  } finally {
     await context._transactionQueryRunner.release();
-    context._transactionQueryRunner = null;
+  } catch (err) {
+    logger.error("Failed to rollback and release transaction queryRunner.", err);
   }
+  context._transactionQueryRunner = null;
   context._transactionRollbackFunctions.forEach(async ({ rollbackFunction, operationName }) => {
     try {
       await rollbackFunction();
     } catch (err) {
-      // tslint:disable-next-line:no-console => TODO: Import logger
-      console.error(`Failed to rollback RevertibleResult of operation '${operationName}'.`, err);
+      logger.error(`Failed to rollback RevertibleResult of operation '${operationName}'.`, err);
     }
   });
 }
@@ -98,15 +108,23 @@ function wrapMutationResolver<TSource, TContext, TParams>(
   customResolver: ICustomFieldResolver<TSource, TContext, TParams>,
   operationParams: TParams,
   operation: IBaseOperation,
-  createQueryRunner: any
+  createQueryRunner: any,
+  logger: ILogger
 ): IFieldResolver<TSource, TContext> {
   return async (obj, args, context: any, info) => {
     const returnIdHandler = new ReturnIdHandler(context, args.returnId || null);
 
-    if (context._transactionQueryRunner != null) {
+    if (context._transactionRunning === true) {
+      if (context._transactionQueryRunner == null) {
+        const err = new UserInputError("This transaction has already been rolled back.");
+        err.extensions.exposeDetails = true;
+        throw err;
+      }
       if (operation.usesQueryRunnerFromContext !== true) {
-        await rollbackAndReleaseTransaction(context);
-        throw new Error("This mutation cannot be used inside a transaction. => ROLLBACK");
+        await rollbackAndReleaseTransaction(context, logger);
+        const err = new UserInputError("This mutation cannot be used inside a transaction. => ROLLBACK");
+        err.extensions.exposeDetails = true;
+        throw err;
       }
 
       try {
@@ -119,7 +137,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
 
         return result;
       } catch (err) {
-        await rollbackAndReleaseTransaction(context);
+        await rollbackAndReleaseTransaction(context, logger);
         throw err;
       }
     }
@@ -138,8 +156,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
         try {
           await context._transactionQueryRunner.release();
         } catch (e) {
-          // tslint:disable-next-line:no-console => TODO: Import logger
-          console.error("Failed to release queryRunner.");
+          logger.error("Failed to release queryRunner.", e);
         }
         context._transactionQueryRunner = null;
       }
