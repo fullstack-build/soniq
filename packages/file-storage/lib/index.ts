@@ -191,9 +191,7 @@ export class FileStorage {
         const type = args.type || "DEFAULT";
 
         if (this.verifierObjects[type] == null) {
-          const error = new UserInputError(`A verifier for type '${type}' hasn't been defined.`);
-          error.extensions.exposeDetails = true;
-          throw error;
+          throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
         }
 
         // tslint:disable-next-line:prettier
@@ -230,24 +228,18 @@ export class FileStorage {
         let stat = null;
 
         if (this.verifierObjects[type] == null) {
-          const error = new UserInputError(`A verifier for type '${type}' hasn't been defined.`);
-          error.extensions.exposeDetails = true;
-          throw error;
+          throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
         }
 
         if (type !== fName.type) {
-          const error = new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`);
-          error.extensions.exposeDetails = true;
-          throw error;
+          throw new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`, { exposeDetails: true });
         }
 
         try {
           stat = await this.client.statObject(this.fileStorageConfig.bucket, fName.uploadName);
         } catch (e) {
           if (e.message.toLowerCase().indexOf("not found") >= 0) {
-            const error = new UserInputError("Please upload a file before verifying.");
-            error.extensions.exposeDetails = true;
-            throw error;
+            throw new UserInputError("Please upload a file before verifying.", { exposeDetails: true });
           }
           throw e;
         }
@@ -401,16 +393,12 @@ export class FileStorage {
     const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
     const regexp = new RegExp(regex);
     if (regexp.test(type) !== true) {
-      const error = new UserInputError(`The type '${type}' has to match RegExp '${regex}'.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`The type '${type}' has to match RegExp '${regex}'.`, { exposeDetails: true });
     }
     if (this.verifiers[type] == null) {
       this.verifiers[type] = fn;
     } else {
-      const error = new UserInputError(`A verifier for type '${type}' already exists.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`A verifier for type '${type}' already exists.`, { exposeDetails: true });
     }
   }
 }

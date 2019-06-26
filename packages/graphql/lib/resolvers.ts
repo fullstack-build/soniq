@@ -116,15 +116,11 @@ function wrapMutationResolver<TSource, TContext, TParams>(
 
     if (context._transactionRunning === true) {
       if (context._transactionQueryRunner == null) {
-        const err = new UserInputError("This transaction has already been rolled back.");
-        err.extensions.exposeDetails = true;
-        throw err;
+        throw new UserInputError("This transaction has already been rolled back.", { exposeDetails: true });
       }
       if (operation.usesQueryRunnerFromContext !== true) {
         await rollbackAndReleaseTransaction(context, logger);
-        const err = new UserInputError("This mutation cannot be used inside a transaction. => ROLLBACK");
-        err.extensions.exposeDetails = true;
-        throw err;
+        throw new UserInputError("This mutation cannot be used inside a transaction. => ROLLBACK", { exposeDetails: true });
       }
 
       try {

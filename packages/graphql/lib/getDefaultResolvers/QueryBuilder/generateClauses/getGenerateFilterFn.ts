@@ -50,16 +50,12 @@ export default function getGenerateFilterFn(
   function generateOperatorFilter(operatorName: string, fieldName: string, value: TNumberOrString[] | number | string) {
     const operator = getOperator(operatorName);
     if (operator == null) {
-      const error = new UserInputError(`Operator '${operatorName}' not found.`);
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError(`Operator '${operatorName}' not found.`, { exposeDetails: true });
     }
 
     if (isBooleanOperator(operator)) {
       if (Array.isArray(value) || typeof value !== "string") {
-        const error = new UserInputError(`BooleanOperator '${operatorName}' requires a single value.`);
-        error.extensions.exposeDetails = true;
-        throw error;
+        throw new UserInputError(`BooleanOperator '${operatorName}' requires a single value.`, { exposeDetails: true });
       }
       const context: IBooleanOperatorContext = {
         field: getField(fieldName),
@@ -68,9 +64,7 @@ export default function getGenerateFilterFn(
       return operator.getSql(context);
     } else if (isSingleValueOperator(operator)) {
       if (Array.isArray(value)) {
-        const error = new UserInputError(`SingleValueOperator '${operatorName}' requires a single value.`);
-        error.extensions.exposeDetails = true;
-        throw error;
+        throw new UserInputError(`SingleValueOperator '${operatorName}' requires a single value.`, { exposeDetails: true });
       }
       const context: ISingleValueOperatorContext = {
         field: getField(fieldName),
@@ -80,9 +74,7 @@ export default function getGenerateFilterFn(
       return operator.getSql(context);
     } else {
       if (!Array.isArray(value)) {
-        const error = new UserInputError(`MultiValueOperator '${operatorName}' requires an array of values.`);
-        error.extensions.exposeDetails = true;
-        throw error;
+        throw new UserInputError(`MultiValueOperator '${operatorName}' requires an array of values.`, { exposeDetails: true });
       }
       const context: IMultiValueOperatorContext = {
         field: getField(fieldName),

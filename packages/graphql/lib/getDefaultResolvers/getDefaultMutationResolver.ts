@@ -41,9 +41,9 @@ export default function getDefaultMutationResolver<TSource>(
     const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
     if (result.rowCount < 1) {
-      const error = new UserInputError("No rows affected by this mutation. Either the entity does not exist or you are not permitted.");
-      error.extensions.exposeDetails = true;
-      throw error;
+      throw new UserInputError("No rows affected by this mutation. Either the entity does not exist or you are not permitted.", {
+        exposeDetails: true
+      });
     }
 
     let returnQueryBuild: IQueryBuildOject | undefined;
@@ -97,12 +97,11 @@ export default function getDefaultMutationResolver<TSource>(
       const resultData = returnResult[0][returnQueryBuild.queryName];
 
       if (resultData.length < 1) {
-        const error = new UserInputError(
+        throw new UserInputError(
           "The return-query of this mutation has no entries. Perhaps you are not permitted to access the results." +
-            " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions."
+            " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions.",
+          { exposeDetails: true }
         );
-        error.extensions.exposeDetails = true;
-        throw error;
       }
 
       // set data from row 0
