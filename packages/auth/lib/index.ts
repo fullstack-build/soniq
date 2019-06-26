@@ -5,7 +5,7 @@ import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
-import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 import migrations from "./migrations";
@@ -224,7 +224,6 @@ export class Auth {
       },
       "@fullstack-one/auth/createUserAuthentication": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         const queryRunner = context._transactionQueryRunner;
-        // tslint:disable-next-line:prettier
 
         const userAuthenticationId = await this.authConnector.createUserAuthentication(
           queryRunner,
@@ -234,7 +233,19 @@ export class Auth {
           args.modifyProviderSets,
           args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
         );
-        return userAuthenticationId;
+
+        return new RevertibleResult(
+          userAuthenticationId,
+          async () => {
+            /* Rollback happens with db-client-transaction */
+          },
+          async () => {
+            await this.authQueryHelper.transaction(async (queryRunnerInternal) => {
+              const userAuthentication = await this.authConnector.getUserAuthenticationById(queryRunnerInternal, userAuthenticationId);
+              this.userRegistrationCallback(userAuthentication);
+            });
+          }
+        );
       },
       "@fullstack-one/auth/getUserAuthentication": async (obj, args, context, info, params) => {
         return this.authConnector.getUserAuthentication(context._transactionQueryRunner, context.accessToken);

@@ -132,6 +132,12 @@ function wrapMutationResolver<TSource, TContext, TParams>(
 
         if (result instanceof RevertibleResult) {
           context._transactionRollbackFunctions.push({ rollbackFunction: result.getRollbackFunction(), operationName: operation.name });
+
+          const onCommitedHandler = result.getOnCommitedHandler();
+          if (onCommitedHandler != null) {
+            context._transactionOnCommitedHandlers.push({ onCommitedHandler, operationName: operation.name });
+          }
+
           return result.getResult();
         }
 
