@@ -1,6 +1,6 @@
 {
   "name": "orm-example",
-  "version": "0.5.24",
+  "version": "0.5.25",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -40,14 +40,14 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.24",
+    "@fullstack-one/auth": "^0.5.25",
     "@fullstack-one/auto-migrate": "^0.5.17",
-    "@fullstack-one/db": "^0.5.24",
+    "@fullstack-one/db": "^0.5.25",
     "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/graphql": "^0.5.24",
-    "@fullstack-one/schema-builder": "^0.5.24",
+    "@fullstack-one/graphql": "^0.5.25",
+    "@fullstack-one/schema-builder": "^0.5.25",
     "dotenv": "^4.0.0",
-    "fullstack-one": "^0.5.17",
+    "fullstack-one": "^0.5.25",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.12"
   }
