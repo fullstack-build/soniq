@@ -31,9 +31,9 @@ export default class Task extends BaseEntity {
   @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public title: string;
 
-  @ManyToOne((type) => User)
+  @ManyToOne((type) => User, "tasks", ({ nullable: true }))
   @QueryPermissions(["Anyone"])
-  public user: User;
+  public user?: User;
 
   @Column({ gqlType: "String", type: "character varying" })
   @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])

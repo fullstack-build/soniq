@@ -15,7 +15,7 @@ export default function OneToMany<T>(typeFunction: (type?: any) => new () => T, 
       const foreignEntityName = identifier ? identifier.name : `Unknown${Math.floor(Math.random() * 100)}`;
       const relationName = entityName < foreignEntityName ? `${entityName}_${foreignEntityName}` : `${foreignEntityName}_${entityName}`;
       const directive = `@relation(name: "${inverseSide}_${relationName}")`;
-      ModelMeta.createColumnMeta(entityName, columnName, { gqlType: `[${foreignEntityName}!]` }, [directive]);
+      ModelMeta.createColumnMeta(entityName, columnName, { gqlType: `[${foreignEntityName}!]`, nullable: options ? options.nullable : false }, [directive]);
 
       typeorm.OneToMany(typeFunction, (object: T) => object[inverseSide], options)(target, columnName);
       ModelMeta.setColumnSynchronizedTrue(entityName, columnName);

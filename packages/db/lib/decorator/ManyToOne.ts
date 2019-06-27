@@ -15,7 +15,7 @@ export default function ManyToOne<T>(typeFunction: (type?: any) => new () => T, 
       const foreignEntityName = identifier ? identifier.name : `Unknown${Math.floor(Math.random() * 100)}`;
       const relationName = entityName < foreignEntityName ? `${entityName}_${foreignEntityName}` : `${foreignEntityName}_${entityName}`;
       const directive = `@relation(name: "${columnName}_${relationName}")`;
-      ModelMeta.createColumnMeta(entityName, columnName, { gqlType: foreignEntityName }, [directive]);
+      ModelMeta.createColumnMeta(entityName, columnName, { gqlType: foreignEntityName, nullable: options ? options.nullable : false }, [directive]);
 
       if (inverseSide == null) typeorm.ManyToOne(typeFunction, (object: T) => object[inverseSide], options)(target, columnName);
       else typeorm.ManyToOne(typeFunction, options)(target, columnName);
