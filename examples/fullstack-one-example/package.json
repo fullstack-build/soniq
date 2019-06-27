@@ -41,7 +41,6 @@
   "dependencies": {
     "@fullstack-one/auth": "^0.5.26",
     "@fullstack-one/auth-fb-token": "^0.5.26",
-    "@fullstack-one/auto-migrate": "^0.5.17",
     "@fullstack-one/db": "^0.5.26",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.25",
