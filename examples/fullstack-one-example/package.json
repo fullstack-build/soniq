@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one-example",
-  "version": "0.5.25",
+  "version": "0.5.26",
   "description": "Example project: how to use fullstack.one",
   "private": true,
   "engines": {
@@ -39,16 +39,15 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.25",
-    "@fullstack-one/auth-fb-token": "^0.5.25",
-    "@fullstack-one/auto-migrate": "^0.5.17",
-    "@fullstack-one/db": "^0.5.25",
+    "@fullstack-one/auth": "^0.5.26",
+    "@fullstack-one/auth-fb-token": "^0.5.26",
+    "@fullstack-one/db": "^0.5.26",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.25",
-    "@fullstack-one/file-storage": "^0.5.25",
+    "@fullstack-one/file-storage": "^0.5.26",
     "@fullstack-one/graceful-shutdown": "^0.5.25",
-    "@fullstack-one/graphql": "^0.5.25",
-    "@fullstack-one/notifications": "^0.5.25",
+    "@fullstack-one/graphql": "^0.5.26",
+    "@fullstack-one/notifications": "^0.5.26",
     "@types/graphql": "^14.0.5",
     "apollo-server": "^2.3.1",
     "dotenv": "^4.0.0",
