@@ -1,0 +1,54 @@
+{
+  "name": "file-storage-example",
+  "version": "0.5.26",
+  "description": "Example project: how to use fullstack.one file-storage",
+  "private": true,
+  "engines": {
+    "node": "10.15",
+    "npm": "6.4"
+  },
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node .",
+    "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
+    "dev": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false .",
+    "dev-js": "ts-node-dev --notify=false .",
+    "dev-pure": "FULLSTACK_ONE_DEV=true ts-node .",
+    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one-example.git"
+  },
+  "keywords": [
+    "fullstack.one",
+    "orm-example"
+  ],
+  "author": "Eugene <opensource@terehov.de> (http://fullstack.build)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one-example/issues"
+  },
+  "homepage": "https://github.com/fullstack-build/fullstack.one-example#readme",
+  "devDependencies": {
+    "@types/dotenv": "^4.0.2",
+    "@types/node": "^8.0.57",
+    "ts-node-dev": "^1.0.0-pre.40",
+    "tslint": "^5.8.0",
+    "tslint-config-airbnb": "^5.4.2",
+    "typescript": "^3.1.1"
+  },
+  "dependencies": {
+    "@fullstack-one/auth": "^0.5.26",
+    "@fullstack-one/db": "^0.5.26",
+    "@fullstack-one/di": "^0.5.15",
+    "@fullstack-one/file-storage": "^0.5.26",
+    "@fullstack-one/graphql": "^0.5.26",
+    "@fullstack-one/schema-builder": "^0.5.26",
+    "dotenv": "^4.0.0",
+    "fullstack-one": "^0.5.25",
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.12",
+    "ts-node": "^8.3.0"
+  }
+}

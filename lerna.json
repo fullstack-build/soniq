@@ -3,6 +3,7 @@
   "packages": [
     "examples/fullstack-one-example",
     "examples/orm-example",
+    "examples/file-storage-example",
     "packages/*"
   ],
   "version": "0.5.26",
