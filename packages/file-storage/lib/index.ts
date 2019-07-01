@@ -1,22 +1,22 @@
+import * as fs from "fs";
 import * as Minio from "minio";
-import { Service, Inject } from "@fullstack-one/di";
 import { Auth } from "@fullstack-one/auth";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
+import { ORM } from "@fullstack-one/db";
+import { Service, Inject } from "@fullstack-one/di";
 import { GraphQl, UserInputError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { getParser } from "./parser";
-import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
 import { DefaultVerifier } from "./DefaultVerifier";
 import { FileName, IInput } from "./FileName";
+import IFileStorageConfig from "./IFileStorageConfig";
+import "./migrationExtension";
+import migrations from "./migrations";
+import { getParser } from "./parser";
+import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
 
 export { DefaultVerifier, Verifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
-
-import * as fs from "fs";
-
-import "./migrationExtension";
-import IFileStorageConfig from "./IFileStorageConfig";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -32,14 +32,17 @@ export class FileStorage {
     @Inject((type) => Auth) private readonly auth: Auth,
     @Inject((type) => GraphQl) private readonly graphQl: GraphQl,
     @Inject((type) => SchemaBuilder) private readonly schemaBuilder: SchemaBuilder,
-    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => BootLoader) bootLoader: BootLoader,
-    @Inject((type) => Config) config: Config
+    @Inject((type) => Config) config: Config,
+    @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
+    @Inject((type) => ORM) orm: ORM
   ) {
     this.fileStorageConfig = config.registerConfig("FileStorage", `${__dirname}/../config`);
 
     this.logger = loggerFactory.create(this.constructor.name);
     this.logger.warn("README: Using an sql folder and addMigrationPath is obsolete and will crash. TODO: use ORM.addMigration instead");
+
+    orm.addMigrations(migrations);
 
     this.schemaBuilder.extendSchema(schema);
     this.schemaBuilder.addExtension(getParser());
