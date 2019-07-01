@@ -18,7 +18,7 @@ export class InitialMetaAuth1560267369283 implements MigrationInterface {
       (E'access_token_secret',E'geheim'),
       (E'admin_token_secret',E'boss'),
       (E'auth_factor_providers',E'password:email:facebook'),
-      (E'get_tenant_by_user_id_query',E'SELECT ''DEFAULT'' "tenantId";'),
+      (E'get_tenant_by_user_id_query',E'SELECT ''default'' "tenantId";'),
       (E'hash_bf_iter_count',E'6'),
       (E'hash_secret',E'gehtdichnixan'),
       (E'refresh_token_bf_iter_count',E'6'),
