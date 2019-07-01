@@ -14,9 +14,9 @@ import IFileStorageConfig from "./IFileStorageConfig";
 import "./migrationExtension";
 import migrations from "./migrations";
 import { getParser } from "./parser";
-import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
+import { AVerifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
 
-export { DefaultVerifier, Verifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
+export { DefaultVerifier, AVerifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
