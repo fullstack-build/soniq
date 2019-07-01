@@ -40,8 +40,7 @@ export function getParser() {
     if (readExpressions[fieldName] != null && directives.files != null) {
       const { defaultFieldCreator, localTable } = ctx;
 
-      const params = directives.files.params || {};
-      const types = directives.files.types || ["DEFAULT"];
+      const types: string[] = directives.files.types || ["DEFAULT"];
 
       const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
       const regexp = new RegExp(regex);

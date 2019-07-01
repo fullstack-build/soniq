@@ -14,9 +14,10 @@ import IFileStorageConfig from "./IFileStorageConfig";
 import "./migrationExtension";
 import migrations from "./migrations";
 import { getParser } from "./parser";
-import { AVerifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
+import { AVerifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, IVerifier } from "./Verifier";
 
 export { DefaultVerifier, AVerifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
+export * from "./decorators";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -25,8 +26,8 @@ export class FileStorage {
   private client: Minio.Client;
   private fileStorageConfig: IFileStorageConfig;
   private logger: ILogger;
-  private verifiers: { [type: string]: new (client: Minio.Client, bucket: string) => any } = {};
-  private verifierObjects: any = {};
+  private verifierClasses: { [type: string]: new (client: Minio.Client, bucket: string) => any } = {};
+  private verifierObjects: { [type: string]: IVerifier } = {};
 
   constructor(
     @Inject((type) => Auth) private readonly auth: Auth,
@@ -40,7 +41,6 @@ export class FileStorage {
     this.fileStorageConfig = config.registerConfig("FileStorage", `${__dirname}/../config`);
 
     this.logger = loggerFactory.create(this.constructor.name);
-    this.logger.warn("README: Using an sql folder and addMigrationPath is obsolete and will crash. TODO: use ORM.addMigration instead");
 
     orm.addMigrations(migrations);
 
@@ -52,24 +52,22 @@ export class FileStorage {
     // this.graphQl.addPostMutationHook(this.postMutationHook.bind(this));
 
     this.addVerifier("DEFAULT", DefaultVerifier);
+    this.client = new Minio.Client(this.fileStorageConfig.minio);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {
-    this.client = new Minio.Client(this.fileStorageConfig.minio);
     try {
-      // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (It loads internally the bucket region)
-      // This prevents errors when large queries require a lot of signed URL's for the first time after boot.
-      await this.client.presignedGetObject(this.fileStorageConfig.bucket, "notExistingObject.nothing", 1);
-
-      Object.keys(this.verifiers).forEach((key) => {
+      Object.keys(this.verifierClasses).forEach((key) => {
         // tslint:disable-next-line:variable-name
-        const CurrentVerifier = this.verifiers[key];
+        const CurrentVerifier = this.verifierClasses[key];
         this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
       });
+      // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (Internally, it loads the bucket region)
+      // This prevents errors, when large queries require a lot of signed URL's for the first time after boot.
+      await this.client.presignedGetObject(this.fileStorageConfig.bucket, "notExistingObject.nothing", 1);
     } catch (err) {
-      // TODO: Dustin: I added this try catch. It was stopping my boot scripts from completing. pls check this.
       // log error and ignore
       this.logger.warn(err);
     }
@@ -319,7 +317,13 @@ export class FileStorage {
 
         return filesDeleted.map((fileName) => fileName.name);
       },
-      "@fullstack-one/file-storage/readFiles": async (obj, args, context, info, params) => {
+      "@fullstack-one/file-storage/readFiles": async (
+        obj: { [fieldName: string]: Array<string | IInput> },
+        args: {},
+        context: {},
+        info,
+        params: {}
+      ) => {
         const awaitingFileSignatures = [];
 
         if (obj[info.fieldName] == null) {
@@ -396,8 +400,8 @@ export class FileStorage {
     if (regexp.test(type) !== true) {
       throw new UserInputError(`The type '${type}' has to match RegExp '${regex}'.`, { exposeDetails: true });
     }
-    if (this.verifiers[type] == null) {
-      this.verifiers[type] = fn;
+    if (this.verifierClasses[type] == null) {
+      this.verifierClasses[type] = fn;
     } else {
       throw new UserInputError(`A verifier for type '${type}' already exists.`, { exposeDetails: true });
     }

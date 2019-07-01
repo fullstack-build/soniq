@@ -1,5 +1,6 @@
 import { Client } from "minio";
 import { FileName } from "./FileName";
+import { verify } from "crypto";
 
 export interface IBucketObject {
   objectName: string;
@@ -17,7 +18,7 @@ export interface IGetObjectCacheSettings {
   expiryHeader: string | null;
 }
 
-export abstract class AVerifier {
+export abstract class AVerifier implements IVerifier {
   public client: Client;
   public bucket: string;
 
@@ -35,13 +36,13 @@ export abstract class AVerifier {
     throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class AVerifier.`);
   }
 
-  public putObjectCacheSettings(fileName: FileName): IPutObjectCacheSettings {
+  public putObjectCacheSettings(fileName?: FileName): IPutObjectCacheSettings {
     return {
       expiryInSeconds: 43200 // 12 hours
     };
   }
 
-  public getObjectCacheSettings(fileName: FileName): IGetObjectCacheSettings {
+  public getObjectCacheSettings(fileName?: FileName): IGetObjectCacheSettings {
     return {
       expiryInSeconds: 43200, // 12 hours
       signIssueTimeReductionModuloInSeconds: 3600, // one hour
@@ -49,4 +50,11 @@ export abstract class AVerifier {
       expiryHeader: null
     };
   }
+}
+
+export interface IVerifier {
+  verify: (verifyFileName: string, fileName: FileName) => Promise<void>;
+  getObjectNames: (fileName: FileName) => IBucketObject[];
+  putObjectCacheSettings: (fileName?: FileName) => IPutObjectCacheSettings;
+  getObjectCacheSettings: (fileName?: FileName) => IGetObjectCacheSettings;
 }
