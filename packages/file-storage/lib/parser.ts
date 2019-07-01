@@ -1,11 +1,9 @@
+import * as _ from "lodash";
 import { utils } from "@fullstack-one/schema-builder";
 
 const { createArrayField, getEnum } = utils;
 
 const typesEnumName = "FILE_TYPES";
-
-import * as _ from "lodash";
-
 const resolverName = "@fullstack-one/file-storage/readFiles";
 
 export function getParser() {
@@ -15,7 +13,7 @@ export function getParser() {
   };
 
   parser.parseUpdateField = (ctx) => {
-    const { gqlFieldDefinition, view, fieldName, directives } = ctx;
+    const { view, fieldName, directives } = ctx;
 
     if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
       const gqlArrayFieldDefinition: any = createArrayField(fieldName, "String");

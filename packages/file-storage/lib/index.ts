@@ -1,74 +1,52 @@
-import { Service, Inject, Container } from "@fullstack-one/di";
-import { Server } from "@fullstack-one/server";
+import * as Minio from "minio";
+import { Service, Inject } from "@fullstack-one/di";
+import { Auth } from "@fullstack-one/auth";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
 import { GraphQl, UserInputError } from "@fullstack-one/graphql";
-import { Auth } from "@fullstack-one/auth";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import * as KoaRouter from "koa-router";
-import * as koaBody from "koa-bodyparser";
-import * as Minio from "minio";
+import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { getParser } from "./parser";
 import { Verifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings } from "./Verifier";
 import { DefaultVerifier } from "./DefaultVerifier";
-import { FileName } from "./FileName";
+import { FileName, IInput } from "./FileName";
 
 export { DefaultVerifier, Verifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
 
 import * as fs from "fs";
 
-// extend migrations
 import "./migrationExtension";
+import IFileStorageConfig from "./IFileStorageConfig";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
 @Service()
 export class FileStorage {
   private client: Minio.Client;
-  private fileStorageConfig;
-
-  // DI
-  private server: Server;
-  private graphQl: GraphQl;
-  private schemaBuilder: SchemaBuilder;
-  private loggerFactory: LoggerFactory;
+  private fileStorageConfig: IFileStorageConfig;
   private logger: ILogger;
-  private config: Config;
-  private auth: Auth;
-  private verifiers: any = {};
+  private verifiers: { [type: string]: new (client: Minio.Client, bucket: string) => any } = {};
   private verifierObjects: any = {};
 
   constructor(
+    @Inject((type) => Auth) private readonly auth: Auth,
+    @Inject((type) => GraphQl) private readonly graphQl: GraphQl,
+    @Inject((type) => SchemaBuilder) private readonly schemaBuilder: SchemaBuilder,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => Server) server?,
-    @Inject((type) => BootLoader) bootLoader?,
-    @Inject((type) => Config) config?,
-    @Inject((type) => GraphQl) graphQl?,
-    @Inject((type) => SchemaBuilder) schemaBuilder?,
-    @Inject((type) => Auth) auth?
+    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => Config) config: Config
   ) {
-    this.loggerFactory = loggerFactory;
-    this.server = server;
-    this.graphQl = graphQl;
-    this.schemaBuilder = schemaBuilder;
-    this.config = config;
-    this.auth = auth;
-    // register package config
     this.fileStorageConfig = config.registerConfig("FileStorage", `${__dirname}/../config`);
 
-    this.logger = this.loggerFactory.create(this.constructor.name);
-
+    this.logger = loggerFactory.create(this.constructor.name);
     this.logger.warn("README: Using an sql folder and addMigrationPath is obsolete and will crash. TODO: use ORM.addMigration instead");
 
     this.schemaBuilder.extendSchema(schema);
-
     this.schemaBuilder.addExtension(getParser());
 
     this.graphQl.addResolvers(this.getResolvers());
-
-    // This hook does not exist anymore
-    // this.graphQl.addPostMutationCommitHook(this.postMutationHook.bind(this));
+    // TODO: Should be made available somehow
+    // this.graphQl.addPostMutationHook(this.postMutationHook.bind(this));
 
     this.addVerifier("DEFAULT", DefaultVerifier);
 
@@ -94,15 +72,13 @@ export class FileStorage {
     }
   }
 
-  // This is currently not used. However, we still need it
-  // TODO: Call this somewhere
   private async postMutationHook(info, context) {
     try {
       const entityId = info.entityId;
       const result = await this.auth.getAuthQueryHelper().adminQuery("SELECT * FROM _meta.file_todelete_by_entity($1);", [entityId]);
       result.forEach((row) => {
         const fileName = new FileName(row);
-        this.deleteFileAsAdmin(fileName.name);
+        this.deleteFileAsAdmin(fileName);
       });
     } catch (e) {
       // I don't care
@@ -124,46 +100,51 @@ export class FileStorage {
     }
 
     const now = Date.now();
-    const issueAtDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
-    return this.client.presignedGetObject(this.fileStorageConfig.bucket, objectName, cacheSettings.expiryInSeconds, respHeaders, issueAtDate);
+    const requestDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
+    // @types/minio@7.0.2 does not support respHeaders and requestDate
+    return (this.client as any).presignedGetObject(
+      this.fileStorageConfig.bucket,
+      objectName,
+      cacheSettings.expiryInSeconds,
+      respHeaders,
+      requestDate
+    );
   }
 
-  private async deleteFileAsAdmin(fName) {
+  private async deleteFileAsAdmin(fileName: FileName) {
     try {
       await this.auth.getAuthQueryHelper().adminTransaction(async (client) => {
-        const result = await client.query("SELECT * FROM _meta.file_deleteone_admin($1);", [fName.id]);
+        const result = await client.query("SELECT * FROM _meta.file_deleteone_admin($1);", [fileName.id]);
         if (result.length < 1) {
           throw new Error("Failed to delete file 'fileId' from db.");
         }
-        await this.deleteObjects(fName.prefix);
+        await this.deleteObjects(fileName.prefix);
       });
     } catch (e) {
-      this.logger.warn("deleteFileAsAdmin.error", `Failed to delete file '${fName.name}'.`, e);
+      this.logger.warn("deleteFileAsAdmin.error", `Failed to delete file '${fileName.name}'.`, e);
       // I don't care => File will be deleted by a cleanup-script some time
       return;
     }
   }
 
-  private async deleteFile(fName, context) {
+  private async deleteFile(fileName: FileName, context: { accessToken?: string }) {
     try {
       await this.auth.getAuthQueryHelper().userTransaction(context.accessToken, async (client) => {
-        await client.query("SELECT * FROM _meta.file_deleteone($1);", [fName.id]);
-        await this.deleteObjects(fName.prefix);
+        await client.query("SELECT * FROM _meta.file_deleteone($1);", [fileName.id]);
+        await this.deleteObjects(fileName.prefix);
       });
     } catch (e) {
-      this.logger.warn("deleteFile.error", `Failed to delete file '${fName.name}'.`, e);
+      this.logger.warn("deleteFile.error", `Failed to delete file '${fileName.name}'.`, e);
       // I don't care => File will be deleted by a cleanup-script some time
       return;
     }
   }
 
-  private deleteObjects(filePrefix) {
+  private deleteObjects(filePrefix: string) {
     return new Promise((resolve, reject) => {
       const objectsList = [];
 
-      // List all object paths in bucket my-bucketname.
-      // Cast this to any because minio returntype of listObjects is broken
-      const objectsStream: any = this.client.listObjects(this.fileStorageConfig.bucket, filePrefix, true);
+      const objectsStream = this.client.listObjects(this.fileStorageConfig.bucket, filePrefix, true);
 
       objectsStream.on("data", (obj) => {
         objectsList.push(obj.name);
@@ -186,7 +167,13 @@ export class FileStorage {
 
   private getResolvers() {
     return {
-      "@fullstack-one/file-storage/createFile": async (obj, args, context, info, params) => {
+      "@fullstack-one/file-storage/createFile": async (
+        obj: any,
+        args: { extension: string; type?: string },
+        context: { accessToken?: string },
+        info: any,
+        params: {}
+      ) => {
         const extension = args.extension.toLowerCase();
         const type = args.type || "DEFAULT";
 
@@ -199,7 +186,7 @@ export class FileStorage {
           .getAuthQueryHelper()
           .userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
 
-        const fName = new FileName({
+        const fileName = new FileName({
           id: result[0].fileId,
           type,
           extension
@@ -207,23 +194,28 @@ export class FileStorage {
 
         const cacheSettings = this.verifierObjects[type].putObjectCacheSettings();
 
-        const presignedPutUrl = await this.presignedPutObject(fName.uploadName, cacheSettings);
+        const presignedPutUrl = await this.presignedPutObject(fileName.uploadName, cacheSettings);
 
         return {
           extension,
           type,
-          fileName: fName.name,
-          uploadFileName: fName.uploadName,
+          fileName: fileName.name,
+          uploadFileName: fileName.uploadName,
           presignedPutUrl
         };
       },
-      "@fullstack-one/file-storage/verifyFile": async (obj, args, context, info, params) => {
-        const fName = new FileName(args.fileName);
+      "@fullstack-one/file-storage/verifyFile": async (
+        obj: any,
+        args: { fileName: string },
+        context: { accessToken?: string },
+        info: any,
+        params: {}
+      ) => {
+        const fileName = new FileName(args.fileName);
 
-        // tslint:disable-next-line:prettier
         const result = await this.auth
           .getAuthQueryHelper()
-          .userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fName.id]);
+          .userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileName.id]);
         const type = result[0].type;
         let stat = null;
 
@@ -231,12 +223,12 @@ export class FileStorage {
           throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
         }
 
-        if (type !== fName.type) {
+        if (type !== fileName.type) {
           throw new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`, { exposeDetails: true });
         }
 
         try {
-          stat = await this.client.statObject(this.fileStorageConfig.bucket, fName.uploadName);
+          stat = await this.client.statObject(this.fileStorageConfig.bucket, fileName.uploadName);
         } catch (e) {
           if (e.message.toLowerCase().indexOf("not found") >= 0) {
             throw new UserInputError("Please upload a file before verifying.", { exposeDetails: true });
@@ -244,7 +236,7 @@ export class FileStorage {
           throw e;
         }
 
-        const verifyFileName = fName.createTempName();
+        const verifyFileName = fileName.createTempName();
 
         const verifyCopyConditions = new Minio.CopyConditions();
         verifyCopyConditions.setMatchETag(stat.etag);
@@ -252,26 +244,26 @@ export class FileStorage {
         await this.client.copyObject(
           this.fileStorageConfig.bucket,
           verifyFileName,
-          `/${this.fileStorageConfig.bucket}/${fName.uploadName}`,
+          `/${this.fileStorageConfig.bucket}/${fileName.uploadName}`,
           verifyCopyConditions
         );
 
-        await this.verifierObjects[type].verify(verifyFileName, fName);
+        await this.verifierObjects[type].verify(verifyFileName, fileName);
 
-        await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT _meta.file_verify($1);", [fName.id]);
+        await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT _meta.file_verify($1);", [fileName.id]);
 
         // Try to clean up temp objects. However, don't care if it fails.
         try {
-          await this.client.removeObjects(this.fileStorageConfig.bucket, [fName.uploadName, verifyFileName]);
+          await this.client.removeObjects(this.fileStorageConfig.bucket, [fileName.uploadName, verifyFileName]);
         } catch (err) {
           this.logger.warn("verifyFile.removeObjectsFail", err);
         }
 
-        const verifier = this.verifierObjects[fName.type];
+        const verifier = this.verifierObjects[fileName.type];
 
-        const objectNames = verifier.getObjectNames(fName);
+        const objectNames = verifier.getObjectNames(fileName);
 
-        const cacheSettings = verifier.getObjectCacheSettings(fName);
+        const cacheSettings = verifier.getObjectCacheSettings(fileName);
 
         const objects = objectNames.map((object) => {
           return {
@@ -296,27 +288,33 @@ export class FileStorage {
         }
 
         return {
-          fileName: fName.name,
+          fileName: fileName.name,
           objects: bucketObjects
         };
       },
-      "@fullstack-one/file-storage/clearUpFiles": async (obj, args, context, info, params) => {
-        let result;
+      "@fullstack-one/file-storage/clearUpFiles": async (
+        obj: any,
+        args: { fileName?: string },
+        context: { accessToken?: string },
+        info: any,
+        params: {}
+      ) => {
+        let result: IInput[] = [];
 
         if (args.fileName != null) {
-          const fName = new FileName(args.fieldName);
-          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fName.id]);
+          const fileName = new FileName(args.fileName);
+          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fileName.id]);
         } else {
           result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();");
         }
 
         const filesDeleted = result.map((row) => new FileName(row));
 
-        filesDeleted.forEach((fName) => {
-          this.deleteFile(fName, context);
+        filesDeleted.forEach((fileName) => {
+          this.deleteFile(fileName, context);
         });
 
-        return filesDeleted.map((fName) => fName.name);
+        return filesDeleted.map((fileName) => fileName.name);
       },
       "@fullstack-one/file-storage/readFiles": async (obj, args, context, info, params) => {
         const awaitingFileSignatures = [];
@@ -389,7 +387,7 @@ export class FileStorage {
     };
   }
 
-  public addVerifier(type, fn) {
+  public addVerifier(type: string, fn: new (client: Minio.Client, bucket: string) => any) {
     const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
     const regexp = new RegExp(regex);
     if (regexp.test(type) !== true) {

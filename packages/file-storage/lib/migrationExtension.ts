@@ -16,7 +16,6 @@ function _splitActionFromNode(node: {} = {}): { action: any; node: any } {
 }
 
 // GQl AST
-// add directive parser
 registerDirectiveParser("files", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDbMetaCurrentTable, refDbMetaCurrentTableColumn) => {
   refDbMetaCurrentTable.extensions.fileTrigger = {
     isActive: true
@@ -29,7 +28,6 @@ registerDirectiveParser("files", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 });
 
 // PG
-// query parser
 registerQueryParser(async (queryRunner: PostgresQueryRunner, dbMeta) => {
   try {
     const rows = await queryRunner.query('SELECT * FROM _meta."FileFields";');
