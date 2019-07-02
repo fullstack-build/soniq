@@ -1,16 +1,20 @@
-import { BaseEntity, createColumnDecorator, createColumnDecoratorFactory, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
 import { files } from "@fullstack-one/file-storage";
 import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
-
-const myDecorator = createColumnDecorator({ directive: "@myDirective" });
-const myDecoratorFactory = createColumnDecoratorFactory<{ max: number }>({ getDirective: ({ max }) => `@myParamDirective(max: ${max})` });
 
 @Entity({ schema: "public" })
 @MutationPermissions({
   createViews: {
     me: {
-      fields: ["name"],
+      fields: ["name", "images"],
       expressions: "Anyone",
+      returnOnlyId: true
+    }
+  },
+  updateViews: {
+    me: {
+      fields: ["id", "images"],
+      expressions: { name: "Owner", params: { field: "id" } },
       returnOnlyId: true
     }
   }
@@ -24,8 +28,8 @@ export default class User extends BaseEntity {
   @QueryPermissions({ name: "Owner", params: { field: "id" } })
   public name: string;
 
-  @Column({ type: "jsonb", gqlType: "[BucketFile]", nullable: true })
+  @Column()
   @QueryPermissions({ name: "Owner", params: { field: "id" } })
-  @files(["DEFAULT"])
+  @files(["DEFAULT", "PROFILE_IMAGE"])
   images?: string[]
 }

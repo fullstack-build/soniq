@@ -2,13 +2,54 @@
 
 ## Outline
 
-[0 Preparation: Create a User and Login](#0-preparation-create-a-user-and-login)<br>
+[Preparation: Create a User and Login](#preparation-user-entity-create-a-user-and-login)<br>
 [1 Create File](#1-create-file)<br>
 [2 File Verification / Manipulation](#2-file-verification--manipulation)<br>
-[3 Read File](#3-read-file)<br>
-[4 Delete File in Postgres and S3](#4-delete-file-in-postgres-and-s3)
+[3 Add File to an Entity](#3-add-file-to-an-entity)<br>
+[4 Read File](#3-read-file)<br>
+[5 Delete File in Postgres and S3](#4-delete-file-in-postgres-and-s3)
 
-## 0 Preparation: Create a User and Login
+## Preparation: User Entity, Create a User and Login
+
+### User Entity
+
+```ts
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
+import { files } from "@fullstack-one/file-storage";
+import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
+
+@Entity({ schema: "public" })
+@MutationPermissions({
+  createViews: {
+    me: {
+      fields: ["name", "images"],
+      expressions: "Anyone",
+      returnOnlyId: true
+    }
+  },
+  updateViews: {
+    me: {
+      fields: ["id", "images"],
+      expressions: { name: "Owner", params: { field: "id" } },
+      returnOnlyId: true
+    }
+  }
+})
+export default class User extends BaseEntity {
+  @PrimaryGeneratedColumn()
+  @QueryPermissions({ name: "Owner", params: { field: "id" } })
+  public id: number;
+
+  @Column({ gqlType: "String", type: "character varying" })
+  @QueryPermissions({ name: "Owner", params: { field: "id" } })
+  public name: string;
+
+  @Column()
+  @QueryPermissions({ name: "Owner", params: { field: "id" } })
+  @files(["DEFAULT", "PROFILE_IMAGE"])
+  images?: string[]
+}
+```
 
 ### Create User
 
@@ -110,6 +151,8 @@ curl --request PUT \
 
 ## 2 File Verification / Manipulation
 
+Downloads the file from S3, verifies it, occassionally manipulates it and uploads it back again making it available for signedGetUrls.
+
 ```graphql
 mutation {
   verifyFile(fileName: "b71e8ce1-8ac2-4567-b19e-b49c6ccd66ff-DEFAULT.jpg") {
@@ -123,7 +166,22 @@ mutation {
 }
 ```
 
-## 3 Read File
+## 3 Add File to an Entity
+
+Hint: You need to run the verification / manipulation mutation first before you can add a file to another entity.
+
+```graphql
+mutation {
+  USER_UPDATE_ME(input: {
+    id: "b71e8ce1-8ac2-4567-b19e-b49c6ccd66ff-DEFAULT.jpg"
+    images: ["8c95267f-1424-45cf-ad52-57e46b7ae9b5-DEFAULT.txt"]
+  })
+}
+```
+
+## 4 Read File
+
+Hint: You need to run the verification / manipulation mutation first before the file gets visible. 
 
 ### Get presignedGetUrl
 
@@ -181,7 +239,7 @@ curl --request GET \
 ```
 
 
-## 4 Delete File in Postgres and S3
+## 5 Delete File in Postgres and S3
 
 Deletes the object in S3 and the "_meta"."File" entry.
 
