@@ -2,11 +2,11 @@
 
 ## Outline
 
-[0 Preparation: Create a User and Login](## 0 Preparation: Create a User and Login)
-[1 Create File](1 Create File)
-[2 File Verification / Manipulation](2 File Verification / Manipulation)
-[3 Read File](3 Read File)
-[4 Delete File in Postgres and S3](4 Delete File in Postgres and S3)
+[0 Preparation: Create a User and Login](##0-preparation:-create-a-user-and-login)<br>
+[1 Create File](##1-create-file)<br>
+[2 File Verification / Manipulation](##2-file-verification-/-manipulation)<br>
+[3 Read File](3-read-file)<br>
+[4 Delete File in Postgres and S3](4-delete-file-in-postgres-and-s3)
 
 ## 0 Preparation: Create a User and Login
 
