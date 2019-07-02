@@ -29,8 +29,19 @@ registerDirectiveParser("files", (gQlDirectiveNode, dbMetaNode, refDbMeta, refDb
 
 // PG
 registerQueryParser(async (queryRunner: PostgresQueryRunner, dbMeta) => {
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
+  console.log("ich bin der file storage query parser und werde grade ausgeführt");
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
+  console.log("=============");
   try {
-    const rows = await queryRunner.query('SELECT * FROM _meta."FileFields";');
+    const rows = await queryRunner.query('SELECT * FROM _meta."FileColumns";');
 
     rows.forEach((row) => {
       const thisColumn = dbMeta.schemas[row.schemaName].tables[row.tableName].columns[row.columnName];

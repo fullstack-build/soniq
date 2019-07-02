@@ -13,11 +13,13 @@ import getClientManager, { IClientManager } from "./getClientManager";
 import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
 import * as modelMeta from "./model-meta";
 import { IDbConfig } from "./IDbConfig";
+import { IModelMeta } from "./model-meta/types";
 
 export { Connection, ConnectionManager, MigrationInterface, QueryBuilder } from "typeorm";
 export { IsolationLevel } from "typeorm/driver/types/IsolationLevel";
 export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
+export { IModelMeta } from "./model-meta/types";
 export * from "./decorator";
 export { IDbConfig } from "./IDbConfig";
 
@@ -153,6 +155,10 @@ export class ORM {
 
   public addMigrations(migrations: Array<new () => typeorm.MigrationInterface>): void {
     migrations.forEach((migration) => this.migrations.push(migration));
+  }
+
+  public getModelMeta(): IModelMeta {
+    return modelMeta.get();
   }
 
   public getGraphQlSDL(): string {

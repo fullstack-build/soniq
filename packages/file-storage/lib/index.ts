@@ -9,6 +9,7 @@ import { GraphQl, UserInputError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { DefaultVerifier } from "./DefaultVerifier";
+import { insertFileColumnsAndCreateTrigger } from "./fileColumnsAndTrigger";
 import { FileName, IInput } from "./FileName";
 import IFileStorageConfig from "./IFileStorageConfig";
 import "./migrationExtension";
@@ -36,13 +37,13 @@ export class FileStorage {
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => Config) config: Config,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => ORM) orm: ORM
+    @Inject((type) => ORM) private readonly orm: ORM
   ) {
     this.fileStorageConfig = config.registerConfig("FileStorage", `${__dirname}/../config`);
 
     this.logger = loggerFactory.create(this.constructor.name);
 
-    orm.addMigrations(migrations);
+    this.orm.addMigrations(migrations);
 
     this.schemaBuilder.extendSchema(schema);
     this.schemaBuilder.addExtension(getParser());
@@ -64,6 +65,8 @@ export class FileStorage {
         const CurrentVerifier = this.verifierClasses[key];
         this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
       });
+      await insertFileColumnsAndCreateTrigger(this.orm, this.logger);
+      // createFileTrigger();
       // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (Internally, it loads the bucket region)
       // This prevents errors, when large queries require a lot of signed URL's for the first time after boot.
       await this.client.presignedGetObject(this.fileStorageConfig.bucket, "notExistingObject.nothing", 1);

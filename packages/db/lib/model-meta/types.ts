@@ -14,8 +14,8 @@ export interface IEntityMeta {
   columns: {
     [columnName: string]: IColumnMeta;
   };
-  directives: string[];
   entityOptions: TEntityOptions;
+  directives: string[];
   synchronized: boolean;
 }
 
@@ -23,8 +23,9 @@ export type TEntityOptions = EntityOptions;
 
 export interface IColumnMeta {
   name: string;
-  directives: string[];
   columnOptions: TColumnOptions;
+  directives: string[];
+  extensions: { [extensionName: string]: any };
   synchronized: boolean;
 }
 
