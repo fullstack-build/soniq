@@ -1,5 +1,5 @@
 import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
-import { files } from "@fullstack-one/file-storage";
+import { Files } from "@fullstack-one/file-storage";
 import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
 
 @Entity({ schema: "public" })
@@ -30,6 +30,6 @@ export default class User extends BaseEntity {
 
   @Column()
   @QueryPermissions({ name: "Owner", params: { field: "id" } })
-  @files(["DEFAULT", "PROFILE_IMAGE"])
+  @Files(["DEFAULT", "PROFILE_IMAGE"])
   images?: string[]
 }

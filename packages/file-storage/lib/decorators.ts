@@ -1,6 +1,7 @@
 import { createColumnDecoratorFactory } from "@fullstack-one/db";
 
-export const files = createColumnDecoratorFactory<string[]>({
+// tslint:disable-next-line:variable-name
+export const Files = createColumnDecoratorFactory<string[]>({
   getDirective: (inputTypes?: string[]) => {
     const types = getTypes(inputTypes);
     return `@files(types: [${types.map((type) => `"${type}"`).join(",")}])`;
