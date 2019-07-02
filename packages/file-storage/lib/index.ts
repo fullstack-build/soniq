@@ -104,14 +104,14 @@ export class FileStorage {
     }
 
     const now = Date.now();
-    const requestDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
-    // @types/minio@7.0.2 does not support respHeaders and requestDate
+    const issueAtDate = new Date(now - (now % (cacheSettings.signIssueTimeReductionModuloInSeconds * 1000)));
+    // @types/minio@7.0.2 does not support respHeaders and issueAtDate
     return (this.client as any).presignedGetObject(
       this.fileStorageConfig.bucket,
       objectName,
       cacheSettings.expiryInSeconds,
       respHeaders,
-      requestDate
+      issueAtDate
     );
   }
 
