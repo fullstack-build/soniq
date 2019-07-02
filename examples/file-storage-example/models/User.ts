@@ -24,6 +24,8 @@ export default class User extends BaseEntity {
   @QueryPermissions({ name: "Owner", params: { field: "id" } })
   public name: string;
 
-  // @files(["DEFAULT"])
-  // images?: any[]
+  @Column({ type: "jsonb", gqlType: "[BucketFile]", nullable: true })
+  @QueryPermissions({ name: "Owner", params: { field: "id" } })
+  @files(["DEFAULT"])
+  images?: string[]
 }

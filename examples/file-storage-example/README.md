@@ -1,6 +1,16 @@
 # Usage
 
-## 1. Create a User
+## Outline
+
+[0 Preparation: Create a User and Login](## 0 Preparation: Create a User and Login)
+[1 Create File](1 Create File)
+[2 File Verification / Manipulation](2 File Verification / Manipulation)
+[3 Read File](3 Read File)
+[4 Delete File in Postgres and S3](4 Delete File in Postgres and S3)
+
+## 0 Preparation: Create a User and Login
+
+### Create User
 
 Create a user with email `franz@fullstack.build` and password `test1234`.
 
@@ -28,7 +38,7 @@ mutation {
 }
 ```
 
-## 2. Login
+### Login
 
 Using the above email and password.
 
@@ -54,7 +64,9 @@ mutation {
 ```
 
 
-## 3. Create File
+## 1 Create File
+
+### Create a PresignedPutUrl and Store a "_meta"."File" entry
 
 Create a file, creates a presignedPutUrl for you.
 
@@ -72,7 +84,7 @@ mutation {
 
 Response:
 
-```graphql
+```json
 {
   "data": {
     "createFile": {
@@ -86,7 +98,7 @@ Response:
 }
 ```
 
-## 4. Upload the File
+### Upload Data to PresignedPutUrl
 
 Using the presignedPutUrl you can actually upload a file to S3. For example using curl:
 
@@ -96,7 +108,7 @@ curl --request PUT \
      --data "My data"
 ```
 
-## 5. Verify And Occassionally Manipulate the File depending on the type and the verifier you added for that type
+## 2 File Verification / Manipulation
 
 ```graphql
 mutation {
@@ -111,7 +123,65 @@ mutation {
 }
 ```
 
-## 6. ClearUpFiles
+## 3 Read File
+
+### Get presignedGetUrl
+
+```graphql
+{
+  users {
+    id
+    name
+    images {
+      fileName
+      objects {
+        objectName
+        presignedGetUrl
+        info
+      }
+    }
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "users": [
+      {
+        "id": "b6cbfe21-047d-4ba3-a8e6-5f124ac8e13c",
+        "name": "Karl Napf",
+        "images": [
+          {
+            "fileName": "deca0c3c-03c9-4ba1-b3d4-b7a83cc1717e-DEFAULT.txt",
+            "objects": [
+              {
+                "objectName": "deca0c3c-03c9-4ba1-b3d4-b7a83cc1717e-DEFAULT.txt",
+                "presignedGetUrl": "https://bettervest3-local.s3-eu-central-1.amazonaws.com/deca0c3c-03c9-4ba1-b3d4-b7a83cc1717e-DEFAULT.txt?response-cache-control=private%2C%20max-age%3D43200&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAYWIAEIAP76NWAD5F%2F20190702%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20190702T080000Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=e38672323c697d864097292af4e84d861e8c57f737c5ae3402322ed0f779e1dd",
+                "info": "default"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Load File from S3 using presignedGetUrl
+
+For example using curl:
+
+```shell
+curl --request GET \
+     --url "https://bettervest3-local.s3-eu-central-1.amazonaws.com/deca0c3c-03c9-4ba1-b3d4-b7a83cc1717e-DEFAULT.txt?response-cache-control=private%2C%20max-age%3D43200&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAYWIAEIAP76NWAD5F%2F20190702%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20190702T080000Z&X-Amz-Expires=43200&X-Amz-SignedHeaders=host&X-Amz-Signature=e38672323c697d864097292af4e84d861e8c57f737c5ae3402322ed0f779e1dd"
+```
+
+
+## 4 Delete File in Postgres and S3
 
 Deletes the object in S3 and the "_meta"."File" entry.
 
