@@ -6,8 +6,8 @@
 [1 Create File](#1-create-file)<br>
 [2 File Verification / Manipulation](#2-file-verification--manipulation)<br>
 [3 Add File to an Entity](#3-add-file-to-an-entity)<br>
-[4 Read File](#3-read-file)<br>
-[5 Delete File in Postgres and S3](#4-delete-file-in-postgres-and-s3)
+[4 Read File](#4-read-file)<br>
+[5 Delete File in Postgres and S3](#5-delete-file-in-postgres-and-s3)
 
 ## Preparation: User Entity, Create a User and Login
 
