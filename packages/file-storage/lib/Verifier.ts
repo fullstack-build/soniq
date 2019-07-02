@@ -1,6 +1,5 @@
 import { Client } from "minio";
 import { FileName } from "./FileName";
-import { verify } from "crypto";
 
 export interface IBucketObject {
   objectName: string;
