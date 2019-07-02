@@ -1,3 +1,9 @@
+export interface IInput {
+  id: string;
+  type: string;
+  extension: string;
+}
+
 export class FileName {
   public name: string;
   public id: string;
@@ -6,7 +12,7 @@ export class FileName {
   public prefix: string;
   public uploadName: string;
 
-  constructor(input: string | any) {
+  constructor(input: string | IInput) {
     if (typeof input === "string") {
       const splitNameAndExtension = input.split(".");
       if (splitNameAndExtension.length < 2) {

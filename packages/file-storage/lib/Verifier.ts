@@ -7,7 +7,7 @@ export interface IBucketObject {
 }
 
 export interface IPutObjectCacheSettings {
-  expiryInSeconds;
+  expiryInSeconds: number;
 }
 
 export interface IGetObjectCacheSettings {
@@ -17,7 +17,7 @@ export interface IGetObjectCacheSettings {
   expiryHeader: string | null;
 }
 
-export class Verifier {
+export abstract class AVerifier implements IVerifier {
   public client: Client;
   public bucket: string;
 
@@ -25,24 +25,23 @@ export class Verifier {
     this.client = client;
     this.bucket = bucket;
   }
-  public async verify(verifyFileName: string, fName: FileName): Promise<void> {
+  public async verify(verifyFileName: string, fileName: FileName): Promise<void> {
     // tslint:disable-next-line:quotemark
-    throw new Error(`Please implement the 'verify(verifyFileName: string, fName: FileName)' method when extending class Verifier.`);
+    throw new Error(`Please implement the 'verify(verifyFileName: string, fName: FileName)' method when extending class AVerifier.`);
   }
 
-  // Returns a
-  public getObjectNames(fName: FileName): IBucketObject[] {
+  public getObjectNames(fileName: FileName): IBucketObject[] {
     // tslint:disable-next-line:quotemark
-    throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class Verifier.`);
+    throw new Error(`Please implement the 'getObjectNames(fName: FileName)' method when extending class AVerifier.`);
   }
 
-  public putObjectCacheSettings(fName: FileName): IPutObjectCacheSettings {
+  public putObjectCacheSettings(fileName?: FileName): IPutObjectCacheSettings {
     return {
       expiryInSeconds: 43200 // 12 hours
     };
   }
 
-  public getObjectCacheSettings(fName: FileName): IGetObjectCacheSettings {
+  public getObjectCacheSettings(fileName?: FileName): IGetObjectCacheSettings {
     return {
       expiryInSeconds: 43200, // 12 hours
       signIssueTimeReductionModuloInSeconds: 3600, // one hour
@@ -50,4 +49,11 @@ export class Verifier {
       expiryHeader: null
     };
   }
+}
+
+export interface IVerifier {
+  verify: (verifyFileName: string, fileName: FileName) => Promise<void>;
+  getObjectNames: (fileName: FileName) => IBucketObject[];
+  putObjectCacheSettings: (fileName?: FileName) => IPutObjectCacheSettings;
+  getObjectCacheSettings: (fileName?: FileName) => IGetObjectCacheSettings;
 }

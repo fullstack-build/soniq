@@ -1,11 +1,9 @@
+import * as _ from "lodash";
 import { utils } from "@fullstack-one/schema-builder";
 
 const { createArrayField, getEnum } = utils;
 
 const typesEnumName = "FILE_TYPES";
-
-import * as _ from "lodash";
-
 const resolverName = "@fullstack-one/file-storage/readFiles";
 
 export function getParser() {
@@ -15,7 +13,7 @@ export function getParser() {
   };
 
   parser.parseUpdateField = (ctx) => {
-    const { gqlFieldDefinition, view, fieldName, directives } = ctx;
+    const { view, fieldName, directives } = ctx;
 
     if (view.fields.indexOf(fieldName) >= 0 && directives.files != null) {
       const gqlArrayFieldDefinition: any = createArrayField(fieldName, "String");
@@ -42,8 +40,7 @@ export function getParser() {
     if (readExpressions[fieldName] != null && directives.files != null) {
       const { defaultFieldCreator, localTable } = ctx;
 
-      const params = directives.files.params || {};
-      const types = directives.files.types || ["DEFAULT"];
+      const types: string[] = directives.files.types || ["DEFAULT"];
 
       const regex = "^[_a-zA-Z][_a-zA-Z0-9]{3,30}$";
       const regexp = new RegExp(regex);

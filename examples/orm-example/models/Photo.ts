@@ -1,5 +1,5 @@
 import { BaseEntity, createColumnDecorator, createColumnDecoratorFactory, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
-import { Computed } from "../../../packages/schema-builder/lib";
+import { Computed } from "@fullstack-one/schema-builder";
 
 const myDecorator = createColumnDecorator({ directive: "@myDirective" });
 const myDecoratorFactory = createColumnDecoratorFactory<{ max: number }>({ getDirective: ({ max }) => `@myParamDirective(max: ${max})` });

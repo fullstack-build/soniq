@@ -80,6 +80,7 @@ export function createColumnMeta(entityName: string, columnName: string, columnO
     name: columnName,
     columnOptions: { name: columnName, ...columnOptions },
     directives,
+    extensions: {},
     synchronized: false
   };
   return entitiyMeta.columns[columnName];
@@ -90,14 +91,20 @@ export function getFinalColumnOptions(entityName: string, columnName: string): T
   return checkAndAdjustColumnOptions(columnMeta.columnOptions);
 }
 
+export function addColumnOptions(entityName: string, columnName: string, columnOptions: TColumnOptions): void {
+  const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
+  columnMeta.columnOptions = { ...columnMeta.columnOptions, ...columnOptions };
+}
+
 export function addColumnDirective(entityName: string, columnName: string, directive: string): void {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   columnMeta.directives.push(directive);
 }
 
-export function addColumnOptions(entityName: string, columnName: string, columnOptions: TColumnOptions): void {
+export function addColumnExtension(entityName: string, columnName: string, extension: [string, any]): void {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
-  columnMeta.columnOptions = { ...columnMeta.columnOptions, ...columnOptions };
+  const [extensionName, extensionValue] = extension;
+  columnMeta.extensions[extensionName] = extensionValue;
 }
 
 export function setColumnSynchronizedTrue(entityName: string, columnName: string): void {
@@ -113,6 +120,10 @@ export function isColumnSynchronized(entityName: string, columnName: string): bo
 }
 
 // ============= Generate
+
+export function get(): IModelMeta {
+  return JSON.parse(JSON.stringify(modelMeta));
+}
 
 export function toString(): string {
   return JSON.stringify(modelMeta, null, 2);
