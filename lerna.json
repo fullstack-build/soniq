@@ -1,12 +1,12 @@
 {
   "lerna": "2.9.0",
   "packages": [
+    "examples/file-storage-example",
     "examples/fullstack-one-example",
     "examples/orm-example",
-    "examples/file-storage-example",
     "packages/*"
   ],
-  "version": "0.5.26",
+  "version": "0.5.27",
   "command": {
     "init": {
       "exact": true
