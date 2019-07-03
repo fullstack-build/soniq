@@ -79,10 +79,10 @@ export class AuthProviderEmail {
         }
         return token;
       },
-      "@fullstack-one/auth/EmailProvider/initiateEmailProof": async (obj, args, context, info, params) => {
+      "@fullstack-one/auth/EmailProvider/initiateEmailProof": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
         try {
           // Don't await this. because we want to make no hint to an attacker wether a user with this email exists or not
-          this.initiateEmailProof(args.userIdentifier, args.info);
+          this.initiateEmailProof(returnIdHandler.getReturnId(args.userIdentifier), args.info);
         } catch (err) {
           /* Ignore Error */
         }
