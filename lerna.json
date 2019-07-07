@@ -1,6 +1,7 @@
 {
   "lerna": "2.9.0",
   "packages": [
+    "examples/1-orm-basic",
     "examples/file-storage-example",
     "examples/fullstack-one-example",
     "examples/orm-example",
