@@ -7,9 +7,7 @@ process.on("unhandledRejection", (reason, p) => {
 import { Container } from "@fullstack-one/di";
 import { FullstackOneCore } from "fullstack-one";
 import { ORM } from "@fullstack-one/db";
-import { Auth, IUserAuthentication, IProofMailPayload } from "@fullstack-one/auth";
-import { AuthProviderEmail } from "@fullstack-one/auth";
-import { AuthProviderPassword } from "@fullstack-one/auth";
+import { Auth, AuthProviderEmail, AuthProviderPassword, IUserAuthentication, IProofMailPayload } from "@fullstack-one/auth";
 import { GraphQl } from "@fullstack-one/graphql";
 
 const $one: FullstackOneCore = Container.get(FullstackOneCore);
