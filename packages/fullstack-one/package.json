@@ -21,6 +21,6 @@
     "@fullstack-one/boot-loader": "^0.5.25",
     "@fullstack-one/config": "^0.5.20",
     "@fullstack-one/di": "^0.5.20",
-    "reflect-metadata": "^0.1.12"
+    "reflect-metadata": "^0.1.13"
   }
 }
