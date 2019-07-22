@@ -1,4 +1,4 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne, Index } from "@fullstack-one/db";
 import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
 import User from "./User";
 
@@ -31,7 +31,7 @@ export default class Task extends BaseEntity {
   @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public title: string;
 
-  @ManyToOne((type) => User, "tasks", ({ nullable: true }))
+  @ManyToOne((type) => User, "tasks", { nullable: true })
   @QueryPermissions(["Anyone"])
   public user?: User;
 
