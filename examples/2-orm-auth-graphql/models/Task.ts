@@ -1,4 +1,4 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne, Index } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from "@fullstack-one/db";
 import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
 import User from "./User";
 
@@ -27,6 +27,14 @@ export default class Task extends BaseEntity {
   @QueryPermissions("Anyone")
   public id: string;
 
+  @CreateDateColumn()
+  @QueryPermissions("Anyone")
+  public createdAt: string;
+
+  @UpdateDateColumn()
+  @QueryPermissions("Anyone")
+  public updatedAt: string;
+
   @Column({ gqlType: "String", type: "character varying" })
   @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public title: string;
@@ -34,8 +42,4 @@ export default class Task extends BaseEntity {
   @ManyToOne((type) => User, "tasks", { nullable: true })
   @QueryPermissions(["Anyone"])
   public user?: User;
-
-  @Column({ gqlType: "String", type: "character varying" })
-  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
-  public updateTime: string;
 }

@@ -6,10 +6,10 @@ export default class Task extends BaseEntity {
   public id: string;
 
   @CreateDateColumn()
-  public readonly createdAt!: string; // @createdAt
+  public readonly createdAt!: string;
 
   @UpdateDateColumn()
-  public readonly updatedAt!: string; // @updatedAt
+  public readonly updatedAt!: string;
 
   @Column({ gqlType: "String", type: "character varying" })
   public title: string;
