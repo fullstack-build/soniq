@@ -7,11 +7,19 @@ import * as typeorm from "typeorm";
 
 // tslint:disable-next-line:function-name
 export default function UpdateDateColumn(options?: typeorm.ColumnOptions) {
-  const typeormDecorator = typeorm.Column({ ...options, type: "timestamp without time zone", default: () => "now()" });
   return (target: object, columnName: string): void => {
     const entityName = target.constructor.name;
+    ModelMeta.addColumnOptions(entityName, columnName, {
+      ...options,
+      type: "timestamp with time zone",
+      default: () => "now()",
+      gqlType: "String",
+      nullable: false
+    });
     ModelMeta.addColumnExtension(entityName, columnName, ["updatedat", true]);
 
+    const finalColumnOptions = ModelMeta.getFinalColumnOptions(entityName, columnName);
+    const typeormDecorator = typeorm.Column(finalColumnOptions);
     typeormDecorator(target, columnName);
     ModelMeta.setColumnSynchronizedTrue(entityName, columnName);
   };
