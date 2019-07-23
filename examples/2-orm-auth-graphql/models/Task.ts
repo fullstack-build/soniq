@@ -39,7 +39,7 @@ export default class Task extends BaseEntity {
   @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
   public title: string;
 
-  @ManyToOne((type) => User, "tasks", ({ nullable: true }))
+  @ManyToOne((type) => User, "tasks", { nullable: true })
   @QueryPermissions(["Anyone"])
   public user?: User;
 }

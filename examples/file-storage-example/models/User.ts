@@ -31,5 +31,5 @@ export default class User extends BaseEntity {
   @Column()
   @QueryPermissions({ name: "Owner", params: { field: "id" } })
   @Files(["DEFAULT", "PROFILE_IMAGE"])
-  images?: string[]
+  public images?: string[];
 }
