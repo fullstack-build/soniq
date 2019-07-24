@@ -8,7 +8,7 @@ import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { EventEmitter } from "@fullstack-one/events";
-import { createUpdatedAtTrigger } from "./decorator/UpdateDateColumn";
+import createTriggers from "./createTriggers";
 import * as dbMigrationsObject from "./migrations";
 import getClientManager, { IClientManager } from "./getClientManager";
 import gracefullyRemoveConnection from "./gracefullyRemoveConnection";
@@ -65,7 +65,7 @@ export class ORM {
   private async boot(): Promise<void> {
     await this.runMigrations();
     await this.createConnection(this.config.globalMax);
-    await createUpdatedAtTrigger(this, this.logger);
+    await createTriggers(this, this.logger);
     await this.clientManager.start();
     await this.eventEmitter.emit("db.orm.pool.connect.success", this.applicationName);
   }
