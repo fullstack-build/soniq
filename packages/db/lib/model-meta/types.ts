@@ -16,10 +16,25 @@ export interface IEntityMeta {
   };
   entityOptions: TEntityOptions;
   directives: string[];
+  triggers: ITriggerDefinition[];
   synchronized: boolean;
 }
 
-export type TEntityOptions = EntityOptions;
+export interface ITriggerDefinition {
+  name: string;
+  when: "BEFORE" | "AFTER" | "INSTEAD OF";
+  operations: Array<"INSERT" | "UPDATE" | "DELETE">;
+  functionName: string;
+  functionArguments: any[];
+}
+
+interface IEntityOptionsExtra {
+  deletable?: boolean;
+  updatable?: boolean;
+  triggers?: ITriggerDefinition[];
+}
+
+export type TEntityOptions = EntityOptions & IEntityOptionsExtra;
 
 export interface IColumnMeta {
   name: string;

@@ -1,7 +1,8 @@
 import * as _ from "lodash";
+import addTriggersFromEntityOptions from "./addTriggersFromEntityOptions";
 import checkAndAdjustColumnOptions from "./check-and-adjust-column-options";
 import { generateSdl } from "./generateSdl";
-import { IModelMeta, IEntityMeta, TEntityOptions, IColumnMeta, TColumnOptions } from "./types";
+import { IModelMeta, IEntityMeta, TEntityOptions, IColumnMeta, TColumnOptions, ITriggerDefinition } from "./types";
 
 export { TEntityOptions, TColumnOptions } from "./types";
 
@@ -35,6 +36,7 @@ function createEntityMetaIfNotExists(entityName: string): IEntityMeta {
       columns: {},
       directives: [],
       entityOptions: {},
+      triggers: [],
       synchronized: false
     };
   }
@@ -55,6 +57,11 @@ export function addEntityOptions(entityName: string, entityOptions: TEntityOptio
   entityMeta.entityOptions = { ...entityMeta.entityOptions, ...entityOptions };
 }
 
+export function addEntityTrigger(entityName: string, trigger: ITriggerDefinition): void {
+  const entityMeta = createEntityMetaIfNotExists(entityName);
+  entityMeta.triggers.push(trigger);
+}
+
 export function getFinalEntityOptions(entityName: string): TEntityOptions {
   const { entityOptions } = createEntityMetaIfNotExists(entityName);
   const schema = entityOptions.schema !== "public" && entityOptions.schema != null ? entityOptions.schema : undefined;
@@ -63,6 +70,7 @@ export function getFinalEntityOptions(entityName: string): TEntityOptions {
 
 export function setEntitySynchronizedTrue(entityName: string): void {
   const entityMeta = createEntityMetaIfNotExists(entityName);
+  addTriggersFromEntityOptions(entityMeta);
   entityMeta.synchronized = true;
 }
 
