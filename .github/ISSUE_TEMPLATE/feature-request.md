@@ -9,17 +9,17 @@ assignees: ''
 
 **Package**
 
-- [ ] auth
-- [ ] boot-loader / graceful-shutdown
-- [ ] config
-- [ ] db
-- [ ] events
-- [ ] file-storage
-- [ ] graphql
-- [ ] notifications
-- [ ] queue
-- [ ] schema-builder
-- [ ] server
+- auth
+- boot-loader / graceful-shutdown
+- config
+- db
+- events
+- file-storage
+- graphql
+- notifications
+- queue
+- schema-builder
+- server
 
 **Description / Use Case for a Feature**
 
