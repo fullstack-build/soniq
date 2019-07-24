@@ -18,6 +18,7 @@ import Task from "./models/Task";
 
   const task = new Task();
   task.title = "Catch the flight";
+  task.solved = "false";
   await task.save();
   console.log("Task has been saved");
 

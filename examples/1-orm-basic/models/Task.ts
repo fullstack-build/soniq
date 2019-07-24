@@ -1,6 +1,7 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, Check, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "@fullstack-one/db";
 
-@Entity()
+@Entity({ deletable: true, updatable: true })
+@Check(`_meta.validate('isBoolean', solved, '')`)
 export default class Task extends BaseEntity {
   @PrimaryGeneratedColumn()
   public id: string;
@@ -13,4 +14,7 @@ export default class Task extends BaseEntity {
 
   @Column({ gqlType: "String", type: "character varying" })
   public title: string;
+
+  @Column({ gqlType: "String", type: "character varying" })
+  public solved: string;
 }
