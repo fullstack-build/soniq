@@ -5,6 +5,7 @@ import { LoggerFactory, ILogger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { IDbConfig, ORM } from "@fullstack-one/db";
+import { DbSchemaBuilder } from "./db-schema-builder";
 import { AHelper } from "@fullstack-one/helper";
 
 export * from "./db-schema-builder/IDbMeta";
@@ -27,7 +28,6 @@ import { print, DocumentNode, DefinitionNode } from "graphql";
 import { IExpression } from "./gql-schema-builder/createExpressions";
 import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
 import { getDecoratorPermissions } from "./decorators";
-import createGraphqlViews from "./createGraphqlViews";
 
 // export for extensions
 // helper: splitActionFromNode
@@ -63,7 +63,8 @@ export class SchemaBuilder {
     @Inject((type) => Config) config,
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => ORM) private readonly orm: ORM
+    @Inject((type) => ORM) private readonly orm: ORM,
+    @Inject((type) => DbSchemaBuilder) private readonly dbSchemaBuilder: DbSchemaBuilder
   ) {
     this.loggerFactory = loggerFactory;
     this.config = config;
@@ -130,7 +131,7 @@ export class SchemaBuilder {
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
       this.logger.trace("boot", "Permission SQL statements set");
-      await createGraphqlViews(this.orm, this.logger, data.sql);
+      await this.dbSchemaBuilder.createGraphqlViews(data.sql);
 
       return this.dbMeta;
     } catch (err) {
@@ -152,6 +153,10 @@ export class SchemaBuilder {
     const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
     this.logger.trace("boot", "Expressions loaded");
     return [].concat.apply([], expressionsArray);
+  }
+
+  public getDbSchemaBuilder(): DbSchemaBuilder {
+    return this.dbSchemaBuilder;
   }
 
   public addExtension(extension): void {
