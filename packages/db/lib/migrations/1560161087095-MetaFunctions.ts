@@ -3,7 +3,6 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class MetaFunctions1560161087095 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
-    await queryRunner.query(loadMetaFunctionSql("create_version", "up"));
     await queryRunner.query(loadMetaFunctionSql("get_last_generated_uuid", "up"));
     await queryRunner.query(loadMetaFunctionSql("jsonb_merge", "up"));
     await queryRunner.query(loadMetaFunctionSql("make_table_immutable", "up"));
@@ -25,7 +24,6 @@ export class MetaFunctions1560161087095 implements MigrationInterface {
     await queryRunner.query(loadMetaFunctionSql("make_table_immutable", "down"));
     await queryRunner.query(loadMetaFunctionSql("jsonb_merge", "down"));
     await queryRunner.query(loadMetaFunctionSql("get_last_generated_uuid", "down"));
-    await queryRunner.query(loadMetaFunctionSql("create_version", "down"));
   }
 }
 

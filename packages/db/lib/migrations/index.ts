@@ -6,3 +6,4 @@ export { MetaFunctions1560161087095 } from "./1560161087095-MetaFunctions";
 export { SetPlv8StartProc1560162945204 } from "./1560162945204-SetPlv8StartProc";
 export { MetaInserts1560163271393 } from "./1560163271393-MetaInserts";
 export { MetaTypes1560164600721 } from "./1560164600721-MetaTypes";
+export { Audit1560165600721 } from "./1560165600721-Audit";

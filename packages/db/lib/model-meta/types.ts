@@ -32,6 +32,7 @@ interface IEntityOptionsExtra {
   deletable?: boolean;
   updatable?: boolean;
   triggers?: ITriggerDefinition[];
+  auditing?: boolean;
 }
 
 export type TEntityOptions = EntityOptions & IEntityOptionsExtra;
