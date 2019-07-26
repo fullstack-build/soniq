@@ -1,6 +1,7 @@
 import { BaseEntity, Entity, Column, Check, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "@fullstack-one/db";
 
-@Entity()
+@Entity({ deletable: true, updatable: true, auditing: true })
+@Check(`_meta.validate('isBoolean', solved, '')`)
 export default class Task extends BaseEntity {
   @PrimaryGeneratedColumn()
   public id: string;

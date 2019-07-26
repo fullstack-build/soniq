@@ -24,4 +24,13 @@ export default function addTriggersFromEntityOptions(entityMeta: IEntityMeta): v
       functionArguments: []
     });
   }
+  if (entityMeta.entityOptions.auditing === true) {
+    entityMeta.triggers.push({
+      name: `audit`,
+      when: "AFTER",
+      operations: ["INSERT", "UPDATE", "DELETE"],
+      functionName: "_audit.audit",
+      functionArguments: []
+    });
+  }
 }
