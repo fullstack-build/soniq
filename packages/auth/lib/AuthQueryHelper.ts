@@ -2,6 +2,7 @@ import { IsolationLevel, ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
+import { AuthenticationError } from "@fullstack-one/graphql";
 
 export class AuthQueryHelper {
   private possibleTransactionIsolationLevels: IsolationLevel[] = ["SERIALIZABLE", "REPEATABLE READ", "READ COMMITTED", "READ UNCOMMITTED"];
@@ -169,6 +170,10 @@ export class AuthQueryHelper {
   }
 
   public async userQuery<TResult = any>(accessToken: string, ...queryArguments: [string, ...any[]]): Promise<TResult> {
+    if (accessToken == null || accessToken === "") {
+      throw new AuthenticationError("Authentication required. AccessToken missing.");
+    }
+
     const queryRunner = await this.orm.createQueryRunner();
 
     try {
@@ -192,6 +197,9 @@ export class AuthQueryHelper {
 
   public async authenticateTransaction(queryRunner: PostgresQueryRunner, accessToken: string) {
     try {
+      if (accessToken == null || accessToken === "") {
+        throw new AuthenticationError("Authentication required. AccessToken missing.");
+      }
       const values = [this.cryptoFactory.decrypt(accessToken)];
 
       await this.setAdmin(queryRunner);
