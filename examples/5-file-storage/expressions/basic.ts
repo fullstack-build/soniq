@@ -24,14 +24,6 @@ export = [
     }
   },
   {
-    name: "Authenticated",
-    type: "expression",
-    gqlReturnType: "Boolean",
-    generate: (context, params): string => {
-      return `${context.getExpression("currentUserId")} IS NOT NULL`;
-    }
-  },
-  {
     name: "Anyone",
     type: "expression",
     gqlReturnType: "Boolean",

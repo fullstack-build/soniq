@@ -1,10 +1,7 @@
 {
   "lerna": "2.9.0",
   "packages": [
-    "examples/1-orm-basic",
-    "examples/2-orm-auth-graphql",
-    "examples/file-storage-example",
-    "examples/fullstack-one-example",
+    "examples/*",
     "packages/*"
   ],
   "version": "0.5.27",
