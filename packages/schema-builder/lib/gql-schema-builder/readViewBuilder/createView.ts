@@ -1,4 +1,4 @@
-import { CreateExpressions, orderExpressions, ICompiledExpression } from "../createExpressions";
+import { ExpressionCompiler, orderExpressions, ICompiledExpression } from "../ExpressionCompiler";
 import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
 import { ITableData, IPermissionContext } from "../interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
@@ -45,7 +45,7 @@ export function buildReadView(
   const localTable = "_local_table_";
 
   // Create an instance of CreateExpression, to create several used expressions in the permissionContext of the current gqlType
-  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable);
+  const expressionCreator = new ExpressionCompiler(permissionContext.expressions, localTable);
   const defaultFieldCreator = new CreateDefaultField(expressionCreator);
 
   gqlTypeDefinition.fields.forEach((gqlFieldDefinitionTemp) => {

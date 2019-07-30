@@ -26,7 +26,7 @@ import { IDbMeta } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
 
 import { print, DocumentNode, DefinitionNode } from "graphql";
-import { IExpression } from "./gql-schema-builder/createExpressions";
+import { IExpression } from "./gql-schema-builder/ExpressionCompiler";
 import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
 import { getDecoratorPermissions } from "./decorators";
 

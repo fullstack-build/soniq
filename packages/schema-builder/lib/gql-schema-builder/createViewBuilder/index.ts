@@ -1,5 +1,5 @@
 import { ITableData, IPermissionContext } from "../interfaces";
-import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { ExpressionCompiler, orderExpressions } from "../ExpressionCompiler";
 import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
 
@@ -83,7 +83,7 @@ export function buildCreateView(table: ITableData, view, permissionContext: IPer
   });
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
+  const expressionCreator = new ExpressionCompiler(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(view.expressions, true);
 

@@ -1,4 +1,4 @@
-export class CreateExpressions {
+export class ExpressionCompiler {
   private compiledExpressions: ICompiledExpressions = {};
   private expressionsByName: IExpressionsByName = {};
   private tableName: string;
