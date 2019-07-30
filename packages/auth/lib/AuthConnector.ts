@@ -157,7 +157,7 @@ export class AuthConnector {
 
     await this.authQueryHelper.unsetAdmin(queryRunner);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (rows.length < 1 || rows[0].payload == null || rows[0].payload.userAuthenticationId == null) {
       throw new Error("Incorrect response from create_user_authentication.");
     }
 
