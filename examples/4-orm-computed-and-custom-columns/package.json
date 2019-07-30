@@ -1,11 +1,11 @@
 {
-  "name": "file-storage-example",
+  "name": "example-4-orm-computed-and-custom-columns",
   "version": "0.5.27",
-  "description": "Example project: how to use fullstack.one file-storage",
+  "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
-    "node": "10.15",
-    "npm": "6.4"
+    "node": ">=10",
+    "npm": ">=6"
   },
   "main": "index.ts",
   "scripts": {
@@ -22,7 +22,7 @@
   },
   "keywords": [
     "fullstack.one",
-    "example"
+    "orm-example"
   ],
   "author": "Eugene <opensource@terehov.de> (http://fullstack.build)",
   "license": "MIT",
@@ -33,7 +33,8 @@
   "devDependencies": {
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.0.57",
-    "ts-node-dev": "^1.0.0-pre.40",
+    "ts-node": "^4.1.0",
+    "ts-node-dev": "^1.0.0-pre.26",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.4.2",
     "typescript": "^3.1.1"
@@ -42,13 +43,11 @@
     "@fullstack-one/auth": "^0.5.27",
     "@fullstack-one/db": "^0.5.27",
     "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/file-storage": "^0.5.27",
     "@fullstack-one/graphql": "^0.5.27",
     "@fullstack-one/schema-builder": "^0.5.27",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.25",
     "reflect-metadata": "^0.1.13",
-    "source-map-support": "^0.5.12",
-    "ts-node": "7.0.1"
+    "source-map-support": "^0.5.12"
   }
 }

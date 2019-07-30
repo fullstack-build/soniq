@@ -1,5 +1,5 @@
 {
-  "name": "orm-example",
+  "name": "example-2-orm-auth-graphql",
   "version": "0.5.27",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
