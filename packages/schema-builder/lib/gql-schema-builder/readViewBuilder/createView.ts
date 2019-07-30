@@ -1,4 +1,4 @@
-import { ExpressionCompiler, orderExpressions, ICompiledExpression } from "../ExpressionCompiler";
+import { ExpressionCompiler, orderExpressions, ICompiledExpression } from "../expressions/ExpressionCompiler";
 import { IParser, IParseReadFieldContext } from "../extensions/interfaces";
 import { ITableData, IPermissionContext } from "../interfaces";
 import { parseDirectives } from "../utils/parseDirectives";

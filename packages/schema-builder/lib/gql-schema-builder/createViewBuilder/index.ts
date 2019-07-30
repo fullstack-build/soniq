@@ -1,5 +1,5 @@
 import { ITableData, IPermissionContext } from "../interfaces";
-import { ExpressionCompiler, orderExpressions } from "../ExpressionCompiler";
+import { ExpressionCompiler, orderExpressions } from "../expressions/ExpressionCompiler";
 import { IParser, IParseCreateFieldContext } from "../extensions/interfaces";
 import { parseDirectives } from "../utils/parseDirectives";
 

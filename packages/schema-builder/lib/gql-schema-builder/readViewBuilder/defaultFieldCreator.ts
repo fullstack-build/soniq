@@ -1,5 +1,5 @@
 import { FieldDefinitionNode } from "graphql";
-import { IExpressionInput, ExpressionCompiler } from "../ExpressionCompiler";
+import { IExpressionInput, ExpressionCompiler } from "../expressions/ExpressionCompiler";
 import { Mutable } from "../interfaces";
 
 export class CreateDefaultField {

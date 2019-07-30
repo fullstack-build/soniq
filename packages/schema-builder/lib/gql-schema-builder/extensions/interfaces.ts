@@ -1,7 +1,7 @@
 import { FieldDefinitionNode, InputValueDefinitionNode, DocumentNode } from "graphql";
 
 import { IReadExpressions, ITableData, IPermissionContext, IResolverMeta, IMutationView } from "../interfaces";
-import { ExpressionCompiler } from "../ExpressionCompiler";
+import { ExpressionCompiler } from "../expressions/ExpressionCompiler";
 import { CreateDefaultField } from "../readViewBuilder/defaultFieldCreator";
 import { ICreateViewMeta } from "../createViewBuilder/interfaces";
 import { IUpdateViewMeta } from "../updateViewBuilder/interfaces";

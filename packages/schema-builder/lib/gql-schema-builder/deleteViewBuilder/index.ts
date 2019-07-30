@@ -1,4 +1,4 @@
-import { ExpressionCompiler, orderExpressions, IExpressionInput } from "../ExpressionCompiler";
+import { ExpressionCompiler, orderExpressions, IExpressionInput } from "../expressions/ExpressionCompiler";
 import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";

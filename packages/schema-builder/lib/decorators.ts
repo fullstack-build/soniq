@@ -2,16 +2,16 @@ import { createColumnDecoratorFactory } from "@fullstack-one/db";
 import { IPermission, IExpressionInput, IMutationViewsByName } from "./gql-schema-builder/interfaces";
 
 interface IOptions<TParams = any> {
-  expression: string;
+  name: string;
   params?: TParams;
   gqlType: string;
 }
 
 // tslint:disable-next-line:variable-name
 export const Computed = createColumnDecoratorFactory<IOptions>({
-  getDirective: ({ expression, params }) => {
-    if (params == null) return `@computed(expression: "${expression}")`;
-    return `@computed(expression: "${expression}", params: ${JSON.stringify(params)})`;
+  getDirective: ({ name, params }) => {
+    if (params == null) return `@computed(expression: "${name}")`;
+    return `@computed(expression: "${name}", params: ${JSON.stringify(params)})`;
   },
   getColumnOptions: ({ gqlType }) => ({ gqlType })
 });
