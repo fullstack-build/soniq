@@ -1,6 +1,21 @@
 export { createColumnDecorator, createColumnDecoratorFactory } from "./decoratorFactoryColumn";
 
-export { AfterLoad, BaseEntity, Check, Index, Unique, Transaction, TransactionManager, TransactionRepository, TransactionOptions } from "typeorm";
+export {
+  AfterLoad,
+  BaseEntity,
+  Check,
+  EventSubscriber,
+  EntitySubscriberInterface,
+  Index,
+  Unique,
+  Transaction,
+  TransactionManager,
+  TransactionRepository,
+  TransactionOptions
+} from "typeorm";
+// typeorm does not export LoadEvent -_-
+export { LoadEvent } from "typeorm/subscriber/event/LoadEvent";
+
 export { default as Entity } from "./Entity";
 export { default as Column } from "./Column";
 export { default as PrimaryGeneratedColumn } from "./PrimaryGeneratedColumn";

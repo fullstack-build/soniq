@@ -1,20 +1,4 @@
-import { createColumnDecoratorFactory } from "@fullstack-one/db";
-import { IPermission, IExpressionInput, IMutationViewsByName } from "./gql-schema-builder/interfaces";
-
-interface IOptions<TParams = any> {
-  name: string;
-  params?: TParams;
-  gqlType: string;
-}
-
-// tslint:disable-next-line:variable-name
-export const Computed = createColumnDecoratorFactory<IOptions>({
-  getDirective: ({ name, params }) => {
-    if (params == null) return `@computed(expression: "${name}")`;
-    return `@computed(expression: "${name}", params: ${JSON.stringify(params)})`;
-  },
-  getColumnOptions: ({ gqlType }) => ({ gqlType })
-});
+import { IPermission, IExpressionInput, IMutationViewsByName } from "../gql-schema-builder/interfaces";
 
 // tslint:disable-next-line:function-name
 export function QueryPermissions(readExpressions: IExpressionInput) {

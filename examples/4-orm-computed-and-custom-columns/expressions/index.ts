@@ -26,3 +26,12 @@ export const getNumber = defineExpression({
     return `1`;
   }
 });
+
+export const myId = defineExpression({
+  name: "MyId",
+  type: "expression",
+  gqlReturnType: "ID",
+  generate: (context): string => {
+    return `${context.getField("id")}`;
+  }
+});

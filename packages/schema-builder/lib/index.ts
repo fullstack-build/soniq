@@ -28,7 +28,7 @@ import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta"
 import { print, DocumentNode, DefinitionNode } from "graphql";
 import { expressions } from "./gql-schema-builder/expressions/defineExpression";
 import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
-import { getDecoratorPermissions } from "./decorators";
+import { getDecoratorPermissions, AfterLoadForComputedColumnsSubscriber } from "./decorators";
 
 // export for extensions
 export { defineExpression } from "./gql-schema-builder/expressions/defineExpression";
@@ -74,6 +74,8 @@ export class SchemaBuilder {
 
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.ENVIRONMENT = this.config.ENVIRONMENT;
+
+    this.orm.addSubscriber(AfterLoadForComputedColumnsSubscriber);
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
