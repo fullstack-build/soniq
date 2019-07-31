@@ -2,13 +2,24 @@ import * as _ from "lodash";
 import addTriggersFromEntityOptions from "./addTriggersFromEntityOptions";
 import checkAndAdjustColumnOptions from "./check-and-adjust-column-options";
 import { generateSdl } from "./generateSdl";
-import { IModelMeta, IEntityMeta, TEntityOptions, IColumnMeta, TColumnOptions, ITriggerDefinition } from "./types";
+import {
+  IModelMeta,
+  IEntityMeta,
+  TEntityOptions,
+  IColumnMeta,
+  TColumnOptions,
+  ITriggerDefinition,
+  GqlScalarFieldType,
+  ITypeMeta,
+  IFieldMeta
+} from "./types";
 
 export { TEntityOptions, TColumnOptions } from "./types";
 
 const modelMeta: IModelMeta = {
   entities: {},
-  enums: {}
+  enums: {},
+  types: {}
 };
 
 // ============= Enum
@@ -125,6 +136,29 @@ export function setColumnSynchronizedTrue(entityName: string, columnName: string
 export function isColumnSynchronized(entityName: string, columnName: string): boolean {
   const columnMeta = createColumnMetaIfNotExists(entityName, columnName);
   return columnMeta.synchronized === true;
+}
+
+// ============= FieldMeta
+
+export function addType(typeName: string): ITypeMeta {
+  if (modelMeta.types[typeName] == null) {
+    modelMeta.types[typeName] = {
+      name: typeName,
+      fields: {}
+    };
+  }
+  return modelMeta.types[typeName];
+}
+
+export function addField(typeName: string, fieldName: string, gqlType: GqlScalarFieldType | string): IFieldMeta {
+  const typeMeta = addType(typeName);
+  if (typeMeta.fields[fieldName] == null) {
+    typeMeta.fields[fieldName] = {
+      name: fieldName,
+      gqlType
+    };
+  }
+  return typeMeta.fields[fieldName];
 }
 
 // ============= Generate
