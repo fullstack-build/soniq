@@ -1,6 +1,6 @@
 import { defineExpression } from "@fullstack-one/schema-builder";
 
-const currentUserId = defineExpression({
+export const currentUserId = defineExpression({
   name: "currentUserId",
   type: "function",
   gqlReturnType: "ID",
@@ -10,7 +10,7 @@ const currentUserId = defineExpression({
   }
 });
 
-export const owner = defineExpression({
+export const owner = defineExpression<{ field: string }>({
   name: "Owner",
   type: "expression",
   gqlReturnType: "Boolean",
@@ -23,6 +23,15 @@ export const owner = defineExpression({
   generate: (context, params: any = {}): string => {
     const field = params.field || "ownerId";
     return `${context.getField(field)} = ${context.getExpression(currentUserId())}`;
+  }
+});
+
+export const authenticated = defineExpression({
+  name: "Authenticated",
+  type: "expression",
+  gqlReturnType: "Boolean",
+  generate: (context, params): string => {
+    return `${context.getExpression(currentUserId())} IS NOT NULL`;
   }
 });
 

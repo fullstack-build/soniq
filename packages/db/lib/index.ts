@@ -38,6 +38,7 @@ export class ORM {
   private readonly clientManager: IClientManager;
   private readonly migrations: Array<new () => typeorm.MigrationInterface> = [];
   private readonly entities: Array<new () => any> = [];
+  private readonly subscribers: Array<new () => typeorm.EntitySubscriberInterface> = [];
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
@@ -105,7 +106,8 @@ export class ORM {
       ...this.config,
       type: "postgres",
       extra: { application_name: this.applicationName, min: this.config.min || 1, max },
-      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities]
+      entities: [...this.config.entities.map((entity: string) => (typeof entity === "string" ? `${path}${entity}` : entity)), ...this.entities],
+      subscribers: this.subscribers
     };
     await typeorm.createConnection(connectionOptions);
 
@@ -149,6 +151,10 @@ export class ORM {
 
   public addEntity(entity: new () => void): void {
     this.entities.push(entity);
+  }
+
+  public addSubscriber(subscriber: new () => typeorm.EntitySubscriberInterface): void {
+    this.subscribers.push(subscriber);
   }
 
   public addMigration(migration: new () => typeorm.MigrationInterface): void {

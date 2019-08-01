@@ -1,7 +1,7 @@
 import { FieldDefinitionNode, InputValueDefinitionNode, DocumentNode } from "graphql";
 
 import { IReadExpressions, ITableData, IPermissionContext, IResolverMeta, IMutationView } from "../interfaces";
-import { CreateExpressions } from "../createExpressions";
+import { ExpressionCompiler } from "../expressions/ExpressionCompiler";
 import { CreateDefaultField } from "../readViewBuilder/defaultFieldCreator";
 import { ICreateViewMeta } from "../createViewBuilder/interfaces";
 import { IUpdateViewMeta } from "../updateViewBuilder/interfaces";
@@ -11,7 +11,7 @@ export interface IParseReadFieldContext {
   readExpressions: IReadExpressions;
   gqlFieldDefinition: FieldDefinitionNode;
   directives: any;
-  expressionCreator: CreateExpressions;
+  expressionCreator: ExpressionCompiler;
   defaultFieldCreator: CreateDefaultField;
   fieldName: string;
   localTable: string;

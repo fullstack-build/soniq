@@ -29,16 +29,17 @@ import Task from "./models/Task";
 (async () => {
   await $one.boot();
 
-    const task = new Task();
-    task.title = "Catch the train";
-    await task.save();
-    console.log("Task has been saved");
+  const task = new Task();
+  task.title = "Catch the train";
+  await task.save();
+  console.log("Task has been saved");
 
   const tasks = await Task.find();
   console.log("When loading tasks via the repository computed columns should appear.");
   tasks.forEach(async (task) => {
     const solved = await task.solved();
     const time = await task.time();
-    console.log(JSON.stringify({ ...task, solved, time }));
+    const computedId = await task.computedId();
+    console.log(JSON.stringify({ ...task, solved, computedId }));
   });
 })();

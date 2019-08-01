@@ -1,28 +1,26 @@
-import { AfterLoad, BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
+import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
 import { Computed, QueryPermissions } from "@fullstack-one/schema-builder";
+import { anyone, getTrue, getNumber, myId } from "../expressions";
 
 @Entity({ schema: "public" })
 export default class Task extends BaseEntity {
   @PrimaryGeneratedColumn({ comment: "This is a very important id column." })
-  @QueryPermissions("Anyone")
+  @QueryPermissions(anyone())
   public id: number;
   
   @Column({ gqlType: "String", type: "character varying" })
-  @QueryPermissions("Anyone")
+  @QueryPermissions(anyone())
   public title: string;
-  
-  // TODO: This AfterLoad function should be created when @Computed is used
-  @AfterLoad()
-  private loadComputed() {
-    if (this.solved == null) this.solved = () => Promise.resolve(true);
-    if (this.time == null) this.time = () => Promise.resolve(10);
-  }
 
-  @Computed({ expression: "GetTrue", gqlType: "Boolean" })
-  @QueryPermissions("Anyone")
+  @Computed({ ...getTrue(), gqlType: "Boolean" })
+  @QueryPermissions(anyone())
   public solved: () => Promise<boolean>;
   
-  @Computed({ expression: "GetNumber", gqlType: "Int" })
-  @QueryPermissions("Anyone")
+  @Computed({ ...getNumber(), gqlType: "Int" })
+  @QueryPermissions(anyone())
   public time: () => Promise<number>;
+  
+  @Computed({ ...myId(), gqlType: "ID" })
+  @QueryPermissions(anyone())
+  public computedId: () => Promise<number>;
 }

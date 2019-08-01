@@ -1,6 +1,6 @@
 import { FieldDefinitionNode, NameNode } from "graphql";
 import { ITableData, IConfig } from "../interfaces";
-import { ICompiledExpression } from "../createExpressions";
+import { ICompiledExpression } from "../expressions/ExpressionCompiler";
 
 function filterRelevantExpressions(expressionObject: ICompiledExpression): boolean {
   return expressionObject.isRequiredAsPermissionExpression === true && expressionObject.excludeFromPermissionExpressions !== true;

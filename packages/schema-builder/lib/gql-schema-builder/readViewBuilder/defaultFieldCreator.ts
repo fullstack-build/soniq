@@ -1,11 +1,11 @@
 import { FieldDefinitionNode } from "graphql";
-import { IExpressionInput, CreateExpressions } from "../createExpressions";
+import { IExpressionInput, ExpressionCompiler } from "../expressions/ExpressionCompiler";
 import { Mutable } from "../interfaces";
 
 export class CreateDefaultField {
-  private expressionCreator: CreateExpressions;
+  private expressionCreator: ExpressionCompiler;
 
-  constructor(expressionCreator: CreateExpressions) {
+  constructor(expressionCreator: ExpressionCompiler) {
     this.expressionCreator = expressionCreator;
   }
 

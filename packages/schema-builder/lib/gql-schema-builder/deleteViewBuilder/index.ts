@@ -1,4 +1,4 @@
-import { CreateExpressions, orderExpressions, IExpressionInput } from "../createExpressions";
+import { ExpressionCompiler, orderExpressions, IExpressionInput } from "../expressions/ExpressionCompiler";
 import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";
@@ -61,7 +61,7 @@ export function buildDeleteView(
   const localTable = "_local_table_";
 
   // Create an instance of CreateExpression, to create several used expressions in the permissionContext of the current gqlType
-  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
+  const expressionCreator = new ExpressionCompiler(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(expressionsInput, true);
 

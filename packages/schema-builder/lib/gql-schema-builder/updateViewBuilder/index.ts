@@ -1,4 +1,4 @@
-import { CreateExpressions, orderExpressions } from "../createExpressions";
+import { ExpressionCompiler, orderExpressions } from "../expressions/ExpressionCompiler";
 import { parseDirectives } from "../utils/parseDirectives";
 
 import { createView } from "./helpers";
@@ -95,7 +95,7 @@ export function buildUpdateView(
   });
 
   // Create an instance of CreateExpression, to create several used expressions in the context of the current gqlType
-  const expressionCreator = new CreateExpressions(permissionContext.expressions, localTable, true);
+  const expressionCreator = new ExpressionCompiler(permissionContext.expressions, localTable, true);
 
   expressionCreator.parseExpressionInput(view.expressions, true);
 

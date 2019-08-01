@@ -1,4 +1,4 @@
-export class CreateExpressions {
+export class ExpressionCompiler {
   private compiledExpressions: ICompiledExpressions = {};
   private expressionsByName: IExpressionsByName = {};
   private tableName: string;
@@ -37,7 +37,7 @@ export class CreateExpressions {
     return expressions;
   }
 
-  private getExpression(name: string, params: IExpressionParams, isRequiredAsPermissionExpression: boolean = false) {
+  private getExpression<TParams>(name: string, params: TParams, isRequiredAsPermissionExpression: boolean = false) {
     if (this.expressionsByName[name] == null) {
       throw new Error(`Expression '${name}' is not defined.`);
     }
@@ -67,7 +67,9 @@ export class CreateExpressions {
           this.compiledExpressions[expressionName].requiresLateral = true;
           return `"${this.tableName}"."${fieldName}"`;
         },
-        getExpression: (tempName: string, tempParams: IExpressionParams): string => {
+        getExpression: (expressionInputObject: IExpressionInputObject): string => {
+          const tempName = expressionInputObject.name;
+          const tempParams = expressionInputObject.params;
           const tempExpressionName = this.getExpression(tempName, tempParams);
           this.compiledExpressions[expressionName].requiresLateral = true;
           this.compiledExpressions[expressionName].order = this.compiledExpressions[tempExpressionName].order + 1;
@@ -124,7 +126,7 @@ export class CreateExpressions {
     });
   }
 
-  public getCompiledExpression(name, params?, isRequiredAsPermissionExpression = false): ICompiledExpression {
+  public getCompiledExpression<TParams>(name: string, params?: TParams, isRequiredAsPermissionExpression = false): ICompiledExpression {
     const expressionName = this.getExpression(name, params, isRequiredAsPermissionExpression);
     return this.compiledExpressions[expressionName];
   }
@@ -144,19 +146,19 @@ export interface IExpressionsByName {
   [name: string]: IExpression;
 }
 
-export interface IExpression {
+export interface IExpression<TParams = any> {
   name: string;
   type: "expression" | "function";
   requiresAuth?: boolean;
   gqlReturnType: string;
-  getNameWithParams?: (params: IExpressionParams) => string;
-  generate: (context: IExpressionContext, params: IExpressionParams) => string;
+  getNameWithParams?: (params: TParams) => string;
+  generate: (context: IExpressionContext<TParams>, params: TParams) => string;
   excludeFromPermissionExpressions?: boolean;
 }
 
-export interface IExpressionContext {
+export interface IExpressionContext<TParams> {
   getField: (name: string) => string;
-  getExpression: (name: string, params: IExpressionParams) => string;
+  getExpression: (expressionInput: IExpressionInputObject) => string;
 }
 
 export interface ICompiledExpressions {
@@ -176,13 +178,9 @@ export interface ICompiledExpression {
   excludeFromPermissionExpressions: boolean;
 }
 
-export interface IExpressionInputObject {
+export interface IExpressionInputObject<TParams = any> {
   name: string;
-  params?: IExpressionParams;
+  params?: TParams;
 }
 
-export interface IExpressionParams {
-  [key: string]: any;
-}
-
-export type IExpressionInput = IExpressionInputObject | string | Array<IExpressionInputObject | string>;
+export type IExpressionInput<TParams = any> = IExpressionInputObject<TParams> | string | Array<IExpressionInputObject<TParams> | string>;

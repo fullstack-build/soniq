@@ -1,5 +1,6 @@
 import { BaseEntity, Entity, PrimaryGeneratedColumn, ManyToOne } from "@fullstack-one/db";
 import { MutationPermissions, QueryPermissions } from "@fullstack-one/schema-builder";
+import { anyone } from "../expressions";
 import User from "./User";
 
 @Entity()
@@ -7,7 +8,7 @@ import User from "./User";
   createViews: {
     me: {
       fields: ["prinzipal", "agent"],
-      expressions: ["Anyone"]
+      expressions: [anyone()]
     }
   }
 })
@@ -16,10 +17,10 @@ export default class Represent extends BaseEntity {
   public id: number;
 
   @ManyToOne((type) => User, "prinzipalRepresent")
-  @QueryPermissions("Anyone")
+  @QueryPermissions(anyone())
   public prinzipal: User;
 
   @ManyToOne((type) => User, "agentRepresent")
-  @QueryPermissions("Anyone")
+  @QueryPermissions(anyone())
   public agent: User;
 }

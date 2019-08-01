@@ -26,11 +26,12 @@ import { IDbMeta } from "./db-schema-builder/IDbMeta";
 import { parseGQlAstToDbMeta } from "./db-schema-builder/fromGQl/gQlAstToDbMeta";
 
 import { print, DocumentNode, DefinitionNode } from "graphql";
-import { IExpression } from "./gql-schema-builder/createExpressions";
+import { expressions } from "./gql-schema-builder/expressions/defineExpression";
 import { IPermissionContext, IConfig, IResolverMeta, IPermission } from "./gql-schema-builder/interfaces";
-import { getDecoratorPermissions } from "./decorators";
+import { getDecoratorPermissions, AfterLoadForComputedColumnsSubscriber } from "./decorators";
 
 // export for extensions
+export { defineExpression } from "./gql-schema-builder/expressions/defineExpression";
 // helper: splitActionFromNode
 export { splitActionFromNode } from "./db-schema-builder/helper";
 // create constraint
@@ -74,6 +75,8 @@ export class SchemaBuilder {
     this.logger = this.loggerFactory.create(this.constructor.name);
     this.ENVIRONMENT = this.config.ENVIRONMENT;
 
+    this.orm.addSubscriber(AfterLoadForComputedColumnsSubscriber);
+
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
@@ -103,7 +106,6 @@ export class SchemaBuilder {
       this.logger.trace("boot", "GraphQl AST parsed");
 
       const permissions = await this.loadPermissions();
-      const expressions = await this.loadExpressions();
 
       const dbConfig: IDbConfig = this.config.getConfig("Db");
       this.logger.trace("boot", "Config loaded");
@@ -146,13 +148,6 @@ export class SchemaBuilder {
     this.logger.trace("boot", "Permissions loaded");
     const decoratorPermissions = getDecoratorPermissions();
     return [].concat.apply([], permissionsArray).concat(decoratorPermissions);
-  }
-
-  private async loadExpressions(): Promise<IExpression[]> {
-    const expressionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.expressionsPattern;
-    const expressionsArray = await AHelper.requireFilesByGlobPattern(expressionsPattern);
-    this.logger.trace("boot", "Expressions loaded");
-    return [].concat.apply([], expressionsArray);
   }
 
   public addExtension(extension): void {

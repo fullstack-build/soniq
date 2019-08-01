@@ -5,14 +5,14 @@ import { IReadViewMeta } from "./readViewBuilder/interfaces";
 import { ICreateViewMeta } from "./createViewBuilder/interfaces";
 import { IUpdateViewMeta } from "./updateViewBuilder/interfaces";
 import { IDeleteViewMeta } from "./deleteViewBuilder/interfaces";
-import { IExpression, IExpressionInput } from "./createExpressions";
+import { IExpression, IExpressionInput } from "./expressions/ExpressionCompiler";
 
 export * from "./readViewBuilder/interfaces";
 export * from "./createViewBuilder/interfaces";
 export * from "./updateViewBuilder/interfaces";
 export * from "./deleteViewBuilder/interfaces";
 export type IMutationViewMeta = ICreateViewMeta | IUpdateViewMeta | IDeleteViewMeta;
-export * from "./createExpressions";
+export * from "./expressions/ExpressionCompiler";
 
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
