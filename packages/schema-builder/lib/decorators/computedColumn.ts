@@ -45,12 +45,11 @@ export function Computed(options: IOptions) {
     const tableName = target.constructor.name;
     const afterLoadFnName = `${resolveComputedColumnPrefix}${columnName}`;
     target.constructor[afterLoadFnName] = (entity: IObjectLiteral, connection: Connection) => {
-      // based on options, set the column, e.g. solved
-      const expressionCompiler = new ExpressionCompiler(expressions, "_local_table_", true);
-      const compiledExpression = expressionCompiler.parseExpressionInput([{ name: options.name, params: options.params }])[0];
-      const sql = `SELECT (${compiledExpression.sql}) "result" FROM "${"public"}"."${tableName}" AS "_local_table_";`;
       if (entity[columnName] == null) {
         entity[columnName] = async () => {
+          const expressionCompiler = new ExpressionCompiler(expressions, "_local_table_", true);
+          const compiledExpression = expressionCompiler.parseExpressionInput([{ name: options.name, params: options.params }])[0];
+          const sql = `SELECT (${compiledExpression.sql}) "result" FROM "${"public"}"."${tableName}" AS "_local_table_";`;
           const [{ result }] = await connection.query(sql);
           return result;
         };
