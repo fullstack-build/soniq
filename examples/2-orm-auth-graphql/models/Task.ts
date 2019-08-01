@@ -1,4 +1,4 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from "@fullstack-one/db";
+import { BaseEntity, Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, Field, Type, UpdateDateColumn } from "@fullstack-one/db";
 import { QueryPermissions, MutationPermissions } from "@fullstack-one/schema-builder";
 import User from "./User";
 
@@ -42,4 +42,17 @@ export default class Task extends BaseEntity {
   @ManyToOne((type) => User, "tasks", { nullable: true })
   @QueryPermissions(["Anyone"])
   public user?: User;
+
+  @Column({ type: "json", gqlType: "Details" })
+  @QueryPermissions(["Anyone"])
+  public details: Details;
+}
+
+@Type()
+class Details {
+  @Field("String")
+  public info: string;
+
+  @Field("String")
+  public extras: string;
 }

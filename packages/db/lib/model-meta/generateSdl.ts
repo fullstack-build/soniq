@@ -1,8 +1,8 @@
-import { IModelMeta, IColumnMeta, IEnumMeta, IEntityMeta } from "./types";
+import { IModelMeta, IColumnMeta, IEnumMeta, IEntityMeta, ITypeMeta } from "./types";
 
 export function generateSdl(modelMeta: IModelMeta): string {
   const enumsSdl = generateEnumsSdl(Object.values(modelMeta.enums));
-  const typesSdl = generateTypesSdl(Object.values(modelMeta.entities));
+  const typesSdl = generateTypesSdl(Object.values(modelMeta.types), Object.values(modelMeta.entities));
   return `${enumsSdl}\n${typesSdl}`;
 }
 
@@ -18,8 +18,14 @@ function generateEnumsSdl(enumMetas: IEnumMeta[]): string {
   return sdlLines.join("\n");
 }
 
-function generateTypesSdl(entityMetas: IEntityMeta[]): string {
+function generateTypesSdl(typeMetas: ITypeMeta[], entityMetas: IEntityMeta[]): string {
   const sdlLines = [];
+
+  typeMetas.forEach(({ name, fields }) => {
+    sdlLines.push(`type ${name} {`);
+    Object.values(fields).forEach((field) => sdlLines.push(`  ${field.name}: ${field.gqlType}`));
+    sdlLines.push("}\n");
+  });
 
   entityMetas.forEach(({ name, columns: fields, directives }) => {
     sdlLines.push(`type ${name} ${directives.join(" ")} {`);

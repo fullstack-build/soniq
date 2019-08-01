@@ -9,3 +9,5 @@ export { default as UpdateDateColumn } from "./UpdateDateColumn";
 export { default as OneToOneJoinColumn } from "./OneToOneJoinColumn";
 export { default as ManyToOne } from "./ManyToOne";
 export { default as OneToMany } from "./OneToMany";
+export { default as Field } from "./Field";
+export { default as Type } from "./Type";

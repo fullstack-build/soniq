@@ -7,6 +7,9 @@ export interface IModelMeta {
   enums: {
     [enumName: string]: IEnumMeta;
   };
+  types: {
+    [typeName: string]: ITypeMeta;
+  };
 }
 
 export interface IEntityMeta {
@@ -51,11 +54,23 @@ interface IExtraColumnOptions {
   enumName?: string;
 }
 
-type GqlScalarFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID";
+export type GqlScalarFieldType = "String" | "Int" | "Float" | "Boolean" | "JSON" | "ID";
 
 export type TColumnOptions = ColumnOptions & IExtraColumnOptions;
 
 export interface IEnumMeta {
   name: string;
   values: string[];
+}
+
+export interface ITypeMeta {
+  name: string;
+  fields: {
+    [fieldName: string]: IFieldMeta;
+  };
+}
+
+export interface IFieldMeta {
+  name: string;
+  gqlType: GqlScalarFieldType | string;
 }
