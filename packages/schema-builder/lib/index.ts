@@ -11,7 +11,7 @@ import createGraphQLViews from "./createGraphQLViews";
 
 export * from "./db-schema-builder/IDbMeta";
 export * from "./gql-schema-builder/interfaces";
-export * from "./decorators";
+export * from "./decorators/index";
 
 import * as utils from "./gql-schema-builder/utils";
 export { utils };
