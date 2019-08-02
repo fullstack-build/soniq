@@ -1,6 +1,6 @@
 {
   "name": "example-5-file-storage",
-  "version": "0.5.28",
+  "version": "0.5.29",
   "description": "Example project: how to use fullstack.one file-storage",
   "private": true,
   "engines": {

@@ -1,6 +1,6 @@
 {
   "name": "example-4-orm-computed-and-custom-columns",
-  "version": "0.5.28",
+  "version": "0.5.29",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
