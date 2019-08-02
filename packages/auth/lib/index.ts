@@ -248,7 +248,9 @@ export class Auth {
         );
       },
       "@fullstack-one/auth/getUserAuthentication": async (obj, args, context, info, params) => {
-        return this.authConnector.getUserAuthentication(context._transactionQueryRunner, context.accessToken);
+        return this.authQueryHelper.userTransaction(context.accessToken, async (queryRunnerInternal) => {
+          return this.authConnector.getUserAuthentication(queryRunnerInternal, context.accessToken);
+        });
       }
     };
   }
