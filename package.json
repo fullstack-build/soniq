@@ -17,7 +17,7 @@
     "docker-test": "sh docker/test.sh",
     "coverage": "nyc --reporter=html --reporter=text ava --verbose",
     "lerna-bootstrap": "lerna bootstrap",
-    "lerna-publish": "lerna publish",
+    "lerna-publish": "npm run clean:dist && npm run build && lerna publish",
     "build": "lerna run build",
     "clean:dist": "lerna exec -- rm -rf ./dist",
     "clean:modules": "lerna clean",
