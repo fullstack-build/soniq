@@ -10,7 +10,9 @@ export function buildCreateView(table: ITableData, view, permissionContext: IPer
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
-  const mutationName = `${table.gqlTypeName}_CREATE_${view.name}`.toUpperCase();
+  // const mutationName = `${table.gqlTypeName}_CREATE_${view.name}`.toUpperCase();
+  const splittedViewName = view.name.toLowerCase().split("");
+  const mutationName = `create${gqlTypeName}${splittedViewName.shift().toUpperCase()}${splittedViewName.join("")}`;
   const gqlInputTypeName = mutationName;
   const returnOnlyId = view.returnOnlyId === true ? true : false;
 

@@ -35,7 +35,7 @@ export default class Task extends BaseEntity {
   @QueryPermissions(["Anyone"])
   public user?: User;
 
-  @Column({ gqlType: "String", type: "character varying" })
-  @QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
-  public updateTime: string;
+  //@Column({ gqlType: "String", type: "character varying" })
+  //@QueryPermissions(["Anyone", { name: "Owner", params: { field: "userId" } }])
+  //public updateTime: string;
 }

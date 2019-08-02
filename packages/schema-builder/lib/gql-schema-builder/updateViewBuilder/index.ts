@@ -16,7 +16,9 @@ export function buildUpdateView(
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
-  const mutationName = `${table.gqlTypeName}_UPDATE_${view.name}`.toUpperCase();
+  // const mutationName = `${table.gqlTypeName}_UPDATE_${view.name}`.toUpperCase();
+  const splittedViewName = view.name.toLowerCase().split("");
+  const mutationName = `update${gqlTypeName}${splittedViewName.shift().toUpperCase()}${splittedViewName.join("")}`;
   const gqlInputTypeName = mutationName;
   const returnOnlyId = view.returnOnlyId === true;
 
