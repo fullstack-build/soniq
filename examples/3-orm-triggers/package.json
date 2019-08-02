@@ -1,6 +1,6 @@
 {
   "name": "example-3-orm-triggers",
-  "version": "0.5.29",
+  "version": "0.5.30",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
