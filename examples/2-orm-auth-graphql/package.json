@@ -1,6 +1,6 @@
 {
   "name": "example-2-orm-auth-graphql",
-  "version": "0.5.30",
+  "version": "0.5.31",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
