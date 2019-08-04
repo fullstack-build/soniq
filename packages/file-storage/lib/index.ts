@@ -12,7 +12,6 @@ import { DefaultVerifier } from "./DefaultVerifier";
 import { insertFileColumnsAndCreateTrigger } from "./fileColumnsAndTrigger";
 import { FileName, IInput } from "./FileName";
 import IFileStorageConfig from "./IFileStorageConfig";
-import "./migrationExtension";
 import migrations from "./migrations";
 import { getParser } from "./parser";
 import { AVerifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, IVerifier } from "./Verifier";
