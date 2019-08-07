@@ -18,17 +18,23 @@ For the graphql endpoint, computed columns get's resolved transparently.
 
 ## Usage Custom Column
 
-Custom columns are usefull, if you have external API, that you want to call for additional information. Let's say, you want to add the current number of tweets to a user object. You can do this, directly after loading the object from the database without having further logic make any additional calls.
+Custom columns are usefull, if you have external API, that you want to call for additional information. Let's say, you want to add the current number of tweets to a user object. Currently this only works for the graphql endpoint and not using the typeORM repository.
 
 ```ts
+const $gql: GraphQl = Container.get(GraphQl);
+
+$gql.addResolvers({
+  someQuery: () => {
+    return "Hello query";
+  }
+});
+
 @Entity()
 class User {
   @Column()
   public twitterName: string;
 
-  @Custom(async (user) => {
-    user.numberOfTweets = await twitterApi.getNumberOfTweets(user.twitterName);
-  })
+  @Custom({ resolver: "someQuery", gqlType: "String" })
   public numberOfTweets: () => Promise<number>;
 }
 ```
