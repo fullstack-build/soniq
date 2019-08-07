@@ -1,6 +1,6 @@
 {
   "name": "example-3-orm-triggers",
-  "version": "0.5.32",
+  "version": "0.5.33",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -42,7 +42,7 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/db": "^0.5.32",
+    "@fullstack-one/db": "^0.5.33",
     "@fullstack-one/di": "^0.5.15",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.28"
