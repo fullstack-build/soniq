@@ -390,9 +390,12 @@ function renameColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, ol
 }
 
 function changeColumnType(dbMeta: IDbMeta, schemaName: string, tableName: string, columnName: string, columnType) {
-  if (columnName != null) {
-    dbMeta.schemas[schemaName].tables[tableName].columns[columnName].type = columnType;
-  }
+  try {
+    if (columnName != null) {
+      dbMeta.schemas[schemaName].tables[tableName].columns[columnName].type = columnType;
+    }
+    // tslint:disable-next-line:no-empty
+  } catch (e) {}
 }
 
 function deleteColumn(dbMeta: IDbMeta, schemaName: string, tableName: string, columnNameToDrop: string) {
