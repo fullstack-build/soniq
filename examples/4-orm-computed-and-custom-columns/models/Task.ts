@@ -1,5 +1,5 @@
 import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from "@fullstack-one/db";
-import { Computed, QueryPermissions } from "@fullstack-one/schema-builder";
+import { Computed, Custom, QueryPermissions } from "@fullstack-one/schema-builder";
 import { anyone, getTrue, getNumber, myId } from "../expressions";
 
 @Entity({ schema: "public" })
@@ -23,4 +23,8 @@ export default class Task extends BaseEntity {
   @Computed({ ...myId(), gqlType: "ID" })
   @QueryPermissions(anyone())
   public computedId: () => Promise<number>;
+
+  @Custom({ resolver: "someQuery", gqlType: "String" })
+  @QueryPermissions(anyone())
+  private someColumn: string;
 }
