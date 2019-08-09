@@ -90,9 +90,13 @@ function wrapResolver<TSource, TContext, TParams>(
 async function rollbackAndReleaseTransaction(context, logger: ILogger) {
   try {
     await context._transactionQueryRunner.rollbackTransaction();
+  } catch (err) {
+    logger.error("Failed to rollback transaction queryRunner.", err);
+  }
+  try {
     await context._transactionQueryRunner.release();
   } catch (err) {
-    logger.error("Failed to rollback and release transaction queryRunner.", err);
+    logger.error("Failed to release transaction queryRunner.", err);
   }
   context._transactionQueryRunner = null;
   context._transactionRollbackFunctions.forEach(async ({ rollbackFunction, operationName }) => {
@@ -145,14 +149,48 @@ function wrapMutationResolver<TSource, TContext, TParams>(
     }
 
     if (operation.usesQueryRunnerFromContext === true) {
+      let rollbackFunction = null;
+      let onCommitedHandler = null;
+
       try {
         context._transactionQueryRunner = createQueryRunner();
         await context._transactionQueryRunner.connect();
         await context._transactionQueryRunner.startTransaction();
         const result = await customResolver(obj, args, context, info, operationParams, returnIdHandler);
+        let finalResult: any;
+
+        if (result instanceof RevertibleResult) {
+          rollbackFunction = result.getRollbackFunction();
+          onCommitedHandler = result.getOnCommitedHandler();
+
+          finalResult = result.getResult();
+        } else {
+          finalResult = result;
+        }
+
         await context._transactionQueryRunner.commitTransaction();
-        return result;
+        try {
+          if (onCommitedHandler != null) {
+            await onCommitedHandler();
+          }
+        } catch (e) {
+          logger.error(`Failed to call onCommitedHandler of operation '${operation.name}'.`, e);
+        }
+
+        return finalResult;
       } catch (err) {
+        try {
+          await context._transactionQueryRunner.rollbackTransaction();
+        } catch (e) {
+          logger.error("Failed to rollback queryRunner.", e);
+        }
+        try {
+          if (rollbackFunction != null) {
+            await rollbackFunction();
+          }
+        } catch (e) {
+          logger.error(`Failed to rollback RevertibleResult of operation '${operation.name}'.`, e);
+        }
         throw err;
       } finally {
         try {
