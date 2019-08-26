@@ -63,7 +63,7 @@ export class CSRFProtection {
     }
 
     // If the client is not a browser we don't need to worry about CORS.
-    if (origin === this.authConfig.apiClientOrigin) {
+    if (this.authConfig.apiClientOrigins.indexOf(origin) >= 0) {
       ctx.securityContext.isApiClient = true;
       ctx.securityContext.isBrowser = false;
     }

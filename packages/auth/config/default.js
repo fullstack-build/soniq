@@ -43,7 +43,8 @@ module.exports = {
   isServerBehindProxy: true,
   enforceHttpsOnProduction: true,
   allowAllCorsOriginsOnDev: true,
-  apiClientOrigin: "#?API_CLIENT",
+  // apiClientOrigin: "#?API_CLIENT",
+  apiClientOrigins: ["#?API_CLIENT"],
   corsOptions: {
     allowMethods: ["GET", "POST"],
     credentials: true,
