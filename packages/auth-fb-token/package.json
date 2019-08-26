@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth-fb-token",
-  "version": "0.5.36",
+  "version": "0.5.37",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -18,7 +18,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.36",
+    "@fullstack-one/auth": "^0.5.37",
     "@fullstack-one/boot-loader": "^0.5.25",
     "@fullstack-one/config": "^0.5.20",
     "@fullstack-one/di": "^0.5.20",
