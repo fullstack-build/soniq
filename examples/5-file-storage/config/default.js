@@ -48,8 +48,8 @@ module.exports = {
   },
   FileStorage: {
     minio: {
-      endPoint:   "s3.amazonaws.com",
-      region:     "eu-central-1",
+      endPoint:   "play.minio.io",
+      region:     "us-east-1",
       port:       443,
       useSSL:     true,
       accessKey:  process.env.S3_ACCESS_KEY,

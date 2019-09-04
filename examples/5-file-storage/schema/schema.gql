@@ -14,3 +14,15 @@ extend type Query {
   someQuery: String! @custom(resolver: "someQuery")
 
 }
+
+extend type Mutation {
+  """
+  Creates a new file for upload. Login required.
+  """
+  createFileSystem(extension: String!, type: FILE_TYPES): UploadFile @custom(resolver: "createFileSystem")
+
+  """
+  Verifies a new file after upload. Login required.
+  """
+  verifyFileSystem(fileName: String!): BucketFile @custom(resolver: "verifyFileSystem")
+}

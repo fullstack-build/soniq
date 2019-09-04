@@ -8,7 +8,7 @@ export class FileStorageTables1561973614862 implements MigrationInterface {
         "createdAt" timestamp without time zone NOT NULL DEFAULT timezone('UTC'::text, now()),
         "extension" varchar NOT NULL,
         "type" varchar NOT NULL,
-        "ownerUserId" uuid NOT NULL,
+        "ownerUserId" uuid,
         "entityId" uuid,
         "verifiedAt" timestamp without time zone,
         "deletedAt" timestamp without time zone,

@@ -19,7 +19,7 @@ DECLARE
     v_extension TEXT;
     v_id uuid;
 BEGIN
-    v_user_id := _auth.current_user_id();
+    v_user_id := _auth.current_user_id_or_null();
 
     v_file_elements = regexp_split_to_array(i_file_name, '\.');
 
@@ -42,8 +42,6 @@ BEGIN
     v_query := $tok$SELECT "id", "ownerUserId", "deletedAt", "entityId", "verifiedAt", "type", "extension" FROM _meta."Files" WHERE id = %L$tok$;
     EXECUTE format(v_query, v_file_id) INTO v_id, v_owner_user_id, v_deletedAt, v_entity_id, v_verifiedAt, v_type, v_extension;
 
-
-
     RAISE NOTICE 'FILE ID % => %', v_id, v_owner_user_id;
 
     if v_id IS NULL THEN
@@ -56,6 +54,14 @@ BEGIN
 
     if v_type != v_file_type THEN
         RAISE EXCEPTION 'Invalid file type.';
+    END IF;
+
+    if v_owner_user_id IS NULL AND v_user_id IS NOT NULL THEN
+        RAISE EXCEPTION 'You cannot add a system file.';
+    END IF;
+
+    if v_owner_user_id IS NOT NULL AND v_user_id IS NULL THEN
+        RAISE EXCEPTION 'You cannot add a user file.';
     END IF;
 
     if v_owner_user_id != v_user_id THEN

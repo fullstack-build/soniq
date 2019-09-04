@@ -5,7 +5,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
 import { ORM } from "@fullstack-one/db";
 import { Service, Inject } from "@fullstack-one/di";
-import { GraphQl, UserInputError } from "@fullstack-one/graphql";
+import { GraphQl, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { DefaultVerifier } from "./DefaultVerifier";
@@ -15,6 +15,7 @@ import IFileStorageConfig from "./IFileStorageConfig";
 import migrations from "./migrations";
 import { getParser } from "./parser";
 import { AVerifier, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, IVerifier } from "./Verifier";
+import { IUploadFile, IBucketFile } from "./interfaces";
 
 export { DefaultVerifier, AVerifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
 export * from "./decorators";
@@ -177,35 +178,11 @@ export class FileStorage {
         info: any,
         params: {}
       ) => {
-        const extension = args.extension.toLowerCase();
-        const type = args.type || "DEFAULT";
-
-        if (this.verifierObjects[type] == null) {
-          throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
+        if (context.accessToken == null) {
+          throw new AuthenticationError("Authentication required for create file.");
         }
 
-        // tslint:disable-next-line:prettier
-        const result = await this.auth
-          .getAuthQueryHelper()
-          .userQuery(context.accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extension, type]);
-
-        const fileName = new FileName({
-          id: result[0].fileId,
-          type,
-          extension
-        });
-
-        const cacheSettings = this.verifierObjects[type].putObjectCacheSettings();
-
-        const presignedPutUrl = await this.presignedPutObject(fileName.uploadName, cacheSettings);
-
-        return {
-          extension,
-          type,
-          fileName: fileName.name,
-          uploadFileName: fileName.uploadName,
-          presignedPutUrl
-        };
+        return this.createFile(args.extension, args.type, context.accessToken);
       },
       "@fullstack-one/file-storage/verifyFile": async (
         obj: any,
@@ -214,86 +191,10 @@ export class FileStorage {
         info: any,
         params: {}
       ) => {
-        const fileName = new FileName(args.fileName);
-
-        const result = await this.auth
-          .getAuthQueryHelper()
-          .userQuery(context.accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileName.id]);
-        const type = result[0].type;
-        let stat = null;
-
-        if (this.verifierObjects[type] == null) {
-          throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
+        if (context.accessToken == null) {
+          throw new AuthenticationError("Authentication required for verify file.");
         }
-
-        if (type !== fileName.type) {
-          throw new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`, { exposeDetails: true });
-        }
-
-        try {
-          stat = await this.client.statObject(this.fileStorageConfig.bucket, fileName.uploadName);
-        } catch (e) {
-          if (e.message.toLowerCase().indexOf("not found") >= 0) {
-            throw new UserInputError("Please upload a file before verifying.", { exposeDetails: true });
-          }
-          throw e;
-        }
-
-        const verifyFileName = fileName.createTempName();
-
-        const verifyCopyConditions = new Minio.CopyConditions();
-        verifyCopyConditions.setMatchETag(stat.etag);
-
-        await this.client.copyObject(
-          this.fileStorageConfig.bucket,
-          verifyFileName,
-          `/${this.fileStorageConfig.bucket}/${fileName.uploadName}`,
-          verifyCopyConditions
-        );
-
-        await this.verifierObjects[type].verify(verifyFileName, fileName);
-
-        await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT _meta.file_verify($1);", [fileName.id]);
-
-        // Try to clean up temp objects. However, don't care if it fails.
-        try {
-          await this.client.removeObjects(this.fileStorageConfig.bucket, [fileName.uploadName, verifyFileName]);
-        } catch (err) {
-          this.logger.warn("verifyFile.removeObjectsFail", err);
-        }
-
-        const verifier = this.verifierObjects[fileName.type];
-
-        const objectNames = verifier.getObjectNames(fileName);
-
-        const cacheSettings = verifier.getObjectCacheSettings(fileName);
-
-        const objects = objectNames.map((object) => {
-          return {
-            objectName: object.objectName,
-            info: object.info,
-            presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings)
-          };
-        });
-
-        const bucketObjects = [];
-
-        for (const object of objects) {
-          try {
-            bucketObjects.push({
-              objectName: object.objectName,
-              info: object.info,
-              presignedGetUrl: await object.presignedGetUrlPromise
-            });
-          } catch (err) {
-            this.logger.warn("readFiles.signFail.promise", err);
-          }
-        }
-
-        return {
-          fileName: fileName.name,
-          objects: bucketObjects
-        };
+        return this.verifyFile(args.fileName, context.accessToken);
       },
       "@fullstack-one/file-storage/clearUpFiles": async (
         obj: any,
@@ -326,72 +227,13 @@ export class FileStorage {
         info,
         params: {}
       ) => {
-        const awaitingFileSignatures = [];
-
         if (obj[info.fieldName] == null) {
           return [];
         }
 
-        const data = obj[info.fieldName];
+        const fileNames: any = obj[info.fieldName];
 
-        for (const fileName of data) {
-          try {
-            const fName = new FileName(fileName);
-
-            const verifier = this.verifierObjects[fName.type];
-
-            const objectNames = verifier.getObjectNames(fName);
-
-            const cacheSettings = verifier.getObjectCacheSettings(fName);
-
-            const objects = objectNames.map((object) => {
-              return {
-                objectName: object.objectName,
-                presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings),
-                info: object.info
-              };
-            });
-
-            awaitingFileSignatures.push({
-              fileName,
-              objects
-            });
-          } catch (err) {
-            // Errors can be ignored => Failed Signs are not returned
-            this.logger.warn("readFiles.signFail", err);
-          }
-        }
-
-        const results = [];
-
-        for (const fileObject of awaitingFileSignatures) {
-          try {
-            const objects = [];
-            // const presignedGetUrl = await fileObject.presignedGetUrlPromise;
-            const fileName = fileObject.fileName;
-            for (const object of fileObject.objects) {
-              try {
-                objects.push({
-                  objectName: object.objectName,
-                  info: object.info,
-                  presignedGetUrl: await object.presignedGetUrlPromise
-                });
-              } catch (err) {
-                this.logger.warn("readFiles.signFail.promise", err);
-              }
-            }
-
-            results.push({
-              fileName,
-              objects
-            });
-          } catch (err) {
-            // Errors can be ignored => Failed Signs are not returned
-            this.logger.warn("readFiles.signFail.promise", err);
-          }
-        }
-
-        return results;
+        return this.readFiles(fileNames);
       }
     };
   }
@@ -407,5 +249,199 @@ export class FileStorage {
     } else {
       throw new UserInputError(`A verifier for type '${type}' already exists.`, { exposeDetails: true });
     }
+  }
+
+  public async createFile(extension: string, type?: string | null, accessToken?: string | null): Promise<IUploadFile> {
+    const extensionInternal = extension.toLowerCase();
+    const typeInternal = type || "DEFAULT";
+
+    if (this.verifierObjects[typeInternal] == null) {
+      throw new UserInputError(`A verifier for type '${typeInternal}' hasn't been defined.`, { exposeDetails: true });
+    }
+
+    const authQueryHelper = this.auth.getAuthQueryHelper();
+    let result: any;
+
+    // tslint:disable-next-line:prefer-conditional-expression
+    if (accessToken != null) {
+      result = await authQueryHelper.userQuery(accessToken, 'SELECT _meta.file_create($1, $2) AS "fileId";', [extensionInternal, typeInternal]);
+    } else {
+      result = await authQueryHelper.adminQuery('SELECT _meta.file_create_system($1, $2) AS "fileId";', [extensionInternal, typeInternal]);
+    }
+
+    const fileName = new FileName({
+      id: result[0].fileId,
+      type: typeInternal,
+      extension: extensionInternal
+    });
+
+    const cacheSettings = this.verifierObjects[typeInternal].putObjectCacheSettings();
+
+    const presignedPutUrl = await this.presignedPutObject(fileName.uploadName, cacheSettings);
+
+    return {
+      extension: extensionInternal,
+      type: typeInternal,
+      fileName: fileName.name,
+      uploadFileName: fileName.uploadName,
+      presignedPutUrl
+    };
+  }
+
+  public async verifyFile(fileNameString: string, accessToken?: string | null): Promise<IBucketFile> {
+    const fileName = new FileName(fileNameString);
+
+    const authQueryHelper = this.auth.getAuthQueryHelper();
+    let result: any;
+
+    // tslint:disable-next-line:prefer-conditional-expression
+    if (accessToken != null) {
+      result = await authQueryHelper.userQuery(accessToken, 'SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileName.id]);
+    } else {
+      result = await authQueryHelper.query('SELECT _meta.file_get_type_to_verify($1) AS "type";', [fileName.id]);
+    }
+
+    const type = result[0].type;
+    let stat = null;
+
+    if (this.verifierObjects[type] == null) {
+      throw new UserInputError(`A verifier for type '${type}' hasn't been defined.`, { exposeDetails: true });
+    }
+
+    if (type !== fileName.type) {
+      throw new UserInputError(`FileTypes do not match. Have you changed the fileName? The type should be '${type}'`, { exposeDetails: true });
+    }
+
+    try {
+      stat = await this.client.statObject(this.fileStorageConfig.bucket, fileName.uploadName);
+    } catch (e) {
+      if (e.message.toLowerCase().indexOf("not found") >= 0) {
+        throw new UserInputError("Please upload a file before verifying.", { exposeDetails: true });
+      }
+      throw e;
+    }
+
+    const verifyFileName = fileName.createTempName();
+
+    const verifyCopyConditions = new Minio.CopyConditions();
+    verifyCopyConditions.setMatchETag(stat.etag);
+
+    await this.client.copyObject(
+      this.fileStorageConfig.bucket,
+      verifyFileName,
+      `/${this.fileStorageConfig.bucket}/${fileName.uploadName}`,
+      verifyCopyConditions
+    );
+
+    await this.verifierObjects[type].verify(verifyFileName, fileName);
+
+    if (accessToken != null) {
+      await this.auth.getAuthQueryHelper().userQuery(accessToken, "SELECT _meta.file_verify($1);", [fileName.id]);
+    } else {
+      await this.auth.getAuthQueryHelper().query("SELECT _meta.file_verify($1);", [fileName.id]);
+    }
+
+    // Try to clean up temp objects. However, don't care if it fails.
+    try {
+      await this.client.removeObjects(this.fileStorageConfig.bucket, [fileName.uploadName, verifyFileName]);
+    } catch (err) {
+      this.logger.warn("verifyFile.removeObjectsFail", err);
+    }
+
+    const verifier = this.verifierObjects[fileName.type];
+
+    const objectNames = verifier.getObjectNames(fileName);
+
+    const cacheSettings = verifier.getObjectCacheSettings(fileName);
+
+    const objects = objectNames.map((object) => {
+      return {
+        objectName: object.objectName,
+        info: object.info,
+        presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings)
+      };
+    });
+
+    const bucketObjects = [];
+
+    for (const object of objects) {
+      try {
+        bucketObjects.push({
+          objectName: object.objectName,
+          info: object.info,
+          presignedGetUrl: await object.presignedGetUrlPromise
+        });
+      } catch (err) {
+        this.logger.warn("readFiles.signFail.promise", err);
+      }
+    }
+
+    return {
+      fileName: fileName.name,
+      objects: bucketObjects
+    };
+  }
+
+  public async readFiles(fileNames: string[]): Promise<IBucketFile[]> {
+    const awaitingFileSignatures = [];
+
+    for (const fileName of fileNames) {
+      try {
+        const fName = new FileName(fileName);
+
+        const verifier = this.verifierObjects[fName.type];
+
+        const objectNames = verifier.getObjectNames(fName);
+
+        const cacheSettings = verifier.getObjectCacheSettings(fName);
+
+        const objects = objectNames.map((object) => {
+          return {
+            objectName: object.objectName,
+            presignedGetUrlPromise: this.presignedGetObject(object.objectName, cacheSettings),
+            info: object.info
+          };
+        });
+
+        awaitingFileSignatures.push({
+          fileName,
+          objects
+        });
+      } catch (err) {
+        // Errors can be ignored => Failed Signs are not returned
+        this.logger.warn("readFiles.signFail", err);
+      }
+    }
+
+    const results = [];
+
+    for (const fileObject of awaitingFileSignatures) {
+      try {
+        const objects = [];
+        // const presignedGetUrl = await fileObject.presignedGetUrlPromise;
+        const fileName = fileObject.fileName;
+        for (const object of fileObject.objects) {
+          try {
+            objects.push({
+              objectName: object.objectName,
+              info: object.info,
+              presignedGetUrl: await object.presignedGetUrlPromise
+            });
+          } catch (err) {
+            this.logger.warn("readFiles.signFail.promise", err);
+          }
+        }
+
+        results.push({
+          fileName,
+          objects
+        });
+      } catch (err) {
+        // Errors can be ignored => Failed Signs are not returned
+        this.logger.warn("readFiles.signFail.promise", err);
+      }
+    }
+
+    return results;
   }
 }
