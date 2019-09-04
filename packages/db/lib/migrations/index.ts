@@ -7,3 +7,4 @@ export { SetPlv8StartProc1560162945204 } from "./1560162945204-SetPlv8StartProc"
 export { MetaInserts1560163271393 } from "./1560163271393-MetaInserts";
 export { MetaTypes1560164600721 } from "./1560164600721-MetaTypes";
 export { Audit1560165600721 } from "./1560165600721-Audit";
+export { Audit1567177300835 } from "./1567177300835-Audit";
