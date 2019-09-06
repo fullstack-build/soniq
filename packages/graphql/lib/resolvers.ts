@@ -156,6 +156,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
         context._transactionQueryRunner = createQueryRunner();
         await context._transactionQueryRunner.connect();
         await context._transactionQueryRunner.startTransaction();
+        context._transactionIsAuthenticated = false;
         const result = await customResolver(obj, args, context, info, operationParams, returnIdHandler);
         let finalResult: any;
 
