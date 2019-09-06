@@ -12,6 +12,7 @@ export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger):
     context._transactionRollbackFunctions = [];
     context._transactionOnCommitedHandlers = [];
     context._transactionRunning = true;
+    context._transactionIsAuthenticated = false;
 
     let txidCurrent = "TransactionId is not available in production.";
     try {
@@ -79,9 +80,10 @@ export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger)
         context._transactionQueryRunner = null;
       }
     }
-    context._transactionRunning = false;
     context._transactionRollbackFunctions = [];
     context._transactionOnCommitedHandlers = [];
+    context._transactionRunning = false;
+    context._transactionIsAuthenticated = false;
 
     return txidCurrent;
   };
