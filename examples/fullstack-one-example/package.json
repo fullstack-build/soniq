@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one-example",
-  "version": "0.5.41",
+  "version": "0.5.42",
   "description": "Example project: how to use fullstack.one",
   "private": true,
   "engines": {
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@fullstack-one/auth": "^0.5.40",
-    "@fullstack-one/auth-fb-token": "^0.5.41",
+    "@fullstack-one/auth-fb-token": "^0.5.42",
     "@fullstack-one/db": "^0.5.38",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.25",

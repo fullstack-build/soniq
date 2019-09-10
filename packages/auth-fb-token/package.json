@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/auth-fb-token",
-  "version": "0.5.41",
+  "version": "0.5.42",
   "description": "fullstack.one auth package",
   "main": "index.js",
   "types": "lib/index.ts",
