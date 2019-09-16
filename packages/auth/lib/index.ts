@@ -17,6 +17,7 @@ import { AuthProvider } from "./AuthProvider";
 import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
+import * as _ from "lodash";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -141,115 +142,149 @@ export class Auth {
     ctx.cookies.set(`${this.authConfig.cookie.name}.sig`, null);
   }
 
+  private async callAndHideErrorDetails(callback) {
+    try {
+      return await callback();
+    } catch (error) {
+      _.set(error, "extensions.hideDetails", true);
+      throw error;
+    }
+  }
+
   private getResolvers() {
     return {
       "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const queryRunner = context._transactionQueryRunner;
-        const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
-        if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
-          return "Token hidden due to returnId usage.";
-        }
-        return userIdentifierObject.userIdentifier;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
+          if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
+            return "Token hidden due to returnId usage.";
+          }
+          return userIdentifierObject.userIdentifier;
+        });
       },
       "@fullstack-one/auth/login": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const queryRunner = context._transactionQueryRunner;
-        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          const clientIdentifier = context.ctx.securityContext.clientIdentifier;
 
-        const loginData = await this.authConnector.login(
-          queryRunner,
-          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
-          clientIdentifier || null
-        );
+          const loginData = await this.authConnector.login(
+            queryRunner,
+            args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+            clientIdentifier || null
+          );
 
-        if (context.ctx.securityContext.isBrowser === true) {
-          this.setAccessTokenCookie(context.ctx, loginData);
+          if (context.ctx.securityContext.isBrowser === true) {
+            this.setAccessTokenCookie(context.ctx, loginData);
 
-          loginData.accessToken = null;
-        }
-        return loginData;
+            loginData.accessToken = null;
+          }
+          return loginData;
+        });
       },
       "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const queryRunner = context._transactionQueryRunner;
-        // tslint:disable-next-line:prettier
-        await this.authConnector.modifyAuthFactors(
-          queryRunner,
-          args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
-          args.isActive,
-          args.loginProviderSets,
-          args.modifyProviderSets,
-          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
-          args.removeAuthFactorIds.map(returnIdHandler.getReturnId.bind(returnIdHandler))
-        );
-        return true;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          // tslint:disable-next-line:prettier
+          await this.authConnector.modifyAuthFactors(
+            queryRunner,
+            args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+            args.isActive,
+            args.loginProviderSets,
+            args.modifyProviderSets,
+            args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+            args.removeAuthFactorIds.map(returnIdHandler.getReturnId.bind(returnIdHandler))
+          );
+          return true;
+        });
       },
       "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const queryRunner = context._transactionQueryRunner;
-        await this.authConnector.proofAuthFactor(queryRunner, returnIdHandler.getReturnId(args.authFactorProofToken));
-        return true;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          await this.authConnector.proofAuthFactor(queryRunner, returnIdHandler.getReturnId(args.authFactorProofToken));
+          return true;
+        });
       },
       "@fullstack-one/auth/invalidateAccessToken": async (obj, args, context, info, params) => {
-        const queryRunner = context._transactionQueryRunner;
-        this.deleteAccessTokenCookie(context.ctx);
-        await this.authConnector.invalidateAccessToken(queryRunner, context.accessToken);
-        return true;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          this.deleteAccessTokenCookie(context.ctx);
+          await this.authConnector.invalidateAccessToken(queryRunner, context.accessToken);
+          return true;
+        });
       },
       "@fullstack-one/auth/invalidateAllAccessTokens": async (obj, args, context, info, params) => {
-        const queryRunner = context._transactionQueryRunner;
-        this.deleteAccessTokenCookie(context.ctx);
-        await this.authConnector.invalidateAllAccessTokens(queryRunner, context.accessToken);
-        return true;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          this.deleteAccessTokenCookie(context.ctx);
+          await this.authConnector.invalidateAllAccessTokens(queryRunner, context.accessToken);
+          return true;
+        });
       },
       "@fullstack-one/auth/refreshAccessToken": async (obj, args, context, info, params) => {
-        const queryRunner = context._transactionQueryRunner;
-        const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          const clientIdentifier = context.ctx.securityContext.clientIdentifier;
 
-        const loginData = await this.authConnector.refreshAccessToken(queryRunner, context.accessToken, clientIdentifier || null, args.refreshToken);
+          const loginData = await this.authConnector.refreshAccessToken(
+            queryRunner,
+            context.accessToken,
+            clientIdentifier || null,
+            args.refreshToken
+          );
 
-        if (context.ctx.securityContext.isBrowser === true) {
-          this.setAccessTokenCookie(context.ctx, loginData);
+          if (context.ctx.securityContext.isBrowser === true) {
+            this.setAccessTokenCookie(context.ctx, loginData);
 
-          loginData.accessToken = null;
-        }
-        return loginData;
+            loginData.accessToken = null;
+          }
+          return loginData;
+        });
       },
       "@fullstack-one/auth/getTokenMeta": async (obj, args, context, info, params) => {
-        const queryRunner = context._transactionQueryRunner;
-        try {
-          const tokenMeta = await this.authConnector.getTokenMeta(queryRunner, context.accessToken);
-          return tokenMeta;
-        } catch (err) {
-          this.deleteAccessTokenCookie(context.ctx);
-          throw err;
-        }
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
+          try {
+            const tokenMeta = await this.authConnector.getTokenMeta(queryRunner, context.accessToken);
+            return tokenMeta;
+          } catch (err) {
+            this.deleteAccessTokenCookie(context.ctx);
+            throw err;
+          }
+        });
       },
       "@fullstack-one/auth/createUserAuthentication": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const queryRunner = context._transactionQueryRunner;
+        return this.callAndHideErrorDetails(async () => {
+          const queryRunner = context._transactionQueryRunner;
 
-        const userAuthenticationId = await this.authConnector.createUserAuthentication(
-          queryRunner,
-          returnIdHandler.getReturnId(args.userId),
-          args.isActive || true,
-          args.loginProviderSets,
-          args.modifyProviderSets,
-          args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
-        );
+          const userAuthenticationId = await this.authConnector.createUserAuthentication(
+            queryRunner,
+            returnIdHandler.getReturnId(args.userId),
+            args.isActive || true,
+            args.loginProviderSets,
+            args.modifyProviderSets,
+            args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
+          );
 
-        return new RevertibleResult(
-          userAuthenticationId,
-          async () => {
-            /* Rollback happens with db-client-transaction */
-          },
-          async () => {
-            await this.authQueryHelper.transaction(async (queryRunnerInternal) => {
-              const userAuthentication = await this.authConnector.getUserAuthenticationById(queryRunnerInternal, userAuthenticationId);
-              this.userRegistrationCallback(userAuthentication);
-            });
-          }
-        );
+          return new RevertibleResult(
+            userAuthenticationId,
+            async () => {
+              /* Rollback happens with db-client-transaction */
+            },
+            async () => {
+              await this.authQueryHelper.transaction(async (queryRunnerInternal) => {
+                const userAuthentication = await this.authConnector.getUserAuthenticationById(queryRunnerInternal, userAuthenticationId);
+                this.userRegistrationCallback(userAuthentication);
+              });
+            }
+          );
+        });
       },
       "@fullstack-one/auth/getUserAuthentication": async (obj, args, context, info, params) => {
-        return this.authQueryHelper.userTransaction(context.accessToken, async (queryRunnerInternal) => {
-          return this.authConnector.getUserAuthentication(queryRunnerInternal, context.accessToken);
+        return this.callAndHideErrorDetails(async () => {
+          return this.authQueryHelper.userTransaction(context.accessToken, async (queryRunnerInternal) => {
+            return this.authConnector.getUserAuthentication(queryRunnerInternal, context.accessToken);
+          });
         });
       }
     };

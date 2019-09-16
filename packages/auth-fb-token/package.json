@@ -26,6 +26,7 @@
     "@fullstack-one/graphql": "^0.5.40",
     "@fullstack-one/logger": "^0.5.25",
     "@fullstack-one/schema-builder": "^0.5.38",
+    "lodash": "^4.17.15",
     "axios": "^0.19.0"
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"

@@ -1,5 +1,5 @@
 import { GraphQLSchema, GraphQLError, GraphQLFormattedError } from "graphql";
-import { ApolloServer, gql, Config, ApolloError, UserInputError, AuthenticationError, ForbiddenError } from "apollo-server-koa";
+import { ApolloServer, gql, Config, ApolloError, UserInputError, AuthenticationError, ForbiddenError, ValidationError } from "apollo-server-koa";
 import * as _ from "lodash";
 
 import IGraphQlConfig from "./IGraphQlConfig";
@@ -92,7 +92,7 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: ILogger): C
 }
 
 function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => GraphQLFormattedError {
-  return (error: GraphQLError) => {
+  return (error: any) => {
     const errorCode = _.get(error, "extensions.code");
     // If any Error has a exposeDetails flag just return it to the user
     if (
@@ -102,21 +102,59 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
       logger.trace(error);
       // Always hide the stacktrace. There is no reason to send it.
       _.set(error, "extensions.exception.stacktrace", null);
+
+      // Mask pg-errors
+      if (_.get(error, "extensions.exception.name", null) === "QueryFailedError") {
+        const exception = _.get(error, "extensions.exception", {});
+        error.extensions.exception = {
+          message: exception.message,
+          detail: exception.detail != null && exception.detail.indexOf("LINE") < 0 ? exception.detail : null,
+          hint: exception.hint,
+          schema: exception.schema,
+          table: exception.table,
+          column: exception.column,
+          constraint: exception.constraint
+        };
+      }
       return error;
     }
 
-    // For Apollo predefined errors keep the type but hide all details.
-    if (errorCode === "BAD_USER_INPUT") {
+    // tslint:disable-next-line:variable-name
+    const handleGenericError = (ErrorClass: any, message: any) => {
       logger.trace(error);
-      return new UserInputError("Bad user input.");
+
+      if (_.get(error, "extensions.hideDetails") === true || _.get(error, "extensions.exception.hideDetails") === true) {
+        return new ErrorClass(message);
+      }
+      // Always hide the stacktrace. There is no reason to send it.
+      _.set(error, "extensions.exception.stacktrace", null);
+
+      // Mask pg-errors
+      if (_.get(error, "extensions.exception.name", null) === "QueryFailedError") {
+        const exception = _.get(error, "extensions.exception", {});
+        error.extensions.exception = {
+          message: exception.message,
+          detail: exception.detail != null && exception.detail.indexOf("LINE") < 0 ? exception.detail : null,
+          hint: exception.hint,
+          schema: exception.schema,
+          table: exception.table,
+          column: exception.column,
+          constraint: exception.constraint
+        };
+      }
+      return error;
+    };
+    if (error instanceof ValidationError) {
+      return handleGenericError(ValidationError, "ValidationError: Details hidden.");
     }
-    if (errorCode === "UNAUTHENTICATED") {
-      logger.trace(error);
-      return new AuthenticationError("Authentication required.");
+    if (error instanceof UserInputError) {
+      return handleGenericError(UserInputError, "UserInputError: Details hidden.");
     }
-    if (errorCode === "FORBIDDEN") {
-      logger.trace(error);
-      return new ForbiddenError("Access forbidden.");
+    if (error instanceof AuthenticationError) {
+      return handleGenericError(AuthenticationError, "AuthenticationError: Details hidden.");
+    }
+    if (error instanceof ForbiddenError) {
+      return handleGenericError(ForbiddenError, "ForbiddenError: Details hidden.");
     }
 
     // Try to map other errors to Apollo predefined errors. Useful when writing pg-functions which cannot return a specific Error Object
@@ -131,6 +169,13 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
     if (error.message.indexOf("AUTH.THROW.FORBIDDEN_ERROR") >= 0) {
       logger.trace(error);
       return new ForbiddenError("Access forbidden.");
+    }
+
+    if (error instanceof ApolloError) {
+      return handleGenericError(ApolloError, "ApolloError: Details hidden.");
+    }
+    if (error instanceof GraphQLError) {
+      return handleGenericError(GraphQLError, "GraphQLError: Details hidden.");
     }
     // Log all internal errors as error here => Everything else is just trace
     logger.error(error);

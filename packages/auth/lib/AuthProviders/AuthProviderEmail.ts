@@ -2,6 +2,7 @@ import { Service, Inject } from "@fullstack-one/di";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { Auth, AuthProvider, IAuthFactorForProof } from "..";
+import * as _ from "lodash";
 
 const schema = `
 extend type Mutation {
@@ -68,6 +69,15 @@ export class AuthProviderEmail {
         this.sendMail(proofMailPayload);
       }
     });
+  }
+
+  private async callAndHideErrorDetails(callback) {
+    try {
+      return await callback();
+    } catch (error) {
+      _.set(error, "extensions.hideDetails", true);
+      throw error;
+    }
   }
 
   private getResolvers() {

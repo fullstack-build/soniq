@@ -3,6 +3,7 @@ import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
 import { Auth, AuthProvider } from "..";
 import { PostgresQueryRunner } from "@fullstack-one/db";
+import * as _ from "lodash";
 
 const schema = `
 extend type Mutation {
@@ -46,21 +47,34 @@ export class AuthProviderPassword {
     return result.authFactorProofToken;
   }
 
+  private async callAndHideErrorDetails(callback) {
+    try {
+      return await callback();
+    } catch (error) {
+      _.set(error, "extensions.hideDetails", true);
+      throw error;
+    }
+  }
+
   private getResolvers() {
     return {
       "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const token = await this.createPassword(args.password);
-        if (returnIdHandler.setReturnId(token)) {
-          return "Token hidden due to returnId usage.";
-        }
-        return token;
+        return this.callAndHideErrorDetails(async () => {
+          const token = await this.createPassword(args.password);
+          if (returnIdHandler.setReturnId(token)) {
+            return "Token hidden due to returnId usage.";
+          }
+          return token;
+        });
       },
       "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
-        if (returnIdHandler.setReturnId(token)) {
-          return "Token hidden due to returnId usage.";
-        }
-        return token;
+        return this.callAndHideErrorDetails(async () => {
+          const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
+          if (returnIdHandler.setReturnId(token)) {
+            return "Token hidden due to returnId usage.";
+          }
+          return token;
+        });
       }
     };
   }
