@@ -25,7 +25,7 @@ export default class User extends BaseEntity {
   @QueryPermissions(owner({field: 'id'}))
   public id: number;
 
-  @Column({ gqlType: "String", type: "character varying" })
+  @Column({ gqlType: "String", type: "character varying", unique: true })
   @QueryPermissions(owner({field: 'id'}))
   public name: string;
 
