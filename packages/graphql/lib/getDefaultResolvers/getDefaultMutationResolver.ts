@@ -40,7 +40,12 @@ export default function getDefaultMutationResolver<TSource>(
 
     const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
-    if (result.rowCount < 1) {
+    if (
+      (mutationBuild.mutation.type === "UPDATE" || mutationBuild.mutation.type === "DELETE") &&
+      result[1] != null &&
+      Number.isInteger(result[1]) &&
+      result[1] < 1
+    ) {
       throw new UserInputError("No rows affected by this mutation. Either the entity does not exist or you are not permitted.", {
         exposeDetails: true
       });
@@ -56,6 +61,12 @@ export default function getDefaultMutationResolver<TSource>(
     // Our concept allows one one INSERT per transaction.
     if (entityId == null && mutationBuild.mutation.type === "CREATE") {
       const idResult = await queryRunner.query('SELECT "_meta"."get_last_generated_uuid"() AS "id";');
+      if (idResult[0] == null || idResult[0].id == null) {
+        throw new UserInputError("No rows affected by this mutation. Either the entity does not exist or you are not permitted.", {
+          exposeDetails: true
+        });
+      }
+
       entityId = idResult[0].id;
     }
     returnIdHandler.setReturnId(entityId);
