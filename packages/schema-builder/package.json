@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/schema-builder",
-  "version": "0.5.44",
+  "version": "0.5.45",
   "description": "fullstack.one schema builder package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,7 +22,7 @@
     "@fullstack-one/config": "^0.5.20",
     "@fullstack-one/db": "^0.5.44",
     "@fullstack-one/di": "^0.5.20",
-    "@fullstack-one/helper": "^0.5.44",
+    "@fullstack-one/helper": "^0.5.45",
     "@fullstack-one/logger": "^0.5.25",
     "@types/graphql": "^0.13.4",
     "@types/lodash": "^4.14.120",
