@@ -444,4 +444,12 @@ export class FileStorage {
 
     return results;
   }
+
+  public getMinioClient() {
+    return this.client;
+  }
+
+  public getBucketName() {
+    return this.fileStorageConfig.bucket;
+  }
 }
