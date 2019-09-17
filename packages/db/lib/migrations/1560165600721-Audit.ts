@@ -63,7 +63,7 @@ export class Audit1560165600721 implements MigrationInterface {
           INSERT INTO _audit.row_change SELECT now(), TG_OP::_audit.operation, TG_TABLE_SCHEMA, TG_TABLE_NAME, OLD.id as row_id, row_to_json(NULL), _auth.current_user_id_or_null() as user_id, current_role as user_role;
           RETURN OLD;
         ELSIF (TG_OP = 'UPDATE') THEN
-          INSERT INTO _audit.row_change SELECT now(), TG_OP::_audit.operation, TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW.id as row_id, _audit.jsonb_diff_val(to_jsonb(OLD), to_jsonb(NEW)), _auth.current_user_id_or_null() as user_id, current_role as user_role;
+          INSERT INTO _audit.row_change SELECT now(), TG_OP::_audit.operation, TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW.id as row_id, _audit.jsonb_diff_val(to_jsonb(NEW), to_jsonb(OLD)), _auth.current_user_id_or_null() as user_id, current_role as user_role;
           RETURN NEW;
         ELSIF (TG_OP = 'INSERT') THEN
           INSERT INTO _audit.row_change SELECT now(), TG_OP::_audit.operation, TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW.id as row_id, row_to_json(NEW), _auth.current_user_id_or_null() as user_id, current_role as user_role;
