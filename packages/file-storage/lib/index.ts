@@ -445,11 +445,11 @@ export class FileStorage {
     return results;
   }
 
-  public getMinioClient() {
+  public getMinioClient(): Minio.Client {
     return this.client;
   }
 
-  public getBucketName() {
+  public getBucketName(): string {
     return this.fileStorageConfig.bucket;
   }
 }
