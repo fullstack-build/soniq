@@ -1,6 +1,6 @@
 {
   "name": "example-2-orm-auth-graphql",
-  "version": "0.5.45",
+  "version": "0.5.46",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -40,10 +40,10 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.5.45",
+    "@fullstack-one/auth": "^0.5.46",
     "@fullstack-one/db": "^0.5.44",
     "@fullstack-one/di": "^0.5.15",
-    "@fullstack-one/graphql": "^0.5.45",
+    "@fullstack-one/graphql": "^0.5.46",
     "@fullstack-one/schema-builder": "^0.5.45",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.28",
