@@ -144,16 +144,16 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
       }
       return error;
     };
-    if (error instanceof ValidationError) {
+    if (_.get(error, "name", null) === "ValidationError") {
       return handleGenericError(ValidationError, "ValidationError: Details hidden.");
     }
-    if (error instanceof UserInputError) {
+    if (_.get(error, "name", null) === "UserInputError") {
       return handleGenericError(UserInputError, "UserInputError: Details hidden.");
     }
-    if (error instanceof AuthenticationError) {
+    if (_.get(error, "name", null) === "AuthenticationError") {
       return handleGenericError(AuthenticationError, "AuthenticationError: Details hidden.");
     }
-    if (error instanceof ForbiddenError) {
+    if (_.get(error, "name", null) === "ForbiddenError") {
       return handleGenericError(ForbiddenError, "ForbiddenError: Details hidden.");
     }
 
@@ -171,10 +171,10 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
       return new ForbiddenError("Access forbidden.");
     }
 
-    if (error instanceof ApolloError) {
+    if (_.get(error, "name", null) === "ApolloError") {
       return handleGenericError(ApolloError, "ApolloError: Details hidden.");
     }
-    if (error instanceof GraphQLError) {
+    if (_.get(error, "name", null) === "GraphQLError") {
       return handleGenericError(GraphQLError, "GraphQLError: Details hidden.");
     }
     // Log all internal errors as error here => Everything else is just trace
