@@ -16,8 +16,8 @@ export function buildUpdateView(
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
-  const mutationName = `${table.gqlTypeName}_UPDATE_${view.name}`.toUpperCase();
-  const gqlInputTypeName = mutationName;
+  const mutationName = `update${table.gqlTypeName}${view.name}`;
+  const gqlInputTypeName = `Update${table.gqlTypeName}${view.name}`;
   const returnOnlyId = view.returnOnlyId === true;
 
   // Initialize meta object. Required for querybuilder

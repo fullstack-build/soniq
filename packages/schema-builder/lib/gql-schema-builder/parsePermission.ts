@@ -66,6 +66,7 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
     Object.keys(permission.updateViews).forEach((name) => {
       const view = permission.updateViews[name];
       view.name = permission.updateViews[name].name || name;
+      view.name = view.name[0].toUpperCase() + view.name.substr(1).toLowerCase();
       const updateView = buildUpdateView(table, view, permissionContext, extensions, config);
       meta.mutation[updateView.meta.name] = updateView.meta;
       updateView.sql.forEach((q) => sql.push(q));
@@ -77,6 +78,7 @@ export function parsePermission(permission: IPermission, permissionContext: IPer
     Object.keys(permission.createViews).forEach((name) => {
       const view = permission.createViews[name];
       view.name = permission.createViews[name].name || name;
+      view.name = view.name[0].toUpperCase() + view.name.substr(1).toLowerCase();
       const createView = buildCreateView(table, view, permissionContext, extensions, config);
       meta.mutation[createView.meta.name] = createView.meta;
       createView.sql.forEach((q) => sql.push(q));

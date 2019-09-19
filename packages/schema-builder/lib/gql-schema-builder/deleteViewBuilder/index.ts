@@ -16,8 +16,8 @@ export function buildDeleteView(
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
-  const mutationName = `${table.gqlTypeName}_DELETE`.toUpperCase();
-  const gqlInputTypeName = mutationName;
+  const mutationName = `delete${table.gqlTypeName}`;
+  const gqlInputTypeName = `Delete${table.gqlTypeName}`;
 
   // Initialize meta object. Required for querybuilder
   const meta: IDeleteViewMeta = {
