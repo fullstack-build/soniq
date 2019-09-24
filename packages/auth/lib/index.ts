@@ -5,7 +5,7 @@ import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
-import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError } from "@fullstack-one/graphql";
+import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 import migrations from "./migrations";
@@ -104,25 +104,46 @@ export class Auth {
   }
 
   private async preQueryHook(queryRunner: PostgresQueryRunner, context, authRequired: boolean, buildObject) {
-    if (authRequired === true && context.accessToken != null) {
-      if (context._transactionIsAuthenticated !== true) {
-        try {
-          await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
-          context._transactionIsAuthenticated = true;
-        } catch (err) {
-          this.logger.trace("authenticateTransaction.failed", err);
-          this.deleteAccessTokenCookie(context.ctx);
-          throw err;
+    // If the current request is a query (not a mutation)
+    if (context._isRequestGqlQuery === true) {
+      if (authRequired === true) {
+        if (context.accessToken != null) {
+          try {
+            await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
+          } catch (err) {
+            this.logger.trace("authenticateTransaction.failed", err);
+            this.deleteAccessTokenCookie(context.ctx);
+            throw err;
+          }
+        } else {
+          throw new AuthenticationError("Authentication is required for this query. AccessToken missing.");
         }
       }
     } else {
-      if (context._transactionIsAuthenticated === true) {
-        try {
-          await this.authQueryHelper.unauthenticateTransaction(queryRunner);
-          context._transactionIsAuthenticated = false;
-        } catch (err) {
-          this.logger.trace("unauthenticateTransaction.failed", err);
-          throw err;
+      if (authRequired === true) {
+        if (context.accessToken != null) {
+          if (context._transactionIsAuthenticated !== true) {
+            try {
+              await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
+              context._transactionIsAuthenticated = true;
+            } catch (err) {
+              this.logger.trace("authenticateTransaction.failed", err);
+              this.deleteAccessTokenCookie(context.ctx);
+              throw err;
+            }
+          }
+        } else {
+          throw new AuthenticationError("Authentication is required for this mutation. AccessToken missing.");
+        }
+      } else {
+        if (context._transactionIsAuthenticated === true) {
+          try {
+            await this.authQueryHelper.unauthenticateTransaction(queryRunner);
+            context._transactionIsAuthenticated = false;
+          } catch (err) {
+            this.logger.trace("unauthenticateTransaction.failed", err);
+            throw err;
+          }
         }
       }
     }

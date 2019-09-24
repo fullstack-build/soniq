@@ -83,6 +83,7 @@ function wrapResolver<TSource, TContext, TParams>(
   operationParams: TParams
 ): IFieldResolver<TSource, TContext> {
   return (obj, args, context: any, info) => {
+    context._isRequestGqlQuery = true;
     return customResolver(obj, args, context, info, operationParams, null);
   };
 }
