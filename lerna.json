@@ -4,7 +4,7 @@
     "examples/*",
     "packages/*"
   ],
-  "version": "0.5.47",
+  "version": "0.5.48",
   "command": {
     "init": {
       "exact": true
