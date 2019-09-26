@@ -10,8 +10,8 @@ export function buildCreateView(table: ITableData, view, permissionContext: IPer
   // Get some data from table
   const { gqlTypeName, tableName, gqlTypeDefinition } = table;
   const sql = [];
-  const mutationName = `${table.gqlTypeName}_CREATE_${view.name}`.toUpperCase();
-  const gqlInputTypeName = mutationName;
+  const mutationName = `create${table.gqlTypeName}${view.name}`;
+  const gqlInputTypeName = `Create${table.gqlTypeName}${view.name}`;
   const returnOnlyId = view.returnOnlyId === true ? true : false;
 
   // Initialize meta object. Required for querybuilder
