@@ -19,6 +19,7 @@ import { IUploadFile, IBucketFile } from "./interfaces";
 
 export { DefaultVerifier, AVerifier, Minio, IBucketObject, IPutObjectCacheSettings, IGetObjectCacheSettings, FileName };
 export * from "./decorators";
+export * from "./interfaces";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
