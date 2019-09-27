@@ -52,15 +52,15 @@
     "nyc": "^14.1.1",
     "prettier": "^1.18.2",
     "source-map-support": "^0.5.12",
-    "ts-node-dev": "^1.0.0-pre.42",
-    "tslint": "^5.18.0",
-    "tslint-config-airbnb": "^5.11.1",
+    "ts-node-dev": "^1.0.0-pre.43",
+    "tslint": "^5.20.0",
+    "tslint-config-airbnb": "^5.11.2",
     "tslint-config-airbnb-base": "^0.1.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1"
   },
   "dependencies": {
-    "ava": "^2.1.0",
+    "ava": "^2.4.0",
     "ts-node": "^3.3.0",
     "tsutils": "^2.28.0",
     "typescript": "^3.3.4000"
