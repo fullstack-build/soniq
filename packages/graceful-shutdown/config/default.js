@@ -1,4 +1,4 @@
 module.exports = {
-  healthCheckLivenessPath: "/_health/liveness";
-  healthCheckReadinessPath: "/_health/readiness";
+  healthCheckLivenessPath: "/_health/liveness",
+  healthCheckReadinessPath: "/_health/readiness"
 };

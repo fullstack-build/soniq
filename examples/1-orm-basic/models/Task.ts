@@ -11,9 +11,9 @@ export default class Task extends BaseEntity {
   @UpdateDateColumn()
   public readonly updatedAt!: string;
 
-  @Column({ gqlType: "String", type: "character varying" })
-  public title: string;
+  @Column({ gqlType: "String", type: "character varying", nullable: false })
+  public title!: string;
 
-  @Column({ gqlType: "String", type: "character varying" })
-  public solved: string;
+  @Column({ gqlType: "String", type: "character varying", nullable: true })
+  public solved?: string;
 }

@@ -6,7 +6,6 @@ import { Config } from "@fullstack-one/config";
 
 import * as exitHook from "async-exit-hook";
 import * as terminus from "@godaddy/terminus";
-import { IDbConfig } from "../../db/lib";
 import { IGracefulShutdownConfig } from "./IGracefulShutdownConfig";
 
 type TShutdownFunction = () => Promise<void> | void;
@@ -34,7 +33,7 @@ export class GracefulShutdown {
     this.bootLoader = bootLoader;
     this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
-    this.config = config.registerConfig("Db", `${__dirname}/../config`);
+    this.config = config.registerConfig("GracefulShutdown", `${__dirname}/../config`);
 
     exitHook(async (callback) => {
       await this.shutdown();

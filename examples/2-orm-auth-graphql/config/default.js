@@ -48,5 +48,9 @@ module.exports = {
   },
   SchemaBuilder: {
     setUserPrivileges: true
+  },
+  GracefulShutdown: {
+    healthCheckLivenessPath: "/",
+    healthCheckReadinessPath: "/_health/readiness"
   }
 };
