@@ -2,9 +2,12 @@ import { Service, Inject } from "@fullstack-one/di";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
+import { Config } from "@fullstack-one/config";
 
 import * as exitHook from "async-exit-hook";
 import * as terminus from "@godaddy/terminus";
+import { IDbConfig } from "../../db/lib";
+import { IGracefulShutdownConfig } from "./IGracefulShutdownConfig";
 
 type TShutdownFunction = () => Promise<void> | void;
 
@@ -18,17 +21,20 @@ export class GracefulShutdown {
   private bootLoader: BootLoader;
   private logger: ILogger;
   private eventEmitter: EventEmitter;
+  private readonly config: IGracefulShutdownConfig;
 
   private readonly shutdownItems: IShutdownItem[] = [];
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => EventEmitter) eventEmitter: EventEmitter
+    @Inject((type) => EventEmitter) eventEmitter: EventEmitter,
+    @Inject((type) => Config) config: Config
   ) {
     this.bootLoader = bootLoader;
     this.logger = loggerFactory.create(this.constructor.name);
     this.eventEmitter = eventEmitter;
+    this.config = config.registerConfig("Db", `${__dirname}/../config`);
 
     exitHook(async (callback) => {
       await this.shutdown();
@@ -70,10 +76,12 @@ export class GracefulShutdown {
   }
 
   public addServer<TServer>(name: string, server: TServer): void {
+    const healthCheckLivenessPath = this.config.healthCheckLivenessPath;
+    const healthCheckReadinessPath = this.config.healthCheckReadinessPath;
     terminus(server, {
       healthChecks: {
-        "/_health/liveness": () => Promise.resolve(),
-        "/_health/readiness": () => this.bootLoader.getReadyPromise()
+        [healthCheckLivenessPath]: () => Promise.resolve(),
+        [healthCheckReadinessPath]: () => this.bootLoader.getReadyPromise()
       },
       timeout: 1000,
       logger: this.logger.info
