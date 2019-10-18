@@ -116,7 +116,9 @@ export class Auth {
             throw err;
           }
         } else {
-          throw new AuthenticationError("Authentication is required for this query. AccessToken missing.");
+          if (this.authConfig.ignoreAuthErrorForUnauthenticatedQueriesToAuthViews !== true) {
+            throw new AuthenticationError("Authentication is required for this query. AccessToken missing.");
+          }
         }
       }
     } else {

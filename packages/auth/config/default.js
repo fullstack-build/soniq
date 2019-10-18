@@ -61,5 +61,6 @@ module.exports = {
   },
   crypto: {
     algorithm: "aes-256-cbc"
-  }
+  },
+  ignoreAuthErrorForUnauthenticatedQueriesToAuthViews: false
 };
