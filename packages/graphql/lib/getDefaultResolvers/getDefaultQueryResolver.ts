@@ -15,7 +15,7 @@ export default function getDefaultQueryResolver(orm: ORM, logger: ILogger, query
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
-    const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated && process.env.FAKE_AUTHENTICATION_FOR_QUERIES !== "true");
+    const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated || process.env.FAKE_AUTHENTICATION_FOR_QUERIES === "true");
 
     const queryRunner = orm.createQueryRunner();
 
