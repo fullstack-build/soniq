@@ -74,7 +74,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
                 throw new Error('ID is required.');
             }
             if (NEW[columnName] == null) {
-                return NEW;
+                continue;
             }
             // Validate all files, because they all are new.
             for(var j in NEW[columnName]) {
@@ -87,7 +87,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
                 throw new Error('ID is required.');
             }
             if (OLD[columnName] == null) {
-                return OLD;
+                continue;
             }
             for(var j in OLD[columnName]) {
                 invalidateFile(OLD[columnName][j], OLD.id)
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
 
             // If the field is neither in NEW nor in OLD it can be ignored
             if (NEW[columnName] == null && OLD[columnName] == null) {
-                return NEW;
+                continue;
             }
 
             // If the field has been removed in NEW, all files can be invalidated (like delete)
@@ -109,7 +109,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
                 for(var j in OLD[columnName]) {
                     invalidateFile(OLD[columnName][j], OLD.id)
                 }
-                return NEW;
+                continue;
             }
 
             // If the field has been added in NEW, all files can be validated (like insert)
@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION _meta.file_trigger() RETURNS trigger AS $$
                 for(var j in NEW[columnName]) {
                     validateFile(NEW[columnName][j], NEW.id, row.types)
                 }
-                return NEW;
+                continue;
             }
             
             // If the field is available in both, we need to diff
