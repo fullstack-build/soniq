@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/graphql",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "description": "fullstack.one GraphQL package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,11 +20,11 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.5.25",
     "@fullstack-one/config": "^0.5.20",
-    "@fullstack-one/db": "^0.6.3",
+    "@fullstack-one/db": "^0.6.9",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/helper": "^0.6.2",
     "@fullstack-one/logger": "^0.5.25",
-    "@fullstack-one/schema-builder": "^0.6.3",
+    "@fullstack-one/schema-builder": "^0.6.9",
     "@fullstack-one/server": "^0.6.3",
     "@types/graphql": "0.13.4",
     "@types/koa-mount": "^3.0.1",
