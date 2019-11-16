@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/notifications",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "description": "fullstack.one notifications package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -23,8 +23,8 @@
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.25",
     "@fullstack-one/logger": "^0.5.25",
-    "@fullstack-one/queue": "^0.6.11",
-    "@fullstack-one/schema-builder": "^0.6.11",
+    "@fullstack-one/queue": "^0.6.12",
+    "@fullstack-one/schema-builder": "^0.6.12",
     "mailgen": "^2.0.5",
     "nodemailer": "^4.6.8",
     "nodemailer-direct-transport": "^3.3.2",
