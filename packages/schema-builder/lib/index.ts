@@ -134,7 +134,7 @@ export class SchemaBuilder {
       this.gqlRuntimeDocument = data.gqlDocument;
       this.logger.trace("boot", "Permission SQL statements set");
 
-      if(this.schemaBuilderConfig.createGraphQlViews === true) {
+      if (this.schemaBuilderConfig.createGraphQlViews === true) {
         this.logger.trace("boot", "Create GraphQL views start");
         await createGraphQLViews(this.orm, this.logger, data.sql);
         this.logger.trace("boot", "Create GraphQL views end");

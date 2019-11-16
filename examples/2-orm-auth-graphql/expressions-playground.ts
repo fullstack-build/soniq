@@ -26,10 +26,8 @@ const currentExpressions = [
     generate: (context, params): string => {
       return `_auth.current_user_id()`;
     }
-  },
-  
+  }
 ];
-
 
 const currentUserId = new Expreesion({
   name: "bluibabla",
@@ -47,7 +45,7 @@ export const authenticated = {
   generate: (context, params): string => {
     return `${context.getExpression(currentExpressions)} IS NOT NULL`;
   }
-}
+};
 
 import * as expr from "./expressions";
 
@@ -60,7 +58,7 @@ const expr = new Expression({
   generate: (context, params): string => {
     return `${context.getExpression(currentUserId)} IS NOT NULL`;
   }
-})
+});
 
 @Entity()
 class User extends BaseEntity {
@@ -75,4 +73,3 @@ class User extends BaseEntity {
   @QueryPermissions(owner({ field: "id" }))
   public bankAccount: User;
 }
-

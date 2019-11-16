@@ -38,25 +38,12 @@ $gql.addResolvers({
   someQuery: () => {
     return "Hello query";
   },
-  "createFileSystem": async (
-    obj: any,
-    args: { extension: string; type?: string },
-    context: { accessToken?: string },
-    info: any,
-    params: {}
-  ) => {
-
+  createFileSystem: async (obj: any, args: { extension: string; type?: string }, context: { accessToken?: string }, info: any, params: {}) => {
     return $fs.createFile(args.extension, args.type);
   },
-  "verifyFileSystem": async (
-    obj: any,
-    args: { fileName: string },
-    context: { accessToken?: string },
-    info: any,
-    params: {}
-  ) => {
+  verifyFileSystem: async (obj: any, args: { fileName: string }, context: { accessToken?: string }, info: any, params: {}) => {
     return $fs.verifyFile(args.fileName);
-  },
+  }
 });
 
 (async () => {
