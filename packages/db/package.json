@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/db",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "description": "fullstack.one db connector package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -22,7 +22,7 @@
     "@fullstack-one/config": "^0.5.20",
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/events": "^0.5.25",
-    "@fullstack-one/graceful-shutdown": "^0.6.10",
+    "@fullstack-one/graceful-shutdown": "^0.6.11",
     "@fullstack-one/logger": "^0.5.25",
     "@types/lodash": "^4.14.136",
     "deepmerge": "^2.0.1",
