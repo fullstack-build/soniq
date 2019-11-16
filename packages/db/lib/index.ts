@@ -57,16 +57,22 @@ export class ORM {
 
     this.clientManager = getClientManager(environment.nodeId, this.adjustORMPoolSize.bind(this));
 
-    this.addMigrations(Object.values(dbMigrationsObject));
+    if (this.config.synchronize) {
+      this.addMigrations(Object.values(dbMigrationsObject));
+    }
 
     bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
     gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
-    await this.runMigrations();
+    if (this.config.synchronize) {
+      await this.runMigrations();
+    }
     await this.createConnection(this.config.globalMax);
-    await createTriggers(this, this.logger);
+    if (this.config.synchronize) {
+      await createTriggers(this, this.logger);
+    }
     await this.clientManager.start();
     await this.eventEmitter.emit("db.orm.pool.connect.success", this.applicationName);
   }

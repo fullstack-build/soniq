@@ -133,7 +133,12 @@ export class SchemaBuilder {
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
       this.logger.trace("boot", "Permission SQL statements set");
-      await createGraphQLViews(this.orm, this.logger, data.sql);
+
+      if(this.schemaBuilderConfig.createGraphQlViews === true) {
+        this.logger.trace("boot", "Create GraphQL views start");
+        await createGraphQLViews(this.orm, this.logger, data.sql);
+        this.logger.trace("boot", "Create GraphQL views end");
+      }
 
       return this.dbMeta;
     } catch (err) {
