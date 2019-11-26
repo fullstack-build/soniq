@@ -24,6 +24,7 @@
     "@fullstack-one/graceful-shutdown": "^0.6.12",
     "@fullstack-one/logger": "^0.5.25",
     "koa": "^2.5.2",
+    "koa-bodyparser": "^4.2.1",
     "koa-compress": "^3.0.0"
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"

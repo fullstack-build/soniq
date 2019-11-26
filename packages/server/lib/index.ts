@@ -8,6 +8,7 @@ import * as http from "http";
 // other npm dependencies
 import * as Koa from "koa";
 import * as compress from "koa-compress";
+import * as bodyParser from "koa-bodyparser";
 
 export { Koa };
 
@@ -66,6 +67,46 @@ export class Server {
   private bootKoa(): void {
     try {
       this.app = new Koa();
+
+      this.app.use(bodyParser());
+      // Handle errors like ECONNRESET
+      this.app.on("error", (error, ctx) => {
+        const bodyHidden =
+          ctx.body.indexOf("createPassword") >= 0 || ctx.body.indexOf("proofPassowrd") >= 0 || ctx.body.indexOf("authFactorProofToken") >= 0;
+        if (error.code === "EPIPE") {
+          this.logger.warn("Koa app-level EPIPE error.", {
+            error,
+            originalUrl: ctx.originalUrl,
+            origin: ctx.origin
+          });
+          this.logger.trace("Koa app-level EPIPE error. BODY TRACE", {
+            bodyHidden,
+            body: bodyHidden === true ? null : ctx.body
+          });
+          return;
+        }
+        if (error.code === "ECONNRESET") {
+          this.logger.warn("Koa app-level ECONNRESET error.", {
+            error,
+            originalUrl: ctx.originalUrl,
+            origin: ctx.origin
+          });
+          this.logger.trace("Koa app-level ECONNRESET error. BODY TRACE", {
+            bodyHidden,
+            body: bodyHidden === true ? null : ctx.body
+          });
+          return;
+        }
+        this.logger.warn("Koa app-level error.", {
+          error,
+          originalUrl: ctx.originalUrl,
+          origin: ctx.origin
+        });
+        this.logger.trace("Koa app-level error. BODY TRACE", {
+          bodyHidden,
+          body: bodyHidden === true ? null : ctx.body
+        });
+      });
       // enable compression
       this.app.use(
         compress({
