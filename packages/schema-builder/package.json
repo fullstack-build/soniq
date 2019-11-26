@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/schema-builder",
-  "version": "0.6.12",
+  "version": "0.6.13",
   "description": "fullstack.one schema builder package",
   "main": "index.js",
   "types": "lib/index.ts",
