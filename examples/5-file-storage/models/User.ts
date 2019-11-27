@@ -15,22 +15,22 @@ import { anyone, owner } from "../expressions/basic";
   updateViews: {
     me: {
       fields: ["id", "images"],
-      expressions: owner({ field: "id" }),
+      expressions: owner({field: 'id'}),
       returnOnlyId: true
     }
   }
 })
 export default class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  @QueryPermissions(owner({ field: "id" }))
+  @QueryPermissions(owner({field: 'id'}))
   public id: number;
 
   @Column({ gqlType: "String", type: "character varying", unique: true })
-  @QueryPermissions(owner({ field: "id" }))
+  @QueryPermissions(owner({field: 'id'}))
   public name: string;
 
   @Column()
-  @QueryPermissions(owner({ field: "id" }))
+  @QueryPermissions(owner({field: 'id'}))
   @Files(["DEFAULT", "PROFILE_IMAGE"])
   public images?: string[];
 }

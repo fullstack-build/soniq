@@ -36,10 +36,7 @@ export class GracefulShutdown {
     this.config = config.registerConfig("GracefulShutdown", `${__dirname}/../config`);
 
     exitHook(async (callback) => {
-      if (this.config.active === true) {
-        await this.shutdown();
-      }
-
+      await this.shutdown();
       return callback();
     });
   }

@@ -58,7 +58,6 @@ module.exports = {
     bucket: process.env.S3_BUCKET
   },
   SchemaBuilder: {
-    setUserPrivileges: true,
-    createGraphQlViews: true
+    setUserPrivileges: true
   }
 };

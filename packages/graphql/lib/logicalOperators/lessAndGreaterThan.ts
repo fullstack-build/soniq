@@ -1,38 +1,38 @@
-import { ISingleValueOperator } from "./types";
+import { IOperator } from "./types";
 
-const greaterThan: ISingleValueOperator = {
+const greaterThan: IOperator = {
   name: "greaterThan",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} > ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} > ${getParam(value)}`;
   }
 };
 
-const greaterThanOrEqual: ISingleValueOperator = {
+const greaterThanOrEqual: IOperator = {
   name: "greaterThanOrEqual",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} >= ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} >= ${getParam(value)}`;
   }
 };
 
-const lessThan: ISingleValueOperator = {
+const lessThan: IOperator = {
   name: "lessThan",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} < ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} < ${getParam(value)}`;
   }
 };
 
-const lessThanOrEqual: ISingleValueOperator = {
+const lessThanOrEqual: IOperator = {
   name: "lessThanOrEqual",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} <= ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} <= ${getParam(value)}`;
   }
 };
 

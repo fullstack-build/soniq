@@ -1,14 +1,10 @@
-import { GraphQLResolveInfo } from "graphql";
-
-import { PostgresQueryRunner } from "@fullstack-one/db";
-import { Service } from "@fullstack-one/di";
+import { PoolClient } from "@fullstack-one/core";
 
 import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildOject } from "../getDefaultResolvers";
 import { TPreQueryHookFunction } from "./types";
 
 export * from "./types";
 
-@Service()
 export class HookManager {
   private preQueryHooks: TPreQueryHookFunction[] = [];
 
@@ -17,13 +13,13 @@ export class HookManager {
   }
 
   public async executePreQueryHooks(
-    queryRunner: PostgresQueryRunner,
+    pgClient: PoolClient,
     context: IDefaultMutationResolverContext,
     authRequired: boolean,
     buildObject: IMutationBuildObject | IQueryBuildOject
   ): Promise<void> {
     for (const hook of this.preQueryHooks) {
-      await hook(queryRunner, context, authRequired, buildObject);
+      await hook(pgClient, context, authRequired, buildObject);
     }
   }
 }

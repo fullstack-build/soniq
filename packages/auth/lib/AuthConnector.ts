@@ -1,4 +1,4 @@
-import { PostgresQueryRunner } from "@fullstack-one/db";
+import { PoolClient } from "@fullstack-one/core";
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
@@ -128,20 +128,20 @@ export class AuthConnector {
     return userIdentifierObject;
   }
 
-  private async getUserIdentifier(queryRunner: PostgresQueryRunner, username: string, tenant: string): Promise<IUserIdentifierObject> {
+  private async getUserIdentifier(pgClient: PoolClient, username: string, tenant: string): Promise<IUserIdentifierObject> {
     const values = [username, tenant];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.find_user($1, $2) AS payload", values);
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.find_user($1, $2) AS payload", values);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("User not found!");
     }
 
-    return rows[0].payload;
+    return queryResult.rows[0].payload;
   }
 
   // tslint:disable-next-line:prettier
   public async createUserAuthentication(
-    queryRunner: PostgresQueryRunner,
+    pgClient: PoolClient,
     userId: string,
     isActive: boolean,
     loginProviderSets: string[],
@@ -150,12 +150,12 @@ export class AuthConnector {
   ): Promise<string> {
     const authFactorCreations: IAuthFactorCreation[] = authFactorCreationTokens.map(this.decryptAuthFactorCreationToken.bind(this));
 
-    await this.authQueryHelper.setAdmin(queryRunner);
+    await this.authQueryHelper.setAdmin(pgClient);
 
     const values = [userId, isActive, loginProviderSets, modifyProviderSets, JSON.stringify(authFactorCreations)];
-    const rows = await queryRunner.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
+    const { rows } = await pgClient.query(`SELECT _auth.create_user_authentication($1, $2, $3, $4, $5) AS payload;`, values);
 
-    await this.authQueryHelper.unsetAdmin(queryRunner);
+    await this.authQueryHelper.unsetAdmin(pgClient);
 
     if (rows.length < 1 || rows[0].payload == null || rows[0].payload.userAuthenticationId == null) {
       throw new Error("Incorrect response from create_user_authentication.");
@@ -174,12 +174,12 @@ export class AuthConnector {
     return this.encryptAuthFactorProofToken(authFactorProof);
   }
 
-  public async findUser(queryRunner: PostgresQueryRunner, username: string, tenant: string): Promise<IFindUserResponse> {
+  public async findUser(pgClient: PoolClient, username: string, tenant: string): Promise<IFindUserResponse> {
     let userIdentifierObject: IUserIdentifierObject = null;
     let isFake = false;
 
     try {
-      userIdentifierObject = await this.getUserIdentifier(queryRunner, username, tenant);
+      userIdentifierObject = await this.getUserIdentifier(pgClient, username, tenant);
     } catch (err) {
       /* Ignore Error */
     }
@@ -200,32 +200,28 @@ export class AuthConnector {
     };
   }
 
-  public async getAuthFactorForProof(queryRunner: PostgresQueryRunner, userIdentifierToken: string, provider: string): Promise<IAuthFactorForProof> {
+  public async getAuthFactorForProof(pgClient: PoolClient, userIdentifierToken: string, provider: string): Promise<IAuthFactorForProof> {
     const userIdentifierObject = this.decryptUserIdentifier(userIdentifierToken);
     const values = [userIdentifierObject.userAuthenticationId, provider];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(
-      queryRunner,
-      "SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload",
-      values
-    );
+    const result = await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.get_auth_factor_for_proof($1, $2) AS payload", values);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (result.rowCount < 1 || result.rows[0].payload == null) {
       throw new Error("AuthFactor not found!");
     }
 
-    return rows[0].payload;
+    return result.rows[0].payload;
   }
 
-  public async login(queryRunner: PostgresQueryRunner, authFactorProofTokens: string[], clientIdentifier: string = null): Promise<ILoginData> {
+  public async login(pgClient: PoolClient, authFactorProofTokens: string[], clientIdentifier: string = null): Promise<ILoginData> {
     const authFactorProofs: IAuthFactorProof[] = authFactorProofTokens.map(this.decryptAuthFactorProofToken.bind(this));
     const values = [JSON.stringify(authFactorProofs), clientIdentifier];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.login($1, $2) AS payload;", values);
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.login($1, $2) AS payload;", values);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("Login failed!");
     }
 
-    const result = rows[0].payload;
+    const result = queryResult.rows[0].payload;
     const issuedAtLuxon = DateTime.fromMillis(result.issuedAt, { zone: "UTC" });
 
     const loginData: ILoginData = {
@@ -243,15 +239,15 @@ export class AuthConnector {
     return loginData;
   }
 
-  public async getTokenMeta(queryRunner: PostgresQueryRunner, accessToken: string): Promise<ITokenMeta> {
+  public async getTokenMeta(pgClient: PoolClient, accessToken: string): Promise<ITokenMeta> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.validate_access_token($1) AS payload;", values);
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.validate_access_token($1) AS payload;", values);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("Token invalid!");
     }
 
-    const result = rows[0].payload;
+    const result = queryResult.rows[0].payload;
     const issuedAtLuxon = DateTime.fromMillis(result.issuedAt, { zone: "UTC" });
 
     const tokenMeta: ITokenMeta = {
@@ -265,30 +261,25 @@ export class AuthConnector {
     return tokenMeta;
   }
 
-  public async proofAuthFactor(queryRunner: PostgresQueryRunner, authFactorProofToken: string) {
+  public async proofAuthFactor(pgClient: PoolClient, authFactorProofToken: string) {
     const authFactorProof = this.decryptAuthFactorProofToken(authFactorProofToken);
     const values = [JSON.stringify(authFactorProof)];
-    await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.proof_auth_factor($1) AS payload", values);
+    await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.proof_auth_factor($1) AS payload", values);
   }
 
-  public async refreshAccessToken(
-    queryRunner: PostgresQueryRunner,
-    accessToken: string,
-    clientIdentifier: string,
-    refreshToken: string
-  ): Promise<ILoginData> {
+  public async refreshAccessToken(pgClient: PoolClient, accessToken: string, clientIdentifier: string, refreshToken: string): Promise<ILoginData> {
     const values = [this.cryptoFactory.decrypt(accessToken), clientIdentifier, this.cryptoFactory.decrypt(refreshToken)];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(
-      queryRunner,
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(
+      pgClient,
       "SELECT _auth.refresh_access_token($1, $2, $3) AS payload;",
       values
     );
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("Refresh failed. Return payload is null");
     }
 
-    const result = rows[0].payload;
+    const result = queryResult.rows[0].payload;
     const issuedAtLuxon = DateTime.fromMillis(result.issuedAt, { zone: "UTC" });
 
     const loginData: ILoginData = {
@@ -308,7 +299,7 @@ export class AuthConnector {
 
   // tslint:disable-next-line:prettier
   public async modifyAuthFactors(
-    queryRunner: PostgresQueryRunner,
+    pgClient: PoolClient,
     authFactorProofTokens: string[],
     isActive: boolean | null,
     loginProviderSets: string[] | null,
@@ -329,48 +320,48 @@ export class AuthConnector {
     values.push(authFactorCreations == null ? null : JSON.stringify(authFactorCreations));
     values.push(removeAuthFactorIds);
 
-    await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, `SELECT _auth.modify_user_authentication($1, $2, $3, $4, $5, $6);`, values);
+    await this.authQueryHelper.adminQueryWithPgClient(pgClient, `SELECT _auth.modify_user_authentication($1, $2, $3, $4, $5, $6);`, values);
   }
 
-  public async getUserAuthentication(queryRunner: PostgresQueryRunner, accessToken: string): Promise<IUserAuthentication> {
+  public async getUserAuthentication(pgClient: PoolClient, accessToken: string): Promise<IUserAuthentication> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.get_user_authentication($1) AS payload;", values);
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.get_user_authentication($1) AS payload;", values);
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("Request invalid.");
     }
 
-    return rows[0].payload;
+    return queryResult.rows[0].payload;
   }
 
-  public async getUserAuthenticationById(queryRunner: PostgresQueryRunner, userAuthenticationId: string): Promise<IUserAuthentication> {
+  public async getUserAuthenticationById(pgClient: PoolClient, userAuthenticationId: string): Promise<IUserAuthentication> {
     const values = [userAuthenticationId];
-    const rows = await this.authQueryHelper.adminQueryWithQueryRunner(
-      queryRunner,
+    const queryResult = await this.authQueryHelper.adminQueryWithPgClient(
+      pgClient,
       "SELECT _auth.get_user_authentication_by_id($1) AS payload;",
       values
     );
 
-    if (rows.length < 1 || rows[0].payload == null) {
+    if (queryResult.rowCount < 1 || queryResult.rows[0].payload == null) {
       throw new Error("Request invalid.");
     }
 
-    return rows[0].payload;
+    return queryResult.rows[0].payload;
   }
 
-  public async invalidateAccessToken(queryRunner: PostgresQueryRunner, accessToken: string): Promise<void> {
+  public async invalidateAccessToken(pgClient: PoolClient, accessToken: string): Promise<void> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
-      await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.invalidate_access_token($1);", values);
+      await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.invalidate_access_token($1);", values);
     } catch (err) {
       /* Igonre Error */
     }
   }
 
-  public async invalidateAllAccessTokens(queryRunner: PostgresQueryRunner, accessToken: string): Promise<void> {
+  public async invalidateAllAccessTokens(pgClient: PoolClient, accessToken: string): Promise<void> {
     const values = [this.cryptoFactory.decrypt(accessToken)];
     try {
-      await this.authQueryHelper.adminQueryWithQueryRunner(queryRunner, "SELECT _auth.invalidate_all_access_tokens($1);", values);
+      await this.authQueryHelper.adminQueryWithPgClient(pgClient, "SELECT _auth.invalidate_all_access_tokens($1);", values);
     } catch (err) {
       /* Igonre Error */
     }

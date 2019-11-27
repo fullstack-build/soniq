@@ -8,7 +8,16 @@ import { Auth, AuthProvider } from "@fullstack-one/auth";
 import { FbHelper } from "./fbHelper";
 
 import * as fs from "fs";
-import { ORM } from "@fullstack-one/db";
+import {
+  Pool,
+  IModuleAppConfig,
+  IModuleEnvConfig,
+  PoolClient,
+  Core,
+  IModuleMigrationResult,
+  IModuleRuntimeConfig,
+  TGetModuleRuntimeConfig
+} from "@fullstack-one/core";
 import * as _ from "lodash";
 
 const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
@@ -25,13 +34,13 @@ export class AuthFbToken {
   private auth: Auth;
   private config: Config;
   private fbHelper: FbHelper;
-  private orm: ORM;
+  private pgPool: Pool;
 
   constructor(
     @Inject((type) => Auth) auth,
     @Inject((type) => BootLoader) bootLoader,
     @Inject((type) => SchemaBuilder) schemaBuilder,
-    @Inject((type) => ORM) orm: ORM,
+    @Inject((type) => Core) core: Core,
     @Inject((type) => Config) config,
     @Inject((type) => GraphQl) graphQl,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory
@@ -46,7 +55,11 @@ export class AuthFbToken {
     this.loggerFactory = loggerFactory;
     this.auth = auth;
     this.config = config;
-    this.orm = orm;
+    core.addCoreFunctions({
+      key: this.constructor.name,
+      migrate: this.migrate.bind(this),
+      boot: this.boot.bind(this)
+    });
 
     this.logger = this.loggerFactory.create(this.constructor.name);
 
@@ -58,8 +71,18 @@ export class AuthFbToken {
     graphQl.addResolvers(this.getResolvers());
   }
 
-  private async boot() {
+  private async migrate(appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
+    return {
+      moduleRuntimeConfig: {},
+      commands: [],
+      errors: [],
+      warnings: []
+    };
+  }
+
+  private async boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) {
     this.fbHelper = new FbHelper(this.authFbTokenConfig, this.logger);
+    this.pgPool = pgPool;
     return;
   }
 
@@ -81,11 +104,10 @@ export class AuthFbToken {
           }
           const tenant = args.tenant || "default";
 
-          const queryRunner = this.orm.createQueryRunner();
+          const pgClient = await this.pgPool.connect();
 
           try {
-            await queryRunner.connect();
-            await queryRunner.startTransaction();
+            await pgClient.query("BEGIN;");
 
             const profile = await this.fbHelper.getProfile(args.token);
             const email = profile.email;
@@ -97,10 +119,10 @@ export class AuthFbToken {
 
             const authConnector = this.facebookAuthProvider.getAuthConnector();
 
-            let user = await authConnector.findUser(queryRunner, email, tenant);
+            let user = await authConnector.findUser(pgClient, email, tenant);
 
             if (user.isFake === true) {
-              user = await authConnector.findUser(queryRunner, profile.id, tenant);
+              user = await authConnector.findUser(pgClient, profile.id, tenant);
             }
 
             if (user.isFake === true) {
@@ -116,13 +138,13 @@ export class AuthFbToken {
                 }
               };
 
-              await queryRunner.commitTransaction();
+              await pgClient.query("COMMIT;");
               return response;
             } else {
-              let emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
+              let emailAuthFactorProof = await this.emailAuthProvider.proof(pgClient, user.userIdentifier, async (authFactor) => {
                 return email;
               });
-              let facebookAuthFactorProof = await this.facebookAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
+              let facebookAuthFactorProof = await this.facebookAuthProvider.proof(pgClient, user.userIdentifier, async (authFactor) => {
                 return profile.id;
               });
 
@@ -143,29 +165,21 @@ export class AuthFbToken {
                 authFactorCreationToken = await this.facebookAuthProvider.create(profile.id, null, true, { oAuthProvider: providerName });
               }
 
-              const userAuthentication = await authConnector.getUserAuthenticationById(queryRunner, user.userAuthenticationId);
+              const userAuthentication = await authConnector.getUserAuthenticationById(pgClient, user.userAuthenticationId);
               const loginProviderSets = userAuthentication.loginProviderSets;
               if (loginProviderSets.indexOf(providerName) < 0) {
                 loginProviderSets.push(providerName);
               }
 
               if (authFactorCreationToken != null) {
-                await authConnector.modifyAuthFactors(
-                  queryRunner,
-                  [authFactorProofToken],
-                  true,
-                  loginProviderSets,
-                  null,
-                  [authFactorCreationToken],
-                  []
-                );
+                await authConnector.modifyAuthFactors(pgClient, [authFactorProofToken], true, loginProviderSets, null, [authFactorCreationToken], []);
 
                 if (emailAuthFactorProof.isFake === true) {
-                  emailAuthFactorProof = await this.emailAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
+                  emailAuthFactorProof = await this.emailAuthProvider.proof(pgClient, user.userIdentifier, async (authFactor) => {
                     return email;
                   });
                 } else {
-                  facebookAuthFactorProof = await this.facebookAuthProvider.proof(queryRunner, user.userIdentifier, async (authFactor) => {
+                  facebookAuthFactorProof = await this.facebookAuthProvider.proof(pgClient, user.userIdentifier, async (authFactor) => {
                     return profile.id;
                   });
                 }
@@ -180,19 +194,19 @@ export class AuthFbToken {
                 }
               };
 
-              await queryRunner.commitTransaction();
+              await pgClient.query("COMMIT;");
               return response;
             }
           } catch (err) {
             try {
-              await queryRunner.rollbackTransaction();
+              await pgClient.query("ROLLBACK;");
             } catch (e) {
               /* don't care */
             }
             this.logger.warn("passport.strategylogin.error", err);
             throw err;
           } finally {
-            queryRunner.release();
+            pgClient.release();
           }
           /*
           // If the privacy token is not valid, this function will throw an error and we will not proceed any data.

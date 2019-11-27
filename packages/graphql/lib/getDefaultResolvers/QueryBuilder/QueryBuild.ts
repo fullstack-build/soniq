@@ -1,68 +1,54 @@
-import { AuthenticationError, UserInputError } from "../../GraphqlErrors";
-import { IReadViewMeta, IResolverMeta, IReadFieldData, IDbMeta, IDbRelation } from "@fullstack-one/schema-builder";
+import { UserInputError } from "../../GraphqlErrors";
 import { IParsedResolveInfo, IMatch } from "../types";
-import generateClauses from "./generateClauses";
-import { IQueryBuildOject, IQueryClauseObject, ICostTree } from "./types";
-import calculateMaxDepth from "./calculateMaxDepth";
+import { ClausesBuilder } from "./ClausesBuilder";
+import { IQueryBuildOject, IQueryClauseObject } from "./types";
+import { IDefaultResolverMeta, IQueryViewMeta, IQueryFieldMeta } from "../../RuntimeInterfaces";
+import { OperatorsBuilder } from "../../logicalOperators";
 
 export default class QueryBuild {
-  private readonly resolverMeta: IResolverMeta;
-  private readonly dbMeta: IDbMeta;
+  private readonly defaultResolverMeta: IDefaultResolverMeta;
   private readonly queryName: string;
   private readonly values: Array<number | string> = [];
   private readonly isAuthenticated: boolean;
-  private readonly minQueryDepthToCheckCostLimit: number;
   private readonly sql: string;
-  private readonly rootCostTree: ICostTree;
   private currentIndex: number = -1;
   private authRequired: boolean = false;
+  private operatorsBuilder: OperatorsBuilder;
 
   constructor(
-    resolverMeta: IResolverMeta,
-    dbMeta: IDbMeta,
+    operatorsBuilder: OperatorsBuilder,
+    defaultResolverMeta: IDefaultResolverMeta,
     isAuthenticated: boolean,
-    minQueryDepthToCheckCostLimit: number,
     query: IParsedResolveInfo<IQueryClauseObject>,
     match: IMatch = null
   ) {
-    this.dbMeta = dbMeta;
-    this.resolverMeta = resolverMeta;
+    this.operatorsBuilder = operatorsBuilder;
+    this.defaultResolverMeta = defaultResolverMeta;
     this.isAuthenticated = isAuthenticated;
-    this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
-    this.rootCostTree = { subtrees: [] };
-    this.sql = `SELECT ${this.jsonAgg(query, match, this.rootCostTree)};`;
+    this.sql = `SELECT ${this.jsonAgg(query, match)};`;
     this.queryName = query.name;
   }
 
-  private jsonAgg(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch, costTree: ICostTree): string {
+  private jsonAgg(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch): string {
     const localName = this.getLocalAliasName();
-    costTree.queryName = query.name;
-    costTree.type = "aggregation";
-    const tableSql = this.resolveTable(query, match, costTree);
+    const tableSql = this.resolveTable(query, match);
     const sql = `(SELECT COALESCE(json_agg(row_to_json("${localName}")), '[]'::json) FROM (${tableSql}) "${localName}") "${query.name}"`;
     return sql;
   }
 
-  private rowToJson(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch, costTree: ICostTree): string {
+  private rowToJson(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch): string {
     const localTableName = this.getLocalAliasName();
-    costTree.queryName = query.name;
-    costTree.type = "row";
-    const tableSql = this.resolveTable(query, match, costTree);
+    const tableSql = this.resolveTable(query, match);
     return `(SELECT row_to_json("${localTableName}") FROM (${tableSql}) "${localTableName}") "${query.name}"`;
   }
 
-  private resolveTable(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch, costTree: ICostTree): string {
+  private resolveTable(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch): string {
     const gqlTypeName: string = Object.keys(query.fieldsByTypeName)[0];
-    const gqlTypeMeta: IReadViewMeta = this.resolverMeta.query[gqlTypeName];
-    const gqlTypePermissionMeta = this.resolverMeta.permissionMeta[gqlTypeName] || {};
-
-    costTree.tableName = gqlTypeMeta.tableName;
-    costTree.tableSchemaName = gqlTypeMeta.tableSchemaName;
-    costTree.limit = query.args.limit;
+    const queryViewMeta: IQueryViewMeta = this.defaultResolverMeta.query[gqlTypeName];
 
     // First iteration always starts with jsonAgg and thus is an aggregation
     const isQueryRootLevel = this.currentIndex < 2 && match == null;
-    if (isQueryRootLevel === true && gqlTypePermissionMeta.disallowGenericRootLevelAggregation === true) {
+    if (isQueryRootLevel === true && queryViewMeta.disallowGenericRootLevelAggregation === true) {
       throw new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`, { exposeDetails: true });
     }
     const fields = query.fieldsByTypeName[gqlTypeName];
@@ -73,111 +59,67 @@ export default class QueryBuild {
     let authRequiredHere: boolean = false;
 
     Object.values(fields).forEach((field) => {
-      if (gqlTypeMeta.fields[field.name] == null) {
+      if (queryViewMeta.fields[field.name] == null) {
         throw new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`, { exposeDetails: true });
       }
-      const fieldMeta = gqlTypeMeta.fields[field.name];
-      if (!gqlTypeMeta.publicFieldNames.includes(field.name) && fieldMeta.nativeFieldName != null) {
+      const fieldMeta: IQueryFieldMeta = queryViewMeta.fields[field.name];
+      if (fieldMeta.authRequired) {
         this.authRequired = true;
         authRequiredHere = true;
-        if (this.isAuthenticated !== true) {
-          const error = new AuthenticationError(`The field '${gqlTypeName}.${field.name}' is not available without authentication.`);
-          error.extensions = {
-            ...error.extensions,
-            exposeDetails: true,
-            message: `The field '${gqlTypeName}.${field.name}' is not available without authentication.`
-          };
-          throw error;
-        }
       }
-      if (fieldMeta.meta != null && fieldMeta.meta.relationName != null) {
+      if (fieldMeta.manyToOne != null || fieldMeta.oneToMany != null) {
         const idExpression =
-          fieldMeta.meta.isListType === false
-            ? this.getFieldExpression(fieldMeta.nativeFieldName, localName)
-            : this.getFieldExpression("id", localName);
+          fieldMeta.manyToOne != null ? this.getColumnExpression(fieldMeta.columnName, localName) : this.getColumnExpression("id", localName);
 
-        const subCostTree: ICostTree = { subtrees: [] };
-        costTree.subtrees.push(subCostTree);
-        const relationSql = this.resolveRelation(field, fieldMeta, localName, idExpression, subCostTree);
+        const relationSql = this.resolveRelation(field, fieldMeta, localName, idExpression);
 
         selectFieldExpressions.push(relationSql);
       } else {
-        selectFieldExpressions.push(`${this.getFieldExpression(field.name, localName)} "${field.name}"`);
+        selectFieldExpressions.push(`${this.getColumnExpression(fieldMeta.columnName, localName)} "${field.name}"`);
       }
     });
 
-    const getField = (fieldName: string) => {
-      const readFieldData = Object.values(gqlTypeMeta.fields).find((field) => field.nativeFieldName === fieldName);
-      if (readFieldData == null) throw new Error(`Field '${fieldName}' not found.`);
-      const virtualFieldName: string = readFieldData.gqlFieldName;
+    const getColumn = (columnName: string) => {
+      const queryFieldMeta = Object.values(queryViewMeta.fields).find((field) => field.columnName === columnName);
+      if (queryFieldMeta == null) {
+        throw new Error(`Column '${columnName}' not found.`);
+      }
 
-      if (!gqlTypeMeta.publicFieldNames.includes(virtualFieldName)) {
+      if (queryFieldMeta.authRequired) {
         this.authRequired = true;
         authRequiredHere = true;
-        if (this.isAuthenticated !== true) {
-          const error = new AuthenticationError(`The field '${gqlTypeName}.${fieldName}' is not available without authentication.`);
-          error.extensions = {
-            ...error.extensions,
-            exposeDetails: true,
-            message: `The field '${gqlTypeName}.${fieldName}' is not available without authentication.`
-          };
-          throw error;
-        }
       }
-      return this.getFieldExpression(fieldName, localName);
+      return this.getColumnExpression(columnName, localName);
     };
 
     const joinConditionSql = this.generateJoinCondition(match, localName);
     // Need to generate clauses before getFromExpression since authRequiredHere might change
-    const clausesSql: string = generateClauses(query.args, this.pushValueAndGetSqlParam.bind(this), getField, joinConditionSql);
+    const clausesBuilder = new ClausesBuilder(this.operatorsBuilder, this.pushValueAndGetSqlParam.bind(this), getColumn);
+    const clausesSql = clausesBuilder.generate(query.args, joinConditionSql);
 
-    const fromExpression = this.getFromExpression(gqlTypeMeta, localName, authRequiredHere);
+    const fromExpression = this.getFromExpression(queryViewMeta, localName, authRequiredHere);
     return [`SELECT ${selectFieldExpressions.join(", ")} FROM ${fromExpression}`, clausesSql].filter((sql) => sql !== "").join(" ");
   }
 
   private resolveRelation(
     query: IParsedResolveInfo<IQueryClauseObject>,
-    fieldMeta: IReadFieldData,
+    fieldMeta: IQueryFieldMeta,
     localName: string,
-    matchIdExpression: string,
-    costTree: ICostTree
+    matchIdExpression: string
   ): string {
-    const { ownRelation, foreignRelation } = this.getOwnAndForeignRelation(fieldMeta);
-    if (ownRelation.type === "ONE") {
+    if (fieldMeta.manyToOne != null) {
       const match: IMatch = {
-        type: "SIMPLE",
-        fieldExpression: matchIdExpression,
-        foreignFieldName: "id"
+        ownColumnExpression: matchIdExpression,
+        foreignColumnName: "id"
       };
-      return this.rowToJson(query, match, costTree);
-    }
-
-    if (foreignRelation.type === "MANY") {
-      const arrayMatch: IMatch = {
-        type: "ARRAY",
-        fieldExpression: this.getFieldExpression(ownRelation.columnName, localName),
-        foreignFieldName: "id"
-      };
-
-      return this.jsonAgg(query, arrayMatch, costTree);
+      return this.rowToJson(query, match);
     } else {
       const match: IMatch = {
-        type: "SIMPLE",
-        fieldExpression: matchIdExpression,
-        foreignFieldName: foreignRelation.columnName
+        ownColumnExpression: matchIdExpression,
+        foreignColumnName: fieldMeta.oneToMany.foreignColumnName
       };
-      match.foreignFieldName = foreignRelation.columnName;
-      return this.jsonAgg(query, match, costTree);
+      return this.jsonAgg(query, match);
     }
-  }
-
-  private getOwnAndForeignRelation(fieldMeta: IReadFieldData): { ownRelation: IDbRelation; foreignRelation: IDbRelation } {
-    const relationConnections = this.dbMeta.relations[fieldMeta.meta.relationName];
-    const relationConnectionsArray: IDbRelation[] = Object.values(relationConnections);
-    const isFirstRelation = relationConnectionsArray[0].tableName === fieldMeta.meta.table.tableName;
-    const ownRelation = isFirstRelation === true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-    const foreignRelation = isFirstRelation !== true ? relationConnectionsArray[0] : relationConnectionsArray[1];
-    return { ownRelation, foreignRelation };
   }
 
   private pushValueAndGetSqlParam(value: number | string): string {
@@ -187,9 +129,8 @@ export default class QueryBuild {
 
   private generateJoinCondition(match: IMatch, localName: string): string {
     if (match == null) return "";
-    const fieldExpression = this.getFieldExpression(match.foreignFieldName, localName);
-    if (match.type === "SIMPLE") return `${fieldExpression} = ${match.fieldExpression}`;
-    return `${match.fieldExpression} @> ARRAY[${fieldExpression}]::uuid[]`;
+    const fieldExpression = this.getColumnExpression(match.foreignColumnName, localName);
+    return `${fieldExpression} = ${match.ownColumnExpression}`;
   }
 
   private getLocalAliasName() {
@@ -197,26 +138,22 @@ export default class QueryBuild {
     return `_local_${this.currentIndex}_`;
   }
 
-  private getFieldExpression(name: string, localName: string): string {
+  private getColumnExpression(name: string, localName: string): string {
     return `"${localName}"."${name}"`;
   }
 
-  private getFromExpression(gqlTypeMeta: IReadViewMeta, localName: string, authRequired: boolean): string {
-    const viewName = authRequired === true ? gqlTypeMeta.authViewName : gqlTypeMeta.publicViewName;
-    return `"${gqlTypeMeta.viewSchemaName}"."${viewName}" AS "${localName}"`;
+  private getFromExpression(queryViewMeta: IQueryViewMeta, localName: string, authRequired: boolean): string {
+    const viewName = authRequired === true ? queryViewMeta.authViewName : queryViewMeta.publicViewName;
+    return `"${this.defaultResolverMeta.viewsSchemaName}"."${viewName}" AS "${localName}"`;
   }
 
   public getBuildObject(): IQueryBuildOject {
-    const maxDepth = calculateMaxDepth(this.rootCostTree);
-    const potentialHighCost = maxDepth >= this.minQueryDepthToCheckCostLimit;
     return {
       sql: this.sql,
       values: this.values,
       queryName: this.queryName,
       authRequired: this.authRequired,
-      maxDepth,
-      potentialHighCost,
-      costTree: this.rootCostTree
+      subqueryCount: this.currentIndex + 1
     };
   }
 }

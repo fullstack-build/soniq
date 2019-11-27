@@ -1,57 +1,57 @@
-import { ISingleValueOperator, IMultiValueOperator } from "./types";
+import { IOperator } from "./types";
 
-const inOperator: IMultiValueOperator = {
+const inOperator: IOperator = {
   name: "in",
-  value: "[String!]",
+  gqlInputType: "[String!]",
   getSql: (context) => {
-    const { field, values } = context;
-    return `${field} IN (${values.join(", ")})`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} IN (${value.map(getParam).join(", ")})`;
   }
 };
 
-const notInOperator: IMultiValueOperator = {
+const notIn: IOperator = {
   name: "notIn",
-  value: "[String!]",
+  gqlInputType: "[String!]",
   getSql: (context) => {
-    const { field, values } = context;
-    return `${field} NOT IN (${values.join(", ")})`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} NOT IN (${value.map(getParam).join(", ")})`;
   }
 };
 
-const includes: ISingleValueOperator = {
+const includes: IOperator = {
   name: "includes",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${value} IN ${field}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${getParam(value)} IN ${fieldPgSelector}`;
   }
 };
 
-const includesNot: ISingleValueOperator = {
+const includesNot: IOperator = {
   name: "includesNot",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${value} IN ${field}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${getParam(value)} IN ${fieldPgSelector}`;
   }
 };
 
-const contains: IMultiValueOperator = {
+const contains: IOperator = {
   name: "contains",
-  value: "[String!]",
+  gqlInputType: "[String!]",
   getSql: (context) => {
-    const { field, values } = context;
-    return `${field} @> ARRAY[${values.join(", ")}]`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} @> ARRAY[${value.map(getParam).join(", ")}]`;
   }
 };
 
-const isContainedBy: IMultiValueOperator = {
+const isContainedBy: IOperator = {
   name: "isContainedBy",
-  value: "[String!]",
+  gqlInputType: "[String!]",
   getSql: (context) => {
-    const { field, values } = context;
-    return `${field} <@ ARRAY[${values.join(", ")}]`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} <@ ARRAY[${value.map(getParam).join(", ")}]`;
   }
 };
 
-export { inOperator, notInOperator, includes, includesNot, contains, isContainedBy };
+export { inOperator as in, notIn, includes, includesNot, contains, isContainedBy };

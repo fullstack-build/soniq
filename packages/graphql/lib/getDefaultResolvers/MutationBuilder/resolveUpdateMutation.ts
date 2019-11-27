@@ -1,10 +1,11 @@
-import { IMutationViewMeta } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo } from "../types";
 import { IMutationBuildObject, IMutationInputObject } from "./types";
 import parseValue from "./parseValue";
-import { ReturnIdHandler } from "../../ReturnIdHandler";
+import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
+import { IDefaultResolverMeta, IMutationViewMeta } from "../../RuntimeInterfaces";
 
 export default function resolveUpdateMutation(
+  defaultResolverMeta: IDefaultResolverMeta,
   query: IParsedResolveInfo<IMutationInputObject>,
   mutation: IMutationViewMeta,
   returnIdHandler: ReturnIdHandler
@@ -24,7 +25,7 @@ export default function resolveUpdateMutation(
   values.push(entityId);
 
   return {
-    sql: `UPDATE "${mutation.viewSchemaName}"."${mutation.viewName}" SET ${fieldAssignments} WHERE id = $${values.length};`,
+    sql: `UPDATE "${defaultResolverMeta.viewsSchemaName}"."${mutation.viewName}" SET ${fieldAssignments} WHERE id = $${values.length};`,
     values,
     mutation,
     id: entityId

@@ -1,39 +1,39 @@
-import { ISingleValueOperator } from "./types";
+import { IOperator } from "./types";
 
-const equal: ISingleValueOperator = {
+const equals: IOperator = {
   name: "equals",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} = ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} = ${getParam(value)}`;
   }
 };
 
-const notEqual: ISingleValueOperator = {
+const equalsNot: IOperator = {
   name: "equalsNot",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} <> ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} <> ${getParam(value)}`;
   }
 };
 
-const isDistinctFrom: ISingleValueOperator = {
+const isDistinctFrom: IOperator = {
   name: "isDistinctFrom",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} IS DISTINCT FROM ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} IS DISTINCT FROM ${getParam(value)}`;
   }
 };
 
-const isNotDistinctFrom: ISingleValueOperator = {
+const isNotDistinctFrom: IOperator = {
   name: "isNotDistinctFrom",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field} IS NOT DISTINCT FROM ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector} IS NOT DISTINCT FROM ${getParam(value)}`;
   }
 };
 
-export { equal, notEqual, isDistinctFrom, isNotDistinctFrom };
+export { equals, equalsNot, isDistinctFrom, isNotDistinctFrom };

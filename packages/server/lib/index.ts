@@ -1,14 +1,12 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { BootLoader } from "@fullstack-one/boot-loader";
-import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
+import { Core, IModuleAppConfig, IModuleEnvConfig, PoolClient, IModuleMigrationResult, IModuleRuntimeConfig, Pool } from "@fullstack-one/core";
 
 import * as http from "http";
 // other npm dependencies
 import * as Koa from "koa";
 import * as compress from "koa-compress";
-import * as bodyParser from "koa-bodyparser";
 
 export { Koa };
 
@@ -17,22 +15,21 @@ export class Server {
   private serverConfig;
   private server: http.Server;
   private app: Koa;
+  private core: Core;
 
   private loggerFactory: LoggerFactory;
   private logger: ILogger;
   private ENVIRONMENT: IEnvironment;
-  private readonly bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
 
   constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
     @Inject((type) => Config) config: Config,
-    @Inject((tpye) => BootLoader) bootLoader: BootLoader,
-    @Inject((tpye) => GracefulShutdown) gracefulShutdown: GracefulShutdown
+    @Inject((tpye) => Core) core: Core
   ) {
     this.loggerFactory = loggerFactory;
-    this.bootLoader = bootLoader;
+    this.core = core;
 
     // register package config
     this.serverConfig = config.registerConfig("Server", `${__dirname}/../config`);
@@ -44,8 +41,21 @@ export class Server {
 
     this.bootKoa();
     this.server = http.createServer(this.app.callback());
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
-    gracefulShutdown.addServer(this.constructor.name, this.server);
+
+    this.core.addCoreFunctions({
+      key: this.constructor.name,
+      migrate: this.migrate.bind(this),
+      boot: this.boot.bind(this)
+    });
+  }
+
+  private async migrate(appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
+    return {
+      moduleRuntimeConfig: {},
+      commands: [],
+      errors: [],
+      warnings: []
+    };
   }
 
   private async boot(): Promise<void> {
@@ -67,46 +77,6 @@ export class Server {
   private bootKoa(): void {
     try {
       this.app = new Koa();
-
-      this.app.use(bodyParser());
-      // Handle errors like ECONNRESET
-      this.app.on("error", (error, ctx) => {
-        const bodyHidden =
-          ctx.body.indexOf("createPassword") >= 0 || ctx.body.indexOf("proofPassowrd") >= 0 || ctx.body.indexOf("authFactorProofToken") >= 0;
-        if (error.code === "EPIPE") {
-          this.logger.warn("Koa app-level EPIPE error.", {
-            error,
-            originalUrl: ctx.originalUrl,
-            origin: ctx.origin
-          });
-          this.logger.trace("Koa app-level EPIPE error. BODY TRACE", {
-            bodyHidden,
-            body: bodyHidden === true ? null : ctx.body
-          });
-          return;
-        }
-        if (error.code === "ECONNRESET") {
-          this.logger.warn("Koa app-level ECONNRESET error.", {
-            error,
-            originalUrl: ctx.originalUrl,
-            origin: ctx.origin
-          });
-          this.logger.trace("Koa app-level ECONNRESET error. BODY TRACE", {
-            bodyHidden,
-            body: bodyHidden === true ? null : ctx.body
-          });
-          return;
-        }
-        this.logger.warn("Koa app-level error.", {
-          error,
-          originalUrl: ctx.originalUrl,
-          origin: ctx.origin
-        });
-        this.logger.trace("Koa app-level error. BODY TRACE", {
-          bodyHidden,
-          body: bodyHidden === true ? null : ctx.body
-        });
-      });
       // enable compression
       this.app.use(
         compress({
@@ -116,12 +86,12 @@ export class Server {
       );
 
       // Block all requests when server has not finished booting
-      this.app.use(async (ctx, next) => {
+      /* this.app.use(async (ctx, next) => {
         if (this.bootLoader.hasBooted() !== true) {
           return ctx.throw(503, "Service not ready yet!");
         }
         await next();
-      });
+      });*/
     } catch (e) {
       // tslint:disable-next-line:no-console
       console.error(e);

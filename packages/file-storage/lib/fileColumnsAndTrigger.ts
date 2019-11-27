@@ -1,5 +1,5 @@
 import { isArray } from "util";
-import { ORM, IModelMeta, PostgresQueryRunner } from "@fullstack-one/db";
+import { Pool, PoolClient } from "@fullstack-one/core";
 import { ILogger } from "@fullstack-one/logger";
 
 interface IFileColumn {
@@ -14,16 +14,16 @@ interface ISchemaTable {
   tableName: string;
 }
 
-export async function insertFileColumnsAndCreateTrigger(orm: ORM, logger: ILogger): Promise<void> {
+export async function insertFileColumnsAndCreateTrigger(pgPool: Pool, logger: ILogger): Promise<void> {
   const fileColumnsTableName = `_meta.FileColumns`;
 
-  const queryRunner = orm.createQueryRunner();
-  const queryBuilder = orm.getConnection().createQueryBuilder();
-  queryBuilder.setQueryRunner(queryRunner);
-  await queryRunner.connect();
+  // const pgClient = await pgPool.connect();
+  // const queryBuilder = orm.getConnection().createQueryBuilder();
+  // queryBuilder.setQueryRunner(pgClient);
+  // await pgClient.connect();
 
-  await queryRunner.startTransaction();
-
+  // await pgClient.startTransaction();
+  /*
   try {
     const modelMeta: IModelMeta = orm.getModelMeta();
     const fileColumns: IFileColumn[] = getFileColumnsFromModelMeta(modelMeta);
@@ -44,18 +44,18 @@ export async function insertFileColumnsAndCreateTrigger(orm: ORM, logger: ILogge
 
     const schemaTables: ISchemaTable[] = getTablesWithFiles(fileColumns);
     const createTriggerPromises = schemaTables.map(({ schemaName, tableName }) => {
-      return createTrigger(queryRunner, schemaName, tableName);
+      return createTrigger(pgClient, schemaName, tableName);
     });
     await Promise.all(createTriggerPromises);
 
-    await queryRunner.commitTransaction();
+    await pgClient.commitTransaction();
   } catch (err) {
     logger.warn("insertFileColumnsAndCreateTrigger.error", err);
-    await queryRunner.rollbackTransaction();
-  }
+    await pgClient.rollbackTransaction();
+  }*/
 }
 
-function getFileColumnsFromModelMeta(modelMeta: IModelMeta): IFileColumn[] {
+/* function getFileColumnsFromModelMeta(modelMeta: IModelMeta): IFileColumn[] {
   const fileColumns: IFileColumn[] = [];
   Object.values(modelMeta.entities).forEach(({ name: tableName, columns, entityOptions }) => {
     const schemaName = entityOptions.schema || "public";
@@ -67,7 +67,7 @@ function getFileColumnsFromModelMeta(modelMeta: IModelMeta): IFileColumn[] {
     });
   });
   return fileColumns;
-}
+}*/
 
 function getTablesWithFiles(fileColumns: IFileColumn[]): ISchemaTable[] {
   const schemaTables: ISchemaTable[] = [];
@@ -81,11 +81,11 @@ function getTablesWithFiles(fileColumns: IFileColumn[]): ISchemaTable[] {
   return schemaTables;
 }
 
-async function createTrigger(queryRunner: PostgresQueryRunner, schemaName: string, tableName: string): Promise<void> {
+async function createTrigger(pgClient: PoolClient, schemaName: string, tableName: string): Promise<void> {
   const triggerName = `"table_file_trigger_${schemaName}_${tableName}"`;
   const schmeaTableName = `"${schemaName}"."${tableName}"`;
-  await queryRunner.query(`DROP TRIGGER IF EXISTS ${triggerName} ON ${schmeaTableName} CASCADE;`);
-  await queryRunner.query(`
+  await pgClient.query(`DROP TRIGGER IF EXISTS ${triggerName} ON ${schmeaTableName} CASCADE;`);
+  await pgClient.query(`
     CREATE TRIGGER ${triggerName}
     BEFORE UPDATE OR INSERT OR DELETE
     ON ${schmeaTableName}

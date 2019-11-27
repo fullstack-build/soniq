@@ -1,33 +1,33 @@
 import { GraphQLResolveInfo } from "graphql";
-import { IResolverMeta, IMutationViewMeta } from "@fullstack-one/schema-builder";
 import { IParsedResolveInfo, parseResolveInfo } from "../types";
 import { IMutationBuildObject, IMutationInputObject } from "./types";
 import resolveCreateMutation from "./resolveCreateMutation";
 import resolveUpdateMutation from "./resolveUpdateMutation";
 import resolveDeleteMutation from "./resolveDeleteMutation";
-import { ReturnIdHandler } from "../../ReturnIdHandler";
+import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
+import { IDefaultResolverMeta, IMutationViewMeta } from "../../RuntimeInterfaces";
 
 export * from "./types";
 
 export default class MutationBuilder {
-  private resolverMeta: IResolverMeta;
+  private defaultResolverMeta: IDefaultResolverMeta;
 
-  constructor(resolverMeta: IResolverMeta) {
-    this.resolverMeta = resolverMeta;
+  constructor(defaultResolverMeta: IDefaultResolverMeta) {
+    this.defaultResolverMeta = defaultResolverMeta;
   }
 
   public build(info: GraphQLResolveInfo, returnIdHandler: ReturnIdHandler): IMutationBuildObject {
     const query: IParsedResolveInfo<IMutationInputObject> = parseResolveInfo(info);
 
-    const mutation: IMutationViewMeta = this.resolverMeta.mutation[query.name];
+    const mutation: IMutationViewMeta = this.defaultResolverMeta.mutation[query.name];
 
     switch (mutation.type) {
       case "CREATE":
-        return resolveCreateMutation(query, mutation, returnIdHandler);
+        return resolveCreateMutation(this.defaultResolverMeta, query, mutation, returnIdHandler);
       case "UPDATE":
-        return resolveUpdateMutation(query, mutation, returnIdHandler);
+        return resolveUpdateMutation(this.defaultResolverMeta, query, mutation, returnIdHandler);
       case "DELETE":
-        return resolveDeleteMutation(query, mutation, returnIdHandler);
+        return resolveDeleteMutation(this.defaultResolverMeta, query, mutation, returnIdHandler);
       default:
         throw new Error(`Mutation-Type does not exist: ${mutation}`);
     }

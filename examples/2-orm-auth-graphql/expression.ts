@@ -4,7 +4,7 @@ interface IOptions<TParams> {
   gqlReturnType: string;
 }
 
-type TExpressionDefinitionFn<TParams> = (options: IOptions<TParams>) => TExpressionFn<TParams>;
+type TExpressionDefinitionFn<TParams> = (options: IOptions<TParams>) => TExpressionFn<TParams>
 
 type TExpressionFn<TParams> = (params?: TParams) => IExpression;
 
@@ -14,6 +14,7 @@ interface IExpression {
 }
 
 export function defineExpression<TParams = undefined>(options: IOptions<TParams>): TExpressionFn<TParams> {
+
   let requiresLateral = false;
   let tableName = "someTableName";
 
@@ -27,8 +28,8 @@ export function defineExpression<TParams = undefined>(options: IOptions<TParams>
     return {
       sql: options.generate(params, getField),
       name: nameSuffix === "" ? options.name : `${options.name}_${nameSuffix}`
-    };
-  };
+    }
+  }
 }
 
 export const ColumnPermission: any = () => null;

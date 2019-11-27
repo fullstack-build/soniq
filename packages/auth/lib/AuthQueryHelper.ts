@@ -1,4 +1,5 @@
-import { IsolationLevel, ORM, PostgresQueryRunner } from "@fullstack-one/db";
+import { PoolClient, Pool, QueryResult } from "@fullstack-one/core";
+type IsolationLevel = any;
 import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
@@ -8,203 +9,188 @@ export class AuthQueryHelper {
   private possibleTransactionIsolationLevels: IsolationLevel[] = ["SERIALIZABLE", "REPEATABLE READ", "READ COMMITTED", "READ UNCOMMITTED"];
 
   constructor(
-    private readonly orm: ORM,
+    private pgPool: Pool,
     private readonly logger: ILogger,
     private readonly cryptoFactory: CryptoFactory,
     private readonly signHelper: SignHelper
   ) {}
 
-  private async createQueryRunnerAdminTransaction(
-    queryRunner: PostgresQueryRunner,
-    isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<PostgresQueryRunner> {
+  private async createPgClientAdminTransaction(pgClient: PoolClient, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<PoolClient> {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    await queryRunner.startTransaction(isolationLevelToUse);
-    await this.setAdmin(queryRunner);
-    return queryRunner;
+    await pgClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
+    await this.setAdmin(pgClient);
+    return pgClient;
   }
 
-  private async createQueryRunnerUserTransaction(
-    queryRunner: PostgresQueryRunner,
+  private async createPgClientUserTransaction(
+    pgClient: PoolClient,
     accessToken: string,
     isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<PostgresQueryRunner> {
+  ): Promise<PoolClient> {
     const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
     const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
 
-    await queryRunner.startTransaction(isolationLevelToUse);
-    await this.authenticateTransaction(queryRunner, accessToken);
-    return queryRunner;
+    await pgClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
+    await this.authenticateTransaction(pgClient, accessToken);
+    return pgClient;
   }
 
-  public async getCurrentUserIdFromClient(queryRunner: PostgresQueryRunner) {
-    return (await queryRunner.query("SELECT _auth.current_user_id();"))[0].current_user_id;
+  public async getCurrentUserIdFromClient(pgClient: PoolClient) {
+    return (await pgClient.query("SELECT _auth.current_user_id();"))[0].current_user_id;
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken: string) {
-    return this.userTransaction(accessToken, async (queryRunner) => {
-      return this.getCurrentUserIdFromClient(queryRunner);
+    return this.userTransaction(accessToken, async (pgClient) => {
+      return this.getCurrentUserIdFromClient(pgClient);
     });
   }
 
-  public async transaction<TResult = any>(
-    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
-    isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<any> {
-    const queryRunner = this.orm.createQueryRunner();
+  public async transaction(callback: (pgClient: PoolClient) => Promise<any>, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<any> {
+    const pgClient = await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      await pgClient.query("BEGIN;");
 
-      const result = await callback(queryRunner);
+      const result = await callback(pgClient);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("transaction.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async query<TResult = any>(...queryArguments: [string, ...any[]]): Promise<TResult> {
-    const queryRunner = this.orm.createQueryRunner();
+  public async query(...queryArguments: [string, ...any[]]): Promise<any> {
+    const pgClient = await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      await pgClient.query("BEGIN;");
 
-      const result: TResult = await queryRunner.query(...queryArguments);
+      const result: QueryResult = await pgClient.query(...queryArguments);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("query.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async adminTransaction<TResult = any>(
-    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
-    isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<any> {
-    const queryRunner = this.orm.createQueryRunner();
+  public async adminTransaction(callback: (pgClient: PoolClient) => Promise<any>, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<any> {
+    const pgClient = await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await this.createQueryRunnerAdminTransaction(queryRunner, isolationLevel);
+      await this.createPgClientAdminTransaction(pgClient, isolationLevel);
 
-      const result = await callback(queryRunner);
+      const result = await callback(pgClient);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("adminTransaction.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async adminQuery<TResult = any>(...queryArguments: [string, ...any[]]): Promise<TResult> {
-    const queryRunner = this.orm.createQueryRunner();
+  public async adminQuery(...queryArguments: [string, ...any[]]): Promise<QueryResult> {
+    const pgClient = await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      await pgClient.query("BEGIN;");
 
-      await this.setAdmin(queryRunner);
+      await this.setAdmin(pgClient);
 
-      const result: TResult = await queryRunner.query(...queryArguments);
+      const result: QueryResult = await pgClient.query(...queryArguments);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("adminQuery.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async adminQueryWithQueryRunner<TResult = any>(queryRunner, ...queryArguments: [string, ...any[]]): Promise<TResult> {
-    await this.setAdmin(queryRunner);
-    const result: TResult = await queryRunner.query(...queryArguments);
-    await this.unsetAdmin(queryRunner);
+  public async adminQueryWithPgClient(pgClient: PoolClient, ...queryArguments: [string, ...any[]]): Promise<QueryResult> {
+    await this.setAdmin(pgClient);
+    const result: QueryResult = await pgClient.query(...queryArguments);
+    await this.unsetAdmin(pgClient);
 
     return result;
   }
 
-  public async userTransaction<TResult = any>(
+  public async userTransaction(
     accessToken: string,
-    callback: (queryRunner: PostgresQueryRunner) => Promise<TResult>,
+    callback: (pgClient: PoolClient) => Promise<any>,
     isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<TResult> {
-    const queryRunner = this.orm.createQueryRunner();
+  ): Promise<any> {
+    const pgClient = await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await this.createQueryRunnerUserTransaction(queryRunner, accessToken, isolationLevel);
+      await this.createPgClientUserTransaction(pgClient, accessToken, isolationLevel);
 
-      const result = await callback(queryRunner);
+      const result = await callback(pgClient);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("userTransaction.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async userQuery<TResult = any>(accessToken: string, ...queryArguments: [string, ...any[]]): Promise<TResult> {
+  public async userQuery(accessToken: string, ...queryArguments: [string, ...any[]]): Promise<QueryResult> {
     if (accessToken == null || accessToken === "") {
       throw new AuthenticationError("Authentication required. AccessToken missing.");
     }
 
-    const queryRunner = await this.orm.createQueryRunner();
+    const pgClient = await await this.pgPool.connect();
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      await pgClient.query("BEGIN;");
 
-      await this.authenticateTransaction(queryRunner, accessToken);
+      await this.authenticateTransaction(pgClient, accessToken);
 
-      const result = await queryRunner.query(...queryArguments);
+      const result = await pgClient.query(...queryArguments);
 
-      await queryRunner.commitTransaction();
+      await pgClient.query("COMMIT;");
       return result;
     } catch (err) {
-      await queryRunner.rollbackTransaction();
+      await pgClient.query("ROLLBACK;");
       this.logger.warn("userQuery.error", err);
       throw err;
     } finally {
-      await queryRunner.release();
+      await pgClient.release();
     }
   }
 
-  public async authenticateTransaction(queryRunner: PostgresQueryRunner, accessToken: string) {
+  public async authenticateTransaction(pgClient: PoolClient, accessToken: string) {
     try {
       if (accessToken == null || accessToken === "") {
         throw new AuthenticationError("Authentication required. AccessToken missing.");
       }
       const values = [this.cryptoFactory.decrypt(accessToken)];
 
-      await this.setAdmin(queryRunner);
-      await queryRunner.query("SELECT _auth.authenticate_transaction($1);", values);
-      await this.unsetAdmin(queryRunner);
+      await this.setAdmin(pgClient);
+      await pgClient.query("SELECT _auth.authenticate_transaction($1);", values);
+      await this.unsetAdmin(pgClient);
 
       return true;
     } catch (err) {
@@ -213,11 +199,11 @@ export class AuthQueryHelper {
     }
   }
 
-  public async unauthenticateTransaction(queryRunner: PostgresQueryRunner) {
+  public async unauthenticateTransaction(pgClient: PoolClient) {
     try {
-      await this.setAdmin(queryRunner);
-      await queryRunner.query("SELECT _auth.authenticate_transaction($1);");
-      await this.unsetAdmin(queryRunner);
+      await this.setAdmin(pgClient);
+      await pgClient.query("SELECT _auth.authenticate_transaction($1);");
+      await this.unsetAdmin(pgClient);
 
       return true;
     } catch (err) {
@@ -226,23 +212,27 @@ export class AuthQueryHelper {
     }
   }
 
-  public async setAdmin(queryRunner: PostgresQueryRunner) {
+  public async setAdmin(pgClient: PoolClient): Promise<PoolClient> {
     try {
-      await queryRunner.query(`SET LOCAL auth.admin_token TO '${this.signHelper.getAdminSignature()}';`);
-      return queryRunner;
+      await pgClient.query(`SET LOCAL auth.admin_token TO '${this.signHelper.getAdminSignature()}';`);
+      return pgClient;
     } catch (err) {
       this.logger.warn("setAdmin.error", err);
       throw err;
     }
   }
 
-  public async unsetAdmin(queryRunner: PostgresQueryRunner) {
+  public async unsetAdmin(pgClient: PoolClient): Promise<PoolClient> {
     try {
-      await queryRunner.query("RESET auth.admin_token;");
-      return queryRunner;
+      await pgClient.query("RESET auth.admin_token;");
+      return pgClient;
     } catch (err) {
       this.logger.warn("unsetAdmin.error", err);
       throw err;
     }
+  }
+
+  public setPool(pgPool: Pool) {
+    this.pgPool = pgPool;
   }
 }

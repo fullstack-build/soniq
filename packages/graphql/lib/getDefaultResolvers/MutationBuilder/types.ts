@@ -1,4 +1,4 @@
-import { IMutationViewMeta } from "@fullstack-one/schema-builder";
+import { IMutationViewMeta } from "../../RuntimeInterfaces";
 
 export interface IMutationBuildObject {
   sql: string;

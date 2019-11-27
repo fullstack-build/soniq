@@ -3,7 +3,7 @@ import * as Minio from "minio";
 import { Auth } from "@fullstack-one/auth";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
-import { ORM } from "@fullstack-one/db";
+import { Core } from "@fullstack-one/core";
 import { Service, Inject } from "@fullstack-one/di";
 import { GraphQl, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
@@ -38,25 +38,25 @@ export class FileStorage {
     @Inject((type) => BootLoader) bootLoader: BootLoader,
     @Inject((type) => Config) config: Config,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => ORM) private readonly orm: ORM
+    @Inject((type) => Core) private readonly core: Core
   ) {
     this.fileStorageConfig = config.registerConfig("FileStorage", `${__dirname}/../config`);
 
     this.logger = loggerFactory.create(this.constructor.name);
 
-    this.orm.addMigrations(migrations);
+    // this.orm.addMigrations(migrations);
 
-    this.schemaBuilder.extendSchema(schema);
-    this.schemaBuilder.addExtension(getParser());
+    // this.schemaBuilder.extendSchema(schema);
+    // this.schemaBuilder.addExtension(getParser());
 
-    this.graphQl.addResolvers(this.getResolvers());
+    // this.graphQl.addResolvers(this.getResolvers());
     // TODO: Should be made available somehow
     // this.graphQl.addPostMutationHook(this.postMutationHook.bind(this));
 
     this.addVerifier("DEFAULT", DefaultVerifier);
     this.client = new Minio.Client(this.fileStorageConfig.minio);
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {
@@ -66,7 +66,7 @@ export class FileStorage {
         const CurrentVerifier = this.verifierClasses[key];
         this.verifierObjects[key] = new CurrentVerifier(this.client, this.fileStorageConfig.bucket);
       });
-      await insertFileColumnsAndCreateTrigger(this.orm, this.logger);
+      await insertFileColumnsAndCreateTrigger(null, this.logger); // TODO: Replace Null with Pool
       // createFileTrigger();
       // Create a presignedGetUrl for a not existing object to force minio to initialize itself. (Internally, it loads the bucket region)
       // This prevents errors, when large queries require a lot of signed URL's for the first time after boot.
@@ -81,7 +81,7 @@ export class FileStorage {
     try {
       const entityId = info.entityId;
       const result = await this.auth.getAuthQueryHelper().adminQuery("SELECT * FROM _meta.file_todelete_by_entity($1);", [entityId]);
-      result.forEach((row) => {
+      result.rows.forEach((row) => {
         const fileName = new FileName(row);
         this.deleteFileAsAdmin(fileName);
       });
@@ -120,7 +120,7 @@ export class FileStorage {
     try {
       await this.auth.getAuthQueryHelper().adminTransaction(async (client) => {
         const result = await client.query("SELECT * FROM _meta.file_deleteone_admin($1);", [fileName.id]);
-        if (result.length < 1) {
+        if (result.rowCount < 1) {
           throw new Error("Failed to delete file 'fileId' from db.");
         }
         await this.deleteObjects(fileName.prefix);
@@ -208,9 +208,10 @@ export class FileStorage {
 
         if (args.fileName != null) {
           const fileName = new FileName(args.fileName);
-          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fileName.id]);
+          result = (await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearupone($1);", [fileName.id]))
+            .rows;
         } else {
-          result = await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();");
+          result = (await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _meta.file_clearup();")).rows;
         }
 
         const filesDeleted = result.map((row) => new FileName(row));

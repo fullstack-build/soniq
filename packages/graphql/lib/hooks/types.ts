@@ -1,9 +1,9 @@
-import { PostgresQueryRunner } from "@fullstack-one/db";
+import { PoolClient } from "@fullstack-one/core";
 
 import { IQueryBuildOject, IMutationBuildObject } from "../getDefaultResolvers";
 
 export type TPreQueryHookFunction = (
-  queryRunner: PostgresQueryRunner,
+  pgClient: PoolClient,
   context: any,
   authRequired: boolean,
   buildObject: IMutationBuildObject | IQueryBuildOject

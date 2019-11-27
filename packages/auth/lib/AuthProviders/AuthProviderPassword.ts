@@ -1,8 +1,8 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { GraphQl, ReturnIdHandler } from "@fullstack-one/graphql";
+// import { SchemaBuilder } from "@fullstack-one/schema-builder";
+import { GraphQl, ReturnIdHandler, ICustomResolverObject } from "@fullstack-one/graphql";
 import { Auth, AuthProvider } from "..";
-import { PostgresQueryRunner } from "@fullstack-one/db";
+// import { PostgresQueryRunner } from "@fullstack-one/db";
 import * as _ from "lodash";
 
 const schema = `
@@ -10,13 +10,13 @@ extend type Mutation {
   """
   Creates a new password AuthFactorCreationToken for the given password.
   """
-  createPassword(password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/createPassword", usesQueryRunnerFromContext: true)
+  createPassword(password: String!, returnId: String): String!
 
   """
   Creates an AuthFactorProofToken for the given user und password.
   This will never fail. When the user could not be found it will return fake-data.
   """
-  proofPassword(userIdentifier: String!, password: String!, returnId: String): String! @custom(resolver: "@fullstack-one/auth/PasswordProvider/proofPassword", usesQueryRunnerFromContext: true)
+  proofPassword(userIdentifier: String!, password: String!, returnId: String): String!
 }
 `;
 
@@ -25,12 +25,29 @@ export class AuthProviderPassword {
   private authProvider: AuthProvider;
 
   constructor(
-    @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
+    // @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject((type) => GraphQl) graphQl: GraphQl,
     @Inject((type) => Auth) auth: Auth
   ) {
-    schemaBuilder.extendSchema(schema);
+    graphQl.addTypeDefsExtension(() => {
+      return schema;
+    });
+
     graphQl.addResolvers(this.getResolvers());
+
+    Object.keys(this.getResolvers())
+      .map((key) => {
+        const splittedKey = key.split("/");
+
+        return () => {
+          return {
+            path: `${splittedKey[3]}.${splittedKey[4]}`,
+            key,
+            config: {}
+          };
+        };
+      })
+      .forEach(graphQl.addResolverExtension.bind(graphQl));
 
     this.authProvider = auth.createAuthProvider("password");
   }
@@ -39,7 +56,7 @@ export class AuthProviderPassword {
     return this.authProvider.create(password, null, true, {});
   }
 
-  private async proofPassword(queryRunner: PostgresQueryRunner, userIdentifier: string, password: string): Promise<string> {
+  private async proofPassword(queryRunner: any, userIdentifier: string, password: string): Promise<string> {
     const result = await this.authProvider.proof(queryRunner, userIdentifier, async () => {
       return password;
     });
@@ -56,25 +73,35 @@ export class AuthProviderPassword {
     }
   }
 
-  private getResolvers() {
+  private getResolvers(): ICustomResolverObject {
     return {
-      "@fullstack-one/auth/PasswordProvider/createPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        return this.callAndHideErrorDetails(async () => {
-          const token = await this.createPassword(args.password);
-          if (returnIdHandler.setReturnId(token)) {
-            return "Token hidden due to returnId usage.";
+      "@fullstack-one/auth/PasswordProvider/Mutation/createPassword": (resolver) => {
+        return {
+          usesPgClientFromContext: true,
+          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+            return this.callAndHideErrorDetails(async () => {
+              const token = await this.createPassword(args.password);
+              if (returnIdHandler.setReturnId(token)) {
+                return "Token hidden due to returnId usage.";
+              }
+              return token;
+            });
           }
-          return token;
-        });
+        };
       },
-      "@fullstack-one/auth/PasswordProvider/proofPassword": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
-        return this.callAndHideErrorDetails(async () => {
-          const token = await this.proofPassword(context._transactionQueryRunner, returnIdHandler.getReturnId(args.userIdentifier), args.password);
-          if (returnIdHandler.setReturnId(token)) {
-            return "Token hidden due to returnId usage.";
+      "@fullstack-one/auth/PasswordProvider/Mutation/proofPassword": (resolver) => {
+        return {
+          usesPgClientFromContext: true,
+          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+            return this.callAndHideErrorDetails(async () => {
+              const token = await this.proofPassword(context._transactionPgClient, returnIdHandler.getReturnId(args.userIdentifier), args.password);
+              if (returnIdHandler.setReturnId(token)) {
+                return "Token hidden due to returnId usage.";
+              }
+              return token;
+            });
           }
-          return token;
-        });
+        };
       }
     };
   }

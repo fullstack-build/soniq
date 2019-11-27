@@ -1,7 +1,7 @@
-import { createColumnDecoratorFactory } from "@fullstack-one/db";
+// import { createColumnDecoratorFactory } from "@fullstack-one/db";
 
 // tslint:disable-next-line:variable-name
-export const Files = createColumnDecoratorFactory<string[]>({
+export const Files = null; /* createColumnDecoratorFactory<string[]>({
   getDirective: (inputTypes?: string[]) => {
     const types = getTypes(inputTypes);
     return `@files(types: [${types.map((type) => `"${type}"`).join(",")}])`;
@@ -15,4 +15,4 @@ export const Files = createColumnDecoratorFactory<string[]>({
 
 function getTypes(inputTypes?: string[]): string[] {
   return inputTypes == null ? ["DEFAULT"] : inputTypes;
-}
+}*/

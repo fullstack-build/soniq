@@ -7,7 +7,7 @@ export default class Task extends BaseEntity {
   @PrimaryGeneratedColumn({ comment: "This is a very important id column." })
   @QueryPermissions(anyone())
   public id: number;
-
+  
   @Column({ gqlType: "String", type: "character varying" })
   @QueryPermissions(anyone())
   public title: string;
@@ -15,11 +15,11 @@ export default class Task extends BaseEntity {
   @Computed({ ...getTrue(), gqlType: "Boolean" })
   @QueryPermissions(anyone())
   public solved: () => Promise<boolean>;
-
+  
   @Computed({ ...getNumber(), gqlType: "Int" })
   @QueryPermissions(anyone())
   public time: () => Promise<number>;
-
+  
   @Computed({ ...myId(), gqlType: "ID" })
   @QueryPermissions(anyone())
   public computedId: () => Promise<number>;

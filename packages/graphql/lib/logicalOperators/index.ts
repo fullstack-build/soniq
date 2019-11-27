@@ -3,25 +3,51 @@ import * as lessAndGreaterThan from "./lessAndGreaterThan";
 import * as boolean from "./boolean";
 import * as inOperators from "./in";
 import * as pattern from "./pattern";
-import { IOperatorObject, IOperator } from "./types";
-import getDuplicates from "./helpers/getDuplicates";
-import getOperatorsDefinitionNode from "./helpers/getOperatorsDefinitionNode";
-import getOperatorsSchemaExtension from "./helpers/getOperatorsSchemaExtension";
+import { IOperatorsByName } from "./types";
 
 export * from "./types";
 
-const operatorsObject: IOperatorObject = { ...equal, ...lessAndGreaterThan, ...boolean, ...inOperators, ...pattern };
+export class OperatorsBuilder {
+  private operatorsByName: IOperatorsByName = {};
 
-const operatorNames = Object.values(operatorsObject).map(({ name }) => name);
-const duplicateOpertorNames = getDuplicates(operatorNames);
-if (duplicateOpertorNames.length !== 0) {
-  throw new Error(`Operators have been defined twice or more: '${duplicateOpertorNames}'`);
+  constructor() {
+    this.addOperators(equal);
+    this.addOperators(lessAndGreaterThan);
+    this.addOperators(boolean);
+    this.addOperators(inOperators);
+    this.addOperators(pattern);
+  }
+
+  public addOperators(operatorsByName: IOperatorsByName) {
+    Object.keys(operatorsByName).forEach((key) => {
+      if (operatorsByName[key].name !== key) {
+        throw new Error(`The operator with name '${operatorsByName[key].name}' does not match its key '${key}'.`);
+      }
+      if (this.operatorsByName[key] != null) {
+        throw new Error(`Operators have been defined twice or more: '${key}'`);
+      }
+      this.operatorsByName[key] = operatorsByName[key];
+    });
+  }
+
+  public buildTypeDefs(): string {
+    let typeDefs = "";
+    const operatorsInputTypeFields: string[] = [];
+
+    Object.values(this.operatorsByName).forEach((operator) => {
+      operatorsInputTypeFields.push(`${operator.name}: ${operator.gqlInputType}`);
+
+      if (operator.typeDefs != null) {
+        typeDefs += `${operator.typeDefs}\n`;
+      }
+    });
+
+    const operatorsTypeDef = `input Operators {\n${operatorsInputTypeFields}}\n`;
+
+    return `${operatorsTypeDef}\n${typeDefs}\n`;
+  }
+
+  public getOperatorByName(name: string) {
+    return this.operatorsByName[name];
+  }
 }
-
-export function getOperator(name: string): IOperator | undefined {
-  return Object.values(operatorsObject).find((operator) => operator.name === name);
-}
-
-export const operatorsSchemaExtension: string = getOperatorsSchemaExtension(operatorsObject);
-
-export const operatorsDefinitionNode = getOperatorsDefinitionNode(operatorsObject);

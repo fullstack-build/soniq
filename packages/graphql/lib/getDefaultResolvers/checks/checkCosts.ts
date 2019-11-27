@@ -1,15 +1,14 @@
 import * as crypto from "crypto";
-import { PostgresQueryRunner } from "@fullstack-one/db";
+import { PoolClient } from "@fullstack-one/core";
 import { IQueryBuildOject } from "../QueryBuilder";
 import { UserInputError } from "../../GraphqlErrors";
 
-export default async function checkCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject, costLimit: number) {
-  const currentCost = await getCurrentCosts(queryRunner, queryBuild);
+export default async function checkCosts(pgClient: PoolClient, queryBuild: IQueryBuildOject, costLimit: number) {
+  const currentCost = await getCurrentCosts(pgClient, queryBuild);
 
   if (currentCost > costLimit) {
     throw new UserInputError(
-      "This query seems to be to exprensive. Please set some limits. " +
-        `Costs: (current: ${currentCost}, limit: ${costLimit}, calculated: ${queryBuild.costTree})`,
+      "This query seems to be to exprensive. Please set some limits. " + `Costs: (current: ${currentCost}, limit: ${costLimit})`,
       { exposeDetails: true }
     );
   }
@@ -27,7 +26,7 @@ function toSha1Base64Hash(input: string): string {
 const costCache = {};
 const COST_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // TODO Dustin put in config
 
-async function getCurrentCosts(queryRunner: PostgresQueryRunner, queryBuild: IQueryBuildOject) {
+async function getCurrentCosts(pgClient: PoolClient, queryBuild: IQueryBuildOject) {
   const queryHash: string = toSha1Base64Hash(queryBuild.sql + queryBuild.values.join(""));
 
   if (costCache[queryHash] != null) {
@@ -39,9 +38,9 @@ async function getCurrentCosts(queryRunner: PostgresQueryRunner, queryBuild: IQu
     }
   }
 
-  const result = await queryRunner.query(`EXPLAIN ${queryBuild.sql}`, queryBuild.values);
+  const result = await pgClient.query(`EXPLAIN ${queryBuild.sql}`, queryBuild.values);
 
-  const queryPlan: string = result[0]["QUERY PLAN"];
+  const queryPlan: string = result.rows[0]["QUERY PLAN"];
 
   const data: { [key: string]: string } = {};
 

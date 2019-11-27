@@ -1,7 +1,7 @@
-import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
+// import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
-export class FileStorageTables1561973614862 implements MigrationInterface {
-  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
+export class FileStorageTables1561973614862 {
+  public async up(queryRunner: any): Promise<any> {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "_meta"."Files" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -40,7 +40,7 @@ export class FileStorageTables1561973614862 implements MigrationInterface {
     `);
   }
 
-  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
+  public async down(queryRunner: any): Promise<any> {
     await queryRunner.dropTable(`"_meta"."FileSettings"`, true);
     await queryRunner.dropTable(`"_meta"."FileColumns"`, true);
     await queryRunner.dropTable(`"_meta"."Files"`, true);

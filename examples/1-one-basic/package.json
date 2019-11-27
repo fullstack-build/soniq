@@ -1,0 +1,55 @@
+{
+  "name": "example-1-one-basic",
+  "version": "0.6.3",
+  "description": "Example project: how to use fullstack.one with ONE",
+  "private": true,
+  "engines": {
+    "node": ">=10",
+    "npm": ">=6"
+  },
+  "main": "index.ts",
+  "scripts": {
+    "start": "node build/index.js",
+    "migrate": "node build/migrate.js",
+    "build": "tsc",
+    "debug": "FULLSTACK_ONE_DEV=true ts-node-dev --notify=false --inspect=9229 .",
+    "dev-js": "ts-node-dev --notify=false .",
+    "dev": "FULLSTACK_ONE_DEV=true ts-node ./src/index.ts",
+    "dev-migrate": "FULLSTACK_ONE_DEV=true ts-node ./src/migrate.ts",
+    "tslint": "tslint './server/**/*.ts?(x)' -e '**/node_modules/**' --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one-example.git"
+  },
+  "keywords": [
+    "fullstack.one",
+    "example"
+  ],
+  "author": "fullstack.build <opensource@fullstack.build>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one-example/issues"
+  },
+  "homepage": "https://github.com/fullstack-build/fullstack.one-example#readme",
+  "devDependencies": {
+    "@types/dotenv": "^4.0.2",
+    "@types/node": "^8.0.57",
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.12",
+    "ts-node": "^4.1.0",
+    "ts-node-dev": "^1.0.0-pre.26",
+    "tslint": "^5.8.0",
+    "tslint-config-airbnb": "^5.4.2",
+    "typescript": "^3.1.1"
+  },
+  "dependencies": {
+    "@fullstack-one/di": "^0.5.15",
+    "@fullstack-one/core": "^0.5.25",
+    "@fullstack-one/graphql": "^0.6.7",
+    "@fullstack-one/auth": "^0.6.7",
+    "@fullstack-one/server": "^0.6.3",
+    "dotenv": "^4.0.0",
+    "fullstack-one": "^0.5.28"
+  }
+}

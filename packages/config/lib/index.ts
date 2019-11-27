@@ -29,7 +29,7 @@ export class Config {
   }
 
   private loadApplicationConfig(): object {
-    const applicationConfigFolderPath = `${path.dirname(require.main.filename)}/config`;
+    const applicationConfigFolderPath = `${path.dirname(require.main.filename)}/../config`;
     return this.getConfigFromConfigFiles(applicationConfigFolderPath);
   }
 

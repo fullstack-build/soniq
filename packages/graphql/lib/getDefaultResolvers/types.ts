@@ -28,7 +28,6 @@ export interface IDefaultMutationResolverContext {
 }
 
 export interface IMatch {
-  type: "SIMPLE" | "ARRAY";
-  foreignFieldName: string;
-  fieldExpression: string;
+  ownColumnExpression: string;
+  foreignColumnName: string;
 }

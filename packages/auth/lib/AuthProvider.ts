@@ -4,7 +4,8 @@ import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./cry
 import uuid = require("uuid");
 import { DateTime } from "luxon";
 import { SignHelper } from "./SignHelper";
-import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
+// import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
+type PostgresQueryRunner = any;
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { ILogger } from "@fullstack-one/logger";
 
@@ -12,7 +13,6 @@ export class AuthProvider {
   private authConnector: AuthConnector;
   private authQueryHelper: AuthQueryHelper;
   private signHelper: SignHelper;
-  private orm: ORM;
   private logger: ILogger;
   private authFactorProofTokenMaxAgeInSeconds: number = null;
   public authConfig: any;
@@ -23,7 +23,6 @@ export class AuthProvider {
     authConnector: AuthConnector,
     authQueryHelper: AuthQueryHelper,
     signHelper: SignHelper,
-    orm: ORM,
     logger: ILogger,
     authConfig: any,
     authFactorProofTokenMaxAgeInSeconds: number = null
@@ -31,7 +30,6 @@ export class AuthProvider {
     this.authConnector = authConnector;
     this.authQueryHelper = authQueryHelper;
     this.signHelper = signHelper;
-    this.orm = orm;
     this.logger = logger;
     this.authConfig = authConfig;
     this.providerName = providerName;

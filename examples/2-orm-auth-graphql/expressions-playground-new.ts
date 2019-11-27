@@ -37,8 +37,9 @@ class User extends BaseEntity {
   @Column()
   @ColumnPermission(defaultPermissions)
   public name: string;
-
+  
   @Column()
   @ColumnPermission(defaultPermissions, { read: [owner({ field: "id" })] })
   public bankAccount: User;
 }
+

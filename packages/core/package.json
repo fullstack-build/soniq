@@ -1,0 +1,29 @@
+{
+  "name": "@fullstack-one/core",
+  "version": "0.5.25",
+  "description": "fullstack.one core package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/logger": "^0.5.25",
+    "@types/lodash": "^4.14.146",
+    "koa": "^2.11.0",
+    "koa-compress": "^3.0.0",
+    "lodash": "^4.17.15",
+    "pg": "^7.12.1"
+  }
+}

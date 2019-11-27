@@ -1,4 +1,4 @@
-import { IBooleanOperator } from "./types";
+import { IOperator } from "./types";
 import { UserInputError } from "../GraphqlErrors";
 
 const operators = {
@@ -12,23 +12,22 @@ const operators = {
   NOT_UNKNOWN: "IS NOT UNKNOWN"
 };
 
-const schemaExtension = `
+const typeDefs = `
 enum IS_VALUE {
   ${Object.keys(operators).join("\n")}
 }
 `;
 
-const is: IBooleanOperator = {
+const is: IOperator = {
   name: "is",
-  value: "IS_VALUE",
-  schemaExtension,
-  isBooleanOperator: true,
+  gqlInputType: "IS_VALUE",
+  typeDefs,
   getSql: (context) => {
-    const { field, value } = context;
+    const { fieldPgSelector, value } = context;
     if (operators[value] == null) {
       throw new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`, { exposeDetails: true });
     }
-    return `${field} ${operators[value]}`;
+    return `${fieldPgSelector} ${operators[value]}`;
   }
 };
 

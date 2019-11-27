@@ -47,8 +47,7 @@ module.exports = {
     }
   },
   SchemaBuilder: {
-    setUserPrivileges: true,
-    createGraphQlViews: process.env.CREATE_GRAPHQL_VIEWS === "true",
+    setUserPrivileges: true
   },
   GracefulShutdown: {
     healthCheckLivenessPath: "/",

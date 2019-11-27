@@ -1,16 +1,16 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
+// import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { GraphQl } from "@fullstack-one/graphql";
 import { Auth, AuthProvider } from "..";
 import { Server } from "@fullstack-one/server";
 import { Config } from "@fullstack-one/config";
-import { BootLoader } from "@fullstack-one/boot-loader";
+import { Core } from "@fullstack-one/core";
 import * as KoaRouter from "koa-router";
 import * as koaBody from "koa-bodyparser";
 import * as koaSession from "koa-session";
 import * as passport from "koa-passport";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
-import { ORM } from "@fullstack-one/db";
+// import { ORM } from "@fullstack-one/db";
 
 const template = `
 <!DOCTYPE html>
@@ -56,22 +56,22 @@ export class AuthProviderOAuth {
 
   private server: Server;
   private logger: ILogger;
-  private orm: ORM;
+  // private orm: ORM;
 
   private authConfig;
 
   constructor(
-    @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
+    // @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
     @Inject((type) => GraphQl) graphQl: GraphQl,
     @Inject((type) => Auth) auth: Auth,
-    @Inject((type) => ORM) orm: ORM,
+    // @Inject((type) => ORM) orm: ORM,
     @Inject((type) => Server) server: Server,
-    @Inject((type) => BootLoader) bootLoader: BootLoader,
+    @Inject((type) => Core) core: Core,
     @Inject((type) => Config) config: Config,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory
   ) {
     this.server = server;
-    this.orm = orm;
+    // this.orm = orm;
     this.authConfig = config.getConfig("Auth");
     this.logger = loggerFactory.create("OAuthAuthProvider");
 
@@ -81,7 +81,10 @@ export class AuthProviderOAuth {
       this.oAuthAuthProviders[key] = auth.createAuthProvider(key);
     });
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    core.addCoreFunctions({
+      key: this.constructor.name,
+      boot: this.boot.bind(this)
+    });
   }
 
   private async boot() {
@@ -133,7 +136,7 @@ export class AuthProviderOAuth {
 
       passport.use(
         new provider.strategy(providerConfig, async (accessToken, refreshToken, profile, cb) => {
-          const queryRunner = this.orm.createQueryRunner();
+          const queryRunner = null; // this.orm.createQueryRunner();
 
           try {
             let email = profile.email || profile._json.email;

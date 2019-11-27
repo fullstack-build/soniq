@@ -1,12 +1,12 @@
 import { readFileSync, readdirSync } from "fs";
-import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
+// import { MigrationInterface, PostgresQueryRunner } from "@fullstack-one/db";
 
-export class FileStorageFunctions1561973614863 implements MigrationInterface {
-  public async up(queryRunner: PostgresQueryRunner): Promise<any> {
+export class FileStorageFunctions1561973614863 {
+  public async up(queryRunner: any): Promise<any> {
     await queryRunner.query(loadAuthFunctionsSql());
   }
 
-  public async down(queryRunner: PostgresQueryRunner): Promise<any> {
+  public async down(queryRunner: any): Promise<any> {
     // TODO: revert "CREATE FUNCTION" queries
   }
 }

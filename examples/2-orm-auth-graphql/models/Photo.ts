@@ -15,7 +15,7 @@ export default class Photo extends BaseEntity {
   @PrimaryGeneratedColumn({ comment: "This is a very important id column." })
   @QueryPermissions(anyone())
   public id: number;
-
+  
   @Column({ gqlType: "String", type: "character varying" })
   @QueryPermissions(anyone())
   public name: string;

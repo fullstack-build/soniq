@@ -1,6 +1,6 @@
 import { IFieldResolver } from "graphql-tools";
 
-import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
+import { Pool } from "@fullstack-one/core";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
@@ -8,49 +8,51 @@ import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import { HookManager } from "../hooks";
+import { ICustomResolverCreator } from "../resolverTransactions";
 
-const hookManager: HookManager = Container.get(HookManager);
+export default function getDefaultQueryResolver(
+  logger: ILogger,
+  hookManager: HookManager,
+  queryBuilder: QueryBuilder,
+  pgPool: Pool
+): ICustomResolverCreator {
+  return (resolver) => {
+    return {
+      usesPgClientFromContext: false,
+      resolver: async (obj, args, context, info, returnIdHandler) => {
+        const isAuthenticated = context.accessToken != null;
 
-export default function getDefaultQueryResolver(orm: ORM, logger: ILogger, queryBuilder: QueryBuilder, costLimit: number): IFieldResolver<any, any> {
-  return async (obj, args, context, info) => {
-    const isAuthenticated = context.accessToken != null;
+        const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated || process.env.FAKE_AUTHENTICATION_FOR_QUERIES === "true");
 
-    const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated || process.env.FAKE_AUTHENTICATION_FOR_QUERIES === "true");
+        const pgClient = await pgPool.connect();
 
-    const queryRunner = orm.createQueryRunner();
+        try {
+          await pgClient.query("BEGIN;");
 
-    try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+          setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
 
-      setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
+          await hookManager.executePreQueryHooks(pgClient, context, queryBuild.authRequired, queryBuild);
 
-      await hookManager.executePreQueryHooks(queryRunner, context, queryBuild.authRequired, queryBuild);
+          logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
 
-      logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
+          await checkCosts(pgClient, queryBuild, queryBuilder.getCostLimit());
 
-      if (queryBuild.potentialHighCost === true) {
-        const currentCost = await checkCosts(queryRunner, queryBuild, costLimit);
-        logger.debug(
-          "The current query has been identified as potentially too expensive and could get denied in case the data set gets bigger." +
-            ` Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${queryBuild.maxDepth})`
-        );
+          const result = await pgClient.query(queryBuild.sql, queryBuild.values);
+          checkQueryResultForInjection(result.rows, logger);
+
+          const data = result.rows[0][queryBuild.queryName];
+
+          await pgClient.query("COMMIT;");
+
+          return data;
+        } catch (e) {
+          await pgClient.query("ROLLBACK;");
+          throw e;
+        } finally {
+          await pgClient.release();
+        }
       }
-
-      const result = await queryRunner.query(queryBuild.sql, queryBuild.values);
-      checkQueryResultForInjection(result, logger);
-
-      const data = result[0][queryBuild.queryName];
-
-      await queryRunner.commitTransaction();
-
-      return data;
-    } catch (e) {
-      await queryRunner.rollbackTransaction();
-      throw e;
-    } finally {
-      await queryRunner.release();
-    }
+    };
   };
 }
 

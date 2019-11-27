@@ -1,28 +1,30 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
-
 import { IParsedResolveInfo, parseResolveInfo, IMatch } from "../types";
 import { IQueryBuildOject, IQueryClauseObject } from "./types";
 import QueryBuild from "./QueryBuild";
+import { IDefaultResolverMeta } from "../../RuntimeInterfaces";
+import { OperatorsBuilder } from "../../logicalOperators";
 
 export * from "./types";
 
 export default class QueryBuilder {
-  private resolverMeta: IResolverMeta;
-  private dbMeta: IDbMeta;
-  private minQueryDepthToCheckCostLimit: number;
+  private operatorsBuilder: OperatorsBuilder;
+  private defaultResolverMeta: IDefaultResolverMeta;
 
-  constructor(resolverMeta: IResolverMeta, dbMeta: IDbMeta, minQueryDepthToCheckCostLimit: number) {
-    this.resolverMeta = resolverMeta;
-    this.dbMeta = dbMeta;
-    this.minQueryDepthToCheckCostLimit = minQueryDepthToCheckCostLimit;
+  constructor(operatorsBuilder: OperatorsBuilder, defaultResolverMeta: IDefaultResolverMeta) {
+    this.operatorsBuilder = operatorsBuilder;
+    this.defaultResolverMeta = defaultResolverMeta;
   }
 
   public build(info: GraphQLResolveInfo, isAuthenticated: boolean, match: IMatch = null): IQueryBuildOject {
     const query: IParsedResolveInfo<IQueryClauseObject> = parseResolveInfo(info);
 
-    const selectQueryBuild = new QueryBuild(this.resolverMeta, this.dbMeta, isAuthenticated, this.minQueryDepthToCheckCostLimit, query, match);
+    const selectQueryBuild = new QueryBuild(this.operatorsBuilder, this.defaultResolverMeta, isAuthenticated, query, match);
     return selectQueryBuild.getBuildObject();
+  }
+
+  public getCostLimit(): number {
+    return this.defaultResolverMeta.costLimit;
   }
 }

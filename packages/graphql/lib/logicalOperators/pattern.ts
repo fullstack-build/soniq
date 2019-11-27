@@ -1,98 +1,100 @@
-import { ISingleValueOperator } from "./types";
+import { IOperator } from "./types";
 
-const like: ISingleValueOperator = {
+const like: IOperator = {
   name: "like",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text LIKE ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text LIKE ${getParam(value)}`;
   }
 };
 
-const notLike: ISingleValueOperator = {
+const notLike: IOperator = {
   name: "notLike",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text NOT LIKE ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text NOT LIKE ${getParam(value)}`;
   }
 };
 
-const iLike: ISingleValueOperator = {
+const iLike: IOperator = {
   name: "iLike",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text ILIKE ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text ILIKE ${getParam(value)}`;
   }
 };
 
-const notILike: ISingleValueOperator = {
+const notILike: IOperator = {
   name: "notILike",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text NOT ILIKE ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text NOT ILIKE ${getParam(value)}`;
   }
 };
 
-const similarTo: ISingleValueOperator = {
+const similarTo: IOperator = {
   name: "similarTo",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text SIMILAR TO ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text SIMILAR TO ${getParam(value)}`;
   }
 };
 
-const notSimilarTo: ISingleValueOperator = {
+const notSimilarTo: IOperator = {
   name: "notSimilarTo",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text NOT SIMILAR TO ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text NOT SIMILAR TO ${getParam(value)}`;
   }
 };
 
-const posixMatchCaseSensitive: ISingleValueOperator = {
+const posixMatchCaseSensitive: IOperator = {
   name: "posixMatchCaseSensitive",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text ~ ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text ~ ${getParam(value)}`;
   }
 };
 
-const posixMatchCaseInsensitive: ISingleValueOperator = {
+const posixMatchCaseInsensitive: IOperator = {
   name: "posixMatchCaseInsensitive",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text ~* ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text ~* ${getParam(value)}`;
   }
 };
 
-const posixNoMatchCaseSensitive: ISingleValueOperator = {
+const posixNoMatchCaseSensitive: IOperator = {
   name: "posixNoMatchCaseSensitive",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text !~ ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text !~ ${getParam(value)}`;
   }
 };
 
-const posixNoMatchCaseInsensitive: ISingleValueOperator = {
+const posixNoMatchCaseInsensitive: IOperator = {
   name: "posixNoMatchCaseInsensitive",
-  value: "String",
+  gqlInputType: "String",
   getSql: (context) => {
-    const { field, value } = context;
-    return `${field}::text !~* ${value}`;
+    const { fieldPgSelector, value, getParam } = context;
+    return `${fieldPgSelector}::text !~* ${getParam(value)}`;
   }
 };
 
 export {
   like,
   notLike,
+  iLike,
+  notILike,
   similarTo,
   notSimilarTo,
   posixMatchCaseSensitive,

@@ -3,9 +3,7 @@ export interface IQueryBuildOject {
   values: any[];
   queryName: string;
   authRequired: boolean;
-  potentialHighCost: boolean;
-  costTree: any;
-  maxDepth: number;
+  subqueryCount: number;
 }
 
 export interface IQueryClauseObject {

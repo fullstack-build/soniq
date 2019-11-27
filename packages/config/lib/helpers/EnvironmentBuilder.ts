@@ -8,8 +8,8 @@ const nodeIdLength = 6;
 // TODO: Needs to be rewritten to actually look for the latest framework version
 export default class EnvironmentBuilder {
   public static buildEnvironment(NODE_ENV: string, namespace: string): IEnvironment {
-    const frameworkVersion = require("../../package.json").version;
     const applicationRootPath = path.dirname(require.main.filename);
+    const frameworkVersion = require(path.join(applicationRootPath, "..", "package.json")).version;
     const { applicationName, applicationVersion } = this.getApplicationNameAndVersion(applicationRootPath);
     const nodeId = this.generateNodeId(nodeIdLength);
 
@@ -25,7 +25,7 @@ export default class EnvironmentBuilder {
   }
 
   private static getApplicationNameAndVersion(applicationRootPath: string): { applicationName: string; applicationVersion: string } {
-    const applicationPackageJSON = require(`${applicationRootPath}/package.json`);
+    const applicationPackageJSON = require(path.join(applicationRootPath, "..", "package.json"));
 
     return {
       applicationName: applicationPackageJSON.name,
