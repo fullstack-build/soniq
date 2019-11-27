@@ -26,14 +26,6 @@ export const exampleSchema: IDbSchema = {
       name: "lastName",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500002"]
     },{
-      id: "67afcca1-37b2-4c5e-8f6e-6bab43500013",
-      type: "text", 
-      name: "foobar42",
-      properties: {
-        nullable: true
-      },
-      appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500002"]
-    },{
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
       type: "enum", 
       name: "gender",
@@ -255,7 +247,7 @@ export const exampleSchema: IDbSchema = {
     placeholders: [],
     authRequired: true,
     nameTemplate: "currentUserId",
-    sqlTemplate: "uuid_generate_v4()"
+    sqlTemplate: "_auth.current_user_id()"
   },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500002",
     name: "Owner",
