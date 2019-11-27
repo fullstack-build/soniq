@@ -42,6 +42,7 @@ typings/
 
 # Distribution folder
 **/dist
+examples/*/build
 
 # Optional npm cache directory
 .npm
