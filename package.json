@@ -48,7 +48,7 @@
   "devDependencies": {
     "@types/node": "^8.10.54",
     "git-hooks": "^1.1.10",
-    "lerna": "^2.11.0",
+    "lerna": "^3.19.0",
     "nyc": "^14.1.1",
     "prettier": "^1.18.2",
     "source-map-support": "^0.5.12",
