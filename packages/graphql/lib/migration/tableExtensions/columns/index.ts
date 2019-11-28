@@ -27,7 +27,7 @@ export const tableExtenstionColumns: ITableExtension = {
     const mergeResult = createMergeResultFunction(result);
 
     const columns = table.columns
-      .map((column) => {
+      .map((column, columnIndex) => {
         // Check if current tables have unique id's
         const idValidation = helpers.validateId(column.id);
 
@@ -43,7 +43,8 @@ export const tableExtenstionColumns: ITableExtension = {
           const columnExtensionContext: IColumnExtensionContext = {
             schema,
             table,
-            column
+            column,
+            columnIndex
           };
           const columnExtension = helpers.getColumnExtensionByType(column.type);
           if (columnExtension == null) {
@@ -109,7 +110,7 @@ export const tableExtenstionColumns: ITableExtension = {
       let columnProceeded: any = false;
 
       // Try to match columns by name
-      columns.forEach((column) => {
+      columns.forEach((column, columnIndex) => {
         // If the id is in updateColumns, the column has already been identified
         if (updateColumns[column.id] != null) {
           return;
@@ -117,7 +118,8 @@ export const tableExtenstionColumns: ITableExtension = {
         const columnExtensionContext: IColumnExtensionContext = {
           schema,
           table,
-          column
+          column,
+          columnIndex
         };
         const columnExtension = helpers.getColumnExtensionByType(column.type);
         if (columnInfo.column_name === columnExtension.getPgColumnName(columnExtensionContext)) {
@@ -166,13 +168,14 @@ export const tableExtenstionColumns: ITableExtension = {
     });
 
     // All columns, which are not in updateColumns are new
-    await asyncForEach(columns, async (column: IDbColumn) => {
+    await asyncForEach(columns, async (column: IDbColumn, columnIndex: number) => {
       if (updateColumns[column.id] == null) {
         try {
           const columnExtensionContext: IColumnExtensionContext = {
             schema,
             table,
-            column
+            column,
+            columnIndex
           };
           const columnExtension = helpers.getColumnExtensionByType(column.type);
           const createColumnResult = await columnExtension.create(columnExtensionContext, dbClient);

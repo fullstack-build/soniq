@@ -176,7 +176,7 @@ export const columnExtensionEnum: IColumnExtension = {
               .join(", ")});`,
             sql
           ],
-          operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN
+          operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0)
         }
       ]
     };

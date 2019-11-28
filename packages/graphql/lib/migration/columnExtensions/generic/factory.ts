@@ -116,7 +116,7 @@ export function createGenericColumnExtension(
       return {
         errors: [],
         warnings: [],
-        commands: [{ sqls: [sql], operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN }]
+        commands: [{ sqls: [sql], operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0) }]
       };
     },
     update: async (context: IColumnExtensionContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {

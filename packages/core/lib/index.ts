@@ -166,12 +166,7 @@ export class Core {
       // .replace(new RegExp("'", "g"), "\\'")
       migrationResult.commands.push({
         sqls: [
-          `
-          INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") 
-          VALUES('${version}', $OneJsonToken$${JSON.stringify(appConfig)}$OneJsonToken$, $OneJsonToken$${JSON.stringify(
-            migrationResult.runtimeConfig
-          )}$OneJsonToken$);
-          `
+          `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $OneJsonToken$${JSON.stringify(appConfig)}$OneJsonToken$, $OneJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$OneJsonToken$);`
         ],
         operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA
       });
@@ -430,8 +425,10 @@ export class Core {
 
       result.commands.forEach((command: ICommand) => {
         command.sqls.forEach((sql) => {
-          // tslint:disable-next-line:no-console
-          console.log(sql);
+          if (sql.startsWith(`INSERT INTO "_core"."Migrations"`) !== true) {
+            // tslint:disable-next-line:no-console
+            console.log(sql);
+          }
         });
       });
 
@@ -485,8 +482,10 @@ export class Core {
 
       result.commands.forEach((command: ICommand) => {
         command.sqls.forEach((sql) => {
-          // tslint:disable-next-line:no-console
-          console.log(sql);
+          if (sql.startsWith(`INSERT INTO "_core"."Migrations"`) !== true) {
+            // tslint:disable-next-line:no-console
+            console.log(sql);
+          }
         });
       });
 

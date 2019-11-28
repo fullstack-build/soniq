@@ -9,6 +9,7 @@ export interface IColumnExtensionContext {
   schema: IDbSchema;
   table: IDbTable;
   column: IDbColumn;
+  columnIndex?: number;
 }
 
 export interface IColumnExtensionDeleteContext {
