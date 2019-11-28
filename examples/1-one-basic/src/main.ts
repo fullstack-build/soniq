@@ -42,7 +42,10 @@ export const appConfig: IAppConfig = {
     key: "GraphQl",
     appConfig: exampleSchema,
     envConfig: {
-      "development": {}
+      "development": {
+        playgroundActive: true,
+        introspectionActive: true
+      }
     }
   },{
     key: "Auth",

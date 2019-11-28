@@ -1,4 +1,4 @@
-export interface IRuntimeConfigCore {
+export interface IRuntimeConfigGql {
   gqlTypeDefs: string;
   resolvers: IResolver[];
   defaultResolverMeta: IDefaultResolverMeta;
@@ -16,6 +16,8 @@ export interface IDefaultResolverMeta {
   viewsSchemaName: string;
   costLimit: number;
   minSubqueryCountToCheckCostLimit: number;
+  playgroundActive: boolean;
+  introspectionActive: boolean;
   query: {
     [name: string]: IQueryViewMeta;
   };

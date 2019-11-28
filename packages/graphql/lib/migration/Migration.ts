@@ -162,7 +162,7 @@ export class Migration {
     // Generate Gql-Schema, Permission-Views and Metadata
     if (schema.permissionViewSchema != null) {
       const permissionGenerator = new PermissionGenerator();
-      const permissions = await permissionGenerator.generate(schema, dbClient, helpers);
+      const permissions = await permissionGenerator.generate(schema, dbClient, helpers, envConfig);
       permissions.commands.forEach((command) => {
         result.commands.push(command);
       });

@@ -6,12 +6,21 @@ import IGraphQlConfig from "./IGraphQlConfig";
 import { ILogger } from "@fullstack-one/logger";
 import { Koa } from "@fullstack-one/server";
 import { TGetModuleRuntimeConfig, Pool } from "@fullstack-one/core";
-import { IRuntimeConfigCore } from "./RuntimeInterfaces";
+import { IRuntimeConfigGql } from "./RuntimeInterfaces";
 import getDefaultResolvers from "./getDefaultResolvers";
 import { getResolvers, ICustomResolverObject } from "./resolverTransactions";
 import { makeExecutableSchema } from "graphql-tools";
 import { HookManager } from "./hooks";
 import { OperatorsBuilder } from "./logicalOperators";
+const compose = require('koa-compose');
+
+function match (path) {
+  // does not match prefix at all
+  if (path.indexOf("/") !== 0) return false
+
+  const newPath = path.replace("/", '') || '/'
+  return newPath
+}
 
 export async function applyApolloMiddleware(
   app: Koa,
@@ -22,38 +31,42 @@ export async function applyApolloMiddleware(
   logger: ILogger,
   hookManager: HookManager,
   operatorsBuilder: OperatorsBuilder
-): Promise<ApolloServer> {
-  const schema = await makeSchema(getRuntimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
-  const server = createApolloServer(schema, config, logger);
-  const path = config.endpoint;
+): Promise<void> {
+  app.use(async (ctx, upstream) => {
+    const runtimeConfig: IRuntimeConfigGql = await getRuntimeConfig();
+    const schema = await makeSchema(runtimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
+    const server = createApolloServer(schema, runtimeConfig, logger);
+    const path = config.endpoint;
 
-  app.use(enforceOriginMatch(path));
-  app.use(setCacheHeaders(path));
-  app.use(async (ctx, next) => {
-    // test
-    const newSchema = await makeSchema(getRuntimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
+    const gqlApp = new Koa();
 
-    const newServer = createApolloServer(newSchema, config, logger);
+    gqlApp.use(enforceOriginMatch(path));
+    gqlApp.use(setCacheHeaders(path));
+    /* gqlApp.use(async (ctx, next) => {
+      const runtimeConfig: IRuntimeConfigGql = await getRuntimeConfig();
+      const newSchema = await makeSchema(runtimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
 
-    _.set(server, "schema", _.get(newServer, "schema"));
+      const newServer = createApolloServer(newSchema, runtimeConfig, logger);
 
-    await next();
+      _.set(server, "schema", _.get(newServer, "schema"));
+
+      await next();
+    });*/
+
+    server.applyMiddleware({ app: gqlApp, path });
+
+    return await gqlApp.handleRequest(ctx, compose(gqlApp.middleware));
   });
-
-  server.applyMiddleware({ app, path });
-
-  return server;
 }
 
 async function makeSchema(
-  getRuntimeConfig: TGetModuleRuntimeConfig,
+  runtimeConfig: IRuntimeConfigGql,
   diResolvers: ICustomResolverObject,
   pgPool: Pool,
   hookManager: HookManager,
   logger: ILogger,
   operatorsBuilder: OperatorsBuilder
 ) {
-  const runtimeConfig: IRuntimeConfigCore = await getRuntimeConfig();
   const defaultResolvers = getDefaultResolvers(operatorsBuilder, runtimeConfig.defaultResolverMeta, hookManager, pgPool, logger);
 
   const runtimeResolvers = { ...defaultResolvers, ...diResolvers };
@@ -62,10 +75,11 @@ async function makeSchema(
   return makeExecutableSchema({ typeDefs: runtimeConfig.gqlTypeDefs, resolvers });
 }
 
-function createApolloServer(schema: GraphQLSchema, { graphiQlEndpointActive }: IGraphQlConfig, logger: ILogger): ApolloServer {
+function createApolloServer(schema: GraphQLSchema, runtimeConfig: IRuntimeConfigGql, logger: ILogger): ApolloServer {
   const koaGraphQlConfig = getKoaGraphQLOptionsFunction(schema, logger);
 
-  koaGraphQlConfig.playground = graphiQlEndpointActive === true;
+  koaGraphQlConfig.playground = runtimeConfig.defaultResolverMeta.playgroundActive;
+  koaGraphQlConfig.introspection = runtimeConfig.defaultResolverMeta.introspectionActive;
 
   const server = new ApolloServer(koaGraphQlConfig);
 

@@ -1,5 +1,5 @@
 import { IDbSchema, IDbTable } from "../DbSchemaInterface";
-import { PoolClient, OPERATION_SORT_POSITION } from "@fullstack-one/core";
+import { PoolClient, OPERATION_SORT_POSITION, IModuleEnvConfig } from "@fullstack-one/core";
 import { IHelpers } from "../schemaExtensions/ISchemaExtension";
 import { ExpressionCompiler } from "../ExpressionCompiler";
 import { QueryPermissionGenerator } from "./QueryPermissionGenerator";
@@ -75,7 +75,7 @@ export class PermissionGenerator {
       };
     });
   }
-  public async generate(schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers) {
+  public async generate(schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers, envConfig: IModuleEnvConfig) {
     let gqlTypeDefs = "";
     const commands: IGqlCommand[] = [];
     const views = [];
@@ -84,8 +84,10 @@ export class PermissionGenerator {
       viewsSchemaName: schema.permissionViewSchema,
       query: {},
       mutation: {},
-      costLimit: 2000000000,
-      minSubqueryCountToCheckCostLimit: 3
+      costLimit: envConfig.costLimit != null ? envConfig.costLimit : 2000000000,
+      minSubqueryCountToCheckCostLimit: envConfig.minSubqueryCountToCheckCostLimit != null ? envConfig.minSubqueryCountToCheckCostLimit : 3,
+      playgroundActive: envConfig.playgroundActive === true,
+      introspectionActive: envConfig.introspectionActive === true
     };
 
     schema.tables.forEach((table) => {

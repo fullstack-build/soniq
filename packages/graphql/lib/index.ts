@@ -34,7 +34,7 @@ import { Migration, ITypeDefsExtension, IResolverExtension } from "./migration/M
 import { IColumnExtension } from "./migration/columnExtensions/IColumnExtension";
 import { ISchemaExtension } from "./migration/schemaExtensions/ISchemaExtension";
 import { ITableExtension } from "./migration/tableExtensions/ITableExtension";
-import { IRuntimeConfigCore } from "./RuntimeInterfaces";
+import { IRuntimeConfigGql } from "./RuntimeInterfaces";
 import getDefaultResolvers from "./getDefaultResolvers";
 import { migrate } from "./basicMigration";
 import { createMergeResultFunction } from "./migration/helpers";
