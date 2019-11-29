@@ -1,8 +1,6 @@
 module.exports = {
-  server: {
-    port: 3000,
-    compression: {
-      threshold: 2048
-    }
+  port: 3030,
+  compression: {
+    threshold: 2048
   }
 };
