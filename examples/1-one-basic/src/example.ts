@@ -249,6 +249,14 @@ export const exampleSchema: IDbSchema = {
     nameTemplate: "currentUserId",
     sqlTemplate: "_auth.current_user_id()"
   },{
+    id: "17afcca1-37b2-4c5e-7f6e-6bab43500004",
+    name: "currentUserIdOrNull",
+    gqlReturnType: "String",
+    placeholders: [],
+    authRequired: true,
+    nameTemplate: "currentUserIdOrNull",
+    sqlTemplate: "_auth.current_user_id_or_null()"
+  },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500002",
     name: "Owner",
     gqlReturnType: "Boolean",
@@ -257,15 +265,15 @@ export const exampleSchema: IDbSchema = {
       type: "INPUT",
       inputType: "LOCAL_COLUMN"
     },{
-      key: "currentUserId",
+      key: "currentUserIdOrNull",
       type: "EXPRESSION",
       appliedExpression: {
         id: "17afcca1-37b2-4c5e-6f6e-6bab43500001",
-        expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500001",
+        expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500004",
         params: {}
       }
     }],
     nameTemplate: "Owner_{{column.columnName}}",
-    sqlTemplate: "${currentUserId} = ${column.columnSelector}"
+    sqlTemplate: "${currentUserIdOrNull} = ${column.columnSelector} AND ${currentUserIdOrNull} IS NOT NULL"
   }]
 }

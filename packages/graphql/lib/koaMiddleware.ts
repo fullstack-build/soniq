@@ -32,28 +32,24 @@ export async function applyApolloMiddleware(
   hookManager: HookManager,
   operatorsBuilder: OperatorsBuilder
 ): Promise<void> {
+  let gqlApp: Koa;
+
   app.use(async (ctx, upstream) => {
-    const runtimeConfig: IRuntimeConfigGql = await getRuntimeConfig();
-    const schema = await makeSchema(runtimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
-    const server = createApolloServer(schema, runtimeConfig, logger);
-    const path = config.endpoint;
+    const { runtimeConfig, hasBeenUpdated } = await getRuntimeConfig("APOLLO"); // IRuntimeConfigGql
 
-    const gqlApp = new Koa();
+    if (gqlApp == null || hasBeenUpdated === true) {
+      const schema = await makeSchema(runtimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
+      const server = createApolloServer(schema, runtimeConfig, logger);
+      const path = config.endpoint;
 
-    gqlApp.use(enforceOriginMatch(path));
-    gqlApp.use(setCacheHeaders(path));
-    /* gqlApp.use(async (ctx, next) => {
-      const runtimeConfig: IRuntimeConfigGql = await getRuntimeConfig();
-      const newSchema = await makeSchema(runtimeConfig, diResolvers, pgPool, hookManager, logger, operatorsBuilder);
+      gqlApp = null;
+      gqlApp = new Koa();
 
-      const newServer = createApolloServer(newSchema, runtimeConfig, logger);
+      gqlApp.use(enforceOriginMatch(path));
+      gqlApp.use(setCacheHeaders(path));
 
-      _.set(server, "schema", _.get(newServer, "schema"));
-
-      await next();
-    });*/
-
-    server.applyMiddleware({ app: gqlApp, path });
+      server.applyMiddleware({ app: gqlApp, path });
+    }
 
     return await gqlApp.handleRequest(ctx, compose(gqlApp.middleware));
   });

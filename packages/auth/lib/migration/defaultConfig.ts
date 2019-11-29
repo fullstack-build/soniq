@@ -1,4 +1,4 @@
-module.exports = {
+export const defaultConfig = {
   secrets: {
     admin:    null,
     cookie:   null,
@@ -6,17 +6,6 @@ module.exports = {
     authProviderHashSignature: null
   },
   sodium: {},
-  oAuth: {
-    cookie: {
-      maxAge:     86400000,
-      overwrite:  true,
-      httpOnly:   true,
-      signed:     true
-    },
-    providers:        {},
-    frontendOrigins:  ["*"],
-    serverApiAddress: "http://localhost:3000"
-  },
   authFactorProofTokenMaxAgeInSeconds: 86400, // Should be changed to one minute in production
   userIdentifierMaxAgeInSeconds: 60,
   cookie: {
@@ -24,12 +13,11 @@ module.exports = {
     maxAge:     1209600000, // Two weeks
     overwrite:  true,
     httpOnly:   true,
-    signed:     true,
-    overwrite:  true
+    signed:     true
   },
   tokenQueryParameter:          "access_token",
   validOrigins: [
-    "http://localhost:3000"
+    "http://localhost:3030"
   ],
   isServerBehindProxy: true,
   enforceHttpsOnProduction: true,
@@ -46,5 +34,15 @@ module.exports = {
   },
   crypto: {
     algorithm: "aes-256-cbc"
+  },
+  pgConfig: {
+    access_token_bf_iter_count: 4,
+    access_token_max_age_in_seconds: 1209600,
+    auth_factor_providers: "password:email",
+    get_tenant_by_user_id_query: `SELECT 'default' "tenantId";`,
+    hash_bf_iter_count: 6,
+    refresh_token_bf_iter_count: 6,
+    transaction_token_max_age_in_seconds: 86400,
+    admin_token_secret: null
   }
-};
+}

@@ -49,7 +49,14 @@ export const appConfig: IAppConfig = {
     }
   },{
     key: "Auth",
-    appConfig: {},
+    appConfig: {
+      secrets: {
+        admin: "HugoBoss",
+        cookie: "FooBar",
+        authProviderHashSignature: "test1234",
+        encryptionKey: "qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL"
+      }
+    },
     envConfig: {
       "development": {}
     }

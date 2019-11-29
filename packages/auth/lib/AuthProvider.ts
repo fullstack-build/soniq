@@ -161,4 +161,10 @@ export class AuthProvider {
   public getAuthQueryHelper(): AuthQueryHelper {
     return this.authQueryHelper;
   }
+
+  public _boot(authConnector: AuthConnector, authQueryHelper: AuthQueryHelper, signHelper: SignHelper) {
+    this.authConnector = authConnector;
+    this.authQueryHelper = authQueryHelper;
+    this.signHelper = signHelper;
+  }
 }

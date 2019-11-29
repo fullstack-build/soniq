@@ -52,6 +52,9 @@ export class Auth {
   private logger: ILogger;
   private loggerFactory: LoggerFactory;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
+  private authProviders: AuthProvider[] = [];
+  private getRuntimeConfig: TGetModuleRuntimeConfig;
+  private pgPool: Pool;
 
   public authConnector: AuthConnector;
 
@@ -70,14 +73,6 @@ export class Auth {
 
     this.loggerFactory = loggerFactory;
     this.logger = loggerFactory.create(this.constructor.name);
-
-    this.cryptoFactory = new CryptoFactory(this.authConfig.secrets.encryptionKey, this.authConfig.crypto.algorithm);
-    this.signHelper = new SignHelper(this.authConfig.secrets.admin, this.cryptoFactory);
-
-    this.authQueryHelper = new AuthQueryHelper(null, this.logger, this.cryptoFactory, this.signHelper);
-    this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, this.authConfig);
-    this.csrfProtection = new CSRFProtection(this.logger, this.authConfig);
-    this.accessTokenParser = new AccessTokenParser(this.authConfig);
     this.graphQl = graphQl;
     this.core = core;
 
@@ -121,49 +116,82 @@ export class Auth {
     return migrate(this.graphQl, appConfig, envConfig, pgClient);
   }
   private async boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) {
-    this.authQueryHelper.setPool(pgPool);
+    this.getRuntimeConfig = getRuntimeConfig;
+    this.pgPool = pgPool;
+    const { runtimeConfig } = await getRuntimeConfig();
+
+    this.updateHelpers(runtimeConfig);
+  }
+
+  private updateHelpers (runtimeConfig: any) {
+    this.cryptoFactory = new CryptoFactory(runtimeConfig.secrets.encryptionKey, runtimeConfig.crypto.algorithm);
+    this.signHelper = new SignHelper(runtimeConfig.secrets.admin, this.cryptoFactory);
+
+    this.authQueryHelper = new AuthQueryHelper(this.pgPool, this.logger, this.cryptoFactory, this.signHelper);
+    this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, runtimeConfig);
+
+    this.authProviders.forEach((authProvider) => {
+      authProvider._boot(this.authConnector, this.authQueryHelper, this.signHelper);
+    });
   }
 
   private addMiddleware(server: Server) {
     const app = server.getApp();
-    app.keys = [this.authConfig.secrets.cookie];
-
-    // If app.proxy === true koa will respect x-forwarded headers
-    app.proxy = this.authConfig.isServerBehindProxy === true ? true : false;
 
     // Prevent CSRF
-    app.use(this.csrfProtection.createSecurityContext.bind(this.csrfProtection));
+    app.use(async (ctx, next) => {
+      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("CSRF");
 
-    const corsOptions = {
-      ...this.authConfig.corsOptions,
-      origin: (ctx) => {
-        return ctx.request.get("origin");
+      if (hasBeenUpdated) {
+        this.updateHelpers(runtimeConfig);
+
+        app.keys = [runtimeConfig.secrets.cookie];
+        app.proxy = runtimeConfig.isServerBehindProxy === true ? true : false;
       }
-    };
+
+      if (hasBeenUpdated || this.csrfProtection == null) {
+        this.csrfProtection = new CSRFProtection(this.logger, runtimeConfig);
+      }
+
+      await this.csrfProtection.createSecurityContext(ctx, next);
+    });
 
     // Allow CORS requests
-    app.use(koaCors(corsOptions));
+    app.use(async (ctx, next) => {
+      const { runtimeConfig } = await this.getRuntimeConfig();
+
+      const corsOptions = {
+        ...runtimeConfig.corsOptions,
+        origin: (ctx) => {
+          return ctx.request.get("origin");
+        }
+      };
+
+      return await koaCors(corsOptions)(ctx, next);
+    });
 
     // Parse AccessToken
-    app.use(this.accessTokenParser.parse.bind(this.accessTokenParser));
+    app.use(async (ctx, next) => {
+      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("ACCESS_TOKEN");
+
+      if (hasBeenUpdated || this.csrfProtection == null) {
+        this.accessTokenParser = new AccessTokenParser(runtimeConfig);
+      }
+
+      return await this.accessTokenParser.parse(ctx, next);
+    });
   }
 
   private async preQueryHook(pgClient, context, authRequired: boolean, buildObject) {
     // If the current request is a query (not a mutation)
     if (context._isRequestGqlQuery === true) {
-      if (authRequired === true) {
-        if (context.accessToken != null) {
-          try {
-            await this.authQueryHelper.authenticateTransaction(pgClient, context.accessToken);
-          } catch (err) {
-            this.logger.trace("authenticateTransaction.failed", err);
-            this.deleteAccessTokenCookie(context.ctx);
-            throw err;
-          }
-        } else {
-          if (this.authConfig.ignoreAuthErrorForUnauthenticatedQueriesToAuthViews !== true) {
-            throw new AuthenticationError("Authentication is required for this query. AccessToken missing.");
-          }
+      if (authRequired === true && context.accessToken != null) {
+        try {
+          await this.authQueryHelper.authenticateTransaction(pgClient, context.accessToken);
+        } catch (err) {
+          this.logger.trace("authenticateTransaction.failed", err);
+          this.deleteAccessTokenCookie(context.ctx);
+          throw err;
         }
       }
     } else {
@@ -416,7 +444,7 @@ export class Auth {
   }
 
   public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
-    return new AuthProvider(
+    const authProvider = new AuthProvider(
       providerName,
       this.authConnector,
       this.authQueryHelper,
@@ -425,6 +453,10 @@ export class Auth {
       this.authConfig,
       authFactorProofTokenMaxAgeInSeconds
     );
+
+    this.authProviders.push(authProvider);
+
+    return authProvider;
   }
 
   public getAuthQueryHelper(): AuthQueryHelper {

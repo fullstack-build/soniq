@@ -1,22 +1,9 @@
 import { generateAuthSchema } from "./basic";
 import { GraphQl } from "@fullstack-one/graphql";
 import { IModuleAppConfig, IModuleEnvConfig, PoolClient, OPERATION_SORT_POSITION } from "@fullstack-one/core";
+import { ConfigMergeHelper } from "./ConfigMergeHelper";
 
-const defaultSettings = {
-  access_token_bf_iter_count: "4",
-  access_token_max_age_in_seconds: "1209600",
-  access_token_secret: "geheim",
-  admin_token_secret: "boss",
-  auth_factor_providers: "password:email:facebook",
-  get_tenant_by_user_id_query: `SELECT 'default' "tenantId";`,
-  hash_bf_iter_count: "6",
-  hash_secret: "gehtdichnixan",
-  refresh_token_bf_iter_count: "6",
-  refresh_token_secret: "ThisIsSparta",
-  transaction_token_max_age_in_seconds: "86400",
-  transaction_token_secret: "$2a$04$G6winEQvL4s7kTk8GJ9tq.w3.N3N6bQkm5KDQ.kmQvyMIfBqfh43q",
-  transaction_token_timestamp: "1554743124"
-};
+const requiredSecrets = ["access_token_secret", "hash_secret", "refresh_token_secret", "transaction_token_secret"];
 
 export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient) {
   const authSchema = await generateAuthSchema();
@@ -25,22 +12,34 @@ export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, env
 
   const result = await gqlMigration.generateSchemaMigrationCommands(authSchema, {}, pgClient);
 
+  const { runtimeConfig, errors } = ConfigMergeHelper.merge(appConfig, envConfig);
+
+  errors.forEach((error) => {
+    result.errors.push(error);
+  });
+
   const currentSettings = await getCurrentSettings(pgClient);
   const sqls: string[] = [];
 
-  Object.keys(defaultSettings).forEach((key) => {
+  Object.keys(runtimeConfig.pgConfig).forEach((key) => {
     if (currentSettings[key] == null) {
-      if (envConfig[key] != null) {
-        sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, $tok$${envConfig[key]}$tok$);`);
-      } else {
-        sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, $tok$${defaultSettings[key]}$tok$);`);
-      }
+      sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, $tok$${runtimeConfig.pgConfig[key]}$tok$);`);
     } else {
-      if (envConfig[key] != null && envConfig[key] !== currentSettings[key]) {
-        sqls.push(`UPDATE _auth."Settings" SET "value"=$tok$${envConfig[key]}$tok$ WHERE "key"=$tok$${key}$tok$;`);
+      if (runtimeConfig.pgConfig[key] != null && runtimeConfig.pgConfig[key] != currentSettings[key]) {
+        sqls.push(`UPDATE _auth."Settings" SET "value"=$tok$${runtimeConfig.pgConfig[key]}$tok$ WHERE "key"=$tok$${key}$tok$;`);
       }
     }
   });
+
+  requiredSecrets.forEach((key) => {
+    if (currentSettings[key] == null) {
+      sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, SUBSTRING(crypt(encode(gen_random_bytes(64), 'hex'), gen_salt('bf', 4)), 8, 21));`);
+    }
+  });
+
+  if (currentSettings["transaction_token_timestamp"] == null) {
+    sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${"transaction_token_timestamp"}$tok$, 0);`);
+  }
 
   if (sqls.length > 0) {
     result.commands.push({
@@ -48,6 +47,10 @@ export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, env
       operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA
     });
   }
+
+  result.moduleRuntimeConfig = JSON.parse(JSON.stringify(runtimeConfig));
+  result.moduleRuntimeConfig.pgConfig = null;
+  delete result.moduleRuntimeConfig.pgConfig;
 
   return result;
 }

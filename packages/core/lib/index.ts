@@ -26,7 +26,12 @@ import {
   getLatestMigrationVersion
 } from "./helpers";
 
-export type TGetModuleRuntimeConfig = () => Promise<IModuleRuntimeConfig>;
+export interface IGetModuleRuntimeConfigResult {
+  runtimeConfig: IModuleRuntimeConfig,
+  hasBeenUpdated: boolean;
+}
+
+export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
 export type TMigrationFuntion = (appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
 export type TBootFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
 export type TUpdateRuntimeConfigFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, envConfig: IModuleEnvConfig) => Promise<void>;
@@ -184,8 +189,8 @@ export class Core {
     return null;
   }
 
-  private getModuleRuntimeConfigGetter(moduleKey: string) {
-    return async () => {
+  private getModuleRuntimeConfigGetter(moduleKey: string): TGetModuleRuntimeConfig {
+    return async (updateKey: string = "DEFAULT") => {
       const pgClient = await this.runTimePgPool.connect();
       try {
         const latestMigration = await getLatestMigrationVersion(pgClient);
@@ -194,7 +199,10 @@ export class Core {
         if (latestMigration == null) {
           throw new Error("This database has no runtimeConfig.");
         }
-        return latestMigration.runtimeConfig[moduleKey];
+        return {
+          runtimeConfig: latestMigration.runtimeConfig[moduleKey],
+          hasBeenUpdated: true
+        };
       } catch (err) {
         this.logger.error(`core.boot.error.caught: ${err}\n`);
         throw err;
