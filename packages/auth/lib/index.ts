@@ -113,7 +113,11 @@ export class Auth {
     this.addMiddleware(server);
   }
   private async migrate(appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
-    return migrate(this.graphQl, appConfig, envConfig, pgClient);
+    const authFactorProviders = this.authProviders.map((authProvider) => {
+      return authProvider.providerName;
+    }).join(":");
+
+    return migrate(this.graphQl, appConfig, envConfig, pgClient, authFactorProviders);
   }
   private async boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) {
     this.getRuntimeConfig = getRuntimeConfig;
@@ -190,7 +194,7 @@ export class Auth {
           await this.authQueryHelper.authenticateTransaction(pgClient, context.accessToken);
         } catch (err) {
           this.logger.trace("authenticateTransaction.failed", err);
-          this.deleteAccessTokenCookie(context.ctx);
+          await this.deleteAccessTokenCookie(context.ctx);
           throw err;
         }
       }
@@ -203,7 +207,7 @@ export class Auth {
               context._transactionIsAuthenticated = true;
             } catch (err) {
               this.logger.trace("authenticateTransaction.failed", err);
-              this.deleteAccessTokenCookie(context.ctx);
+              await this.deleteAccessTokenCookie(context.ctx);
               throw err;
             }
           }
@@ -224,18 +228,20 @@ export class Auth {
     }
   }
 
-  private setAccessTokenCookie(ctx: any, loginData: ILoginData) {
+  private async setAccessTokenCookie(ctx: any, loginData: ILoginData) {
+    const { runtimeConfig } = await this.getRuntimeConfig();
     const cookieOptions = {
-      ...this.authConfig.cookie,
+      ...runtimeConfig.cookie,
       maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000
     };
 
-    ctx.cookies.set(this.authConfig.cookie.name, loginData.accessToken, cookieOptions);
+    ctx.cookies.set(runtimeConfig.cookie.name, loginData.accessToken, cookieOptions);
   }
 
-  private deleteAccessTokenCookie(ctx: any) {
-    ctx.cookies.set(this.authConfig.cookie.name, null);
-    ctx.cookies.set(`${this.authConfig.cookie.name}.sig`, null);
+  private async deleteAccessTokenCookie(ctx: any) {
+    const { runtimeConfig } = await this.getRuntimeConfig();
+    ctx.cookies.set(runtimeConfig.cookie.name, null);
+    ctx.cookies.set(`${runtimeConfig.cookie.name}.sig`, null);
   }
 
   private async callAndHideErrorDetails(callback) {
@@ -279,7 +285,7 @@ export class Auth {
               );
 
               if (context.ctx.securityContext.isBrowser === true) {
-                this.setAccessTokenCookie(context.ctx, loginData);
+                await this.setAccessTokenCookie(context.ctx, loginData);
 
                 loginData.accessToken = null;
               }
@@ -327,7 +333,7 @@ export class Auth {
           resolver: async (obj, args, context, info) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              this.deleteAccessTokenCookie(context.ctx);
+              await this.deleteAccessTokenCookie(context.ctx);
               await this.authConnector.invalidateAccessToken(pgClient, context.accessToken);
               return true;
             });
@@ -340,7 +346,7 @@ export class Auth {
           resolver: async (obj, args, context, info) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              this.deleteAccessTokenCookie(context.ctx);
+              await this.deleteAccessTokenCookie(context.ctx);
               await this.authConnector.invalidateAllAccessTokens(pgClient, context.accessToken);
               return true;
             });
@@ -363,7 +369,7 @@ export class Auth {
               );
 
               if (context.ctx.securityContext.isBrowser === true) {
-                this.setAccessTokenCookie(context.ctx, loginData);
+                await this.setAccessTokenCookie(context.ctx, loginData);
 
                 loginData.accessToken = null;
               }
@@ -382,7 +388,7 @@ export class Auth {
                 const tokenMeta = await this.authConnector.getTokenMeta(pgClient, context.accessToken);
                 return tokenMeta;
               } catch (err) {
-                this.deleteAccessTokenCookie(context.ctx);
+                await this.deleteAccessTokenCookie(context.ctx);
                 throw err;
               }
             });

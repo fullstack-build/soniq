@@ -5,7 +5,7 @@ import { ConfigMergeHelper } from "./ConfigMergeHelper";
 
 const requiredSecrets = ["access_token_secret", "hash_secret", "refresh_token_secret", "transaction_token_secret"];
 
-export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient) {
+export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient, authFactorProviders: string) {
   const authSchema = await generateAuthSchema();
 
   const gqlMigration = graphQl.getMigration();
@@ -17,6 +17,8 @@ export async function migrate(graphQl: GraphQl, appConfig: IModuleAppConfig, env
   errors.forEach((error) => {
     result.errors.push(error);
   });
+
+  runtimeConfig.pgConfig.auth_factor_providers = authFactorProviders;
 
   const currentSettings = await getCurrentSettings(pgClient);
   const sqls: string[] = [];

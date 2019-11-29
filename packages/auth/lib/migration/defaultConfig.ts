@@ -38,7 +38,6 @@ export const defaultConfig = {
   pgConfig: {
     access_token_bf_iter_count: 4,
     access_token_max_age_in_seconds: 1209600,
-    auth_factor_providers: "password:email",
     get_tenant_by_user_id_query: `SELECT 'default' "tenantId";`,
     hash_bf_iter_count: 6,
     refresh_token_bf_iter_count: 6,
