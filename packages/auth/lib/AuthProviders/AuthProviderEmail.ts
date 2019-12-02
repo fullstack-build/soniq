@@ -44,7 +44,7 @@ export class AuthProviderEmail {
   }
 
   private async createEmail(email: string) {
-    return this.authProvider.create(email, email, false, { email });
+    return this.authProvider.create(email.toLowerCase(), email.toLowerCase(), false, { email: email.toLowerCase() });
   }
 
   private async initiateEmailProof(userIdentifier: string, info: string = null): Promise<void> {
