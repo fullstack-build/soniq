@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/server",
-  "version": "0.6.17",
+  "version": "0.6.18",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -18,11 +18,11 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.6.17",
-    "@fullstack-one/config": "^0.6.16",
-    "@fullstack-one/di": "^0.6.16",
-    "@fullstack-one/graceful-shutdown": "^0.6.17",
-    "@fullstack-one/logger": "^0.6.17",
+    "@fullstack-one/boot-loader": "^0.6.18",
+    "@fullstack-one/config": "^0.6.18",
+    "@fullstack-one/di": "^0.6.18",
+    "@fullstack-one/graceful-shutdown": "^0.6.18",
+    "@fullstack-one/logger": "^0.6.18",
     "koa": "^2.5.2",
     "koa-bodyparser": "^4.2.1",
     "koa-compress": "^3.0.0"
