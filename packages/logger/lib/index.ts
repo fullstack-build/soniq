@@ -5,6 +5,7 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 
 export type ILogger = Tracer.Logger;
+export type ILoggerMethods<T> = Tracer.LevelOption<T>;
 
 @Service()
 export class LoggerFactory {
@@ -43,7 +44,7 @@ export class LoggerFactory {
     return tracerLogger;
   }
 
-  public attach(loggerToBeAttached: Tracer.LevelOption<() => void>): void {
+  public attach(loggerToBeAttached: ILoggerMethods<(...args) => void>): void {
     this.attachedLogger = loggerToBeAttached;
   }
 }
