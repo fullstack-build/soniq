@@ -45,9 +45,9 @@ export interface IColumnExtension {
   // Database Stuff
   getPgColumnName: (context: IColumnExtensionContext) => string;
   getPgExpression?: (context: IColumnExtensionContext, expressionGenerator: ExpressionGenerator) => string;
-  create: (context: IColumnExtensionContext, dbClient: PoolClient) => Promise<IGqlMigrationResult>;
-  update: (context: IColumnExtensionContext, columnInfo: IColumnInfo, dbClient: PoolClient) => Promise<IGqlMigrationResult>;
-  cleanUp?: (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo, dbClient: PoolClient) => Promise<IGqlMigrationResult>;
+  create: (context: IColumnExtensionContext, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
+  update: (context: IColumnExtensionContext, columnInfo: IColumnInfo, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
+  cleanUp?: (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
 
   // Helpers to create gql and ts types
   getQueryFieldData: (

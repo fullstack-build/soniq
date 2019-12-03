@@ -25,6 +25,7 @@ export interface IDbFunction {
   schema: string;
   name: string;
   definition: string;
+  runAfterTables?: boolean;
 }
 
 export interface IDbColumn {

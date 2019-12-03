@@ -7,7 +7,7 @@ import { getTables } from "./queryHelper";
 import { ITableExtension, IHelpersWithColumnHelper, ITableExtensionData } from "../../tableExtensions/ITableExtension";
 
 export const schemaExtensionTables: ISchemaExtension = {
-  generateCommands: async (schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers): Promise<IGqlMigrationResult> => {
+  generateCommands: async (schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers, gqlMigrationContext: any): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
       warnings: [],
@@ -142,7 +142,7 @@ export const schemaExtensionTables: ISchemaExtension = {
     const preloadedDataByTableExtensionIndex: { [index: string]: ITableExtensionData[] } = {};
     await asyncForEach(tableExtensions, async (tableExtension: ITableExtension, index: number) => {
       if (tableExtension.preloadData != null) {
-        preloadedDataByTableExtensionIndex[`${index}`] = await tableExtension.preloadData(schema, dbClient);
+        preloadedDataByTableExtensionIndex[`${index}`] = await tableExtension.preloadData(schema, dbClient, gqlMigrationContext);
       }
     });
 
@@ -155,7 +155,7 @@ export const schemaExtensionTables: ISchemaExtension = {
             filteredTableExtensionData = filterTableExtensionData(tableMeta, preloadedDataByTableExtensionIndex[`${index}`]);
           }
 
-          const cleanUpResult = await tableExtension.cleanUpDeletedTable(schema, tableMeta, filteredTableExtensionData, helpers, dbClient);
+          const cleanUpResult = await tableExtension.cleanUpDeletedTable(schema, tableMeta, filteredTableExtensionData, helpers, dbClient, gqlMigrationContext);
           mergeResult(cleanUpResult);
         }
       });
@@ -189,7 +189,7 @@ export const schemaExtensionTables: ISchemaExtension = {
           filteredTableExtensionData = filterTableExtensionData(existingTablesById[table.id], preloadedDataByTableExtensionIndex[`${index}`]);
         }
 
-        const extensionResult = await tableExtension.generateCommands(table, schema, filteredTableExtensionData, columnHelpers, dbClient);
+        const extensionResult = await tableExtension.generateCommands(table, schema, filteredTableExtensionData, columnHelpers, dbClient, gqlMigrationContext);
         mergeResult(extensionResult);
       });
     });

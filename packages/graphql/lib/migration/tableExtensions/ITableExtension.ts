@@ -11,20 +11,22 @@ export interface ITableExtensionData {
 }
 
 export interface ITableExtension {
-  preloadData?: (schema: IDbSchema, dbClient: PoolClient) => Promise<ITableExtensionData[]>;
+  preloadData?: (schema: IDbSchema, dbClient: PoolClient, gqlMigrationContext: any) => Promise<ITableExtensionData[]>;
   generateCommands: (
     table: IDbTable,
     schema: IDbSchema,
     extensionData: ITableExtensionData[],
     helpers: IHelpersWithColumnHelper,
-    dbClient: PoolClient
+    dbClient: PoolClient,
+    gqlMigrationContext: any
   ) => Promise<IGqlMigrationResult>;
   cleanUpDeletedTable?: (
     schema: IDbSchema,
     tableMeta: ITableMeta,
     extensionData: ITableExtensionData[],
     helpers: IHelpers,
-    dbClient: PoolClient
+    dbClient: PoolClient,
+    gqlMigrationContext: any
   ) => Promise<IGqlMigrationResult>;
 }
 

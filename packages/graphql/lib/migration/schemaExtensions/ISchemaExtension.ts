@@ -5,7 +5,7 @@ import { IColumnExtension } from "../columnExtensions/IColumnExtension";
 import { ITableExtension } from "../tableExtensions/ITableExtension";
 
 export interface ISchemaExtension {
-  generateCommands: (schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers) => Promise<IGqlMigrationResult>;
+  generateCommands: (schema: IDbSchema, dbClient: PoolClient, helpers: IHelpers, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
 }
 
 export interface IHelpers {

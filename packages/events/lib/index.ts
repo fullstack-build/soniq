@@ -3,7 +3,7 @@ import { Client as PgClient, Notification, ClientConfig } from "pg";
 import { Container, Service, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { LoggerFactory, ILogger } from "@fullstack-one/logger";
-import { BootLoader } from "@fullstack-one/boot-loader";
+// import { BootLoader } from "@fullstack-one/boot-loader";
 import { IEventEmitterConfig, IEvent, TEventListener } from "./types";
 
 @Service()
@@ -19,7 +19,7 @@ export class EventEmitter {
   constructor(
     @Inject((type) => Config) config: Config,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => BootLoader) bootLoader: BootLoader
+    // @Inject((type) => BootLoader) bootLoader: BootLoader
   ) {
     this.config = config.registerConfig("Events", `${__dirname}/../config`);
     this.logger = loggerFactory.create(this.constructor.name);
@@ -32,7 +32,7 @@ export class EventEmitter {
     const clientConfig = { ...this.config.pgClient, application_name: `${this.getPgClientApplicationNamePrefix()}_${this.nodeId}` };
     this.pgClient = new PgClient(clientConfig as ClientConfig);
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot() {

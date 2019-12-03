@@ -7,6 +7,7 @@ import { IColumnExtension } from "./columnExtensions/IColumnExtension";
 import { createMergeResultFunction } from "./helpers";
 import { ISchemaExtension, IHelpers } from "./schemaExtensions/ISchemaExtension";
 import { ITableExtension } from "./tableExtensions/ITableExtension";
+import { IPostProcessingExtension } from "./postProcessingExtensions/IPostProcessingExtension";
 import { PermissionGenerator } from "./permissions/PermissionsGenerator";
 import { print, parse } from "graphql";
 
@@ -27,7 +28,9 @@ import {
   columnExtensionUuid,
   columnExtensionIntArray,
   columnExtensionBigIntArray,
-  columnExtensionBigInt
+  columnExtensionBigInt,
+  columnExtensionJson,
+  columnExtensionJsonb
 } from "./columnExtensions/generic";
 import { columnExtensionManyToOne } from "./columnExtensions/relation/manyToOne";
 import { columnExtensionOneToMany } from "./columnExtensions/relation/oneToMany";
@@ -46,6 +49,7 @@ export class Migration {
   } = {};
   private schemaExtensions: ISchemaExtension[] = [];
   private tableExtensions: ITableExtension[] = [];
+  private postProcessingExtensions: IPostProcessingExtension[] = [];
   private typeDefsExtensions: ITypeDefsExtension[] = [];
   private resolverExtensions: IResolverExtension[] = [];
 
@@ -75,6 +79,8 @@ export class Migration {
     this.addColumnExtension(columnExtensionUuid);
     this.addColumnExtension(columnExtensionBigInt);
     this.addColumnExtension(columnExtensionBigIntArray);
+    this.addColumnExtension(columnExtensionJson);
+    this.addColumnExtension(columnExtensionJsonb);
   }
 
   public addSchemaExtension(schemaExtension: ISchemaExtension) {
@@ -92,6 +98,10 @@ export class Migration {
     this.columnExtensions[columnExtension.type] = columnExtension;
   }
 
+  public addPostProcessingExtension(postProcessingExtension: IPostProcessingExtension) {
+    this.postProcessingExtensions.push(postProcessingExtension);
+  }
+
   public addTypeDefsExtension(typeDefsExtension: ITypeDefsExtension) {
     this.typeDefsExtensions.push(typeDefsExtension);
   }
@@ -106,8 +116,9 @@ export class Migration {
     dbClient: PoolClient
   ): Promise<IModuleMigrationResult> {
     const schema = appConfig as IDbSchema;
+    const gqlMigrationContext: any = {};
 
-    const result: IModuleMigrationResult = {
+    let result: IModuleMigrationResult = {
       moduleRuntimeConfig: {},
       commands: [],
       errors: [],
@@ -155,8 +166,13 @@ export class Migration {
 
     // Generate Table-Migrations
     await asyncForEach(this.schemaExtensions, async (schemaExtension: ISchemaExtension) => {
-      const extensionResult = await schemaExtension.generateCommands(schema, dbClient, helpers);
+      const extensionResult = await schemaExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext);
       mergeResult(extensionResult);
+    });
+
+    // Migration post-processing
+    await asyncForEach(this.postProcessingExtensions, async (postProcessingExtension: IPostProcessingExtension) => {
+      result = await postProcessingExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext, result) as IModuleMigrationResult;
     });
 
     // Generate Gql-Schema, Permission-Views and Metadata
@@ -196,6 +212,9 @@ export class Migration {
         resolvers
       };
     }
+
+    // Generate other stuff like triggers etc.
+
 
     return result;
   }

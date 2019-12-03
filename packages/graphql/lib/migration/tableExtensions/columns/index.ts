@@ -17,7 +17,8 @@ export const tableExtenstionColumns: ITableExtension = {
     schema: IDbSchema,
     columnsInfo: IColumnInfo[],
     helpers: IHelpersWithColumnHelper,
-    dbClient: PoolClient
+    dbClient: PoolClient,
+    gqlMigrationContext: any
   ): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
@@ -157,7 +158,7 @@ export const tableExtenstionColumns: ITableExtension = {
             schema,
             table
           };
-          const deleteColumnResult = await columnExtension.cleanUp(columnExtensionDeleteContext, columnInfo, dbClient);
+          const deleteColumnResult = await columnExtension.cleanUp(columnExtensionDeleteContext, columnInfo, dbClient, gqlMigrationContext);
           mergeResult(deleteColumnResult);
         }
         result.commands.push({
@@ -178,7 +179,7 @@ export const tableExtenstionColumns: ITableExtension = {
             columnIndex
           };
           const columnExtension = helpers.getColumnExtensionByType(column.type);
-          const createColumnResult = await columnExtension.create(columnExtensionContext, dbClient);
+          const createColumnResult = await columnExtension.create(columnExtensionContext, dbClient, gqlMigrationContext);
           mergeResult(createColumnResult);
           result.commands.push({
             sqls: [
@@ -236,7 +237,7 @@ export const tableExtenstionColumns: ITableExtension = {
               schema,
               table
             };
-            const cleanUpResult = await formerColumnExtension.cleanUp(columnExtensionCleanUpContext, updateColumn.columnInfo, dbClient);
+            const cleanUpResult = await formerColumnExtension.cleanUp(columnExtensionCleanUpContext, updateColumn.columnInfo, dbClient, gqlMigrationContext);
             mergeResult(cleanUpResult);
           }
           result.commands.push({
@@ -251,7 +252,7 @@ export const tableExtenstionColumns: ITableExtension = {
         }
 
         // Alter column type/constraints/whatever
-        const updateColumnResult = await columnExtension.update(columnExtensionContext, updateColumn.columnInfo, dbClient);
+        const updateColumnResult = await columnExtension.update(columnExtensionContext, updateColumn.columnInfo, dbClient, gqlMigrationContext);
         mergeResult(updateColumnResult);
       } catch (e) {
         result.errors.push({
@@ -271,7 +272,8 @@ export const tableExtenstionColumns: ITableExtension = {
     tableMeta: ITableMeta,
     columnsInfo: IColumnInfo[],
     helpers: IHelpers,
-    dbClient: PoolClient
+    dbClient: PoolClient,
+    gqlMigrationContext: any
   ): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
@@ -288,7 +290,7 @@ export const tableExtenstionColumns: ITableExtension = {
             schema,
             table: tableMeta
           };
-          const deleteColumnResult = await columnExtension.cleanUp(columnExtensionDeleteContext, columnInfo, dbClient);
+          const deleteColumnResult = await columnExtension.cleanUp(columnExtensionDeleteContext, columnInfo, dbClient, gqlMigrationContext);
           mergeResult(deleteColumnResult);
         }
         result.commands.push({

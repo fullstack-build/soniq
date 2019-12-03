@@ -53,6 +53,14 @@ export const exampleSchema: IDbSchema = {
       type: "createdAt",
       name: "createdAt",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"]
+    },{
+      id: "67afcca1-37b2-4c5e-8f6e-6bab43500008",
+      type: "file", 
+      name: "images",
+      appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
+      properties: {
+        nullable: true
+      }
     }],
     indexes: [{
       id: "77afcca1-37b2-4c5e-8f6e-6bab43500001",
@@ -101,6 +109,9 @@ export const exampleSchema: IDbSchema = {
         isRequired: true
       },{
         columnId: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
+        isRequired: false
+      }, {
+        columnId: "67afcca1-37b2-4c5e-8f6e-6bab43500008",
         isRequired: false
       }]
     }]

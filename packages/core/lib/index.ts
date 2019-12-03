@@ -34,13 +34,11 @@ export interface IGetModuleRuntimeConfigResult {
 export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
 export type TMigrationFuntion = (appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
 export type TBootFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
-export type TUpdateRuntimeConfigFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, envConfig: IModuleEnvConfig) => Promise<void>;
 
 interface IModuleCoreFunctions {
   key: string;
   migrate?: TMigrationFuntion;
   boot?: TBootFuntion;
-  updateRuntimeConfig?: TUpdateRuntimeConfigFuntion;
 }
 
 export * from "./interfaces";
@@ -58,6 +56,7 @@ export class Core {
   private state: EBootState = EBootState.Initial;
 
   private modules: IModuleCoreFunctions[] = [];
+  private bootReadyPromiseResolver: ((value?: any) => void)[] = [];
 
   private readonly logger: ILogger;
   private runTimePgPool: Pool;
@@ -148,6 +147,13 @@ export class Core {
       });
     }
 
+    if (currentExtensionNames.indexOf("plv8") < 0) {
+      migrationResult.commands.push({
+        sqls: [`CREATE EXTENSION ${getPgSelector("plv8")};`],
+        operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA
+      });
+    }
+
     if (currentTableNames.indexOf("Migrations") < 0) {
       migrationResult.commands.push({
         sqls: [
@@ -225,6 +231,16 @@ export class Core {
   public addCoreFunctions(moduleCoreFunctions: IModuleCoreFunctions): void {
     this.logger.trace("addCoreFunctions", moduleCoreFunctions.key);
     this.modules.push(moduleCoreFunctions);
+  }
+
+  public hasBootedPromise(): Promise<any> | true {
+    if (this.hasBooted()) {
+      return true;
+    } else {
+      return new Promise((resolve) => {
+        this.bootReadyPromiseResolver.push(resolve);
+      });
+    }
   }
 
   public async generateMigration(version: string, appConfig: IAppConfig, envKey: string, pgPoolConfig: PoolConfig) {
@@ -571,6 +587,14 @@ ____) | |__| | |___| |____| |____ ____) |___) |
       this.state = EBootState.Finished;
 
       this.logger.info("core.boot.ready", `Took ${process.hrtime(STARTUP_TIME)} seconds.`);
+
+      for (const resolverFunction of this.bootReadyPromiseResolver) {
+        try {
+          resolverFunction();
+        } catch (err) {
+          // Ignore Errors because this is only an Event
+        }
+      }
       this.logger.info("Improved.io Worker running!");
     } catch (err) {
       this.logger.error(`core.boot.error.caught: ${err}\n`);

@@ -49,6 +49,7 @@
     "@fullstack-one/graphql": "^0.6.7",
     "@fullstack-one/auth": "^0.6.7",
     "@fullstack-one/server": "^0.6.3",
+    "@fullstack-one/file-storage": "^0.6.8",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.5.28"
   }

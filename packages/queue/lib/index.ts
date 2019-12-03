@@ -1,10 +1,10 @@
 import * as PgBoss from "pg-boss";
 export { PgBoss };
 
-import { BootLoader } from "@fullstack-one/boot-loader";
+// import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
-import { ORM } from "@fullstack-one/db";
-import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
+// import { ORM } from "@fullstack-one/db";
+// import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
@@ -14,17 +14,17 @@ export class QueueFactory {
   private readonly logger: ILogger;
 
   constructor(
-    @Inject((type) => BootLoader) bootLoader: BootLoader,
-    @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
+    // @Inject((type) => BootLoader) bootLoader: BootLoader,
+    // @Inject((type) => GracefulShutdown) gracefulShutdown: GracefulShutdown,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
-    @Inject((type) => ORM) private readonly orm: ORM,
+    // @Inject((type) => ORM) private readonly orm: ORM,
     @Inject((type) => Config) config: Config
   ) {
     config.registerConfig("Queue", `${__dirname}/../config`);
     this.logger = loggerFactory.create(this.constructor.name);
 
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
-    gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
+    // bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // gracefulShutdown.addShutdownFunction(this.constructor.name, this.end.bind(this));
   }
 
   private async boot(): Promise<void> {
@@ -36,7 +36,8 @@ export class QueueFactory {
       // create a PGBoss instance
       boss = new PgBoss(queueConfig);
     } else {
-      const queryRunner = this.orm.createQueryRunner();
+      // const queryRunner = this.orm.createQueryRunner();
+      const queryRunner: any = {};
       await queryRunner.connect();
 
       // Add `close` and `executeSql` functions for PgBoss to function

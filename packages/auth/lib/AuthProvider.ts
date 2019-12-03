@@ -15,7 +15,7 @@ export class AuthProvider {
   private signHelper: SignHelper;
   private logger: ILogger;
   private authFactorProofTokenMaxAgeInSeconds: number = null;
-  public authConfig: any;
+  public runtimeConfig: any;
   public readonly providerName: string;
 
   constructor(
@@ -24,21 +24,21 @@ export class AuthProvider {
     authQueryHelper: AuthQueryHelper,
     signHelper: SignHelper,
     logger: ILogger,
-    authConfig: any,
+    runtimeConfig: any,
     authFactorProofTokenMaxAgeInSeconds: number = null
   ) {
     this.authConnector = authConnector;
     this.authQueryHelper = authQueryHelper;
     this.signHelper = signHelper;
     this.logger = logger;
-    this.authConfig = authConfig;
+    this.runtimeConfig = runtimeConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
   }
 
   private async createRandomAuthFactor(): Promise<{ authFactor: IAuthFactorForProof; passwordData: IPasswordData }> {
     const randomPassword = generateRandomPassword();
-    const sodiumConfig = createConfig(this.authConfig.sodium);
+    const sodiumConfig = createConfig(this.runtimeConfig.sodium);
     const passwordData = await newHash(randomPassword, sodiumConfig);
 
     const randomTime = DateTime.fromMillis(Math.round(Date.now() * Math.random()), { zone: "utc" }).toISO();
@@ -61,9 +61,9 @@ export class AuthProvider {
 
   // tslint:disable-next-line:prettier
   public async create(password: string, communicationAddress: string = null, isProofed: boolean = false, providerMeta: any = {}): Promise<string> {
-    const sodiumConfig = createConfig(this.authConfig.sodium);
+    const sodiumConfig = createConfig(this.runtimeConfig.sodium);
 
-    const providerSignature = this.signHelper.getProviderSignature(this.authConfig.secrets.authProviderHashSignature, this.providerName, "");
+    const providerSignature = this.signHelper.getProviderSignature(this.runtimeConfig.secrets.authProviderHashSignature, this.providerName, "");
 
     const passwordData: IPasswordData = await newHash(password + providerSignature, sodiumConfig);
 
@@ -96,7 +96,7 @@ export class AuthProvider {
       const password = await getPassword(authFactor);
 
       const providerSignature = this.signHelper.getProviderSignature(
-        this.authConfig.secrets.authProviderHashSignature,
+        this.runtimeConfig.secrets.authProviderHashSignature,
         meta.isOldPassword === true ? "local" : provider,
         meta.isOldPassword === true ? authFactor.userId : ""
       );
@@ -162,9 +162,10 @@ export class AuthProvider {
     return this.authQueryHelper;
   }
 
-  public _boot(authConnector: AuthConnector, authQueryHelper: AuthQueryHelper, signHelper: SignHelper) {
+  public _boot(authConnector: AuthConnector, authQueryHelper: AuthQueryHelper, signHelper: SignHelper, runtimeConfig: any) {
     this.authConnector = authConnector;
     this.authQueryHelper = authQueryHelper;
     this.signHelper = signHelper;
+    this.runtimeConfig = runtimeConfig;
   }
 }

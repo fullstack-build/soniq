@@ -7,8 +7,8 @@ import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { EventEmitter } from "@fullstack-one/events";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
-import { BootLoader } from "@fullstack-one/boot-loader";
+// import { SchemaBuilder } from "@fullstack-one/schema-builder";
+// import { BootLoader } from "@fullstack-one/boot-loader";
 
 @Service()
 export class NotificationsEmail {
@@ -29,8 +29,8 @@ export class NotificationsEmail {
     @Inject((type) => LoggerFactory) loggerFactory,
     @Inject((type) => QueueFactory) queueFactory,
     @Inject((type) => Config) config,
-    @Inject((type) => SchemaBuilder) schemaBuilder,
-    @Inject((type) => BootLoader) bootLoader
+    // @Inject((type) => SchemaBuilder) schemaBuilder,
+    // @Inject((type) => BootLoader) bootLoader
   ) {
     // set DI dependencies
     this.queueFactory = queueFactory;
@@ -45,7 +45,7 @@ export class NotificationsEmail {
     this.mailGenerator = new Mailgen(this.CONFIG.mailgen);
 
     // add to boot loader
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
   }
 
   private async boot(): Promise<void> {

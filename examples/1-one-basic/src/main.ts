@@ -11,6 +11,7 @@ import { GraphQl } from "@fullstack-one/graphql";
 import { Auth, AuthProviderEmail, AuthProviderPassword, IUserAuthentication, IProofMailPayload } from "@fullstack-one/auth";
 import { Server } from "@fullstack-one/server";
 import { IAppConfig } from "@fullstack-one/core/lib/interfaces";
+import { FileStorage } from "@fullstack-one/file-storage";
 
 import { exampleSchema } from "./example";
 
@@ -23,6 +24,7 @@ export const $gql: GraphQl = Container.get(GraphQl);
 export const $server: Server = Container.get(Server);
 export const $authProviderEmail: AuthProviderEmail = Container.get(AuthProviderEmail);
 export const $authProviderPassword: AuthProviderPassword = Container.get(AuthProviderPassword);
+export const $fileStorage: AuthProviderPassword = Container.get(FileStorage);
 
 $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
   console.log("user.registered", JSON.stringify(userAuthentication, null, 2));
@@ -51,10 +53,10 @@ export const appConfig: IAppConfig = {
     key: "Auth",
     appConfig: {
       secrets: {
-        admin: "HugoBoss",
+        admin: "HugoBosssdkhfk",
         cookie: "FooBar",
         authProviderHashSignature: "test1234",
-        encryptionKey: "qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL"
+        encryptionKey: "qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL",
       }
     },
     envConfig: {
@@ -63,6 +65,22 @@ export const appConfig: IAppConfig = {
   },{
     key: "Server",
     appConfig: {},
+    envConfig: {
+      "development": {}
+    }
+  },{
+    key: "FileStorage",
+    appConfig: {
+      minio: {
+        endPoint:   "play.minio.io",
+        region:     "us-east-1",
+        port:       443,
+        useSSL:     true,
+        accessKey:  "Q3AM3UQ867SPQQA43P2F",
+        secretKey:  "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
+      },
+      bucket: "onetest"
+    },
     envConfig: {
       "development": {}
     }

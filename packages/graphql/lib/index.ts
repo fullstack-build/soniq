@@ -38,6 +38,7 @@ import { IRuntimeConfigGql } from "./RuntimeInterfaces";
 import getDefaultResolvers from "./getDefaultResolvers";
 import { migrate } from "./basicMigration";
 import { createMergeResultFunction } from "./migration/helpers";
+import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
 export {
   ApolloServer,
   AuthenticationError,
@@ -53,6 +54,12 @@ export {
 };
 
 export * from "./migration/DbSchemaInterface";
+export * from "./migration/columnExtensions/IColumnExtension";
+export * from "./migration/tableExtensions/ITableExtension";
+export * from "./migration/schemaExtensions/ISchemaExtension";
+export * from "./migration/helpers";
+export * from "./migration/ExpressionCompiler";
+export * from "./migration/interfaces";
 
 @Service()
 export class GraphQl {
@@ -152,6 +159,9 @@ export class GraphQl {
   }
   public addColumnExtension(columnExtension: IColumnExtension) {
     this.migration.addColumnExtension(columnExtension);
+  }
+  public addPostProcessingExtension(postProcessingExtension: IPostProcessingExtension) {
+    this.migration.addPostProcessingExtension(postProcessingExtension);
   }
   public addTypeDefsExtension(typeDefs: ITypeDefsExtension) {
     this.migration.addTypeDefsExtension(typeDefs);

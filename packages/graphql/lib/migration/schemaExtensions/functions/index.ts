@@ -95,6 +95,7 @@ export const schemaExtensionFunctions: ISchemaExtension = {
       }
 
       const functionRegClass = getFunctionRegClass(fn);
+      const position = fn.runAfterTables === true ? OPERATION_SORT_POSITION.ALTER_COLUMN : OPERATION_SORT_POSITION.CREATE_SCHEMA;
       if (currentFunctionsByName[functionRegClass] != null) {
         // Update it
         if (currentFunctionsByName[functionRegClass].hash == null || currentFunctionsByName[functionRegClass].hash !== sha1(fn.definition)) {
@@ -104,16 +105,17 @@ export const schemaExtensionFunctions: ISchemaExtension = {
             sqls: [`DROP FUNCTION ${getFunctionRegClass(fn)};`],
             operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA - 100
           }); */
+
           result.commands.push({
             sqls: [fn.definition, `COMMENT ON FUNCTION ${functionRegClass} IS 'ONE_${sha1(fn.definition)}_Your comment';`],
-            operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA + 100
+            operationSortPosition: position + 100
           });
         }
       } else {
         // Create it
         result.commands.push({
           sqls: [fn.definition, `COMMENT ON FUNCTION ${functionRegClass} IS 'ONE_${sha1(fn.definition)}_Your comment';`],
-          operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA + 100
+          operationSortPosition: position + 100
         });
       }
     });

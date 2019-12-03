@@ -1,6 +1,6 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { BootLoader } from "@fullstack-one/boot-loader";
-import { SchemaBuilder } from "@fullstack-one/schema-builder";
+// import { BootLoader } from "@fullstack-one/boot-loader";
+// import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
 import { GraphQl, UserInputError } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
@@ -38,8 +38,8 @@ export class AuthFbToken {
 
   constructor(
     @Inject((type) => Auth) auth,
-    @Inject((type) => BootLoader) bootLoader,
-    @Inject((type) => SchemaBuilder) schemaBuilder,
+    // @Inject((type) => BootLoader) bootLoader,
+    // @Inject((type) => SchemaBuilder) schemaBuilder,
     @Inject((type) => Core) core: Core,
     @Inject((type) => Config) config,
     @Inject((type) => GraphQl) graphQl,
@@ -64,9 +64,9 @@ export class AuthFbToken {
     this.logger = this.loggerFactory.create(this.constructor.name);
 
     // add to boot loader
-    bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
+    // bootLoader.addBootFunction(this.constructor.name, this.boot.bind(this));
 
-    schemaBuilder.extendSchema(schema);
+    // schemaBuilder.extendSchema(schema);
 
     graphQl.addResolvers(this.getResolvers());
   }

@@ -85,13 +85,13 @@ export class Server {
         })
       );
 
+      // TODO: Add health-check Endpoint here
+
       // Block all requests when server has not finished booting
-      /* this.app.use(async (ctx, next) => {
-        if (this.bootLoader.hasBooted() !== true) {
-          return ctx.throw(503, "Service not ready yet!");
-        }
+      this.app.use(async (ctx, next) => {
+        await this.core.hasBootedPromise();
         await next();
-      });*/
+      });
     } catch (e) {
       // tslint:disable-next-line:no-console
       console.error(e);

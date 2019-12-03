@@ -22,15 +22,15 @@ extend type Mutation {
   """
   Creates a new file for upload. Login required.
   """
-  createFile(extension: String!, type: FILE_TYPES): UploadFile @custom(resolver: "@fullstack-one/file-storage/createFile")
+  createFile(extension: String!, type: FILE_TYPES): UploadFile
 
   """
   Verifies a new file after upload. Login required.
   """
-  verifyFile(fileName: String!): BucketFile @custom(resolver: "@fullstack-one/file-storage/verifyFile")
+  verifyFile(fileName: String!): BucketFile
 
   """
   Deletes temporary files of the current user which have not been added to any entity. If you provide a fileName only this will be deleted. Login required.
   """
-  clearUpFiles(fileName: String): [String] @custom(resolver: "@fullstack-one/file-storage/clearUpFiles")
+  clearUpFiles(fileName: String): [String]
 }

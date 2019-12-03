@@ -135,7 +135,7 @@ export class Auth {
     this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, runtimeConfig);
 
     this.authProviders.forEach((authProvider) => {
-      authProvider._boot(this.authConnector, this.authQueryHelper, this.signHelper);
+      authProvider._boot(this.authConnector, this.authQueryHelper, this.signHelper, runtimeConfig);
     });
   }
 

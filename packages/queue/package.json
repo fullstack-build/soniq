@@ -18,11 +18,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/boot-loader": "^0.5.25",
     "@fullstack-one/config": "^0.5.20",
-    "@fullstack-one/db": "^0.6.3",
     "@fullstack-one/di": "^0.5.20",
-    "@fullstack-one/graceful-shutdown": "^0.6.3",
     "@fullstack-one/logger": "^0.5.25",
     "pg-boss": "^3.1.0"
   },

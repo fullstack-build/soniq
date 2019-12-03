@@ -202,3 +202,41 @@ export const columnExtensionDateTimeUTC = createGenericColumnExtension(
     }
   }
 );
+
+export const columnExtensionJson = createGenericColumnExtension(
+  {
+    type: "json",
+    gqlType: "JSON",
+    gqlInputType: "JSON",
+    tsType: "any",
+    tsInputType: "any",
+    pgDataType: "json"
+  },
+  (context: IColumnExtensionContext, columnInfo: IColumnInfo) => {
+    switch (columnInfo.data_type) {
+      case "json":
+        return [];
+      default:
+        throw new Error(`Cannot migrate type ${columnInfo.data_type} to json.`);
+    }
+  }
+);
+
+export const columnExtensionJsonb = createGenericColumnExtension(
+  {
+    type: "jsonb",
+    gqlType: "JSON",
+    gqlInputType: "JSON",
+    tsType: "any",
+    tsInputType: "any",
+    pgDataType: "jsonb"
+  },
+  (context: IColumnExtensionContext, columnInfo: IColumnInfo) => {
+    switch (columnInfo.data_type) {
+      case "jsonb":
+        return [];
+      default:
+        throw new Error(`Cannot migrate type ${columnInfo.data_type} to json.`);
+    }
+  }
+);
