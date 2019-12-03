@@ -213,11 +213,11 @@ export class QueryPermissionGenerator {
             })
             .join(" OR ");
 
-          if (hasPublicTrueExpression === true) {
+          if (hasPublicTrueExpression === true && authRequired === false) {
             publicColumnSelects.push(`${queryFieldData.pgSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
             authColumnSelects.push(`${queryFieldData.pgSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
           } else {
-            if (publicCondition.length > 0) {
+            if (publicCondition.length > 0 && authRequired === false) {
               publicColumnSelects.push(this.createSwitchCase(publicCondition, queryFieldData.pgSelectExpression, queryFieldData.viewColumnName));
             } else {
               publicColumnSelects.push(`NULL AS ${getPgSelector(queryFieldData.viewColumnName)}`);

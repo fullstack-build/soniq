@@ -1,5 +1,5 @@
 import { getPgSelector } from "@fullstack-one/core";
-import { IDbSchema, IDbTable, IDbColumn } from "./DbSchemaInterface";
+import { IDbSchema, IDbTable, IDbColumn, IDbAppliedExpression } from "./DbSchemaInterface";
 import { ITableMeta, IGqlMigrationResult } from "./interfaces";
 import * as uuidValidate from "uuid-validate";
 
@@ -18,6 +18,15 @@ export const findColumnById = (table: IDbTable, columnId: string): IDbColumn | n
   for (const i in table.columns) {
     if (table.columns[i].id === columnId) {
       return table.columns[i];
+    }
+  }
+  return null;
+};
+
+export const findAppliedExpressionById = (table: IDbTable, appliendExpressionId: string): IDbAppliedExpression | null => {
+  for (const i in table.appliedExpressions || []) {
+    if (table.appliedExpressions[i].id === appliendExpressionId) {
+      return table.appliedExpressions[i];
     }
   }
   return null;

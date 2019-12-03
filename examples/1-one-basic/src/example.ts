@@ -24,7 +24,7 @@ export const exampleSchema: IDbSchema = {
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500003",
       type: "text", 
       name: "lastName",
-      appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500002"]
+      appliedQueryExpressionIds: ["20354d7a-e4fe-47af-8ff6-187bca92f3f9"]
     },{
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
       type: "enum", 
@@ -61,6 +61,14 @@ export const exampleSchema: IDbSchema = {
       properties: {
         nullable: true
       }
+    },{
+      id: "67afcca1-37b2-4c5e-8f6e-6bab43500009",
+      type: "computed", 
+      name: "isOwner",
+      appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
+      properties: {
+        appliedExpressionId: "20354d7a-e4fe-47af-8ff6-187bca92f3f9"
+      }
     }],
     indexes: [{
       id: "77afcca1-37b2-4c5e-8f6e-6bab43500001",
@@ -72,7 +80,7 @@ export const exampleSchema: IDbSchema = {
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500003",
       params: {}
     },{
-      id: "42afcca1-37b2-4c5e-7f6e-6bab43500002",
+      id: "20354d7a-e4fe-47af-8ff6-187bca92f3f9",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500002",
       params: {
         column: "67afcca1-37b2-4c5e-8f6e-6bab43500001"
@@ -97,7 +105,7 @@ export const exampleSchema: IDbSchema = {
       id: "67af42a1-37b2-4c5e-8f6e-6bab43500001",
       name: "Test",
       type: "UPDATE",
-      appliedExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500002"],
+      appliedExpressionIds: ["20354d7a-e4fe-47af-8ff6-187bca92f3f9"],
       columns: [{
         columnId: "67afcca1-37b2-4c5e-8f6e-6bab43500001",
         isRequired: true
@@ -110,7 +118,7 @@ export const exampleSchema: IDbSchema = {
       },{
         columnId: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
         isRequired: false
-      }, {
+      },{
         columnId: "67afcca1-37b2-4c5e-8f6e-6bab43500008",
         isRequired: false
       }]
@@ -284,7 +292,7 @@ export const exampleSchema: IDbSchema = {
         params: {}
       }
     }],
-    nameTemplate: "Owner_{{column.columnName}}",
+    nameTemplate: "Owner_${column.columnName}",
     sqlTemplate: "${currentUserIdOrNull} = ${column.columnSelector} AND ${currentUserIdOrNull} IS NOT NULL"
   }]
 }

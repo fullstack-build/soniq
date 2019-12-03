@@ -39,6 +39,7 @@ import { columnExtensionCreatedAt } from "./columnExtensions/createdAt";
 import { columnExtensionUpdatedAt } from "./columnExtensions/updatedAt";
 import { schemaExtensionFunctions } from "./schemaExtensions/functions";
 import { IResolver } from "../RuntimeInterfaces";
+import { columnExtensionComputed } from "./columnExtensions/computed";
 
 export type ITypeDefsExtension = () => string;
 export type IResolverExtension = () => IResolver;
@@ -81,6 +82,7 @@ export class Migration {
     this.addColumnExtension(columnExtensionBigIntArray);
     this.addColumnExtension(columnExtensionJson);
     this.addColumnExtension(columnExtensionJsonb);
+    this.addColumnExtension(columnExtensionComputed);
   }
 
   public addSchemaExtension(schemaExtension: ISchemaExtension) {

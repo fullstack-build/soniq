@@ -69,8 +69,6 @@ export class FileStorage {
 
       const fileTypesEnum = this.generateGqlEnumType({name: "FILE_TYPES", options: fileTypes});
 
-      console.log('>>', `${fileTypesEnum}\n${schema}`);
-
       return `${fileTypesEnum}\n${schema}`;
     });
 
