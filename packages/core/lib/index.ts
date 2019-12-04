@@ -25,6 +25,7 @@ import {
   getExtensions,
   getLatestMigrationVersion
 } from "./helpers";
+import * as Ajv from "ajv";
 
 export interface IGetModuleRuntimeConfigResult {
   runtimeConfig: IModuleRuntimeConfig,
@@ -43,7 +44,7 @@ interface IModuleCoreFunctions {
 
 export * from "./interfaces";
 export * from "./helpers";
-export { Pool, PoolClient, PoolConfig, QueryResult };
+export { Pool, PoolClient, PoolConfig, QueryResult, Ajv };
 
 export enum EBootState {
   Initial = "initial",

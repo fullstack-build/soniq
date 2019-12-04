@@ -25,95 +25,53 @@ const getPgColumnName = (context: IColumnExtensionContext): string => {
 
 export const columnExtensionEnum: IColumnExtension = {
   type: "enum",
-  validateProperties: (context: IColumnExtensionContext) => {
-    const result: IPropertieValidationResult = {
-      errors: [],
-      warnings: []
-    };
-
-    if (context.column.properties == null) {
-      result.errors.push({
-        message: `Properties are required for enum column '${context.table.schema}.${context.table.name}.${context.column.name}'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "ManyToOne Column Properties",
+      "required": ["values"],
+      "properties": {
+        "values": {
+          "$id": "#/properties/values",
+          "type": "array",
+          "title": "The enum values",
+          "uniqueItems": true,
+          "items": {
+            "$id": "#/properties/values/items",
+            "type": "string",
+            "title": "An enum value",
+            "examples": [
+              "FOO",
+              "BAR"
+            ],
+            "pattern": "^(.*)$"
+          }
+        },
+        "nullable": {
+          "$id": "#/properties/nullable",
+          "type": "boolean",
+          "title": "Is column nullable or not",
+          "default": true,
+          "examples": [
+            true
+          ]
+        },
+        "defaultExpression": {
+          "$id": "#/properties/defaultExpression",
+          "type": "string",
+          "title": "The default value of the column as pg expression",
+          "default": null,
+          "examples": [
+            "'foobar'::text"
+          ],
+          "pattern": "^(.*)$"
         }
-      });
-      return result;
+      },
+      "additionalProperties": false
     }
-    const properties = context.column.properties;
-
-    Object.keys(properties).forEach((key) => {
-      if (["values", "nullable", "defaultExpression"].indexOf(key) < 0) {
-        result.errors.push({
-          message: `Unknown property '${key}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    });
-    if (properties.nullable != null) {
-      if (properties.nullable !== true && properties.nullable !== false) {
-        result.errors.push({
-          message: `The property 'nullable' must be boolean on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.defaultExpression != null) {
-      if (typeof properties.defaultExpression !== "string") {
-        result.errors.push({
-          message: `The property 'defaultExpression' must be a string on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.values == null || Array.isArray(properties.values) !== true) {
-      result.errors.push({
-        message: `The property 'values' must be an array of unique strings on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-    }
-    const allValues: string[] = [];
-    for (const i in properties.values) {
-      if (properties.values.hasOwnProperty(i)) {
-        const value = properties.values[i];
-        if (typeof value !== "string") {
-          result.errors.push({
-            message: `The property 'values' must be an array of unique strings on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'. See value-index '${i}'.`,
-            meta: {
-              tableId: context.table.id,
-              columnId: context.column.id
-            }
-          });
-        } else {
-          if (allValues.indexOf(value) >= 0) {
-            result.errors.push({
-              message: `The property 'values' must be an array of unique strings on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'enum'. Dupblicate value '${value}'.`,
-              meta: {
-                tableId: context.table.id,
-                columnId: context.column.id
-              }
-            });
-          } else {
-            allValues.push(value);
-          }
-        }
-      }
-    }
-
-    return result;
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName,

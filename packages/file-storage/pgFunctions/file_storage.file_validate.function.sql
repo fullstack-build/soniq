@@ -13,12 +13,13 @@ DECLARE
     v_file_elements TEXT[];
     v_file_name TEXT;
     v_file_name_elements TEXT[];
-    v_file_id uuid;
+    v_file_id TEXT;
     v_file_type TEXT;
     v_file_extension TEXT;
     v_extension TEXT;
     v_id uuid;
 BEGIN
+	RAISE NOTICE 'i_file_name %', i_file_name;
     v_user_id := _auth.current_user_id_or_null();
 
     v_file_elements = regexp_split_to_array(i_file_name, '\.');
@@ -36,8 +37,9 @@ BEGIN
         RAISE EXCEPTION 'Invalid fileName.';
     END IF;
 
-    v_file_id := v_file_name_elements[1] || v_file_name_elements[2] || v_file_name_elements[3] || v_file_name_elements[4] || v_file_name_elements[5];
+    v_file_id := v_file_name_elements[1] || '-' || v_file_name_elements[2] || '-' || v_file_name_elements[3] || '-' || v_file_name_elements[4] || '-' || v_file_name_elements[5];
     v_file_type := v_file_name_elements[6];
+	RAISE NOTICE 'v_file_id %', v_file_id;
 
     v_query := $tok$SELECT "id", "ownerUserId", "deletedAt", "entityId", "verifiedAt", "type", "extension" FROM _file_storage."Files" WHERE id = %L$tok$;
     EXECUTE format(v_query, v_file_id) INTO v_id, v_owner_user_id, v_deletedAt, v_entity_id, v_verifiedAt, v_type, v_extension;

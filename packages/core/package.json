@@ -21,6 +21,7 @@
     "@fullstack-one/di": "^0.5.20",
     "@fullstack-one/logger": "^0.5.25",
     "@types/lodash": "^4.14.146",
+    "ajv": "^6.10.2",
     "koa": "^2.11.0",
     "koa-compress": "^3.0.0",
     "lodash": "^4.17.15",

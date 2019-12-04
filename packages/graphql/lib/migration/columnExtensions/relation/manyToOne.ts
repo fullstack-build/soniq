@@ -160,97 +160,76 @@ export const generateConstraint = (context: IColumnExtensionContext, relations: 
 
 export const columnExtensionManyToOne: IColumnExtension = {
   type: "manyToOne",
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "ManyToOne Column Properties",
+      "required": ["foreignTableId"],
+      "properties": {
+        "foreignTableId": {
+          "$id": "#/properties/foreignTableId",
+          "type": "string",
+          "title": "FOREIGN_TABLE",
+          "description": "An foreignTableId another table",
+          "examples": [
+            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "nullable": {
+          "$id": "#/properties/nullable",
+          "type": "boolean",
+          "title": "Is column nullable or not",
+          "default": true,
+          "examples": [
+            true
+          ]
+        },
+        "defaultExpression": {
+          "$id": "#/properties/defaultExpression",
+          "type": "string",
+          "title": "The default value of the column as pg expression",
+          "default": null,
+          "examples": [
+            "'foobar'::text"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "onDelete": {
+          "$id": "#/properties/onDelete",
+          "type": "string",
+          "title": "Relation onDelete behaviour",
+          "default": ACTION_TYPES[0],
+          "enum": ACTION_TYPES
+        },
+        "onUpdate": {
+          "$id": "#/properties/onUpdate",
+          "type": "string",
+          "title": "Relation onUpdate behaviour",
+          "default": ACTION_TYPES[0],
+          "enum": ACTION_TYPES
+        },
+        "validation": {
+          "$id": "#/properties/validation",
+          "type": "string",
+          "title": "Relation validation",
+          "enum": VALIDATION_TYPES
+        },
+      },
+      "additionalProperties": false
+    }
+  },
   validateProperties: (context: IColumnExtensionContext) => {
     const result: IPropertieValidationResult = {
       errors: [],
       warnings: []
     };
+    const properties = context.column.properties || {};
 
-    if (context.column.properties == null) {
-      result.errors.push({
-        message: `Properties are required for manyToOne column '${context.table.schema}.${context.table.name}.${context.column.name}'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-      return result;
-    }
-    const properties = context.column.properties;
-
-    Object.keys(properties).forEach((key) => {
-      if (["foreignTableId", "nullable", "defaultExpression", "onDelete", "onUpdate", "validation"].indexOf(key) < 0) {
-        result.errors.push({
-          message: `Unknown property '${key}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    });
-    if (properties.nullable != null) {
-      if (properties.nullable !== true && properties.nullable !== false) {
-        result.errors.push({
-          message: `The property 'nullable' must be boolean on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.defaultExpression != null) {
-      if (typeof properties.defaultExpression !== "string") {
-        result.errors.push({
-          message: `The property 'defaultExpression' must be a string on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.onDelete != null) {
-      if (typeof properties.onDelete !== "string" || ACTION_TYPES.indexOf(properties.onDelete) < 0) {
-        result.errors.push({
-          message: `The property 'onDelete' must be a string out of '${ACTION_TYPES.join(", ")}' on '${context.table.schema}.${context.table.name}.${
-            context.column.name
-          }' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.onUpdate != null) {
-      if (typeof properties.onUpdate !== "string" || ACTION_TYPES.indexOf(properties.onUpdate) < 0) {
-        result.errors.push({
-          message: `The property 'onUpdate' must be a string out of '${ACTION_TYPES.join(", ")}' on '${context.table.schema}.${context.table.name}.${
-            context.column.name
-          }' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.validation != null) {
-      if (typeof properties.validation !== "string" || VALIDATION_TYPES.indexOf(properties.validation) < 0) {
-        result.errors.push({
-          message: `The property 'validation' must be a string out of '${VALIDATION_TYPES.join(", ")}' on '${context.table.schema}.${
-            context.table.name
-          }.${context.column.name}' for type 'manyToOne'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    }
-    if (properties.foreignTableId == null || uuidValidate(properties.foreignTableId) !== true) {
+    if (uuidValidate(properties.foreignTableId) !== true) {
       result.errors.push({
         message: `The property 'foreignTableId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'manyToOne'.`,
         meta: {

@@ -1,5 +1,5 @@
 
-import { $core, pgConfig, appConfig } from "./main";
+import { $core, pgConfig, appConfig, $gql } from "./main";
 
 (async () => {
   console.log("Generate Migration");
@@ -12,4 +12,6 @@ import { $core, pgConfig, appConfig } from "./main";
   await $core.applyMigrationResult(res, pgConfig);
 
   console.log("Finished Migration");
+
+  // console.log("DEF", JSON.stringify($gql.getColumnExtensionPropertySchemas(), null, 2));
 })();

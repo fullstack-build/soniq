@@ -15,37 +15,38 @@ import { ICompiledExpression } from "../../ExpressionCompiler";
 
 export const columnExtensionComputed: IColumnExtension = {
   type: "computed",
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "Computed Column Properties",
+      "required": ["appliedExpressionId"],
+      "properties": {
+        "appliedExpressionId": {
+          "$id": "#/properties/appliedExpressionId",
+          "type": "string",
+          "title": "APPLIED_EXPRESSION",
+          "description": "An appliedExpressionId from the local table",
+          "default": "",
+          "examples": [
+            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
+          ],
+          "pattern": "^(.*)$"
+        }
+      },
+      "additionalProperties": false
+    };
+  },
   validateProperties: (context: IColumnExtensionContext) => {
     const result: IPropertieValidationResult = {
       errors: [],
       warnings: []
     };
+    const properties = context.column.properties || {};
 
-    if (context.column.properties == null) {
-      result.errors.push({
-        message: `Properties are required for computed column '${context.table.schema}.${context.table.name}.${context.column.name}'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-      return result;
-    }
-    const properties = context.column.properties;
-
-    Object.keys(properties).forEach((key) => {
-      if (["appliedExpressionId"].indexOf(key) < 0) {
-        result.errors.push({
-          message: `Unknown property '${key}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    });
-    console.log('>>', properties, properties.appliedExpressionId == null, uuidValidate(properties.appliedExpressionId));
-    if (properties.appliedExpressionId == null || uuidValidate(properties.appliedExpressionId) !== true) {
+    if (uuidValidate(properties.appliedExpressionId) !== true) {
       result.errors.push({
         message: `The property 'appliedExpressionId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'.`,
         meta: {

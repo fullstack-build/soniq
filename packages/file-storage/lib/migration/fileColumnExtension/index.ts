@@ -11,82 +11,61 @@ import {
   IQueryFieldData,
   IMutationFieldData,
   IColumnInfo,
-  IGqlMigrationResult
+  IGqlMigrationResult,
+  IColumnExtension
 } from "@fullstack-one/graphql";
 import { OPERATION_SORT_POSITION, ICommand, PoolClient } from "@fullstack-one/core";
 import { IFileColumn } from "../filePostProcessingExtension/queryHelper";
 
-export const columnExtensionFile = {
+export const columnExtensionFile: IColumnExtension = {
   type: "file",
-  validateProperties: (context: IColumnExtensionContext) => {
-    const result: IPropertieValidationResult = {
-      errors: [],
-      warnings: []
-    };
-
-    if (context.column.properties != null) {
-      const properties = context.column.properties;
-
-      Object.keys(properties).forEach((key) => {
-        if (["nullable", "defaultExpression", "types"].indexOf(key) < 0) {
-          result.errors.push({
-            message: `Unknown property '${key}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'file'.`,
-            meta: {
-              tableId: context.table.id,
-              columnId: context.column.id
-            }
-          });
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "ManyToOne Column Properties",
+      "required": [],
+      "properties": {
+        "types": {
+          "$id": "#/properties/types",
+          "type": "array",
+          "title": "The allowed file-types",
+          "uniqueItems": true,
+          "items": {
+            "$id": "#/properties/types/items",
+            "type": "string",
+            "title": "A file-type",
+            "default": "DEFAULT",
+            "examples": [
+              "DEFAULT"
+            ],
+            "pattern": "^(.*)$"
+          }
+        },
+        "nullable": {
+          "$id": "#/properties/nullable",
+          "type": "boolean",
+          "title": "Is column nullable or not",
+          "default": true,
+          "examples": [
+            true
+          ]
+        },
+        "defaultExpression": {
+          "$id": "#/properties/defaultExpression",
+          "type": "string",
+          "title": "The default value of the column as pg expression",
+          "default": null,
+          "examples": [
+            "'foobar'::text"
+          ],
+          "pattern": "^(.*)$"
         }
-      });
-      if (properties.nullable != null) {
-        if (properties.nullable !== true && properties.nullable !== false) {
-          result.errors.push({
-            message: `The property 'nullable' must be boolean on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'file'.`,
-            meta: {
-              tableId: context.table.id,
-              columnId: context.column.id
-            }
-          });
-        }
-      }
-      if (properties.defaultExpression != null) {
-        if (typeof properties.defaultExpression !== "string") {
-          result.errors.push({
-            message: `The property 'defaultExpression' must be a string on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'file'.`,
-            meta: {
-              tableId: context.table.id,
-              columnId: context.column.id
-            }
-          });
-        }
-      }
-      if (properties.types != null) {
-        if (Array.isArray(properties.types) !== true) {
-          result.errors.push({
-            message: `The property 'types' must be an array of strings on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'file'.`,
-            meta: {
-              tableId: context.table.id,
-              columnId: context.column.id
-            }
-          });
-        } else {
-          properties.types.forEach((value: string, index: number) => {
-            if (typeof value !== "string") {
-              result.errors.push({
-                message: `The property 'types' must be an array of strings on '${context.table.schema}.${context.table.name}.${context.column.name}.${index}' for type 'file'.`,
-                meta: {
-                  tableId: context.table.id,
-                  columnId: context.column.id,
-                  index
-                }
-              });
-            }
-          });
-        }
-      }
+      },
+      "additionalProperties": false
     }
-
-    return result;
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (context: IColumnExtensionContext): string => {
@@ -232,7 +211,7 @@ export const columnExtensionFile = {
 
     return result;
   },
-  delete: async (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {
+  cleanUp: async (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {
     return {
       errors: [],
       warnings: [],

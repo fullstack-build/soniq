@@ -4,7 +4,8 @@ import {
   IColumnExtensionDeleteContext,
   IPropertieValidationResult,
   IQueryFieldData,
-  IMutationFieldData
+  IMutationFieldData,
+  IColumnExtension
 } from "../IColumnExtension";
 import { getPgRegClass, getPgSelector } from "../../helpers";
 import { ICompiledExpression } from "../../ExpressionCompiler";
@@ -20,35 +21,17 @@ export interface IFixedGenericTypes {
   tsInputType: string;
 }
 
-export const columnExtensionId = {
+export const columnExtensionId: IColumnExtension = {
   type: "id",
-  validateProperties: (context: IColumnExtensionContext) => {
-    const result: IPropertieValidationResult = {
-      errors: [],
-      warnings: []
-    };
-
-    if (context.column.properties != null) {
-      result.errors.push({
-        message: `The type 'id' has no properties. See '${context.table.schema}.${context.table.name}.${context.column.name}''.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "Id Column Properties",
+      "additionalProperties": false
     }
-
-    if (context.column.name !== "id") {
-      result.errors.push({
-        message: `The type 'id' must have the name 'id'. See '${context.table.schema}.${context.table.name}.${context.column.name}''.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-    }
-
-    return result;
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (): string => {
@@ -110,7 +93,7 @@ export const columnExtensionId = {
 
     return result;
   },
-  delete: async (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {
+  cleanUp: async (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {
     return {
       errors: [],
       warnings: [],

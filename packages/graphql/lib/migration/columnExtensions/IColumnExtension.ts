@@ -40,7 +40,8 @@ export interface IMutationFieldData {
 export interface IColumnExtension {
   // Meta and validation
   type: string;
-  validateProperties: (context: IColumnExtensionContext) => IPropertieValidationResult;
+  getPropertiesDefinition: () => any;
+  validateProperties?: (context: IColumnExtensionContext) => IPropertieValidationResult;
 
   // Database Stuff
   getPgColumnName: (context: IColumnExtensionContext) => string;

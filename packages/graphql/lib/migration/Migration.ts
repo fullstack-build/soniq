@@ -171,11 +171,17 @@ export class Migration {
       const extensionResult = await schemaExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext);
       mergeResult(extensionResult);
     });
+    if (result.errors.length > 0) {
+      return result;
+    }
 
     // Migration post-processing
     await asyncForEach(this.postProcessingExtensions, async (postProcessingExtension: IPostProcessingExtension) => {
       result = await postProcessingExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext, result) as IModuleMigrationResult;
     });
+    if (result.errors.length > 0) {
+      return result;
+    }
 
     // Generate Gql-Schema, Permission-Views and Metadata
     if (schema.permissionViewSchema != null) {
@@ -219,5 +225,14 @@ export class Migration {
 
 
     return result;
+  }
+
+  public getColumnExtensionPropertySchemas() {
+    return Object.keys(this.columnExtensions).map((type) => {
+      return {
+        type,
+        schema: this.columnExtensions[type].getPropertiesDefinition()
+      };
+    });
   }
 }

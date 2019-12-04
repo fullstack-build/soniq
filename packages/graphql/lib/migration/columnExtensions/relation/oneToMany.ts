@@ -15,36 +15,47 @@ import { ICompiledExpression } from "../../ExpressionCompiler";
 
 export const columnExtensionOneToMany: IColumnExtension = {
   type: "oneToMany",
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "OneToMany Column Properties",
+      "required": ["foreignTableId", "foreignColumnId"],
+      "properties": {
+        "foreignTableId": {
+          "$id": "#/properties/foreignTableId",
+          "type": "string",
+          "title": "FOREIGN_TABLE",
+          "description": "An foreignTableId another table",
+          "examples": [
+            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "foreignColumnId": {
+          "$id": "#/properties/foreignColumnId",
+          "type": "string",
+          "title": "FOREIGN_COLUMN",
+          "description": "An foreignColumnId another table",
+          "examples": [
+            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
+          ],
+          "pattern": "^(.*)$"
+        },
+      },
+      "additionalProperties": false
+    }
+  },
   validateProperties: (context: IColumnExtensionContext) => {
     const result: IPropertieValidationResult = {
       errors: [],
       warnings: []
     };
+    const properties = context.column.properties || {};
 
-    if (context.column.properties == null) {
-      result.errors.push({
-        message: `Properties are required for oneToMany column '${context.table.schema}.${context.table.name}.${context.column.name}'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-      return result;
-    }
-    const properties = context.column.properties;
-
-    Object.keys(properties).forEach((key) => {
-      if (["foreignTableId", "foreignColumnId"].indexOf(key) < 0) {
-        result.errors.push({
-          message: `Unknown property '${key}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      }
-    });
-    if (properties.foreignTableId == null || uuidValidate(properties.foreignTableId) !== true) {
+    if (uuidValidate(properties.foreignTableId) !== true) {
       result.errors.push({
         message: `The property 'foreignTableId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
         meta: {
@@ -63,7 +74,7 @@ export const columnExtensionOneToMany: IColumnExtension = {
           }
         });
       } else {
-        if (properties.foreignColumnId == null || uuidValidate(properties.foreignColumnId) !== true) {
+        if (uuidValidate(properties.foreignColumnId) !== true) {
           result.errors.push({
             message: `The property 'foreignColumnId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
             meta: {

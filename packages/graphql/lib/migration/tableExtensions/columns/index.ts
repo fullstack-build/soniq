@@ -1,5 +1,5 @@
 import { IDbSchema, IDbTable, IDbColumn } from "../../DbSchemaInterface";
-import { PoolClient, OPERATION_SORT_POSITION, asyncForEach } from "@fullstack-one/core";
+import { PoolClient, OPERATION_SORT_POSITION, asyncForEach, Ajv } from "@fullstack-one/core";
 import { IGqlMigrationResult, IColumnInfo, IUpdateColumns, IUpdateColumn, ITableMeta } from "../../interfaces";
 import { getPgRegClass, createMergeResultFunction, ONE_PREFIX } from "../../helpers";
 import { IColumnExtensionDeleteContext, IColumnExtensionContext } from "../../columnExtensions/IColumnExtension";
@@ -59,12 +59,35 @@ export const tableExtenstionColumns: ITableExtension = {
             return null;
           } else {
             try {
-              const validationResult = columnExtension.validateProperties(columnExtensionContext);
+              const columnValidationSchema = columnExtension.getPropertiesDefinition();
+              const ajv = new Ajv();
+              const validate = ajv.compile(columnValidationSchema);
+              const valid = validate(column.properties || {});
+              const errors = (validate.errors || []).map((err) => {
+                return {
+                  message: `Failed to validate column-properties '${table.schema}.${table.name}.${column.name}' of type '${column.type}': ${err.message}`,
+                  error: err,
+                  meta: {
+                    tableId: table.id,
+                    columnId: column.id
+                  }
+                }
+              });
 
               mergeResult({
-                ...validationResult,
+                errors,
+                warnings: [], 
                 commands: []
               });
+
+              if (errors.length < 1 && columnExtension.validateProperties != null) {
+                const validationResult = columnExtension.validateProperties(columnExtensionContext);
+
+                mergeResult({
+                  ...validationResult,
+                  commands: []
+                });
+              }
 
               return columnExtension.getPgColumnName(columnExtensionContext) != null ? column : null;
             } catch (e) {

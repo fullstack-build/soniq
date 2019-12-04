@@ -12,7 +12,8 @@ export const postProcessingExtensionFile = {
     result: IGqlMigrationResult
   ): Promise<IGqlMigrationResult> => {
     const fileColumns: IFileColumn[] = gqlMigrationContext.fileStorageColumns || [];
-    const existingFileColumns = await getFileColumns(pgClient, schema.schemas);
+    const doesColumnsTableExistNow = await doesColumnsTableExist(pgClient);
+    const existingFileColumns = doesColumnsTableExistNow === true ? await getFileColumns(pgClient, schema.schemas) : [];
     const existingTriggers = await getTriggers(pgClient, schema.schemas);
     const tableTriggers: {[tableKey: string]: {schemaName: string, tableName: string}} = {};
     const sqls = [];
@@ -81,11 +82,11 @@ export const postProcessingExtensionFile = {
         const triggerName = `fileStorage_trigger_${uuidv4()}`;
         const schemaTableName = `${getPgSelector(table.schemaName)}.${getPgSelector(table.tableName)}`;
 
-        const createTriggerSql = `CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE OR INSERT OR DELETE ON ${schemaTableName} FOR EACH ROW EXECUTE PROCEDURE _file_storage.file_trigger();`;
+        const createTriggerSql = `CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE OR INSERT OR DELETE ON ${schemaTableName} FOR EACH ROW EXECUTE PROCEDURE _file_storage.file_trigger_plpgsql();`;
 
         result.commands.push({
           sqls: [createTriggerSql],
-          operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + 100
+          operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN + 200
         });
       }
     });
@@ -100,11 +101,26 @@ export const postProcessingExtensionFile = {
 
         result.commands.push({
           sqls: [dropTriggerSql],
-          operationSortPosition: OPERATION_SORT_POSITION.RENAME_TABLE - 100
+          operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA - 200
         });
       }
     });
 
     return result;
   }
+}
+
+const EXISTS_QUERY = `
+SELECT EXISTS (
+   SELECT 1
+	   FROM   information_schema.tables 
+	   WHERE  table_schema = '_file_storage'
+	   AND    table_name = 'Columns'
+   ) "exists";
+`;
+
+async function doesColumnsTableExist(pgClient: PoolClient): Promise<boolean> {
+  const { rows } = await pgClient.query(EXISTS_QUERY);
+
+  return rows[0] != null && rows[0].exists != null && rows[0].exists === true;
 }

@@ -16,32 +16,15 @@ export interface IFixedGenericTypes {
 
 export const columnExtensionCreatedAt: IColumnExtension = {
   type: "createdAt",
-  validateProperties: (context: IColumnExtensionContext) => {
-    const result: IPropertieValidationResult = {
-      errors: [],
-      warnings: []
-    };
-
-    if (context.column.properties != null) {
-      result.errors.push({
-        message: `The type 'createdAt' has no properties. See '${context.table.schema}.${context.table.name}.${context.column.name}''.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
+  getPropertiesDefinition: () => {
+    return {
+      "definitions": {},
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "http://example.com/root.json",
+      "type": "object",
+      "title": "CreatedAt Column Properties",
+      "additionalProperties": false
     }
-    if (context.column.name !== "createdAt") {
-      result.errors.push({
-        message: `The column of type 'createdAt' has to be named "createdAt". See '${context.table.schema}.${context.table.name}.${context.column.name}''.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-    }
-
-    return result;
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (context: IColumnExtensionContext): string => {

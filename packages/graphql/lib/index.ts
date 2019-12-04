@@ -178,4 +178,7 @@ export class GraphQl {
   public addPreQueryHook(hookFunction: TPreQueryHookFunction) {
     this.hookManager.addPreQueryHook(hookFunction);
   }
+  public getColumnExtensionPropertySchemas() {
+    return this.migration.getColumnExtensionPropertySchemas();
+  }
 }
