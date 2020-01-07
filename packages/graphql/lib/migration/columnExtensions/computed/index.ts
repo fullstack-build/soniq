@@ -9,7 +9,7 @@ import {
 } from "../IColumnExtension";
 import { IDbMutationColumn, IDbMutation } from "../../DbSchemaInterface";
 import * as uuidValidate from "uuid-validate";
-import { findTableById, getPgSelector, findAppliedExpressionById } from "../../helpers";
+import { findTableById, getPgSelector, findAppliedExpressionById, getPgRegClass } from "../../helpers";
 import { PoolClient } from "@fullstack-one/core";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 
@@ -34,6 +34,16 @@ export const columnExtensionComputed: IColumnExtension = {
             "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
           ],
           "pattern": "^(.*)$"
+        },
+        "moveSelectToQuery": {
+          "$id": "#/properties/moveSelectToQuery",
+          "type": "boolean",
+          "title": "Select the column in QueryBuilder not in view",
+          "default": false,
+          "examples": [
+            true,
+            false
+          ]
         }
       },
       "additionalProperties": false
@@ -76,18 +86,28 @@ export const columnExtensionComputed: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToRequiredList: boolean) => ICompiledExpression
   ): IQueryFieldData => {
-    const compiledExpression = getCompiledExpressionById(context.column.properties.appliedExpressionId);
+    const moveSelectToQuery = context.column.properties != null && context.column.properties.moveSelectToQuery === true;
 
-    return {
+    const compiledExpression = getCompiledExpressionById(context.column.properties.appliedExpressionId, moveSelectToQuery !== true);
+
+    const queryFieldData: IQueryFieldData = {
       field: `${context.column.name}: ${compiledExpression.gqlReturnType}`,
       fieldName: context.column.name,
       pgSelectExpression: compiledExpression.alias,
       viewColumnName: context.column.name,
+      columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
       queryFieldMeta: {}
     };
+
+    if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
+      queryFieldData.pgSelectExpression = `TRUE`;
+      queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT ${compiledExpression.renderedSql.replace("_local_table_", "_temp_")} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL END`;
+    }
+
+    return queryFieldData;
   },
   getMutationFieldData: (
     context: IColumnExtensionContext,

@@ -85,6 +85,7 @@ export const columnExtensionEnum: IColumnExtension = {
       fieldName: getPgColumnName(context),
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
       viewColumnName: getPgColumnName(context),
+      columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: true,
       queryFieldMeta: {},
       gqlTypeDefs: `\nenum Enum_${context.table.name}_${context.column.name} { \n${context.column.properties.values

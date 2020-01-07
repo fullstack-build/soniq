@@ -111,6 +111,8 @@ export class MutationPermissionGenerator {
     const expressionGenerator = new ExpressionGenerator(expressionCompiler);
 
     const mutationName = `${mutation.type.toLowerCase()}${table.name}${mutation.type !== "DELETE" ? mutation.name : ""}`;
+    const typeCamelCase = mutation.type.toLowerCase()[0].toUpperCase() + mutation.type.toLowerCase().substr(1);
+    const viewName = `${table.name}_${typeCamelCase}${mutation.type !== "DELETE" ? "_" + mutation.name : ""}`;
 
     const mutationData: IMutationPermissionGeneratorResult = {
       views: [],
@@ -120,7 +122,7 @@ export class MutationPermissionGenerator {
         name: mutationName,
         type: mutation.type,
         authRequired: false,
-        viewName: mutationName[0].toUpperCase() + mutationName.substr(1),
+        viewName,
         returnOnlyId: mutation.returnOnlyId === true
       }
     };

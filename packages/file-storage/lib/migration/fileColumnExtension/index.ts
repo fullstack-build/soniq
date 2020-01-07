@@ -81,6 +81,7 @@ export const columnExtensionFile: IColumnExtension = {
       fieldName: context.column.name,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(context.column.name)}`,
       viewColumnName: context.column.name,
+      columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
       queryFieldMeta: {},
       resolvers: [{

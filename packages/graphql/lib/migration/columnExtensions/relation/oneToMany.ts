@@ -115,6 +115,7 @@ export const columnExtensionOneToMany: IColumnExtension = {
       fieldName: context.column.name,
       pgSelectExpression: `TRUE`,
       viewColumnName: context.column.name,
+      columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
       queryFieldMeta: {
         oneToMany: {

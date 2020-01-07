@@ -41,6 +41,7 @@ export interface IQueryFields {
 export interface IQueryFieldMeta {
   fieldName: string;
   columnName: string | null;
+  columnSelectExpressionTemplate: string | null;
   authRequired: boolean;
   manyToOne?: {
     foreignColumnName: string;

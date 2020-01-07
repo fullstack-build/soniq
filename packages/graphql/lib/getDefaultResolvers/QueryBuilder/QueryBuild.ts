@@ -69,13 +69,13 @@ export default class QueryBuild {
       }
       if (fieldMeta.manyToOne != null || fieldMeta.oneToMany != null) {
         const idExpression =
-          fieldMeta.manyToOne != null ? this.getColumnExpression(fieldMeta.columnName, localName) : this.getColumnExpression("id", localName);
+          fieldMeta.manyToOne != null ? this.getColumnExpressionTemplate(fieldMeta, localName) : this.getColumnExpression("id", localName);
 
         const relationSql = this.resolveRelation(field, fieldMeta, localName, idExpression);
 
         selectFieldExpressions.push(relationSql);
       } else {
-        selectFieldExpressions.push(`${this.getColumnExpression(fieldMeta.columnName, localName)} "${field.name}"`);
+        selectFieldExpressions.push(`${this.getColumnExpressionTemplate(fieldMeta, localName)} "${field.name}"`);
       }
     });
 
@@ -89,7 +89,7 @@ export default class QueryBuild {
         this.authRequired = true;
         authRequiredHere = true;
       }
-      return this.getColumnExpression(columnName, localName);
+      return this.getColumnExpressionTemplate(queryFieldMeta, localName);
     };
 
     const joinConditionSql = this.generateJoinCondition(match, localName);
@@ -140,6 +140,11 @@ export default class QueryBuild {
 
   private getColumnExpression(name: string, localName: string): string {
     return `"${localName}"."${name}"`;
+  }
+
+  private getColumnExpressionTemplate(fieldMeta: IQueryFieldMeta, localName: string): string {
+    console.log('>>', fieldMeta);
+    return fieldMeta.columnSelectExpressionTemplate.split("{_local_table_}").join(localName);
   }
 
   private getFromExpression(queryViewMeta: IQueryViewMeta, localName: string, authRequired: boolean): string {

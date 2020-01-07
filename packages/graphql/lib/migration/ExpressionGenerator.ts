@@ -23,12 +23,14 @@ export class ExpressionGenerator {
     });
   }
 
-  public getCompiledExpressionById(id: string) {
+  public getCompiledExpressionById(id: string, directRequired: boolean = true, addToRequiredList: boolean = true) {
     const compiledExpression = this.expressionCompiler.getCompiledExpressionById(id);
 
-    compiledExpression.directRequired = true;
+    compiledExpression.directRequired = directRequired;
 
-    this.addCompiledExpression(compiledExpression);
+    if (addToRequiredList === true) {
+      this.addCompiledExpression(compiledExpression);
+    }
 
     return compiledExpression;
   }

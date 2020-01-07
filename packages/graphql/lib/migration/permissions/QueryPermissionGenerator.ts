@@ -126,8 +126,8 @@ export class QueryPermissionGenerator {
       resolvers: [],
       queryViewMeta: {
         name: table.name,
-        publicViewName: `${table.name}_READ_PUBLIC`,
-        authViewName: `${table.name}_READ_AUTH`,
+        publicViewName: `${table.name}_Read_Public`,
+        authViewName: `${table.name}_Read_Auth`,
         fields: {},
         disallowGenericRootLevelAggregation: table.options != null && table.options.disallowGenericRootLevelAggregation === true
       }
@@ -148,8 +148,8 @@ export class QueryPermissionGenerator {
         let authRequired: boolean = false;
 
         // Get field-data from the type
-        const queryFieldData = columnExtension.getQueryFieldData(columnExtensionContext, LOCAL_TABLE_ALIAS, (appliedExpressionId) => {
-          const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId);
+        const queryFieldData = columnExtension.getQueryFieldData(columnExtensionContext, LOCAL_TABLE_ALIAS, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
+          const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
 
           if (compiledExpression.authRequired === true) {
             authRequired = true;
@@ -222,13 +222,18 @@ export class QueryPermissionGenerator {
             } else {
               publicColumnSelects.push(`NULL AS ${getPgSelector(queryFieldData.viewColumnName)}`);
             }
-            authColumnSelects.push(this.createSwitchCase(authCondition, queryFieldData.pgSelectExpression, queryFieldData.viewColumnName));
+            if (hasPublicTrueExpression === true) {
+              authColumnSelects.push(`${queryFieldData.pgSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
+            } else {
+              authColumnSelects.push(this.createSwitchCase(authCondition, queryFieldData.pgSelectExpression, queryFieldData.viewColumnName));
+            }
           }
 
           const queryFieldMeta: IQueryFieldMeta = {
             ...queryFieldData.queryFieldMeta,
             fieldName: queryFieldData.fieldName,
             columnName: queryFieldData.viewColumnName,
+            columnSelectExpressionTemplate: queryFieldData.columnSelectExpressionTemplate,
             authRequired: authRequired && hasPublicTrueExpression !== true
           };
 

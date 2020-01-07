@@ -276,6 +276,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
       fieldName: context.column.name,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
       viewColumnName: getPgColumnName(context),
+      columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(getPgColumnName(context))}`,
       canBeFilteredAndOrdered: true,
       queryFieldMeta: {
         manyToOne: {

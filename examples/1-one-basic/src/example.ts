@@ -18,12 +18,16 @@ export const exampleSchema: IDbSchema = {
       name: "firstName",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
       properties: {
+        moveSelectToQuery: true,
         defaultExpression: "'test'::text"
       }
     },{
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500003",
       type: "text", 
       name: "lastName",
+      properties: {
+        moveSelectToQuery: true
+      },
       appliedQueryExpressionIds: ["20354d7a-e4fe-47af-8ff6-187bca92f3f9"]
     },{
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
@@ -62,12 +66,13 @@ export const exampleSchema: IDbSchema = {
         nullable: true
       }
     },{
-      id: "67afcca1-37b2-4c5e-8f6e-6bab43500009",
+      id: "67afcca1-37b2-4c5e-8f6e-6bab43500010",
       type: "computed", 
-      name: "isOwner",
+      name: "countOfUsers",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
       properties: {
-        appliedExpressionId: "20354d7a-e4fe-47af-8ff6-187bca92f3f9"
+        moveSelectToQuery: true,
+        appliedExpressionId: "20354d7a-e4fe-47af-8ff6-187bca92f3e9"
       }
     }],
     indexes: [{
@@ -85,6 +90,10 @@ export const exampleSchema: IDbSchema = {
       params: {
         column: "67afcca1-37b2-4c5e-8f6e-6bab43500001"
       }
+    },{
+      id: "20354d7a-e4fe-47af-8ff6-187bca92f3e9",
+      expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500005",
+      params: {}
     }],
     mutations: [{
       id: "67af42a1-37b2-4c5e-8f6e-6bab43500001",
@@ -294,5 +303,13 @@ export const exampleSchema: IDbSchema = {
     }],
     nameTemplate: "Owner_${column.columnName}",
     sqlTemplate: "${currentUserIdOrNull} = ${column.columnSelector} AND ${currentUserIdOrNull} IS NOT NULL"
-  }]
+  },{
+    id: "17afcca1-37b2-4c5e-7f6e-6bab43500005",
+    name: "countOfUsers",
+    gqlReturnType: "Int",
+    placeholders: [],
+    authRequired: false,
+    nameTemplate: "countOfUsers",
+    sqlTemplate: `(SELECT count(*) FROM one_example."User")`
+  },]
 }

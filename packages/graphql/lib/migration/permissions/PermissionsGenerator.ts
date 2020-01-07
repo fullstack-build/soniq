@@ -63,10 +63,12 @@ export class PermissionGenerator {
     const { rows } = await dbClient.query(query, [schema]);
 
     return rows.map((row) => {
-      const splittedComment = row.comment.split("_");
       let hash = null;
-      if (splittedComment[0] === "ONE" && splittedComment[1] != null) {
-        hash = splittedComment[1];
+      if (row.comment != null) {
+        const splittedComment = row.comment.split("_");
+        if (splittedComment[0] === "ONE" && splittedComment[1] != null) {
+          hash = splittedComment[1];
+        }
       }
 
       return {

@@ -51,7 +51,17 @@ export function createGenericColumnExtension(
               "'foobar'::text"
             ],
             "pattern": "^(.*)$"
-          }
+          },
+          "moveSelectToQuery": {
+            "$id": "#/properties/moveSelectToQuery",
+            "type": "boolean",
+            "title": "Select the column in QueryBuilder not in view",
+            "default": false,
+            "examples": [
+              true,
+              false
+            ]
+          },
         },
         "additionalProperties": false
       }
@@ -63,14 +73,22 @@ export function createGenericColumnExtension(
       localTableAlias: string,
       getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
     ): IQueryFieldData => {
-      return {
+      const queryFieldData: IQueryFieldData = {
         field: `${getPgColumnName(context)}: ${fixedGenericTypes.gqlType}`,
         fieldName: getPgColumnName(context),
         pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
         viewColumnName: getPgColumnName(context),
+        columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
         canBeFilteredAndOrdered: true,
         queryFieldMeta: {}
       };
+
+      if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
+        queryFieldData.pgSelectExpression = `TRUE`;
+        queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT _temp_.${getPgSelector(getPgColumnName(context))} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL::text END`;
+      }
+
+      return queryFieldData;
     },
     getMutationFieldData: (
       context: IColumnExtensionContext,

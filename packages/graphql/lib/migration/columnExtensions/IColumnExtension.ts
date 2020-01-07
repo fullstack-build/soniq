@@ -27,6 +27,7 @@ export interface IQueryFieldData {
   fieldName: string;
   pgSelectExpression: string;
   viewColumnName: string;
+  columnSelectExpressionTemplate: string;
   canBeFilteredAndOrdered: boolean;
   queryFieldMeta: IQueryFieldMeta | {};
   resolvers?: IResolver[];
