@@ -72,7 +72,9 @@ export class Server {
       // Handle errors like ECONNRESET
       this.app.on("error", (error, ctx) => {
         const bodyHidden =
-          ctx != null && ctx.body != null && (ctx.body.indexOf("createPassword") >= 0 || ctx.body.indexOf("proofPassowrd") >= 0 || ctx.body.indexOf("authFactorProofToken") >= 0);
+          ctx != null &&
+          ctx.body != null &&
+          (ctx.body.indexOf("createPassword") >= 0 || ctx.body.indexOf("proofPassowrd") >= 0 || ctx.body.indexOf("authFactorProofToken") >= 0);
         if (error.code === "EPIPE") {
           this.logger.warn("Koa app-level EPIPE error.", {
             error,
