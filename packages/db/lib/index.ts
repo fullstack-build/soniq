@@ -16,7 +16,7 @@ import * as modelMeta from "./model-meta";
 import { IDbConfig } from "./IDbConfig";
 import { IModelMeta } from "./model-meta/types";
 
-export { Connection, ConnectionManager, MigrationInterface, QueryBuilder, Unique } from "typeorm";
+export { Connection, ConnectionManager, MigrationInterface, QueryBuilder, Unique, Index } from "typeorm";
 export { IsolationLevel } from "typeorm/driver/types/IsolationLevel";
 export { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 export { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
