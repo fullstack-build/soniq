@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/boot-loader",
-  "version": "0.6.18",
+  "version": "0.6.21",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -19,6 +19,6 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/di": "^0.6.18",
-    "@fullstack-one/logger": "^0.6.18"
+    "@fullstack-one/logger": "^0.6.21"
   }
 }
