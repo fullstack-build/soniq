@@ -32,7 +32,7 @@
     "apollo-cache-inmemory": "1.6.2",
     "apollo-client": "2.6.3",
     "apollo-link-schema": "1.2.3",
-    "apollo-server-koa": "2.4.8",
+    "apollo-server-koa": "^2.11.0",
     "graphql": "0.13.2",
     "graphql-parse-resolve-info": "0.1.0-alpha.18",
     "graphql-tools": "^3.0.0",
