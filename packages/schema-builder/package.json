@@ -31,7 +31,7 @@
     "deepmerge": "^2.0.1",
     "fast-glob": "^2.2.1",
     "graphql": "^0.13.2",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.15",
     "util": "^0.10.3"
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"

@@ -28,7 +28,7 @@
     "mailgen": "^2.0.5",
     "nodemailer": "^4.6.8",
     "nodemailer-direct-transport": "^3.3.2",
-    "nodemailer-html-to-text": "^2.1.0"
+    "nodemailer-html-to-text": "^3.1.0"
   },
   "devDependencies": {
     "@types/mailgen": "^2.0.1",
