@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@fullstack-one/boot-loader": "^0.6.18",
 		"@fullstack-one/config": "latest",
+		"@fullstack-one/di": "^0.6.18",
 		"@fullstack-one/events": "^0.6.18",
 		"@fullstack-one/logger": "^0.6.18",
 		"@godaddy/terminus": "^2.2.0",
