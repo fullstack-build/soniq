@@ -8,6 +8,10 @@
 		"type": "git",
 		"url": "git+https://github.com/fullstack-build/fullstack.one.git"
 	},
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
 	"publishConfig": {
 		"access": "public"
 	},
