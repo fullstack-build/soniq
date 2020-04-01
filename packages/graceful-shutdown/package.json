@@ -1,16 +1,16 @@
 {
 	"name": "@fullstack-one/graceful-shutdown",
-	"version": "0.6.21",
+	"version": "0.6.22",
 	"description": "fullstack.one helper package",
 	"main": "index.js",
 	"types": "lib/index.ts",
 	"publishConfig": {
 		"access": "public"
 	},
-  "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build"
-  },
+	"scripts": {
+		"build": "tsc",
+		"prepublishOnly": "npm run build"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/fullstack-build/fullstack.one.git"
@@ -18,11 +18,11 @@
 	"keywords": [],
 	"license": "MIT",
 	"dependencies": {
-		"@fullstack-one/boot-loader": "^0.6.21",
+		"@fullstack-one/boot-loader": "^0.6.22",
 		"@fullstack-one/config": "latest",
-		"@fullstack-one/di": "^0.6.18",
-		"@fullstack-one/events": "^0.6.21",
-		"@fullstack-one/logger": "^0.6.21",
+		"@fullstack-one/di": "^0.6.22",
+		"@fullstack-one/events": "^0.6.22",
+		"@fullstack-one/logger": "^0.6.22",
 		"@godaddy/terminus": "^2.2.0",
 		"async-exit-hook": "^2.0.1"
 	},
