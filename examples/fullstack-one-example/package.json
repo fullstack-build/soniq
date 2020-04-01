@@ -1,6 +1,6 @@
 {
   "name": "fullstack.one-example",
-  "version": "0.6.22",
+  "version": "0.6.23",
   "description": "Example project: how to use fullstack.one",
   "private": true,
   "engines": {
@@ -39,19 +39,19 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.6.22",
-    "@fullstack-one/auth-fb-token": "^0.6.22",
-    "@fullstack-one/db": "^0.6.22",
-    "@fullstack-one/di": "^0.6.22",
-    "@fullstack-one/events": "^0.6.22",
-    "@fullstack-one/file-storage": "^0.6.22",
-    "@fullstack-one/graceful-shutdown": "^0.6.22",
-    "@fullstack-one/graphql": "^0.6.22",
-    "@fullstack-one/notifications": "^0.6.22",
+    "@fullstack-one/auth": "^0.6.23",
+    "@fullstack-one/auth-fb-token": "^0.6.23",
+    "@fullstack-one/db": "^0.6.23",
+    "@fullstack-one/di": "^0.6.23",
+    "@fullstack-one/events": "^0.6.23",
+    "@fullstack-one/file-storage": "^0.6.23",
+    "@fullstack-one/graceful-shutdown": "^0.6.23",
+    "@fullstack-one/graphql": "^0.6.23",
+    "@fullstack-one/notifications": "^0.6.23",
     "@types/graphql": "^14.2.2",
     "apollo-server": "^2.7.0",
     "dotenv": "^4.0.0",
-    "fullstack-one": "^0.6.22",
+    "fullstack-one": "^0.6.23",
     "graphql": "^14.4.2",
     "passport-facebook": "^2.1.1",
     "passport-google-oauth20": "^1.0.0"
