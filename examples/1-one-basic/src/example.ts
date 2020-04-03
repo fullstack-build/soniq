@@ -18,7 +18,7 @@ export const exampleSchema: IDbSchema = {
       name: "firstName",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
       properties: {
-        moveSelectToQuery: true,
+        // moveSelectToQuery: true,
         defaultExpression: "'test'::text"
       }
     },{
@@ -26,9 +26,18 @@ export const exampleSchema: IDbSchema = {
       type: "text", 
       name: "lastName",
       properties: {
-        moveSelectToQuery: true
+        // moveSelectToQuery: true
       },
       appliedQueryExpressionIds: ["20354d7a-e4fe-47af-8ff6-187bca92f3f9"]
+    },{
+      id: "67afcca1-37b2-4c5e-8f6e-6bab43500012",
+      type: "text", 
+      name: "secret",
+      properties: {
+        // moveSelectToQuery: true
+        nullable: true
+      },
+      appliedQueryExpressionIds: []
     },{
       id: "67afcca1-37b2-4c5e-8f6e-6bab43500004",
       type: "enum", 
@@ -71,8 +80,17 @@ export const exampleSchema: IDbSchema = {
       name: "countOfUsers",
       appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
       properties: {
-        moveSelectToQuery: true,
+        // moveSelectToQuery: true,
         appliedExpressionId: "20354d7a-e4fe-47af-8ff6-187bca92f3e9"
+      }
+    },{
+      id: "67afcca1-37b2-4c5e-8f6e-6bab43500011",
+      type: "computed", 
+      name: "userId",
+      appliedQueryExpressionIds: ["42afcca1-37b2-4c5e-7f6e-6bab43500001"],
+      properties: {
+        moveSelectToQuery: true,
+        appliedExpressionId: "20354d7a-e4fe-47af-8ff6-187bca92f3f9"
       }
     }],
     indexes: [{
@@ -82,16 +100,19 @@ export const exampleSchema: IDbSchema = {
     }],
     appliedExpressions: [{
       id: "42afcca1-37b2-4c5e-7f6e-6bab43500001",
+      name: "Anyone",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500003",
       params: {}
     },{
       id: "20354d7a-e4fe-47af-8ff6-187bca92f3f9",
+      name: "Owner",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500002",
       params: {
         column: "67afcca1-37b2-4c5e-8f6e-6bab43500001"
       }
     },{
       id: "20354d7a-e4fe-47af-8ff6-187bca92f3e9",
+      name: "count",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500005",
       params: {}
     }],
@@ -190,7 +211,6 @@ export const exampleSchema: IDbSchema = {
       type: "oneToMany",
       name: "comments",
       properties: {
-        foreignTableId: "57afcca1-37b2-4c5e-8f6e-6bab43500003",
         foreignColumnId: "97afcca1-37b2-4c5e-8f6e-6bab43500004"
       },
       appliedQueryExpressionIds: ["43afcca1-37b2-4c5e-7f6e-6bab43500001"]
@@ -198,6 +218,7 @@ export const exampleSchema: IDbSchema = {
     indexes: [],
     appliedExpressions: [{
       id: "43afcca1-37b2-4c5e-7f6e-6bab43500001",
+      name: "Anyone",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500003",
       params: {}
     }]
@@ -256,6 +277,7 @@ export const exampleSchema: IDbSchema = {
     }],
     appliedExpressions: [{
       id: "44afcca1-37b2-4c5e-7f6e-6bab43500001",
+      name: "Anyone",
       expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500003",
       params: {}
     }]
@@ -263,10 +285,9 @@ export const exampleSchema: IDbSchema = {
   expressions: [{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500003",
     name: "Anyone",
-    gqlReturnType: "String",
+    gqlReturnType: "Boolean",
     placeholders: [],
     authRequired: false,
-    nameTemplate: "Anyone",
     sqlTemplate: "TRUE"
   },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500001",
@@ -274,7 +295,6 @@ export const exampleSchema: IDbSchema = {
     gqlReturnType: "String",
     placeholders: [],
     authRequired: true,
-    nameTemplate: "currentUserId",
     sqlTemplate: "_auth.current_user_id()"
   },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500004",
@@ -282,7 +302,6 @@ export const exampleSchema: IDbSchema = {
     gqlReturnType: "String",
     placeholders: [],
     authRequired: true,
-    nameTemplate: "currentUserIdOrNull",
     sqlTemplate: "_auth.current_user_id_or_null()"
   },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500002",
@@ -297,11 +316,11 @@ export const exampleSchema: IDbSchema = {
       type: "EXPRESSION",
       appliedExpression: {
         id: "17afcca1-37b2-4c5e-6f6e-6bab43500001",
+        name: "Owner_None",
         expressionId: "17afcca1-37b2-4c5e-7f6e-6bab43500004",
         params: {}
       }
     }],
-    nameTemplate: "Owner_${column.columnName}",
     sqlTemplate: "${currentUserIdOrNull} = ${column.columnSelector} AND ${currentUserIdOrNull} IS NOT NULL"
   },{
     id: "17afcca1-37b2-4c5e-7f6e-6bab43500005",
@@ -309,7 +328,6 @@ export const exampleSchema: IDbSchema = {
     gqlReturnType: "Int",
     placeholders: [],
     authRequired: false,
-    nameTemplate: "countOfUsers",
     sqlTemplate: `(SELECT count(*) FROM one_example."User")`
   },]
 }

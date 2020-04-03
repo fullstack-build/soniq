@@ -24,7 +24,7 @@ export const $gql: GraphQl = Container.get(GraphQl);
 export const $server: Server = Container.get(Server);
 export const $authProviderEmail: AuthProviderEmail = Container.get(AuthProviderEmail);
 export const $authProviderPassword: AuthProviderPassword = Container.get(AuthProviderPassword);
-export const $fileStorage: AuthProviderPassword = Container.get(FileStorage);
+export const $fileStorage: FileStorage = Container.get(FileStorage);
 
 $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication) => {
   console.log("user.registered", JSON.stringify(userAuthentication, null, 2));
@@ -53,7 +53,8 @@ export const appConfig: IAppConfig = {
     key: "Auth",
     appConfig: {
       secrets: {
-        admin: "HugoBosssdkhfk",
+        admin: "HyperHyper",
+        root: "ThisIsScooter",
         cookie: "FooBar",
         authProviderHashSignature: "test1234",
         encryptionKey: "qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL",
@@ -90,7 +91,7 @@ export const appConfig: IAppConfig = {
 export const pgConfig = {
   user: 'postgres',
   host: 'localhost',
-  database: 'one-mig-2',
+  database: 'one-mig-3',
   password: '',
   port: 5432,
 };
