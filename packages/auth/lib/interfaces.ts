@@ -109,3 +109,8 @@ export interface ISodiumConfigOptional {
   memlimit?: number;
   algorithm?: string;
 }
+
+export interface ITransactionAuth {
+  accessToken?: string;
+  rootAccess?: boolean;
+}

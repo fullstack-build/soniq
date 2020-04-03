@@ -31,7 +31,7 @@ export const columnExtensionFile: IColumnExtension = {
         "types": {
           "$id": "#/properties/types",
           "type": "array",
-          "title": "The allowed file-types",
+          "title": "ENUM_VALUES",
           "uniqueItems": true,
           "items": {
             "$id": "#/properties/types/items",
@@ -74,12 +74,14 @@ export const columnExtensionFile: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${context.column.name}: [BucketFile!]`,
       fieldName: context.column.name,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(context.column.name)}`,
+      pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(context.column.name)}`,
       viewColumnName: context.column.name,
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,

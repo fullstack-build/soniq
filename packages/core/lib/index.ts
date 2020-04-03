@@ -596,7 +596,7 @@ ____) | |__| | |___| |____| |____ ____) |___) |
           // Ignore Errors because this is only an Event
         }
       }
-      this.logger.info("Improved.io Worker running!");
+      this.logger.info("Fullstack.ONE Worker running!");
     } catch (err) {
       this.logger.error(`core.boot.error.caught: ${err}\n`);
       throw err;

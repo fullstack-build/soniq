@@ -225,9 +225,11 @@ export class FileStorage {
   private async deleteFile(fileName: FileName, context: { accessToken?: string }) {
     await this.ensureInitializedClient();
     try {
-      await this.auth.getAuthQueryHelper().userTransaction(context.accessToken, async (client) => {
+      await this.auth.getAuthQueryHelper().transaction(async (client) => {
         await client.query("SELECT * FROM _file_storage.file_deleteone($1);", [fileName.id]);
         await this.deleteObjects(fileName.prefix);
+      }, {
+        accessToken: context.accessToken
       });
     } catch (e) {
       this.logger.warn("deleteFile.error", `Failed to delete file '${fileName.name}'.`, e);
@@ -294,9 +296,9 @@ export class FileStorage {
 
             if (args.fileName != null) {
               const fileName = new FileName(args.fileName);
-              result = (await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _file_storage.file_clearupone($1);", [fileName.id])).rows;
+              result = (await this.auth.getAuthQueryHelper().query({accessToken: context.accessToken}, "SELECT * FROM _file_storage.file_clearupone($1);", [fileName.id])).rows;
             } else {
-              result = (await this.auth.getAuthQueryHelper().userQuery(context.accessToken, "SELECT * FROM _file_storage.file_clearup();")).rows;
+              result = (await this.auth.getAuthQueryHelper().query({accessToken: context.accessToken}, "SELECT * FROM _file_storage.file_clearup();")).rows;
             }
 
             const filesDeleted = result.map((row) => new FileName(row));
@@ -366,7 +368,7 @@ export class FileStorage {
 
     // tslint:disable-next-line:prefer-conditional-expression
     if (accessToken != null) {
-      result = await authQueryHelper.userQuery(accessToken, 'SELECT _file_storage.file_create($1, $2) AS "fileId";', [extensionInternal, typeInternal]);
+      result = await authQueryHelper.query({accessToken}, 'SELECT _file_storage.file_create($1, $2) AS "fileId";', [extensionInternal, typeInternal]);
     } else {
       result = await authQueryHelper.adminQuery('SELECT _file_storage.file_create_system($1, $2) AS "fileId";', [extensionInternal, typeInternal]);
     }
@@ -399,9 +401,9 @@ export class FileStorage {
 
     // tslint:disable-next-line:prefer-conditional-expression
     if (accessToken != null) {
-      result = await authQueryHelper.userQuery(accessToken, 'SELECT _file_storage.file_get_type_to_verify($1) AS "type";', [fileName.id]);
+      result = await authQueryHelper.query({accessToken}, 'SELECT _file_storage.file_get_type_to_verify($1) AS "type";', [fileName.id]);
     } else {
-      result = await authQueryHelper.query('SELECT _file_storage.file_get_type_to_verify($1) AS "type";', [fileName.id]);
+      result = await authQueryHelper.query({}, 'SELECT _file_storage.file_get_type_to_verify($1) AS "type";', [fileName.id]);
     }
 
     const type = result.rows[0].type;
@@ -439,9 +441,9 @@ export class FileStorage {
     await this.verifierObjects[type].verify(verifyFileName, fileName);
 
     if (accessToken != null) {
-      await this.auth.getAuthQueryHelper().userQuery(accessToken, "SELECT _file_storage.file_verify($1);", [fileName.id]);
+      await this.auth.getAuthQueryHelper().query({accessToken}, "SELECT _file_storage.file_verify($1);", [fileName.id]);
     } else {
-      await this.auth.getAuthQueryHelper().query("SELECT _file_storage.file_verify($1);", [fileName.id]);
+      await this.auth.getAuthQueryHelper().query({}, "SELECT _file_storage.file_verify($1);", [fileName.id]);
     }
 
     // Try to clean up temp objects. However, don't care if it fails.

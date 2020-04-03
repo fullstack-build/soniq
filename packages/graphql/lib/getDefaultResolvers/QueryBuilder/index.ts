@@ -20,7 +20,10 @@ export default class QueryBuilder {
   public build(info: GraphQLResolveInfo, isAuthenticated: boolean, match: IMatch = null): IQueryBuildOject {
     const query: IParsedResolveInfo<IQueryClauseObject> = parseResolveInfo(info);
 
-    const selectQueryBuild = new QueryBuild(this.operatorsBuilder, this.defaultResolverMeta, isAuthenticated, query, match);
+    // TODO: Use root views when set
+    const useRootViews = false;
+
+    const selectQueryBuild = new QueryBuild(this.operatorsBuilder, this.defaultResolverMeta, isAuthenticated, useRootViews, query, match);
     return selectQueryBuild.getBuildObject();
   }
 

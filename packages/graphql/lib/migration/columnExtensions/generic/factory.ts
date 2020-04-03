@@ -71,12 +71,14 @@ export function createGenericColumnExtension(
     getQueryFieldData: (
       context: IColumnExtensionContext,
       localTableAlias: string,
-      getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+      getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+      getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
     ): IQueryFieldData => {
       const queryFieldData: IQueryFieldData = {
         field: `${getPgColumnName(context)}: ${fixedGenericTypes.gqlType}`,
         fieldName: getPgColumnName(context),
         pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
+        pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
         viewColumnName: getPgColumnName(context),
         columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
         canBeFilteredAndOrdered: true,
@@ -85,6 +87,7 @@ export function createGenericColumnExtension(
 
       if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
         queryFieldData.pgSelectExpression = `TRUE`;
+        queryFieldData.pgRootSelectExpression = `TRUE`;
         queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT _temp_.${getPgSelector(getPgColumnName(context))} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL::text END`;
       }
 

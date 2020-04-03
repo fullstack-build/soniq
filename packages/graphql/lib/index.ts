@@ -16,7 +16,8 @@ import {
   IModuleMigrationResult,
   IModuleRuntimeConfig,
   Pool,
-  TGetModuleRuntimeConfig
+  TGetModuleRuntimeConfig,
+  IModuleConfig
 } from "@fullstack-one/core";
 import { Server } from "@fullstack-one/server";
 
@@ -144,6 +145,11 @@ export class GraphQl {
     const app = this.server.getApp();
 
     applyApolloMiddleware(app, getRuntimeConfig, pgPool, this.resolvers, this.graphQlConfig, this.logger, this.hookManager, this.operatorsBuilder);
+
+    console.log('>>', JSON.stringify(this.getColumnExtensionPropertySchemas()));
+  }
+  private async bootStudio(getModuleConfig: () => IModuleConfig, setModuleConfig: (moduleConfig: IModuleConfig) => void, server) {
+    
   }
   /* =====================================================================
       EXTERNAL EXTENSIONS

@@ -13,18 +13,21 @@ export default class QueryBuild {
   private readonly sql: string;
   private currentIndex: number = -1;
   private authRequired: boolean = false;
+  private useRootViews: boolean = false;
   private operatorsBuilder: OperatorsBuilder;
 
   constructor(
     operatorsBuilder: OperatorsBuilder,
     defaultResolverMeta: IDefaultResolverMeta,
     isAuthenticated: boolean,
+    useRootViews: boolean,
     query: IParsedResolveInfo<IQueryClauseObject>,
     match: IMatch = null
   ) {
     this.operatorsBuilder = operatorsBuilder;
     this.defaultResolverMeta = defaultResolverMeta;
     this.isAuthenticated = isAuthenticated;
+    this.useRootViews = useRootViews;
     this.sql = `SELECT ${this.jsonAgg(query, match)};`;
     this.queryName = query.name;
   }
@@ -89,6 +92,7 @@ export default class QueryBuild {
         this.authRequired = true;
         authRequiredHere = true;
       }
+
       return this.getColumnExpressionTemplate(queryFieldMeta, localName);
     };
 
@@ -144,11 +148,14 @@ export default class QueryBuild {
 
   private getColumnExpressionTemplate(fieldMeta: IQueryFieldMeta, localName: string): string {
     console.log('>>', fieldMeta);
+    if (fieldMeta.rootOnlyColumn === true && this.useRootViews !== true) {
+      throw new UserInputError(`The field '${fieldMeta.fieldName}' is only accessible with root privileges.`, { exposeDetails: true });
+    }
     return fieldMeta.columnSelectExpressionTemplate.split("{_local_table_}").join(localName);
   }
 
   private getFromExpression(queryViewMeta: IQueryViewMeta, localName: string, authRequired: boolean): string {
-    const viewName = authRequired === true ? queryViewMeta.authViewName : queryViewMeta.publicViewName;
+    const viewName = this.useRootViews === true ? queryViewMeta.rootViewName : (authRequired === true ? queryViewMeta.authViewName : queryViewMeta.publicViewName);
     return `"${this.defaultResolverMeta.viewsSchemaName}"."${viewName}" AS "${localName}"`;
   }
 

@@ -36,11 +36,13 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${context.column.name}: String`,
       fieldName: context.column.name,
+      pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(context.column.name)}`,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(context.column.name)}`,
       viewColumnName: context.column.name,
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,

@@ -37,7 +37,7 @@ export const columnExtensionEnum: IColumnExtension = {
         "values": {
           "$id": "#/properties/values",
           "type": "array",
-          "title": "The enum values",
+          "title": "ENUM_VALUES",
           "uniqueItems": true,
           "items": {
             "$id": "#/properties/values/items",
@@ -78,11 +78,13 @@ export const columnExtensionEnum: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${getPgColumnName(context)}: Enum_${context.table.name}_${context.column.name}`,
       fieldName: getPgColumnName(context),
+      pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
       viewColumnName: getPgColumnName(context),
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,

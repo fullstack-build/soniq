@@ -23,6 +23,21 @@ export const findColumnById = (table: IDbTable, columnId: string): IDbColumn | n
   return null;
 };
 
+export const findTableColumnInSchemaByColumnId = (schema: IDbSchema, columnId: string): {table: IDbTable, column: IDbColumn} | null => {
+  for (const i in schema.tables) {
+    const table = schema.tables[i];
+    for (const j in table.columns) {
+      if (table.columns[j].id === columnId) {
+        return {
+          table,
+          column: table.columns[j]
+        };
+      }
+    }
+  }
+  return null;
+};
+
 export const findAppliedExpressionById = (table: IDbTable, appliendExpressionId: string): IDbAppliedExpression | null => {
   for (const i in table.appliedExpressions || []) {
     if (table.appliedExpressions[i].id === appliendExpressionId) {

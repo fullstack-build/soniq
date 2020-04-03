@@ -6,7 +6,9 @@
   "types": "lib/index.ts",
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "dev": "parcel gui-lib/index.html --out-dir gui-dist",
+    "gui-build": "parcel build gui-lib/index.html --out-dir gui-dist"
   },
   "publishConfig": {
     "access": "public"
@@ -27,6 +29,7 @@
     "@types/graphql": "0.13.4",
     "@types/koa-mount": "^3.0.1",
     "@types/lodash": "^4.14.136",
+    "ajv": "^6.11.0",
     "apollo-cache-inmemory": "1.6.2",
     "apollo-client": "2.6.3",
     "apollo-link-schema": "1.2.3",
@@ -44,6 +47,24 @@
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad",
   "devDependencies": {
-    "@types/uuid-validate": "0.0.1"
+    "@babel/core": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
+    "@babel/preset-react": "^7.8.3",
+    "@types/uuid-validate": "0.0.1",
+    "ace-builds": "^1.4.8",
+    "fela": "^11.0.2",
+    "fela-dom": "^11.0.2",
+    "fela-monolithic": "^11.0.2",
+    "fela-plugin-friendly-pseudo-class": "^11.0.2",
+    "fela-preset-web": "^11.0.2",
+    "parcel-bundler": "^1.12.4",
+    "prop-types": "^15.7.2",
+    "react": "^16.12.0",
+    "react-ace": "^8.0.0",
+    "react-dom": "^16.12.0",
+    "react-fela": "^11.0.2",
+    "react-select": "^3.0.8",
+    "react-tagsinput": "^3.19.0",
+    "sql-formatter": "^2.3.3"
   }
 }

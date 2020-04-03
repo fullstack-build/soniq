@@ -39,7 +39,7 @@ export { AuthProvider, IAuthFactorForProof };
 
 @Service()
 export class Auth {
-  private authConfig;
+  private authConfig: any;
   private cryptoFactory: CryptoFactory;
   private signHelper: SignHelper;
   private authQueryHelper: AuthQueryHelper;
@@ -129,7 +129,7 @@ export class Auth {
 
   private updateHelpers (runtimeConfig: any) {
     this.cryptoFactory = new CryptoFactory(runtimeConfig.secrets.encryptionKey, runtimeConfig.crypto.algorithm);
-    this.signHelper = new SignHelper(runtimeConfig.secrets.admin, this.cryptoFactory);
+    this.signHelper = new SignHelper(runtimeConfig.secrets.admin, runtimeConfig.secrets.root, this.cryptoFactory);
 
     this.authQueryHelper = new AuthQueryHelper(this.pgPool, this.logger, this.cryptoFactory, this.signHelper);
     this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, runtimeConfig);
@@ -198,6 +198,8 @@ export class Auth {
           throw err;
         }
       }
+      // TODO: Set root when available
+      // await this.authQueryHelper.setRoot(pgClient);
     } else {
       if (authRequired === true) {
         if (context.accessToken != null) {
@@ -432,9 +434,9 @@ export class Auth {
           usesPgClientFromContext: false,
           resolver: async (obj, args, context, info) => {
             return this.callAndHideErrorDetails(async () => {
-              return this.authQueryHelper.userTransaction(context.accessToken, async (pgClientInternal) => {
+              return this.authQueryHelper.transaction(async (pgClientInternal) => {
                 return this.authConnector.getUserAuthentication(pgClientInternal, context.accessToken);
-              });
+              }, { accessToken: context.accessToken });
             });
           }
         };

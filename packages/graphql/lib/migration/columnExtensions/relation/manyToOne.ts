@@ -174,9 +174,6 @@ export const columnExtensionManyToOne: IColumnExtension = {
           "type": "string",
           "title": "FOREIGN_TABLE",
           "description": "An foreignTableId another table",
-          "examples": [
-            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
-          ],
           "pattern": "^(.*)$"
         },
         "nullable": {
@@ -267,7 +264,8 @@ export const columnExtensionManyToOne: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     const foreignTable = findTableById(context.schema, context.column.properties.foreignTableId);
 
@@ -275,6 +273,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
       field: `${context.column.name}: ${foreignTable.name}`,
       fieldName: context.column.name,
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
+      pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector(getPgColumnName(context))}`,
       viewColumnName: getPgColumnName(context),
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(getPgColumnName(context))}`,
       canBeFilteredAndOrdered: true,

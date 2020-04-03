@@ -20,7 +20,8 @@ export class QueryPermissionGenerator {
     viewName: string,
     selects: string[],
     schema: IDbSchema,
-    table: IDbTable
+    table: IDbTable,
+    whereCondition: string = null
   ): string {
     let sql = `CREATE VIEW ${getPgSelector(schema.permissionViewSchema)}.${getPgSelector(viewName)}${
       table.options != null && table.options.disableSecurityBarrierForReadViews === true ? "" : " WITH (security_barrier)"
@@ -35,15 +36,19 @@ export class QueryPermissionGenerator {
         .join(", ")}`;
     }
 
-    if (requiredComiledWhereExpressions.length > 0) {
-      sql += ` WHERE (FALSE OR ${requiredComiledWhereExpressions
-        .map((compiledExpression) => {
-          return compiledExpression.alias;
-        })
-        .join(" OR ")});`;
+    if (whereCondition != null) {
+      sql += ` WHERE ${whereCondition};`;
     } else {
-      // A view without any expression has nothing to see
-      sql += ` WHERE FALSE;`;
+      if (requiredComiledWhereExpressions.length > 0) {
+        sql += ` WHERE (FALSE OR ${requiredComiledWhereExpressions
+          .map((compiledExpression) => {
+            return compiledExpression.alias;
+          })
+          .join(" OR ")});`;
+      } else {
+        // A view without any expression has nothing to see
+        sql += ` WHERE FALSE;`;
+      }
     }
 
     return sql;
@@ -99,8 +104,9 @@ export class QueryPermissionGenerator {
 
     return def;
   }
-  public generate(schema: IDbSchema, table: IDbTable, helpers: IHelpers, expressionCompiler: ExpressionCompiler): IQueryPermissionGeneratorResult {
+  public generate(schema: IDbSchema, table: IDbTable, helpers: IHelpers, expressionCompiler: ExpressionCompiler, rootExpressionCompiler: ExpressionCompiler): IQueryPermissionGeneratorResult {
     const expressionGenerator = new ExpressionGenerator(expressionCompiler);
+    const rootExpressionGenerator = new ExpressionGenerator(rootExpressionCompiler);
 
     const tableType = {
       name: `${table.name}`,
@@ -119,6 +125,7 @@ export class QueryPermissionGenerator {
 
     const publicColumnSelects = [];
     const authColumnSelects = [];
+    const rootColumnSelects = [];
 
     const result: IQueryPermissionGeneratorResult = {
       views: [],
@@ -128,68 +135,80 @@ export class QueryPermissionGenerator {
         name: table.name,
         publicViewName: `${table.name}_Read_Public`,
         authViewName: `${table.name}_Read_Auth`,
+        rootViewName: `${table.name}_Root`,
         fields: {},
         disallowGenericRootLevelAggregation: table.options != null && table.options.disallowGenericRootLevelAggregation === true
       }
     };
 
     table.columns.forEach((column) => {
-      if (
+      // Remove this check because all columns are required for root access
+      /* if (
         column.appliedQueryExpressionIds != null &&
         Array.isArray(column.appliedQueryExpressionIds) &&
         column.appliedQueryExpressionIds.length > 0
-      ) {
-        const columnExtension = helpers.getColumnExtensionByType(column.type);
-        const columnExtensionContext: IColumnExtensionContext = {
-          schema,
-          table,
-          column
-        };
-        let authRequired: boolean = false;
+      ) { */
+      const columnExtension = helpers.getColumnExtensionByType(column.type);
+      const columnExtensionContext: IColumnExtensionContext = {
+        schema,
+        table,
+        column
+      };
+      let authRequired: boolean = false;
 
-        // Get field-data from the type
-        const queryFieldData = columnExtension.getQueryFieldData(columnExtensionContext, LOCAL_TABLE_ALIAS, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
-          const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
+      // Get field-data from the type
+      const queryFieldData = columnExtension.getQueryFieldData(columnExtensionContext, LOCAL_TABLE_ALIAS, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
+        const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
 
-          if (compiledExpression.authRequired === true) {
-            authRequired = true;
-          }
+        if (compiledExpression.authRequired === true) {
+          authRequired = true;
+        }
 
-          return compiledExpression;
-        });
+        return compiledExpression;
+      }, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
+        const compiledExpression = rootExpressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
 
-        // If this is null the column is not shown anywhere
-        if (queryFieldData != null) {
-          // GQL-Types generation
+        return compiledExpression;
+      });
 
-          // Add to table-type
-          tableType.fields.push(queryFieldData.field);
+      // If this is null the column is not shown anywhere
+      if (queryFieldData != null) {
+        // GQL-Types generation
 
-          // Custom fields cannot be ordered or filtered
-          if (queryFieldData.viewColumnName != null) {
-            // Add to filter-type
-            filterType.fields.push(`${queryFieldData.viewColumnName}: Operators`);
+        // Add to table-type
+        tableType.fields.push(queryFieldData.field);
 
-            // Add to orderByEnum if it can be ordered
-            orderByEnum.options.push(`${queryFieldData.viewColumnName}_ASC`);
-            orderByEnum.options.push(`${queryFieldData.viewColumnName}_DESC`);
-          }
+        // Custom fields cannot be ordered or filtered
+        if (queryFieldData.viewColumnName != null) {
+          // Add to filter-type
+          filterType.fields.push(`${queryFieldData.viewColumnName}: Operators`);
 
-          if (queryFieldData.resolvers != null && Array.isArray(queryFieldData.resolvers)) {
-            queryFieldData.resolvers.forEach((resolver) => {
-              result.resolvers.push(resolver);
-            });
-          }
+          // Add to orderByEnum if it can be ordered
+          orderByEnum.options.push(`${queryFieldData.viewColumnName}_ASC`);
+          orderByEnum.options.push(`${queryFieldData.viewColumnName}_DESC`);
+        }
 
-          if (queryFieldData.gqlTypeDefs != null) {
-            result.gqlTypeDefs += queryFieldData.gqlTypeDefs;
-          }
+        if (queryFieldData.resolvers != null && Array.isArray(queryFieldData.resolvers)) {
+          queryFieldData.resolvers.forEach((resolver) => {
+            result.resolvers.push(resolver);
+          });
+        }
 
+        if (queryFieldData.gqlTypeDefs != null) {
+          result.gqlTypeDefs += queryFieldData.gqlTypeDefs;
+        }
+
+        // Push every column to root view
+        rootColumnSelects.push(`${queryFieldData.pgRootSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
+
+        let hasPublicTrueExpression: any = false;
+
+        const rootOnlyColumn = column.appliedQueryExpressionIds == null || !Array.isArray(column.appliedQueryExpressionIds) || column.appliedQueryExpressionIds.length <= 0;
+
+        if (rootOnlyColumn !== true) {
           const compiledExpressions = column.appliedQueryExpressionIds.map((appliedExpressionId) => {
             return expressionGenerator.getCompiledExpressionById(appliedExpressionId);
           });
-
-          let hasPublicTrueExpression: any = false;
 
           const publicCondition = compiledExpressions
             .filter((compiledExpression) => {
@@ -213,6 +232,7 @@ export class QueryPermissionGenerator {
             })
             .join(" OR ");
 
+          // Push column to auth and public views dependent on auth-requirements
           if (hasPublicTrueExpression === true && authRequired === false) {
             publicColumnSelects.push(`${queryFieldData.pgSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
             authColumnSelects.push(`${queryFieldData.pgSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`);
@@ -228,21 +248,23 @@ export class QueryPermissionGenerator {
               authColumnSelects.push(this.createSwitchCase(authCondition, queryFieldData.pgSelectExpression, queryFieldData.viewColumnName));
             }
           }
-
-          const queryFieldMeta: IQueryFieldMeta = {
-            ...queryFieldData.queryFieldMeta,
-            fieldName: queryFieldData.fieldName,
-            columnName: queryFieldData.viewColumnName,
-            columnSelectExpressionTemplate: queryFieldData.columnSelectExpressionTemplate,
-            authRequired: authRequired && hasPublicTrueExpression !== true
-          };
-
-          result.queryViewMeta.fields[queryFieldData.fieldName] = queryFieldMeta;
         }
+
+        const queryFieldMeta: IQueryFieldMeta = {
+          ...queryFieldData.queryFieldMeta,
+          fieldName: queryFieldData.fieldName,
+          columnName: queryFieldData.viewColumnName,
+          columnSelectExpressionTemplate: queryFieldData.columnSelectExpressionTemplate,
+          authRequired: authRequired && hasPublicTrueExpression !== true,
+          rootOnlyColumn
+        };
+
+        result.queryViewMeta.fields[queryFieldData.fieldName] = queryFieldMeta;
       }
+      // }
     });
 
-    // Build Views
+    // Build auth and public views
     const authRequiredCompiledExpressions = expressionGenerator.getRequiredCompiledExpressions();
     const publicRequiredCompiledExpressions = authRequiredCompiledExpressions.filter((compiledExpression) => {
       return compiledExpression.authRequired !== true;
@@ -284,6 +306,21 @@ export class QueryPermissionGenerator {
         sql: publicViewSql
       });
     }
+
+    // Build root view
+    const rootViewSql = this.createView(
+      [],
+      [],
+      result.queryViewMeta.rootViewName,
+      rootColumnSelects,
+      schema,
+      table,
+      "_auth.is_root() IS TRUE"
+    );
+    result.views.push({
+      name: result.queryViewMeta.rootViewName,
+      sql: rootViewSql
+    });
 
     const queryName = `${table.name}s`;
 

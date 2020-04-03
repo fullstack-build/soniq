@@ -8,6 +8,7 @@ export class ConfigMergeHelper {
     const runtimeConfig = _.defaultsDeep(JSON.parse(JSON.stringify(envConfig)), JSON.parse(JSON.stringify(appConfig)), JSON.parse(JSON.stringify(defaultConfig)));
 
     runtimeConfig.pgConfig.admin_token_secret = runtimeConfig.secrets.admin;
+    runtimeConfig.pgConfig.root_token_secret = runtimeConfig.secrets.root;
 
     const errors = this.checkForMissingConfigProperties(runtimeConfig);
 

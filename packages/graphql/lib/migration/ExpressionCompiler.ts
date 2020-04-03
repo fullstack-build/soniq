@@ -225,11 +225,11 @@ export class ExpressionCompiler {
       }
     });
 
-    const name = template(expression.nameTemplate, {})(placeholders);
+    const name = appliedExpression.name;
 
     Object.values(this.compiledExpressions).forEach((compiledExpression) => {
       if (compiledExpression.name === name) {
-        throw new Error(`Duplicate generated expression names: '${name}' in expression '${expression.id}'`);
+        throw new Error(`Duplicate applied-expression names: '${name}' in expression '${expression.id}'`);
       }
     });
 

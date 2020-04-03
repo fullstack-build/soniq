@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION _auth.is_admin() RETURNS boolean AS $$
 DECLARE
     v_admin_token_secret TEXT;
     v_admin_token TEXT;
+    v_admin_token_max_age_in_seconds BIGINT;
     v_parts TEXT[];
     v_tok_timestamp BIGINT;
     v_timestamp BIGINT;
@@ -11,6 +12,7 @@ DECLARE
 BEGIN
     -- Get admin secret from auth-table
     SELECT value INTO v_admin_token_secret FROM _auth."Settings" WHERE key = 'admin_token_secret';
+    SELECT value INTO v_admin_token_max_age_in_seconds FROM _auth."Settings" WHERE key = 'admin_token_max_age_in_seconds';
 
     -- Get the token set to local variable
     v_admin_token := current_setting('auth.admin_token', true);
@@ -41,7 +43,7 @@ BEGIN
     v_timestamp := (round(extract(epoch from now())*1000))::bigint;
 
     -- Check if the admin-token is expired
-    IF v_timestamp - v_tok_timestamp > 60000 THEN
+    IF v_timestamp - v_tok_timestamp > ( v_admin_token_max_age_in_seconds * 1000 ) THEN
         RETURN false;
     END IF;
 

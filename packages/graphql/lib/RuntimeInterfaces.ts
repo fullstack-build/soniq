@@ -30,6 +30,7 @@ export interface IQueryViewMeta {
   name: string;
   publicViewName: string;
   authViewName: string;
+  rootViewName: string;
   fields: IQueryFields;
   disallowGenericRootLevelAggregation: boolean;
 }
@@ -43,6 +44,7 @@ export interface IQueryFieldMeta {
   columnName: string | null;
   columnSelectExpressionTemplate: string | null;
   authRequired: boolean;
+  rootOnlyColumn: boolean;
   manyToOne?: {
     foreignColumnName: string;
   };

@@ -4,10 +4,12 @@ import { CryptoFactory } from "./CryptoFactory";
 
 export class SignHelper {
   private adminSecret: string;
+  private rootSecret: string;
   private cryptoFactory: CryptoFactory;
 
-  constructor(adminSecret: string, cryptoFactory: CryptoFactory) {
+  constructor(adminSecret: string, rootSecret: string, cryptoFactory: CryptoFactory) {
     this.adminSecret = adminSecret;
+    this.rootSecret = rootSecret;
     this.cryptoFactory = cryptoFactory;
   }
 
@@ -15,6 +17,14 @@ export class SignHelper {
     const ts = Date.now().toString();
 
     const payload = `${ts}:${this.adminSecret}`;
+
+    return `${ts}:${sha256(payload)}`;
+  }
+
+  public getRootSignature() {
+    const ts = Date.now().toString();
+
+    const payload = `${ts}:${this.rootSecret}`;
 
     return `${ts}:${sha256(payload)}`;
   }

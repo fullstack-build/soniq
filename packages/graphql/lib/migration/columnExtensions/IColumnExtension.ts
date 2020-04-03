@@ -26,6 +26,7 @@ export interface IQueryFieldData {
   field: string; // e.g. events(where: EventFilter, orderBy: [EventOrderBy!], limit: Int, offset: Int): [Event!]!
   fieldName: string;
   pgSelectExpression: string;
+  pgRootSelectExpression: string;
   viewColumnName: string;
   columnSelectExpressionTemplate: string;
   canBeFilteredAndOrdered: boolean;
@@ -35,6 +36,10 @@ export interface IQueryFieldData {
 }
 
 export interface IMutationFieldData {
+  fieldType: string;
+}
+
+export interface IRootFieldData {
   fieldType: string;
 }
 
@@ -55,7 +60,8 @@ export interface IColumnExtension {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ) => IQueryFieldData;
   getMutationFieldData: (
     context: IColumnExtensionContext,

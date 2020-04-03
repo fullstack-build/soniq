@@ -42,7 +42,7 @@ BEGIN
     -- Check if the user is admin. Raise exeption if not.
     v_is_admin := _auth.is_admin();
     IF v_is_admin = FALSE THEN
-        RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation.';
+        RAISE EXCEPTION 'AUTH.THROW.FORBIDDEN_ERROR: You are not permitted to execute this operation. Admin-token required.';
     END IF;
     
     SELECT value INTO v_hash_secret FROM _auth."Settings" WHERE key = 'hash_secret';

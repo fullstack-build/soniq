@@ -4,8 +4,7 @@ import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { DateTime } from "luxon";
-import { AuthenticationError, UserInputError } from "@fullstack-one/graphql";
-import { sha512 } from "./crypto";
+import { UserInputError } from "@fullstack-one/graphql";
 import {
   IAuthFactorProof,
   IAuthFactorCreation,

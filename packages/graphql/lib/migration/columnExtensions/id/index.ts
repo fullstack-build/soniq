@@ -40,12 +40,14 @@ export const columnExtensionId: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `id: ID`,
       fieldName: "id",
       pgSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector("id")}`,
+      pgRootSelectExpression: `${getPgSelector(localTableAlias)}.${getPgSelector("id")}`,
       viewColumnName: "id",
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: true,

@@ -86,16 +86,19 @@ export const columnExtensionComputed: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToRequiredList: boolean) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     const moveSelectToQuery = context.column.properties != null && context.column.properties.moveSelectToQuery === true;
 
     const compiledExpression = getCompiledExpressionById(context.column.properties.appliedExpressionId, moveSelectToQuery !== true);
+    const directCompiledExpression = getDirectCompiledExpressionById(context.column.properties.appliedExpressionId);
 
     const queryFieldData: IQueryFieldData = {
       field: `${context.column.name}: ${compiledExpression.gqlReturnType}`,
       fieldName: context.column.name,
       pgSelectExpression: compiledExpression.alias,
+      pgRootSelectExpression: directCompiledExpression.renderedSql,
       viewColumnName: context.column.name,
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
@@ -104,7 +107,8 @@ export const columnExtensionComputed: IColumnExtension = {
 
     if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
       queryFieldData.pgSelectExpression = `TRUE`;
-      queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT ${compiledExpression.renderedSql.replace("_local_table_", "_temp_")} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL END`;
+      queryFieldData.pgRootSelectExpression = `TRUE`;
+      queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT ${directCompiledExpression.renderedSql.replace(/_local_table_/g, "_temp_")} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL END`;
     }
 
     return queryFieldData;

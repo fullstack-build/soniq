@@ -36,6 +36,7 @@ build/Release
 node_modules/
 jspm_packages/
 packages/*/node_modules
+packages/*/.cache
 
 # Typescript v1 declaration files
 typings/

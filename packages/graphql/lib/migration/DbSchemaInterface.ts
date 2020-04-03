@@ -33,7 +33,7 @@ export interface IDbColumn {
   type: string;
   name: string;
   properties?: any;
-  appliedQueryExpressionIds?: string[];
+  appliedQueryExpressionIds: string[];
 }
 
 export interface IDbIndex {
@@ -65,6 +65,7 @@ export interface IDbMutationColumn {
 
 export interface IDbAppliedExpression {
   id: string;
+  name: string;
   expressionId: string;
   params: {
     [placeholder: string]: string;
@@ -102,6 +103,5 @@ export interface IDbExpression {
   localTableId?: string;
   authRequired?: boolean;
   excludeFromWhereClause?: boolean;
-  nameTemplate: string;
   sqlTemplate: string;
 }

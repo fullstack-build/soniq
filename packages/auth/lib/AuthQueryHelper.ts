@@ -4,6 +4,7 @@ import { ILogger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 import { AuthenticationError } from "@fullstack-one/graphql";
+import { ITransactionAuth } from "./interfaces";
 
 export class AuthQueryHelper {
   private possibleTransactionIsolationLevels: IsolationLevel[] = ["SERIALIZABLE", "REPEATABLE READ", "READ COMMITTED", "READ UNCOMMITTED"];
@@ -24,34 +25,34 @@ export class AuthQueryHelper {
     return pgClient;
   }
 
-  private async createPgClientUserTransaction(
-    pgClient: PoolClient,
-    accessToken: string,
-    isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<PoolClient> {
-    const isolationLevelIndex = this.possibleTransactionIsolationLevels.findIndex((item) => isolationLevel.toLowerCase() === item.toLowerCase());
-    const isolationLevelToUse = this.possibleTransactionIsolationLevels[isolationLevelIndex];
-
-    await pgClient.query(`BEGIN TRANSACTION ISOLATION LEVEL ${isolationLevelToUse};`);
-    await this.authenticateTransaction(pgClient, accessToken);
-    return pgClient;
-  }
-
   public async getCurrentUserIdFromClient(pgClient: PoolClient) {
     return (await pgClient.query("SELECT _auth.current_user_id();"))[0].current_user_id;
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken: string) {
-    return this.userTransaction(accessToken, async (pgClient) => {
+    return this.transaction(async (pgClient) => {
       return this.getCurrentUserIdFromClient(pgClient);
-    });
+    }, { accessToken });
   }
 
-  public async transaction(callback: (pgClient: PoolClient) => Promise<any>, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<any> {
+  public async transaction(callback: (pgClient: PoolClient) => Promise<any>, transactionAuth: ITransactionAuth = {}, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<any> {
     const pgClient = await this.pgPool.connect();
+
+    const tAuth: ITransactionAuth = {
+      accessToken: transactionAuth.accessToken || null,
+      rootAccess: transactionAuth.rootAccess === true,
+    };
 
     try {
       await pgClient.query("BEGIN;");
+
+      if (tAuth.accessToken != null) {
+        await this.authenticateTransaction(pgClient, tAuth.accessToken);
+      }
+
+      if (tAuth.rootAccess === true) {
+        await this.setRoot(pgClient);
+      }
 
       const result = await callback(pgClient);
 
@@ -66,11 +67,24 @@ export class AuthQueryHelper {
     }
   }
 
-  public async query(...queryArguments: [string, ...any[]]): Promise<any> {
+  public async query(transactionAuth: ITransactionAuth = {}, ...queryArguments: [string, ...any[]]): Promise<any> {
     const pgClient = await this.pgPool.connect();
+
+    const tAuth: ITransactionAuth = {
+      accessToken: transactionAuth.accessToken || null,
+      rootAccess: transactionAuth.rootAccess === true,
+    };
 
     try {
       await pgClient.query("BEGIN;");
+
+      if (tAuth.accessToken != null) {
+        await this.authenticateTransaction(pgClient, tAuth.accessToken);
+      }
+
+      if (tAuth.rootAccess === true) {
+        await this.setRoot(pgClient);
+      }
 
       const result: QueryResult = await pgClient.query(...queryArguments);
 
@@ -133,54 +147,6 @@ export class AuthQueryHelper {
     return result;
   }
 
-  public async userTransaction(
-    accessToken: string,
-    callback: (pgClient: PoolClient) => Promise<any>,
-    isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<any> {
-    const pgClient = await this.pgPool.connect();
-
-    try {
-      await this.createPgClientUserTransaction(pgClient, accessToken, isolationLevel);
-
-      const result = await callback(pgClient);
-
-      await pgClient.query("COMMIT;");
-      return result;
-    } catch (err) {
-      await pgClient.query("ROLLBACK;");
-      this.logger.warn("userTransaction.error", err);
-      throw err;
-    } finally {
-      await pgClient.release();
-    }
-  }
-
-  public async userQuery(accessToken: string, ...queryArguments: [string, ...any[]]): Promise<QueryResult> {
-    if (accessToken == null || accessToken === "") {
-      throw new AuthenticationError("Authentication required. AccessToken missing.");
-    }
-
-    const pgClient = await await this.pgPool.connect();
-
-    try {
-      await pgClient.query("BEGIN;");
-
-      await this.authenticateTransaction(pgClient, accessToken);
-
-      const result = await pgClient.query(...queryArguments);
-
-      await pgClient.query("COMMIT;");
-      return result;
-    } catch (err) {
-      await pgClient.query("ROLLBACK;");
-      this.logger.warn("userQuery.error", err);
-      throw err;
-    } finally {
-      await pgClient.release();
-    }
-  }
-
   public async authenticateTransaction(pgClient: PoolClient, accessToken: string) {
     try {
       if (accessToken == null || accessToken === "") {
@@ -228,6 +194,26 @@ export class AuthQueryHelper {
       return pgClient;
     } catch (err) {
       this.logger.warn("unsetAdmin.error", err);
+      throw err;
+    }
+  }
+
+  public async setRoot(pgClient: PoolClient): Promise<PoolClient> {
+    try {
+      await pgClient.query(`SET LOCAL auth.root_token TO '${this.signHelper.getRootSignature()}';`);
+      return pgClient;
+    } catch (err) {
+      this.logger.warn("setRoot.error", err);
+      throw err;
+    }
+  }
+
+  public async unsetRoot(pgClient: PoolClient): Promise<PoolClient> {
+    try {
+      await pgClient.query("RESET auth.root_token;");
+      return pgClient;
+    } catch (err) {
+      this.logger.warn("unsetRoot.error", err);
       throw err;
     }
   }

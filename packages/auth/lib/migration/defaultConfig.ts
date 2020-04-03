@@ -1,6 +1,7 @@
 export const defaultConfig = {
   secrets: {
     admin:    null,
+    root: null,
     cookie:   null,
     encryptionKey: null,
     authProviderHashSignature: null
@@ -42,6 +43,9 @@ export const defaultConfig = {
     hash_bf_iter_count: 6,
     refresh_token_bf_iter_count: 6,
     transaction_token_max_age_in_seconds: 86400,
-    admin_token_secret: null
+    admin_token_secret: null,
+    root_token_secret: null,
+    admin_token_max_age_in_seconds: 60,
+    root_token_max_age_in_seconds: 3600
   }
 }

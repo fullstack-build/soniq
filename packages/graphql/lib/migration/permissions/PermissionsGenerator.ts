@@ -94,9 +94,10 @@ export class PermissionGenerator {
 
     schema.tables.forEach((table) => {
       const expressionCompiler = new ExpressionCompiler(schema, table, helpers, LOCAL_TABLE_ALIAS, false);
+      const rootExpressionCompiler = new ExpressionCompiler(schema, table, helpers, LOCAL_TABLE_ALIAS, true);
 
       // Generate READ Permissions
-      const queryPermissions = this.queryPermissionGenerator.generate(schema, table, helpers, expressionCompiler);
+      const queryPermissions = this.queryPermissionGenerator.generate(schema, table, helpers, expressionCompiler, rootExpressionCompiler);
 
       queryPermissions.views.forEach((view) => {
         views.push(view);

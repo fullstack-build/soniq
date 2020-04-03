@@ -9,7 +9,7 @@ import {
 } from "../IColumnExtension";
 import { IDbMutationColumn, IDbMutation } from "../../DbSchemaInterface";
 import * as uuidValidate from "uuid-validate";
-import { findTableById, getPgSelector, findColumnById } from "../../helpers";
+import { getPgSelector, findTableColumnInSchemaByColumnId } from "../../helpers";
 import { PoolClient } from "@fullstack-one/core";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 
@@ -22,26 +22,13 @@ export const columnExtensionOneToMany: IColumnExtension = {
       "$id": "http://example.com/root.json",
       "type": "object",
       "title": "OneToMany Column Properties",
-      "required": ["foreignTableId", "foreignColumnId"],
+      "required": ["foreignColumnId"],
       "properties": {
-        "foreignTableId": {
-          "$id": "#/properties/foreignTableId",
-          "type": "string",
-          "title": "FOREIGN_TABLE",
-          "description": "An foreignTableId another table",
-          "examples": [
-            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
-          ],
-          "pattern": "^(.*)$"
-        },
         "foreignColumnId": {
           "$id": "#/properties/foreignColumnId",
           "type": "string",
-          "title": "FOREIGN_COLUMN",
+          "title": "FOREIGN_COLUMN_MANY_TO_ONE",
           "description": "An foreignColumnId another table",
-          "examples": [
-            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
-          ],
           "pattern": "^(.*)$"
         },
       },
@@ -55,43 +42,34 @@ export const columnExtensionOneToMany: IColumnExtension = {
     };
     const properties = context.column.properties || {};
 
-    if (uuidValidate(properties.foreignTableId) !== true) {
-      result.errors.push({
-        message: `The property 'foreignTableId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
-        meta: {
-          tableId: context.table.id,
-          columnId: context.column.id
-        }
-      });
-    } else {
-      const foreignTable = findTableById(context.schema, properties.foreignTableId);
-      if (foreignTable == null) {
+    if (uuidValidate(properties.foreignColumnId) !== true) {
         result.errors.push({
-          message: `Could not find foreignTableId '${properties.foreignTableId}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
+          message: `The property 'foreignColumnId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
           meta: {
             tableId: context.table.id,
             columnId: context.column.id
           }
         });
       } else {
-        if (uuidValidate(properties.foreignColumnId) !== true) {
+      const foreignRelation = findTableColumnInSchemaByColumnId(context.schema, properties.foreignColumnId);
+
+      if (foreignRelation == null) {
+        result.errors.push({
+          message: `Could not find foreignColumnId '${properties.foreignColumnId}' on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
+          meta: {
+            tableId: context.table.id,
+            columnId: context.column.id
+          }
+        });
+      } else {
+        if (foreignRelation.column.type !== "manyToOne") {
           result.errors.push({
-            message: `The property 'foreignColumnId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
+            message: `The foreign column '${properties.foreignColumnId}' of '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany' must be type 'manyToOne'.`,
             meta: {
               tableId: context.table.id,
               columnId: context.column.id
             }
           });
-        } else {
-          if (findColumnById(foreignTable, properties.foreignColumnId) == null) {
-            result.errors.push({
-              message: `The table '${foreignTable.schema}.${foreignTable.name}' must have column '${properties.foreignColumnId}' for relation on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
-              meta: {
-                tableId: context.table.id,
-                columnId: context.column.id
-              }
-            });
-          }
         }
       }
     }
@@ -105,21 +83,22 @@ export const columnExtensionOneToMany: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId) => ICompiledExpression
+    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
-    const foreignTable = findTableById(context.schema, context.column.properties.foreignTableId);
-    const foreignColumn = findColumnById(foreignTable, context.column.properties.foreignColumnId);
+    const foreignRelation = findTableColumnInSchemaByColumnId(context.schema, context.column.properties.foreignColumnId);
 
     return {
-      field: `${context.column.name}: [${foreignTable.name}!]!`,
+      field: `${context.column.name}: [${foreignRelation.table.name}!]!`,
       fieldName: context.column.name,
       pgSelectExpression: `TRUE`,
+      pgRootSelectExpression: `TRUE`,
       viewColumnName: context.column.name,
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
       queryFieldMeta: {
         oneToMany: {
-          foreignColumnName: `${foreignColumn.name}Id`
+          foreignColumnName: `${foreignRelation.column.name}Id`
         }
       }
     };
