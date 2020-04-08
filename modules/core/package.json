@@ -1,0 +1,22 @@
+{
+  "name": "fullstack-one-core",
+  "version": "0.2.0",
+  "description": "Core of the fullstack-one framework",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one/issues"
+  },
+  "homepage": "https://www.fullstack.one"
+}
