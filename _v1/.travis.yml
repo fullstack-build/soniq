@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+  - "10"
+
+install:
+  - npm install
+  - npm run lerna-bootstrap
+  - npm run build
+
+script:
+  - npm run tslint
+  - npm run coverage
