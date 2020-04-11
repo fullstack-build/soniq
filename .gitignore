@@ -66,4 +66,4 @@ common/temp/
 .idea
 
 # don't check in build files
-dist
+**/dist
