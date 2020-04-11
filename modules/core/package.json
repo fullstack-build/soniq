@@ -2,7 +2,8 @@
   "name": "@fullstack-one/core",
   "version": "0.2.0",
   "description": "Core of the fullstack-one framework",
-  "main": "index.ts",
+  "main": "index",
+  "typings": "dist/index",
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -28,5 +29,9 @@
     "eslint-plugin-prettier": "^3.1.2",
     "prettier": "^2.0.4",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "typedi": "~0.8.0",
+    "reflect-metadata": "~0.1.13"
   }
 }

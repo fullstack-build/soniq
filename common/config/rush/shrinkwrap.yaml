@@ -7,6 +7,8 @@ dependencies:
   eslint-config-prettier: 6.10.1
   eslint-plugin-prettier: 3.1.2
   prettier: 2.0.4
+  reflect-metadata: 0.1.13
+  typedi: 0.8.0
   typescript: 3.8.3
 packages:
   /@babel/code-frame/7.8.3:
@@ -1205,6 +1207,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
+  /reflect-metadata/0.1.13:
+    dev: false
+    resolution:
+      integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
   /regexpp/2.0.1:
     dev: false
     engines:
@@ -1484,6 +1490,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==
+  /typedi/0.8.0:
+    dev: false
+    resolution:
+      integrity: sha512-/c7Bxnm6eh5kXx2I+mTuO+2OvoWni5+rXA3PhXwVWCtJRYmz3hMok5s1AKLzoDvNAZqj/Q/acGstN0ri5aQoOA==
   /typescript/3.8.3:
     dev: false
     engines:
@@ -1528,17 +1538,19 @@ packages:
       integrity: sha512-/lg70HAjtkUgWPVZhZcm+T4hkL8Zbtp1nFNOn3lRrxnlv50SRBv7cR7RqR+GMsd3hUXy9hWBo4CHTbFTcOYwig==
   'file:projects/core.tgz':
     dependencies:
-      '@rushstack/eslint-config': 0.5.7
+      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
       '@types/node': 13.11.1
       eslint: 6.8.0
-      eslint-config-prettier: 6.10.1
-      eslint-plugin-prettier: 3.1.2
+      eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
+      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.2/eslint@6.8.0+prettier@2.0.4
       prettier: 2.0.4
+      reflect-metadata: 0.1.13
+      typedi: 0.8.0
       typescript: 3.8.3
     dev: false
     name: '@rush-temp/core'
     resolution:
-      integrity: sha512-eJT0dx8qBsGNQlB/KzkfpdJmmbX1EjnDY23ekE+jbQ5QLpj7NsIAYjFwaDBA2CPqM5gGpEPBRmL6mhBHhrDfQw==
+      integrity: sha512-PvndXj/E2g6B8wACshIsgSWJe8PMdy7WrlQ4KkN715QCpQVBrhVcoJvsRXZOJupfiR4d1lZ5LLLNrIt2svVxQg==
       tarball: 'file:projects/core.tgz'
     version: 0.0.0
   'file:projects/examples_01.tgz':
@@ -1553,7 +1565,7 @@ packages:
     dev: false
     name: '@rush-temp/examples_01'
     resolution:
-      integrity: sha512-vGX3Oyx0Q5P3xq7a08ci9UVhCTURTHt/aQdzYYzx+1MzO8Gf8qSrQsKSDCEeNLl1V4vLv+wJl5GyiOzt6Sx3NQ==
+      integrity: sha512-t6jZpTaMLmPtN8hrexd1agz1GP21xzmzbD3aYz1cU06yDzUcOYQuqMdISoCcxuwt9C2o1fctEsn0AfrONO5kyw==
       tarball: 'file:projects/examples_01.tgz'
     version: 0.0.0
 registry: 'https://registry.npmjs.org/'
@@ -1568,4 +1580,6 @@ specifiers:
   eslint-config-prettier: ^6.10.1
   eslint-plugin-prettier: ^3.1.2
   prettier: ^2.0.4
+  reflect-metadata: ~0.1.13
+  typedi: ~0.8.0
   typescript: ^3.8.3
