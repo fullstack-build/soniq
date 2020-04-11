@@ -1,8 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "lib": ["es2017", "esnext.asynciterable"],
-    "target": "es6",
+    "lib": ["es2019", "esnext.bigint", "es2020.string", "es2020.symbol.wellknown"],
+    "target": "es2019",
     "module": "commonjs",
     "types": ["node"],
     "moduleResolution": "node",
@@ -11,7 +11,7 @@
     "sourceMap": false,
     "declaration": true,
     "outDir": "./dist",
-    "strict": false,
+    "strict": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true
   },

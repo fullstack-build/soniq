@@ -18,12 +18,16 @@ exports.ContainerInstance = typedi_1.ContainerInstance;
 exports.Inject = typedi_1.Inject;
 exports.InjectMany = typedi_1.InjectMany;
 const BootLoader_1 = require("./BootLoader");
+const ConfigManager_1 = require("./ConfigManager");
 process.on("unhandledRejection", (reason, p) => {
     console.error("Unhandled Rejection:", reason);
 });
 let Core = class Core {
     constructor() {
         this.bootLoader = new BootLoader_1.BootLoader();
+        this.configManager = new ConfigManager_1.ConfigManager();
+        this.ENVIRONMENT = this.configManager.ENVIRONMENT;
+        typedi_1.Container.set("@fullstack-one/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
     }
     // draw CLI art
     drawCliArt() {

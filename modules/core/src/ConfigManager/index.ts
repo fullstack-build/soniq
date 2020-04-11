@@ -1,15 +1,13 @@
 import * as path from "path";
 import * as _ from "lodash";
 
-import { Container } from "../index";
 import { DefaultConfigNotFoundError } from "./errors";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
-
 export { IEnvironment };
 
-export class Config {
+export class ConfigManager {
   private applicationConfig: any = {};
   private config: any = {};
 
@@ -18,14 +16,13 @@ export class Config {
 
   constructor() {
     this.applicationConfig = this.loadApplicationConfig();
-    this.registerConfig("Config", `${__dirname}/../config`);
+    this.registerConfig(this.constructor.name, `${__dirname}/../config`);
 
     const namespace = this.config.Config.namespace;
     this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(
       this.NODE_ENV,
       namespace
     );
-    Container.set("ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
   }
 
   private loadApplicationConfig(): object {
