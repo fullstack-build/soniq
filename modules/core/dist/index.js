@@ -10,9 +10,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
+// DI
 const typedi_1 = require("typedi");
 exports.Service = typedi_1.Service;
 exports.Container = typedi_1.Container;
+exports.ContainerInstance = typedi_1.ContainerInstance;
+exports.Inject = typedi_1.Inject;
+exports.InjectMany = typedi_1.InjectMany;
 const BootLoader_1 = require("./BootLoader");
 process.on("unhandledRejection", (reason, p) => {
     console.error("Unhandled Rejection:", reason);

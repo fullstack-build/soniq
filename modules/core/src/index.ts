@@ -8,7 +8,7 @@ import {
   InjectMany,
 } from "typedi";
 export { Service, Container, ContainerInstance, Inject, InjectMany };
-import { BootLoader } from "./BootLoader
+import { BootLoader } from "./BootLoader";
 
 process.on("unhandledRejection", (reason, p) => {
   console.error("Unhandled Rejection:", reason);

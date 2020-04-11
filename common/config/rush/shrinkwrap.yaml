@@ -2,6 +2,7 @@ dependencies:
   '@rush-temp/core': 'file:projects/core.tgz'
   '@rush-temp/examples_01': 'file:projects/examples_01.tgz'
   '@rushstack/eslint-config': 0.5.7
+  '@types/lodash': 4.14.149
   '@types/node': 13.11.1
   dotenv: 8.2.0
   eslint: 6.8.0
@@ -9,6 +10,7 @@ dependencies:
   eslint-plugin-prettier: 3.1.2
   husky: 4.2.5
   lint-staged: 10.1.3
+  lodash: 4.17.15
   prettier: 2.0.4
   reflect-metadata: 0.1.13
   typedi: 0.8.0
@@ -123,6 +125,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-8+KAKzEvSUdeo+kmqnKrqgeE+LcA0tjYWFY7RPProVYwnqDjukzO+3b6dLD56rYX5TdWejnEOLJYOIeh4CXKuA==
+  /@types/lodash/4.14.149:
+    dev: false
+    resolution:
+      integrity: sha512-ijGqzZt/b7BfzcK9vTrS6MFljQRPn5BFWOx8oE0GYxribu6uV+aA9zZuXI1zc/etK9E8nrgdoF2+LgUw7+9tJQ==
   /@types/node/13.11.1:
     dev: false
     resolution:
@@ -2282,12 +2288,14 @@ packages:
   'file:projects/core.tgz':
     dependencies:
       '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
+      '@types/lodash': 4.14.149
       '@types/node': 13.11.1
       eslint: 6.8.0
       eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
       eslint-plugin-prettier: /eslint-plugin-prettier/3.1.2/eslint@6.8.0+prettier@2.0.4
       husky: 4.2.5
       lint-staged: 10.1.3
+      lodash: 4.17.15
       prettier: 2.0.4
       reflect-metadata: 0.1.13
       typedi: 0.8.0
@@ -2295,17 +2303,17 @@ packages:
     dev: false
     name: '@rush-temp/core'
     resolution:
-      integrity: sha512-Y/aBRp3ndrXgp7OzkAZT323Lc0HXiMoKJ4FDEtNfg8js47Dhljw7A6LxvAmkEQRD/Qpf04A6jsOW94fEIfgMhA==
+      integrity: sha512-LUrEcxpIzGjcILUr36Ec1KNT3T/eL+KcUcPAk3AND5y1HpKfbX0mRv6PZe6s2Gg+PE3Tl/R/rpjQFRkeJjUN7A==
       tarball: 'file:projects/core.tgz'
     version: 0.0.0
   'file:projects/examples_01.tgz':
     dependencies:
-      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
+      '@rushstack/eslint-config': 0.5.7
       '@types/node': 13.11.1
       dotenv: 8.2.0
       eslint: 6.8.0
-      eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
-      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.2/eslint@6.8.0+prettier@2.0.4
+      eslint-config-prettier: 6.10.1
+      eslint-plugin-prettier: 3.1.2
       husky: 4.2.5
       lint-staged: 10.1.3
       prettier: 2.0.4
@@ -2323,6 +2331,7 @@ specifiers:
   '@rush-temp/core': 'file:./projects/core.tgz'
   '@rush-temp/examples_01': 'file:./projects/examples_01.tgz'
   '@rushstack/eslint-config': ^0.5.7
+  '@types/lodash': ~4.14.149
   '@types/node': ^13.11.0
   dotenv: ~8.2.0
   eslint: ^6.8.0
@@ -2330,6 +2339,7 @@ specifiers:
   eslint-plugin-prettier: ^3.1.2
   husky: ~4.2.5
   lint-staged: ~10.1.3
+  lodash: ~4.17.15
   prettier: ^2.0.4
   reflect-metadata: ~0.1.13
   typedi: ~0.8.0
