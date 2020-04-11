@@ -408,5 +408,16 @@
     //   "projectFolder": "tools/my-toolchain",
     //   "reviewCategory": "tools"
     // }
+    {
+      "packageName": "@fullstack-one/core",
+      "projectFolder": "modules/core",
+      "shouldPublish": true
+    },
+    // examples
+    {
+      "packageName": "@fullstack-one/examples_01",
+      "projectFolder": "examples/01",
+      "shouldPublish": false
+    }
   ]
 }

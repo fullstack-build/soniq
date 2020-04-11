@@ -64,3 +64,6 @@ common/temp/
 
 # IDE
 .idea
+
+# don't check in build files
+build
