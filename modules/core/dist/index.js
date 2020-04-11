@@ -13,11 +13,24 @@ require("reflect-metadata");
 const typedi_1 = require("typedi");
 exports.Service = typedi_1.Service;
 exports.Container = typedi_1.Container;
+const BootLoader_1 = require("./BootLoader");
+process.on("unhandledRejection", (reason, p) => {
+    console.error("Unhandled Rejection:", reason);
+});
 let Core = class Core {
     constructor() {
+        this.bootLoader = new BootLoader_1.BootLoader();
+    }
+    // draw CLI art
+    drawCliArt() {
         process.stdout.write(`  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤\n  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n`);
         //process.stdout.write(`${JSON.stringify(this.ENVIRONMENT, null, 2)}\n`);
         process.stdout.write("____________________________________\n");
+    }
+    async boot() {
+        await this.bootLoader.boot();
+        this.drawCliArt();
+        return;
     }
 };
 Core = __decorate([

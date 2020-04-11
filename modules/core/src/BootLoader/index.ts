@@ -1,12 +1,11 @@
-import { Service, Inject } from "@fullstack-one/di";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+//import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
 export enum EBootState {
   Initial = "initial",
   Booting = "booting",
-  Finished = "finished"
+  Finished = "finished",
 }
 
 interface IFunctionObject {
@@ -17,17 +16,16 @@ interface IFunctionObject {
 type IBootFunctionObject = IFunctionObject;
 type IAfterBootFunctionObject = IFunctionObject;
 
-@Service()
 export class BootLoader {
   private state: EBootState = EBootState.Initial;
 
   private bootFunctionObjects: IBootFunctionObject[] = [];
   private afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
 
-  private readonly logger: ILogger;
+  //private readonly logger: ILogger;
 
-  constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory) {
-    this.logger = loggerFactory.create(this.constructor.name);
+  constructor() {
+    //this.logger = loggerFactory.create(this.constructor.name);
   }
 
   public getBootState(): EBootState {
@@ -43,12 +41,12 @@ export class BootLoader {
   }
 
   public addBootFunction(name: string, fn: TBootFuntion): void {
-    this.logger.trace("addBootFunction", name);
+    //this.logger.trace("addBootFunction", name);
     this.bootFunctionObjects.push({ name, fn });
   }
 
   public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
-    this.logger.trace("onBootReady", name);
+    //this.logger.trace("onBootReady", name);
     if (this.state === EBootState.Finished) {
       return fn();
     }
@@ -65,18 +63,18 @@ export class BootLoader {
     this.state = EBootState.Booting;
     try {
       for (const fnObj of this.bootFunctionObjects) {
-        this.logger.trace("boot.bootFunctions.start", fnObj.name);
+        //this.logger.trace("boot.bootFunctions.start", fnObj.name);
         await fnObj.fn(this);
-        this.logger.trace("boot.bootFunctions.end", fnObj.name);
+        //this.logger.trace("boot.bootFunctions.end", fnObj.name);
       }
       this.state = EBootState.Finished;
       for (const fnObj of this.afterBootFunctionObjects) {
-        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+        //this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
         fnObj.fn(this);
-        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+        //this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
       }
     } catch (err) {
-      this.logger.error(`BootLoader.boot.error.caught: ${err}\n`);
+      //this.logger.error(`BootLoader.boot.error.caught: ${err}\n`);
       throw err;
     }
   }
