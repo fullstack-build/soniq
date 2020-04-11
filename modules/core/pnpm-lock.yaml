@@ -1,5 +1,6 @@
 devDependencies:
   '@rushstack/eslint-config': 0.5.7_eslint@6.8.0+typescript@3.8.3
+  '@types/node': 13.11.0
   eslint: 6.8.0
   eslint-config-prettier: 6.10.1_eslint@6.8.0
   eslint-plugin-prettier: 3.1.2_eslint@6.8.0+prettier@2.0.4
@@ -77,6 +78,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-8+KAKzEvSUdeo+kmqnKrqgeE+LcA0tjYWFY7RPProVYwnqDjukzO+3b6dLD56rYX5TdWejnEOLJYOIeh4CXKuA==
+  /@types/node/13.11.0:
+    dev: true
+    resolution:
+      integrity: sha512-uM4mnmsIIPK/yeO+42F2RQhGUIs39K2RFmugcJANppXe6J1nvH87PvzPZYpza7Xhhs8Yn9yIAVdLZ84z61+0xQ==
   /@typescript-eslint/eslint-plugin/2.3.3_a2bb259f24818a70afc6654b4b4f65cc:
     dependencies:
       '@typescript-eslint/experimental-utils': 2.3.3_eslint@6.8.0
@@ -1400,6 +1405,7 @@ packages:
       integrity: sha512-/lg70HAjtkUgWPVZhZcm+T4hkL8Zbtp1nFNOn3lRrxnlv50SRBv7cR7RqR+GMsd3hUXy9hWBo4CHTbFTcOYwig==
 specifiers:
   '@rushstack/eslint-config': ^0.5.7
+  '@types/node': ^13.11.0
   eslint: ^6.8.0
   eslint-config-prettier: ^6.10.1
   eslint-plugin-prettier: ^3.1.2
