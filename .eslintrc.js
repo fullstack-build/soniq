@@ -2,6 +2,10 @@
 require("@rushstack/eslint-config/patch-eslint6");
 
 module.exports = {
-extends: [ "@rushstack/eslint-config" ],
-parserOptions: { tsconfigRootDir: __dirname }
+  plugins: ["prettier"],
+  rules: {
+    "prettier/prettier": "error"
+},
+extends: [ "@rushstack/eslint-config", "plugin:prettier/recommended" ],
+  parserOptions: { tsconfigRootDir: __dirname }
 };
