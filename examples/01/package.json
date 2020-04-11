@@ -1,0 +1,35 @@
+{
+  "name": "@fullstack-one/examples_01",
+  "version": "0.2.0",
+  "description": "Examples of the fullstack-one framework",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start-ts": "ts-node src/index.ts",
+    "dev": "ts-node-dev src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one/issues"
+  },
+  "homepage": "https://www.fullstack.one",
+  "devDependencies": {
+    "@rushstack/eslint-config": "^0.5.7",
+    "@types/node": "^13.11.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^2.0.4",
+    "typescript": "^3.8.3"
+  }
+}
