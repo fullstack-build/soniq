@@ -5,6 +5,7 @@ import { DefaultConfigNotFoundError } from "./errors";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
+import { Helper } from "../Helper";
 export { IEnvironment };
 
 export class ConfigManager {
@@ -18,7 +19,7 @@ export class ConfigManager {
     this.applicationConfig = this.loadApplicationConfig();
     this.registerConfig(this.constructor.name, `${__dirname}/../config`);
 
-    const namespace = this.config.Config.namespace;
+    const namespace = this.config?.Config?.namespace ?? "one";
     this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(
       this.NODE_ENV,
       namespace
@@ -40,8 +41,12 @@ export class ConfigManager {
     try {
       defaultConfig = require(defaultConfigPath);
     } catch (err) {
-      throw new DefaultConfigNotFoundError(
-        `config.default.loading.error.not.found: ${defaultConfigPath} \n ${err}`
+      defaultConfig = {};
+      const cleanUpDefaultConfigPath = Helper.cleanUpFilePath(
+        defaultConfigPath
+      );
+      console.warn(
+        `config.default.loading.error.not.found: Continuing without app configuration. Was expecting file at ${cleanUpDefaultConfigPath} ${defaultConfigPath}`
       );
     }
 

@@ -1,6 +1,1 @@
-package.json
-package-lock.json
-pnpm-lock.json
-**/dist/**
-# ignore sourceode of the first version temprorary located in this repository
-_v1
+../../.prettierignore

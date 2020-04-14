@@ -25,20 +25,25 @@
   "homepage": "https://www.fullstack.one",
   "devDependencies": {
     "@rushstack/eslint-config": "^0.5.7",
+    "@types/lodash": "~4.14.149",
     "@types/node": "^13.11.0",
+    "@types/source-map-support": "~0.5.1",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
-    "prettier": "^2.0.4",
-    "typescript": "^3.8.3",
     "husky": "~4.2.5",
     "lint-staged": "~10.1.3",
-    "@types/lodash": "~4.14.149"
+    "prettier": "^2.0.4",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
-    "typedi": "~0.8.0",
+    "chalk": "~4.0.0",
+    "jsome": "~2.5.0",
+    "lodash": "~4.17.15",
     "reflect-metadata": "~0.1.13",
-    "lodash": "~4.17.15"
+    "source-map-support": "~0.5.16",
+    "ts-node": "~8.8.2",
+    "typedi": "~0.8.0"
   },
   "husky": {
     "hooks": {

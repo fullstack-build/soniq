@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": true,
     "outDir": "./dist",
     "strict": true,

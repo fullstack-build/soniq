@@ -5,7 +5,6 @@ import { IEnvironment } from "../IEnvironment";
 
 const nodeIdLength = 6;
 
-// TODO: Needs to be rewritten to actually look for the latest framework version
 export default class EnvironmentBuilder {
   public static buildEnvironment(
     NODE_ENV: string,
@@ -32,12 +31,13 @@ export default class EnvironmentBuilder {
 
   private static getApplicationNameAndVersion(
     applicationRootPath: string
-  ): { applicationName: string; applicationVersion: string } {
-    const applicationPackageJSON = require(`${applicationRootPath}/package.json`);
-
+  ): {
+    applicationName: string | undefined;
+    applicationVersion: string | undefined;
+  } {
     return {
-      applicationName: applicationPackageJSON.name,
-      applicationVersion: applicationPackageJSON.version,
+      applicationName: process.env.npm_package_name,
+      applicationVersion: process.env.npm_package_version,
     };
   }
 

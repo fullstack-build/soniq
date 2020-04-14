@@ -17,6 +17,8 @@ exports.Container = typedi_1.Container;
 exports.ContainerInstance = typedi_1.ContainerInstance;
 exports.Inject = typedi_1.Inject;
 exports.InjectMany = typedi_1.InjectMany;
+const Logger_1 = require("./Logger");
+exports.Logger = Logger_1.Logger;
 const BootLoader_1 = require("./BootLoader");
 const ConfigManager_1 = require("./ConfigManager");
 process.on("unhandledRejection", (reason, p) => {
@@ -24,16 +26,27 @@ process.on("unhandledRejection", (reason, p) => {
 });
 let Core = class Core {
     constructor() {
+        this.className = this.constructor.name;
+        this.logger = new Logger_1.Logger(this.className);
         this.bootLoader = new BootLoader_1.BootLoader();
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
         typedi_1.Container.set("@fullstack-one/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
+        this.logger.trace("###huhu", "haha!!!!");
+        this.logger.error("ERROR!");
     }
     // draw CLI art
     drawCliArt() {
-        process.stdout.write(`  ┌─┐┬ ┬┬  ┬  ┌─┐┌┬┐┌─┐┌─┐┬┌─ ┌─┐┌┐┌┌─┐\n  ├┤ │ ││  │  └─┐ │ ├─┤│  ├┴┐ │ ││││├┤\n  └  └─┘┴─┘┴─┘└─┘ ┴ ┴ ┴└─┘┴ ┴o└─┘┘└┘└─┘\n\n`);
-        //process.stdout.write(`${JSON.stringify(this.ENVIRONMENT, null, 2)}\n`);
+        process.stdout.write(`     
+  ___  ___  _ __  _  __ _ 
+ / __|/ _ \\| '_ \\| |/ _\` |
+ \\__ \\ (_) | | | | | (_| |
+ |___/\\___/|_| |_|_|\\__, |
+                       | |
+                       |_|\n`);
         process.stdout.write("____________________________________\n");
+        process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2));
+        process.stdout.write("====================================\n");
     }
     async boot() {
         await this.bootLoader.boot();
@@ -46,3 +59,4 @@ Core = __decorate([
     __metadata("design:paramtypes", [])
 ], Core);
 exports.Core = Core;
+//# sourceMappingURL=index.js.map
