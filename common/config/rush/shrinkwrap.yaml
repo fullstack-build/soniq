@@ -6,13 +6,12 @@ dependencies:
   '@types/lodash': 4.14.149
   '@types/node': 13.11.1
   '@types/source-map-support': 0.5.1
-  callsites: 3.1.0
   chalk: 4.0.0
+  cli-highlight: 2.1.4
   debug: 4.1.1
   debug-logger: 0.4.1
   debug-trace: 2.2.3
   dotenv: 8.2.0
-  error-callsites: 2.0.3
   eslint: 6.8.0
   eslint-config-prettier: 6.10.1
   eslint-plugin-prettier: 3.1.2
@@ -21,6 +20,7 @@ dependencies:
   lint-staged: 10.1.3
   lodash: 4.17.15
   prettier: 2.0.4
+  pretty-error: 2.1.1
   reflect-metadata: 0.1.13
   source-map-support: 0.5.16
   tracer: 1.0.3
@@ -570,12 +570,20 @@ packages:
     dev: false
     resolution:
       integrity: sha512-4dhht0A3T3i+wshSm1kUnJySJnMfaV9Y4O27PcIVQkQR73ska32ddhxxJBIgs+ghvDOs5wpLthiA88VM9SyzPw==
+  /ansicolors/0.3.2:
+    dev: false
+    resolution:
+      integrity: sha1-ZlWX3oap/+Oqm/vmyuXG6kJrSXk=
   /any-observable/0.3.0:
     dev: false
     engines:
       node: '>=6'
     resolution:
       integrity: sha512-/FQM1EDkTsf63Ub2C6O7GuYFDsSXUwsaZDurV0np41ocwq0jthUAYCmhBX9f+KwlaCgIuWyr/4WlUQUBfKfZog==
+  /any-promise/1.3.0:
+    dev: false
+    resolution:
+      integrity: sha1-q8av7tzqUugJzcA3au0845Y10X8=
   /append-transform/2.0.0:
     dependencies:
       default-require-extensions: 3.0.0
@@ -701,6 +709,14 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
+  /cardinal/2.1.1:
+    dependencies:
+      ansicolors: 0.3.2
+      redeyed: 2.1.1
+    dev: false
+    hasBin: true
+    resolution:
+      integrity: sha1-fMEFXYItISlU0HsIXeolHMe8VQU=
   /chalk/1.1.3:
     dependencies:
       ansi-styles: 2.2.1
@@ -771,6 +787,21 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-I/zHAwsKf9FqGoXM4WWRACob9+SNukZTd94DWF57E4toouRulbCxcUh6RKUEOQlYTHJnzkPMySvPNaaSLNfLZw==
+  /cli-highlight/2.1.4:
+    dependencies:
+      chalk: 3.0.0
+      highlight.js: 9.18.1
+      mz: 2.7.0
+      parse5: 5.1.1
+      parse5-htmlparser2-tree-adapter: 5.1.1
+      yargs: 15.3.1
+    dev: false
+    engines:
+      node: '>=8.0.0'
+      npm: '>=5.0.0'
+    hasBin: true
+    resolution:
+      integrity: sha512-s7Zofobm20qriqDoU9sXptQx0t2R9PEgac92mENNm7xaEe1hn71IIMsXMK+6encA6WRCWWxIGQbipr3q998tlQ==
   /cli-truncate/0.2.1:
     dependencies:
       slice-ansi: 0.0.4
@@ -1699,6 +1730,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-2W+jKdQbAdSIrggA8Q35Br8qKadTrqCTC8+XZvBWepKDK6m9XkX6Iz1a2yh2KP01kzAR/dpuMeUnocoLYDcskw==
+  /highlight.js/9.18.1:
+    dev: false
+    resolution:
+      integrity: sha512-OrVKYz70LHsnCgmbXctv/bfuvntIKDz177h0Co37DQ5jamGZLVmoCVMtjMtNZY3X9DrCcKfklHPNeA0uPZhSJg==
   /hosted-git-info/2.8.8:
     dev: false
     resolution:
@@ -2414,6 +2449,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
+  /mz/2.7.0:
+    dependencies:
+      any-promise: 1.3.0
+      object-assign: 4.1.1
+      thenify-all: 1.6.0
+    dev: false
+    resolution:
+      integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==
   /natural-compare/1.4.0:
     dev: false
     resolution:
@@ -2764,6 +2807,16 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-OOY5b7PAEFV0E2Fir1KOkxchnZNCdowAJgQ5NuxjpBKTRP3pQhwkrkxqQjeoKJ+fO7bCpmIZaogI4eZGDMEGOw==
+  /parse5-htmlparser2-tree-adapter/5.1.1:
+    dependencies:
+      parse5: 5.1.1
+    dev: false
+    resolution:
+      integrity: sha512-CF+TKjXqoqyDwHqBhFQ+3l5t83xYi6fVT1tQNg+Ye0JRLnTxWvIroCjEp1A0k4lneHNBGnICUf0cfYVYGEazqw==
+  /parse5/5.1.1:
+    dev: false
+    resolution:
+      integrity: sha512-ugq4DFI0Ptb+WWjAdOK16+u/nHfiIrcE+sh8kZMaM0WllQKLI9rOUq6c2b7cwPkXdzfQESqvoqK6ug7U/Yyzug==
   /path-exists/2.1.0:
     dependencies:
       pinkie-promise: 2.0.1
@@ -2996,6 +3049,12 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-z5Fqsf1fHxbfsggi3W7H9zDCr94=
+  /redeyed/2.1.1:
+    dependencies:
+      esprima: 4.0.1
+    dev: false
+    resolution:
+      integrity: sha1-iYS1gV2ZyyIEacme7v/jiRPmzAs=
   /reflect-metadata/0.1.13:
     dev: false
     resolution:
@@ -3554,6 +3613,20 @@ packages:
     dev: false
     resolution:
       integrity: sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
+  /thenify-all/1.6.0:
+    dependencies:
+      thenify: 3.3.0
+    dev: false
+    engines:
+      node: '>=0.8'
+    resolution:
+      integrity: sha1-GhkY1ALY/D+Y+/I02wvMjMEOlyY=
+  /thenify/3.3.0:
+    dependencies:
+      any-promise: 1.3.0
+    dev: false
+    resolution:
+      integrity: sha1-5p44obq+lpsBCCB5eLn2K4hgSDk=
   /through/2.3.8:
     dev: false
     resolution:
@@ -3927,8 +4000,10 @@ packages:
       '@types/node': 13.11.1
       '@types/source-map-support': 0.5.1
       callsites: 3.1.0
+      cardinal: 2.1.1
       chalk: 4.0.0
       clean-stack: 2.2.0
+      cli-highlight: 2.1.4
       error-callsites: 2.0.3
       eslint: 6.8.0
       eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
@@ -3950,7 +4025,7 @@ packages:
     dev: false
     name: '@rush-temp/core'
     resolution:
-      integrity: sha512-vB5oEX0WHZUkPNFt18UZisIFeSzdzf5leL0F72xlhEE91hnHyQslPzyK8MErre769oN00lMjIaoz1JSzP3ilDA==
+      integrity: sha512-KtLsCtOrkBupO2mrBDSIUCQDzt9eZRlQYFZC1Yo0a4iEaxwqYuQWYDG2GhreAtsdLC6VBpWL8gCG2B0FpaqJSw==
       tarball: 'file:projects/core.tgz'
     version: 0.0.0
   'file:projects/examples_01.tgz':
@@ -4010,13 +4085,12 @@ specifiers:
   '@types/lodash': ~4.14.149
   '@types/node': ^13.11.0
   '@types/source-map-support': ~0.5.1
-  callsites: ~3.1.0
   chalk: ~4.0.0
+  cli-highlight: ~2.1.4
   debug: ^4.1.1
   debug-logger: ~0.4.1
   debug-trace: ^2.2.3
   dotenv: ~8.2.0
-  error-callsites: ~2.0.3
   eslint: ^6.8.0
   eslint-config-prettier: ^6.10.1
   eslint-plugin-prettier: ^3.1.2
@@ -4025,6 +4099,7 @@ specifiers:
   lint-staged: ~10.1.3
   lodash: ~4.17.15
   prettier: ^2.0.4
+  pretty-error: ^2.1.1
   reflect-metadata: ~0.1.13
   source-map-support: ~0.5.16
   tracer: ~1.0.3

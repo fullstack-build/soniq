@@ -24,13 +24,13 @@ function fullstackLogsExample() {
   console.trace("Hello Trace.");
 
   logger.warn(new Error("huhu haha"));
-  logger.info(new ValidationError("ValidationError"));
+  logger.info("davor", new ValidationError("ValidationError"), "danach");
 
   test();
 
   function test() {
-    console.error("foo");
-    console.warn(
+    logger.error("foo");
+    logger.warn(
       "test",
       [
         { id: 1, email: "abc@def.gh", active: true },
@@ -40,29 +40,7 @@ function fullstackLogsExample() {
       "huhu",
       "haha"
     );
-    console.log("---------");
-    console.error("***", new Error("bar"), "###");
-  }
-}
-
-function debugTraceExample() {
-  require("debug-trace")({
-    colors: {
-      warn: "35",
-      info: "32",
-    },
-  });
-
-  console.info("Hello World.");
-
-  test();
-
-  function test() {
-    console.error("foo");
-    console.warn(JSON.stringify({ a: { b: { c: true } } }, null, 2));
-    console.log("---------");
-    console.trace("huhu haha");
-    console.log("---------");
-    console.error(new Error("bar"));
+    logger.debug("---------");
+    logger.error("***", new Error("bar"), "###");
   }
 }

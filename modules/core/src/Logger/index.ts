@@ -1,7 +1,6 @@
 import { wrapCallSite } from "source-map-support";
 import * as chalk from "chalk";
-// @ts-ignore
-import * as jsome from "jsome";
+import { highlight } from "cli-highlight";
 import { Helper } from "../Helper";
 import { basename as fileBasename, normalize as fileNormalize } from "path";
 import { format, types } from "util";
@@ -26,15 +25,6 @@ interface ILogMessage extends IStackFrame {
   argumentsArray: any[];
 }
 
-const getCallSites = (error?: Error): NodeJS.CallSite[] => {
-  const _prepareStackTrace = Error.prepareStackTrace;
-  Error.prepareStackTrace = (_, stack) => stack;
-  const stack =
-    error == null ? (new Error().stack as any).slice(1) : error.stack;
-  Error.prepareStackTrace = _prepareStackTrace;
-  return stack;
-};
-
 export class Logger {
   private readonly name: string;
   private readonly logLevels = {
@@ -45,6 +35,7 @@ export class Logger {
     4: "warn",
     5: "error",
   };
+
   private readonly logLevelsColors = {
     0: "#B0B0B0",
     1: "#FFFFFF",
@@ -60,19 +51,6 @@ export class Logger {
 
   constructor(name: string = "", minLevel: number = 0) {
     this.name = name;
-
-    jsome.colors = {
-      num: "cyan", // stands for numbers
-      str: "blueBright", // stands for strings
-      bool: "red", // stands for booleans
-      regex: "blue", // stands for regular expressions
-      undef: "grey", // stands for undefined
-      null: "grey", // stands for null
-      attr: "whiteBright", // objects attributes -> { attr : value }
-      quot: "white", // strings quotes -> "..."
-      punc: "white", // commas separating arrays and objects values -> [ , , , ]
-      brack: "white", // for both {} and []
-    };
 
     // TODO: catch all errors & exceptions
     if (this.doOverwriteConsole) {
@@ -114,7 +92,7 @@ export class Logger {
   private handleLog(
     logLevel: 0 | 1 | 2 | 3 | 4 | 5,
     logArguments: any[],
-    doPrintStack: boolean = true
+    doPrintStack: boolean = false
   ): ILogMessage {
     const logObj = this.buildLog(logLevel, logArguments);
     this.printLog(logObj, doPrintStack);
@@ -125,9 +103,9 @@ export class Logger {
     logLevel: 0 | 1 | 2 | 3 | 4 | 5,
     logArguments: any[]
   ): ILogMessage {
-    const stack = getCallSites();
-    const relevantStack = stack.splice(0, this.ignoreStackLevels);
-    const stackFrame = this.unwrapJsStackOrFallBack(relevantStack)[0];
+    const callsites = this.getCallSites();
+    const relevantCallSites = callsites.splice(this.ignoreStackLevels);
+    const stackFrame = this.wrapCallSiteOrIgnore(relevantCallSites[0]);
     const stackFrameObject = this.toStackFrameObject(stackFrame);
 
     return {
@@ -136,33 +114,17 @@ export class Logger {
       msSincePrevious: 0,
       logLevel: logLevel,
       logLevelName: this.logLevels[logLevel],
-      stack: stack,
+      stack: relevantCallSites,
       argumentsArray: logArguments,
     };
   }
 
-  private unwrapJsStackOrFallBack(
-    jsStack: NodeJS.CallSite[]
-  ): NodeJS.CallSite[] {
-    const tsStackTraceFirstEntry = wrapCallSite(jsStack[0]);
-    if (tsStackTraceFirstEntry == null) {
-      return jsStack;
-    } else {
-      const tsStack: NodeJS.CallSite[] = [];
-      Object.values(jsStack).forEach((jsStackFrame: NodeJS.CallSite) => {
-        const tsStackFrame = wrapCallSite(jsStackFrame);
-        tsStack.push(tsStackFrame);
-      });
-      return tsStack;
-    }
-  }
-
   private toStackObjectArray(jsStack: NodeJS.CallSite[]): IStackFrame[] {
-    const stack = this.unwrapJsStackOrFallBack(jsStack);
-
-    let prettyStack: IStackFrame[] = Object.values(stack).reduce(
+    let prettyStack: IStackFrame[] = Object.values(jsStack).reduce(
       (iPrettyStack: IStackFrame[], stackFrame: NodeJS.CallSite) => {
-        iPrettyStack.push(this.toStackFrameObject(stackFrame));
+        iPrettyStack.push(
+          this.toStackFrameObject(this.wrapCallSiteOrIgnore(stackFrame))
+        );
         return iPrettyStack;
       },
       []
@@ -186,9 +148,14 @@ export class Logger {
 
   private printStack(std: NodeJS.WriteStream, stack: NodeJS.CallSite[]) {
     const stackObjectArray = this.toStackObjectArray(stack);
+    std.write("\n");
     Object.values(stackObjectArray).forEach((stackObject: IStackFrame) => {
       std.write(
-        chalk`    {grey •} {yellowBright ${stackObject.fileName}}{grey :}{yellow ${stackObject.lineNumber}} {white ${stackObject.functionName}}`
+        chalk`    {grey •} {yellowBright ${
+          stackObject.fileName
+        }}{grey :}{yellow ${stackObject.lineNumber}} {white ${
+          stackObject.functionName ?? "<anonumous>"
+        }}`
       );
       std.write("\n    ");
       std.write(
@@ -214,13 +181,15 @@ export class Logger {
 
     std.write(
       chalk.gray(
-        `[${logObj.fileName}:${logObj.lineNumber} ${logObj.functionName}.${logObj.methodName} *${logObj.isConstructor}*]\t`
+        `[${logObj.filePath}:${logObj.lineNumber} ${logObj.functionName}.${logObj.methodName} *${logObj.isConstructor}*]\t`
       )
     );
 
     logObj.argumentsArray.forEach((arg: any) => {
       if (typeof arg === "object" && !types.isNativeError(arg)) {
-        std.write(jsome(arg));
+        std.write(
+          highlight(JSON.stringify(arg, null, 2), { language: "JSON" }) + " "
+        );
       } else if (typeof arg === "object" && types.isNativeError(arg)) {
         isError = true;
         std.write(
@@ -231,7 +200,7 @@ export class Logger {
           )
         );
 
-        this.printStack(std, getCallSites(arg));
+        this.printStack(std, this.getCallSites(arg));
       } else {
         std.write(format(arg + " "));
       }
@@ -241,6 +210,25 @@ export class Logger {
     if (doPrintStack && !isError) {
       this.printStack(std, logObj.stack);
     }
+  }
+
+  private wrapCallSiteOrIgnore(
+    callSiteFrame: NodeJS.CallSite
+  ): NodeJS.CallSite {
+    try {
+      return wrapCallSite(callSiteFrame);
+    } catch {
+      return callSiteFrame;
+    }
+  }
+
+  private getCallSites(error?: Error): NodeJS.CallSite[] {
+    const _prepareStackTrace = Error.prepareStackTrace;
+    Error.prepareStackTrace = (_, stack) => stack;
+    const stack =
+      error == null ? (new Error().stack as any).slice(1) : error.stack;
+    Error.prepareStackTrace = _prepareStackTrace;
+    return stack;
   }
 
   private overwriteConsole() {
