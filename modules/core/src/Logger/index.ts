@@ -13,6 +13,7 @@ interface IStackFrame {
   columnNumber: number | null;
   isConstructor: boolean | null;
   functionName: string | null;
+  typeName: string | null;
   methodName: string | null;
 }
 
@@ -52,17 +53,16 @@ export class Logger {
   constructor(name: string = "", minLevel: number = 0) {
     this.name = name;
 
+    this.silly("Log in a class in a constructor");
+    this.test();
     // TODO: catch all errors & exceptions
     if (this.doOverwriteConsole) {
       this.overwriteConsole();
     }
+  }
 
-    this.silly("silly", "sully");
-    this.trace("trace");
-    this.debug("debug");
-    this.info("info");
-    this.warn("warn");
-    this.error("error");
+  private test() {
+    this.silly("Log in a class in a method");
   }
 
   public silly(...args: any[]) {
@@ -70,7 +70,7 @@ export class Logger {
   }
 
   public trace(...args: any[]) {
-    return this.handleLog.apply(this, [1, args]);
+    return this.handleLog.apply(this, [1, args, true]);
   }
 
   public debug(...args: any[]) {
@@ -134,6 +134,7 @@ export class Logger {
 
   private toStackFrameObject(stackFrame: NodeJS.CallSite): IStackFrame {
     const filePath = stackFrame.getFileName();
+
     return {
       filePath: Helper.cleanUpFilePath(filePath) ?? "",
       fullFilePath: filePath ?? "",
@@ -142,33 +143,13 @@ export class Logger {
       columnNumber: stackFrame.getColumnNumber(),
       isConstructor: stackFrame.isConstructor(),
       functionName: stackFrame.getFunctionName(),
+      typeName: stackFrame.getTypeName(),
       methodName: stackFrame.getMethodName(),
     };
   }
 
-  private printStack(std: NodeJS.WriteStream, stack: NodeJS.CallSite[]) {
-    const stackObjectArray = this.toStackObjectArray(stack);
-    std.write("\n");
-    Object.values(stackObjectArray).forEach((stackObject: IStackFrame) => {
-      std.write(
-        chalk`    {grey •} {yellowBright ${
-          stackObject.fileName
-        }}{grey :}{yellow ${stackObject.lineNumber}} {white ${
-          stackObject.functionName ?? "<anonumous>"
-        }}`
-      );
-      std.write("\n    ");
-      std.write(
-        fileNormalize(
-          chalk`{grey ${stackObject.fullFilePath}:${stackObject.lineNumber}:${stackObject.columnNumber}}`
-        )
-      );
-      std.write("\n\n");
-    });
-  }
-
   private printLog(logObj: ILogMessage, doPrintStack: boolean = false) {
-    // send ERROR to stdErr
+    // only errors should go to stdErr
     const std = logObj.logLevel < 5 ? process.stdout : process.stderr;
     const nowStr = logObj.date.toISOString().replace("T", " ").replace("Z", "");
     const hexColor = this.logLevelsColors[logObj.logLevel];
@@ -179,16 +160,21 @@ export class Logger {
       chalk.hex(hexColor).bold(` ${logObj.logLevelName.toUpperCase()}\t`)
     );
 
+    const functionName = logObj.isConstructor
+      ? `${logObj.typeName}.constructor`
+      : logObj.methodName != null
+      ? `${logObj.typeName}.${logObj.methodName}`
+      : `${logObj.functionName}`;
     std.write(
-      chalk.gray(
-        `[${logObj.filePath}:${logObj.lineNumber} ${logObj.functionName}.${logObj.methodName} *${logObj.isConstructor}*]\t`
-      )
+      chalk.gray(`[${logObj.filePath}:${logObj.lineNumber} ${functionName}]\t`)
     );
 
     logObj.argumentsArray.forEach((arg: any) => {
       if (typeof arg === "object" && !types.isNativeError(arg)) {
         std.write(
-          highlight(JSON.stringify(arg, null, 2), { language: "JSON" }) + " "
+          "\n" +
+            highlight(JSON.stringify(arg, null, 2), { language: "JSON" }) +
+            " "
         );
       } else if (typeof arg === "object" && types.isNativeError(arg)) {
         isError = true;
@@ -210,6 +196,27 @@ export class Logger {
     if (doPrintStack && !isError) {
       this.printStack(std, logObj.stack);
     }
+  }
+
+  private printStack(std: NodeJS.WriteStream, stack: NodeJS.CallSite[]) {
+    const stackObjectArray = this.toStackObjectArray(stack);
+    std.write("\n");
+    Object.values(stackObjectArray).forEach((stackObject: IStackFrame) => {
+      std.write(
+        chalk`    {grey •} {yellowBright ${
+          stackObject.fileName
+        }}{grey :}{yellow ${stackObject.lineNumber}} {white ${
+          stackObject.functionName ?? "<anonumous>"
+        }}`
+      );
+      std.write("\n    ");
+      std.write(
+        fileNormalize(
+          chalk`{grey ${stackObject.fullFilePath}:${stackObject.lineNumber}:${stackObject.columnNumber}}`
+        )
+      );
+      std.write("\n\n");
+    });
   }
 
   private wrapCallSiteOrIgnore(

@@ -20,26 +20,26 @@ class ValidationError extends Error {
 
 function fullstackLogsExample() {
   const logger = new Logger("test");
-  logger.info("Hello World.");
-  console.trace("Hello Trace.");
+  logger.silly("Log in a function");
+  logger.silly("silly");
+  logger.trace("trace");
+  logger.debug("debug");
+  logger.info("info");
+  logger.warn("warn");
+  logger.error("error");
 
-  logger.warn(new Error("huhu haha"));
-  logger.info("davor", new ValidationError("ValidationError"), "danach");
+  //logger.warn(new Error("huhu haha"));
+  logger.info(new ValidationError("Much error. Very danger."));
 
   test();
 
   function test() {
     logger.error("foo");
-    logger.warn(
-      "test",
-      [
-        { id: 1, email: "abc@def.gh", active: true },
-        { id: 2, email: "abc@def.gh", active: false },
-        { id: 3, email: "abc@def.gh", active: true },
-      ],
-      "huhu",
-      "haha"
-    );
+    logger.warn("Some fancy JS object", [
+      { id: 1, email: "abc@def.gh", active: true },
+      { id: 2, email: "abc@def.gh", active: false },
+      { id: 3, email: "abc@def.gh", active: true },
+    ]);
     logger.debug("---------");
     logger.error("***", new Error("bar"), "###");
   }
