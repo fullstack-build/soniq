@@ -17,20 +17,18 @@ interface IStackFrame {
   methodName: string | null;
 }
 
-interface ILogMessageObject extends IStackFrame {
-  date: Date;
-  logLevel: number;
-  logLevelName: string;
-  argumentsArray: any[];
-  stack: NodeJS.CallSite[];
-}
-
 interface ILogObject extends IStackFrame {
   date: Date;
   logLevel: number;
   logLevelName: string;
   argumentsArray: (string | object)[];
   stack?: IStackFrame[];
+}
+
+interface IErrorObject {
+  isError: true;
+  message: string;
+  stack: IStackFrame[];
 }
 
 export class Logger {
@@ -54,7 +52,7 @@ export class Logger {
 
   private ignoreStackLevels = 3;
 
-  private doOverwriteConsole = true;
+  private doOverwriteConsole = false;
   private logAsJson = true;
 
   constructor(
@@ -74,6 +72,7 @@ export class Logger {
       this.overwriteConsole();
     }
   }
+
   public silly(...args: any[]) {
     return this.handleLog.apply(this, [0, args]);
   }
@@ -101,35 +100,67 @@ export class Logger {
   private handleLog(
     logLevel: 0 | 1 | 2 | 3 | 4 | 5,
     logArguments: any[],
-    doPrintStack: boolean = true
-  ): ILogMessageObject {
-    const logObj = this.buildLog(logLevel, logArguments);
+    doExposeStack: boolean = false
+  ): ILogObject {
+    const logObject = this.buildLogObject(
+      logLevel,
+      logArguments,
+      doExposeStack
+    );
     if (!this.logAsJson) {
-      this.printPrettyLog(logObj, doPrintStack);
+      this.printPrettyLog(logObject);
     } else {
-      this.printJsonLog(this.getJsonLog(logObj, doPrintStack), doPrintStack);
+      this.printJsonLog(logObject);
     }
 
-    return logObj;
+    return logObject;
   }
 
-  private buildLog(
+  private buildLogObject(
     logLevel: 0 | 1 | 2 | 3 | 4 | 5,
-    logArguments: any[]
-  ): ILogMessageObject {
+    logArguments: any[],
+    doExposeStack: boolean = true
+  ): ILogObject {
     const callSites = this.getCallSites();
     const relevantCallSites = callSites.splice(this.ignoreStackLevels);
     const stackFrame = this.wrapCallSiteOrIgnore(relevantCallSites[0]);
     const stackFrameObject = this.toStackFrameObject(stackFrame);
 
-    return {
-      ...stackFrameObject,
+    const logObject: ILogObject = {
       date: new Date(),
       logLevel: logLevel,
       logLevelName: this.logLevels[logLevel],
-      stack: relevantCallSites,
-      argumentsArray: logArguments,
+      filePath: stackFrameObject.filePath,
+      fullFilePath: stackFrameObject.fullFilePath,
+      fileName: stackFrameObject.fileName,
+      lineNumber: stackFrameObject.lineNumber,
+      columnNumber: stackFrameObject.columnNumber,
+      isConstructor: stackFrameObject.isConstructor,
+      functionName: stackFrameObject.functionName,
+      typeName: stackFrameObject.typeName,
+      methodName: stackFrameObject.methodName,
+      argumentsArray: [],
     };
+
+    logArguments.forEach((arg: any) => {
+      if (typeof arg === "object" && !types.isNativeError(arg)) {
+        logObject.argumentsArray.push(JSON.parse(JSON.stringify(arg)));
+      } else if (typeof arg === "object" && types.isNativeError(arg)) {
+        const errorStack = this.getCallSites(arg);
+        const errorObject: IErrorObject = JSON.parse(JSON.stringify(arg));
+        errorObject.isError = true;
+        errorObject.stack = this.toStackObjectArray(errorStack);
+        logObject.argumentsArray.push(errorObject);
+      } else {
+        logObject.argumentsArray.push(format(arg));
+      }
+    });
+
+    if (doExposeStack) {
+      logObject.stack = this.toStackObjectArray(relevantCallSites);
+    }
+
+    return logObject;
   }
 
   private toStackObjectArray(jsStack: NodeJS.CallSite[]): IStackFrame[] {
@@ -161,10 +192,7 @@ export class Logger {
     };
   }
 
-  private printPrettyLog(
-    logObj: ILogMessageObject,
-    doPrintStack: boolean = false
-  ) {
+  private printPrettyLog(logObj: ILogObject) {
     // only errors should go to stdErr
     const std = logObj.logLevel < 5 ? process.stdout : process.stderr;
     const nowStr = logObj.date.toISOString().replace("T", " ").replace("Z", "");
@@ -187,13 +215,13 @@ export class Logger {
     );
 
     logObj.argumentsArray.forEach((arg: any) => {
-      if (typeof arg === "object" && !types.isNativeError(arg)) {
+      if (typeof arg === "object" && !arg.isError) {
         std.write(
           "\n" +
             highlight(JSON.stringify(arg, null, 2), { language: "JSON" }) +
             " "
         );
-      } else if (typeof arg === "object" && types.isNativeError(arg)) {
+      } else if (typeof arg === "object" && arg.isError) {
         std.write(
           format(
             chalk`\n{whiteBright.bgRed.bold ${arg.name}}{grey :} ${format(
@@ -202,21 +230,23 @@ export class Logger {
           )
         );
 
-        this.printPrettyStack(std, this.getCallSites(arg));
+        this.printPrettyStack(std, arg.stack);
       } else {
         std.write(format(arg + " "));
       }
     });
     std.write("\n");
 
-    if (doPrintStack) {
+    if (logObj.stack != null) {
       std.write("log stack:\n");
       this.printPrettyStack(std, logObj.stack);
     }
   }
 
-  private printPrettyStack(std: NodeJS.WriteStream, stack: NodeJS.CallSite[]) {
-    const stackObjectArray = this.toStackObjectArray(stack);
+  private printPrettyStack(
+    std: NodeJS.WriteStream,
+    stackObjectArray: IStackFrame[]
+  ) {
     std.write("\n");
     Object.values(stackObjectArray).forEach((stackObject: IStackFrame) => {
       std.write(
@@ -236,50 +266,10 @@ export class Logger {
     });
   }
 
-  private printJsonLog(logObject: ILogObject, doPrintStack: boolean = false) {
+  private printJsonLog(logObject: ILogObject) {
     // only errors should go to stdErr
     const std = logObject.logLevel < 5 ? process.stdout : process.stderr;
-    std.write(highlight(JSON.stringify(logObject, null, 2)) + "\n\n");
-  }
-
-  private getJsonLog(
-    logObj: ILogMessageObject,
-    doPrintStack: boolean = false
-  ): ILogObject {
-    const logObject: ILogObject = {
-      filePath: logObj.filePath,
-      fullFilePath: logObj.fullFilePath,
-      fileName: logObj.fileName,
-      lineNumber: logObj.lineNumber,
-      columnNumber: logObj.columnNumber,
-      isConstructor: logObj.isConstructor,
-      functionName: logObj.functionName,
-      typeName: logObj.typeName,
-      methodName: logObj.methodName,
-      date: logObj.date,
-      logLevel: logObj.logLevel,
-      logLevelName: logObj.logLevelName,
-      argumentsArray: [],
-    };
-
-    logObj.argumentsArray.forEach((arg: any) => {
-      if (typeof arg === "object" && !types.isNativeError(arg)) {
-        logObject.argumentsArray.push(JSON.parse(JSON.stringify(arg)));
-      } else if (typeof arg === "object" && types.isNativeError(arg)) {
-        const errorStack = this.getCallSites(arg);
-        const errorObject = JSON.parse(JSON.stringify(arg));
-        errorObject.stack = this.toStackObjectArray(errorStack);
-        logObject.argumentsArray.push(errorObject);
-      } else {
-        logObject.argumentsArray.push(format(arg));
-      }
-    });
-
-    if (doPrintStack) {
-      logObject.stack = this.toStackObjectArray(logObj.stack);
-    }
-
-    return logObject;
+    std.write(highlight(JSON.stringify(logObject)) + "\n");
   }
 
   private wrapCallSiteOrIgnore(
