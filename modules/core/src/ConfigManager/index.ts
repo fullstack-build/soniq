@@ -1,7 +1,6 @@
 import * as path from "path";
 import * as _ from "lodash";
 
-import { DefaultConfigNotFoundError } from "./errors";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";

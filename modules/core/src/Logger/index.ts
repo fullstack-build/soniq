@@ -101,7 +101,7 @@ export class Logger {
   private handleLog(
     logLevel: 0 | 1 | 2 | 3 | 4 | 5,
     logArguments: any[],
-    doExposeStack: boolean = false
+    doExposeStack: boolean = true
   ): ILogObject {
     const logObject = this.buildLogObject(
       logLevel,
@@ -122,7 +122,7 @@ export class Logger {
     logArguments: any[],
     doExposeStack: boolean = true
   ): ILogObject {
-    const callSites = this.getCallSites();
+    const callSites: NodeJS.CallSite[] = this.getCallSites();
     const relevantCallSites = callSites.splice(this.ignoreStackLevels);
     const stackFrame = this.wrapCallSiteOrIgnore(relevantCallSites[0]);
     const stackFrameObject = this.toStackFrameObject(stackFrame);
@@ -203,7 +203,7 @@ export class Logger {
       .replace("Z", "");
     const hexColor = this.logLevelsColors[logObject.logLevel];
 
-    std.write(chalk.hex(hexColor)(`${nowStr}\t`));
+    std.write(chalk`{grey ${nowStr}}\t`);
     std.write(
       chalk.hex(hexColor).bold(` ${logObject.logLevelName.toUpperCase()}\t`)
     );

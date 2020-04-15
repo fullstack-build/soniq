@@ -409,18 +409,18 @@
     //   "reviewCategory": "tools"
     // }
     {
-      "packageName": "@fullstack-one/core",
+      "packageName": "soniq",
       "projectFolder": "modules/core",
       "shouldPublish": true
     },
     /*{
-      "packageName": "@fullstack-one/logger",
+      "packageName": "@soniq/logger",
       "projectFolder": "modules/logger",
       "shouldPublish": true
     },*/
     // examples
     {
-      "packageName": "@fullstack-one/examples_01",
+      "packageName": "@soniq/examples_01",
       "projectFolder": "examples/01",
       "shouldPublish": false
     }

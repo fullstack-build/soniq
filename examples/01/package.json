@@ -1,7 +1,7 @@
 {
-  "name": "@fullstack-one/examples_01",
+  "name": "@soniq/examples_01",
   "version": "2.0.0",
-  "description": "Examples of the fullstack-one framework",
+  "description": "Examples of the soniq framework",
   "main": "index.ts",
   "scripts": {
     "build": "tsc",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+    "url": "git+https://github.com/fullstack-build/soniq.git"
   },
   "authors": [
     "Eugene Terehov <eugene@fullstack.build>",
@@ -20,7 +20,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fullstack-build/fullstack.one/issues"
+    "url": "https://github.com/fullstack-build/soniq/issues"
   },
   "homepage": "https://www.fullstack.one",
   "devDependencies": {
@@ -36,7 +36,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@fullstack-one/core": "~0.2.0",
+    "soniq": "~0.2.0",
     "debug": "^4.1.1",
     "debug-trace": "^2.2.3",
     "dotenv": "~8.2.0",

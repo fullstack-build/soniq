@@ -30,10 +30,8 @@ let Core = class Core {
         this.bootLoader = new BootLoader_1.BootLoader();
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
-        typedi_1.Container.set("@fullstack-one/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
+        typedi_1.Container.set("@soniq/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
         this.logger = new Logger_1.Logger(this.ENVIRONMENT.nodeId, this.className);
-        this.logger.trace("###huhu", "haha!!!!");
-        this.logger.error("ERROR!");
     }
     // draw CLI art
     drawCliArt() {
@@ -55,7 +53,7 @@ let Core = class Core {
     }
 };
 Core = __decorate([
-    typedi_1.Service("@fullstack-one/core"),
+    typedi_1.Service("@soniq"),
     __metadata("design:paramtypes", [])
 ], Core);
 exports.Core = Core;

@@ -18,7 +18,7 @@ process.on("unhandledRejection", (reason, p) => {
   console.error("Unhandled Rejection:", reason);
 });
 
-@Service("@fullstack-one/core")
+@Service("@soniq")
 export class Core {
   private readonly className = this.constructor.name;
   private readonly bootLoader: BootLoader = new BootLoader();
@@ -30,12 +30,10 @@ export class Core {
     this.configManager = new ConfigManager();
     this.ENVIRONMENT = this.configManager.ENVIRONMENT;
     Container.set(
-      "@fullstack-one/ENVIRONMENT",
+      "@soniq/ENVIRONMENT",
       JSON.parse(JSON.stringify(this.ENVIRONMENT))
     );
     this.logger = new Logger(this.ENVIRONMENT.nodeId, this.className);
-    this.logger.trace("###huhu", "haha!!!!");
-    this.logger.error("ERROR!");
   }
 
   // draw CLI art

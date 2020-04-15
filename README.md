@@ -1,5 +1,5 @@
-# fullstack-one - A PostgreSQL centric GraphQL Framework
-fullstack-one is a battery included Node.js GraphQL framework created on top of PostgreSQL written in TypeScript/ES2017, with focus on high performance, flexibility and security.
+# soniq - A PostgreSQL centric GraphQL Framework
+soniq is a battery included Node.js GraphQL framework created on top of PostgreSQL written in TypeScript, with focus on high performance, flexibility and security.
 > PostgreSQL, Node.js, TypeScript, GraphQL, DI
 
 

@@ -1,5 +1,3 @@
-//import { ILogger, LoggerFactory } from "@fullstack-one/logger";
-
 type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
 export enum EBootState {

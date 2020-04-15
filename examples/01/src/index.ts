@@ -1,13 +1,13 @@
 require("dotenv").config();
 
-import { Container, Core, Logger } from "@fullstack-one/core";
+import { Container, Core, Logger } from "soniq";
 
-const $core: Core = Container.get("@fullstack-one/core");
+const $core: Core = Container.get("@soniq");
 
 (async () => {
   await $core.boot();
 
-  fullstackLogsExample();
+  soniqLogsExample();
   //debugTraceExample();
 })();
 
@@ -18,7 +18,7 @@ class ValidationError extends Error {
   }
 }
 
-function fullstackLogsExample() {
+function soniqLogsExample() {
   const logger = new Logger($core.ENVIRONMENT?.nodeId, "testLogger");
   logger.silly("Log in a function");
   logger.silly("silly");
@@ -28,7 +28,6 @@ function fullstackLogsExample() {
   logger.warn("warn");
   logger.error("error");
 
-  //logger.warn(new Error("huhu haha"));
   logger.info(new ValidationError("Much error. Very danger."));
 
   test();
@@ -38,7 +37,11 @@ function fullstackLogsExample() {
     logger.warn("Some fancy JS object", [
       { id: 1, email: "abc@def.gh", active: true },
       { id: 2, email: "abc@def.gh", active: false },
-      { id: 3, email: "abc@def.gh", active: true },
+      {
+        id: 3,
+        email: "abc@def.gh",
+        active: true,
+      },
     ]);
     logger.debug("---------");
     logger.error("***", new Error("bar"), "###");
