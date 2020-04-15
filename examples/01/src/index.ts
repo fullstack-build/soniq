@@ -19,7 +19,7 @@ class ValidationError extends Error {
 }
 
 function fullstackLogsExample() {
-  const logger = new Logger("test");
+  const logger = new Logger($core.ENVIRONMENT?.nodeId);
   logger.silly("Log in a function");
   logger.silly("silly");
   logger.trace("trace");

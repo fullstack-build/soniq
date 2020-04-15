@@ -21,10 +21,10 @@ process.on("unhandledRejection", (reason, p) => {
 @Service("@fullstack-one/core")
 export class Core {
   private readonly className = this.constructor.name;
-  private readonly logger: Logger = new Logger(this.className);
   private readonly bootLoader: BootLoader = new BootLoader();
   public readonly configManager: ConfigManager | undefined;
-  public readonly ENVIRONMENT: IEnvironment | undefined;
+  public readonly ENVIRONMENT: IEnvironment;
+  private readonly logger: Logger;
 
   private constructor() {
     this.configManager = new ConfigManager();
@@ -33,6 +33,7 @@ export class Core {
       "@fullstack-one/ENVIRONMENT",
       JSON.parse(JSON.stringify(this.ENVIRONMENT))
     );
+    this.logger = new Logger(this.ENVIRONMENT.nodeId, this.className);
     this.logger.trace("###huhu", "haha!!!!");
     this.logger.error("ERROR!");
   }
