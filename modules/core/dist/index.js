@@ -27,11 +27,11 @@ process.on("unhandledRejection", (reason, p) => {
 let Core = class Core {
     constructor() {
         this.className = this.constructor.name;
-        this.logger = new Logger_1.Logger(this.className);
         this.bootLoader = new BootLoader_1.BootLoader();
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
         typedi_1.Container.set("@fullstack-one/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
+        this.logger = new Logger_1.Logger(this.ENVIRONMENT.nodeId, this.className);
         this.logger.trace("###huhu", "haha!!!!");
         this.logger.error("ERROR!");
     }

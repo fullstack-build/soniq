@@ -18,6 +18,7 @@ interface IStackFrame {
 }
 
 interface ILogObject extends IStackFrame {
+  loggerName: string;
   date: Date;
   logLevel: number;
   logLevelName: string;
@@ -53,21 +54,21 @@ export class Logger {
   private ignoreStackLevels = 3;
 
   private doOverwriteConsole = false;
-  private logAsJson = true;
+  private logAsJson = false;
 
   constructor(
     private nodeId: string,
-    private name: string,
+    private name?: string,
     minLevel: number = 0
   ) {
     this.errorToJsonHelper();
     // TODO: catch all errors & exceptions
-    // Log as json
-    // remove ms
+    // x Log as json
+    // x remove ms
     // transport (inkl. min level)
     // config
     // override console.log
-    // print out logger name, if set
+    // x print out logger name, if set
     if (this.doOverwriteConsole) {
       this.overwriteConsole();
     }
@@ -127,6 +128,7 @@ export class Logger {
     const stackFrameObject = this.toStackFrameObject(stackFrame);
 
     const logObject: ILogObject = {
+      loggerName: this.name ?? "",
       date: new Date(),
       logLevel: logLevel,
       logLevelName: this.logLevels[logLevel],
@@ -192,29 +194,32 @@ export class Logger {
     };
   }
 
-  private printPrettyLog(logObj: ILogObject) {
+  private printPrettyLog(logObject: ILogObject) {
     // only errors should go to stdErr
-    const std = logObj.logLevel < 5 ? process.stdout : process.stderr;
-    const nowStr = logObj.date.toISOString().replace("T", " ").replace("Z", "");
-    const hexColor = this.logLevelsColors[logObj.logLevel];
+    const std = logObject.logLevel < 5 ? process.stdout : process.stderr;
+    const nowStr = logObject.date
+      .toISOString()
+      .replace("T", " ")
+      .replace("Z", "");
+    const hexColor = this.logLevelsColors[logObject.logLevel];
 
     std.write(chalk.hex(hexColor)(`${nowStr}\t`));
     std.write(
-      chalk.hex(hexColor).bold(` ${logObj.logLevelName.toUpperCase()}\t`)
+      chalk.hex(hexColor).bold(` ${logObject.logLevelName.toUpperCase()}\t`)
     );
 
-    const functionName = logObj.isConstructor
-      ? `${logObj.typeName}.constructor`
-      : logObj.methodName != null
-      ? `${logObj.typeName}.${logObj.methodName}`
-      : `${logObj.functionName}`;
+    const functionName = logObject.isConstructor
+      ? `${logObject.typeName}.constructor`
+      : logObject.methodName != null
+      ? `${logObject.typeName}.${logObject.methodName}`
+      : `${logObject.functionName}`;
     std.write(
       chalk.gray(
-        `[@${this.nodeId} ${logObj.filePath}:${logObj.lineNumber} ${functionName}]\t`
+        `[${logObject.loggerName}@${this.nodeId} ${logObject.filePath}:${logObject.lineNumber} ${functionName}]\t`
       )
     );
 
-    logObj.argumentsArray.forEach((arg: any) => {
+    logObject.argumentsArray.forEach((arg: any) => {
       if (typeof arg === "object" && !arg.isError) {
         std.write(
           "\n" +
@@ -237,9 +242,9 @@ export class Logger {
     });
     std.write("\n");
 
-    if (logObj.stack != null) {
+    if (logObject.stack != null) {
       std.write("log stack:\n");
-      this.printPrettyStack(std, logObj.stack);
+      this.printPrettyStack(std, logObject.stack);
     }
   }
 

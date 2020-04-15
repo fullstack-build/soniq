@@ -7,10 +7,10 @@ export { IEnvironment };
 export { Logger };
 export declare class Core {
     private readonly className;
-    private readonly logger;
     private readonly bootLoader;
     readonly configManager: ConfigManager | undefined;
-    readonly ENVIRONMENT: IEnvironment | undefined;
+    readonly ENVIRONMENT: IEnvironment;
+    private readonly logger;
     private constructor();
     private drawCliArt;
     boot(): Promise<void>;

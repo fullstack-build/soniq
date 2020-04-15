@@ -8,43 +8,34 @@ const $core = core_1.Container.get("@fullstack-one/core");
     fullstackLogsExample();
     //debugTraceExample();
 })();
-function fullstackLogsExample() {
-    const logger = new core_1.Logger("test");
-    logger.info("Hello World.");
-    console.trace("Hello Trace.");
-    test();
-    function test() {
-        console.error("foo");
-        console.warn("test", {
-            asks: [
-                { price: "1000", amt: 10 },
-                { price: "2000", amt: 10 },
-            ],
-            bids: [
-                { price: "500", amt: 10 },
-                { price: "100", amt: 10 },
-            ],
-        }, "huhu", "haha");
-        console.log("---------");
-        console.error("***", new Error("bar"), "###");
+class ValidationError extends Error {
+    constructor(message) {
+        super(message); // (1)
+        this.name = "ValidationError"; // (2)
     }
 }
-function debugTraceExample() {
-    require("debug-trace")({
-        colors: {
-            warn: "35",
-            info: "32",
-        },
-    });
-    console.info("Hello World.");
+function fullstackLogsExample() {
+    var _a;
+    const logger = new core_1.Logger((_a = $core.ENVIRONMENT) === null || _a === void 0 ? void 0 : _a.nodeId, "testLogger");
+    logger.silly("Log in a function");
+    logger.silly("silly");
+    logger.trace("trace");
+    logger.debug("debug");
+    logger.info("info");
+    logger.warn("warn");
+    logger.error("error");
+    //logger.warn(new Error("huhu haha"));
+    logger.info(new ValidationError("Much error. Very danger."));
     test();
     function test() {
-        console.error("foo");
-        console.warn(JSON.stringify({ a: { b: { c: true } } }, null, 2));
-        console.log("---------");
-        console.trace("huhu haha");
-        console.log("---------");
-        console.error(new Error("bar"));
+        logger.error("foo");
+        logger.warn("Some fancy JS object", [
+            { id: 1, email: "abc@def.gh", active: true },
+            { id: 2, email: "abc@def.gh", active: false },
+            { id: 3, email: "abc@def.gh", active: true },
+        ]);
+        logger.debug("---------");
+        logger.error("***", new Error("bar"), "###");
     }
 }
 //# sourceMappingURL=index.js.map

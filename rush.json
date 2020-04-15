@@ -413,11 +413,11 @@
       "projectFolder": "modules/core",
       "shouldPublish": true
     },
-    {
+    /*{
       "packageName": "@fullstack-one/logger",
       "projectFolder": "modules/logger",
       "shouldPublish": true
-    },
+    },*/
     // examples
     {
       "packageName": "@fullstack-one/examples_01",

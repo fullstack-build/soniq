@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "Logger of the fullstack-one framework",
   "main": "index",
-  "typings": "dist/index",
+  "typings": "src/index",
   "scripts": {
     "build": "tsc",
     "eslint": "eslint . --ext .ts",
