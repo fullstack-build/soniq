@@ -1,6 +1,6 @@
 {
   "name": "soniq",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A PostgreSQL centric GraphQL Framework",
   "main": "index",
   "typings": "src/index",
