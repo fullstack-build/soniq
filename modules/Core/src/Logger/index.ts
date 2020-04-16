@@ -28,6 +28,7 @@ export class Logger {
   };
   private ignoreStackLevels = 3;
   private attachedTransports: ITransportProvider[] = [];
+  private readonly minLevelToStdErr: number = 4;
 
   // Settings
   private readonly name?: string;
@@ -205,7 +206,10 @@ export class Logger {
 
   private printPrettyLog(logObject: ILogObject) {
     // only errors should go to stdErr
-    const std = logObject.logLevel < 5 ? process.stdout : process.stderr;
+    const std =
+      logObject.logLevel < this.minLevelToStdErr
+        ? process.stdout
+        : process.stderr;
     const nowStr = logObject.date
       .toISOString()
       .replace("T", " ")
@@ -282,7 +286,10 @@ export class Logger {
 
   private printJsonLog(logObject: ILogObject) {
     // only errors should go to stdErr
-    const std = logObject.logLevel < 5 ? process.stdout : process.stderr;
+    const std =
+      logObject.logLevel < this.minLevelToStdErr
+        ? process.stdout
+        : process.stderr;
     std.write(highlight(JSON.stringify(logObject)) + "\n");
   }
 
