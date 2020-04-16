@@ -12,7 +12,6 @@ import { Logger } from "./Logger";
 import { BootLoader } from "./BootLoader";
 import { ConfigManager, IEnvironment } from "./ConfigManager";
 export { IEnvironment };
-export { Logger };
 
 process.on("unhandledRejection", (reason, p) => {
   console.error("Unhandled Rejection:", reason);
@@ -56,5 +55,9 @@ export class Core {
     await this.bootLoader.boot();
     this.drawCliArt();
     return;
+  }
+
+  public getLogger(name?: string, minLevel: number = 0, exposeStack = false) {
+    return new Logger(this.ENVIRONMENT.nodeId, name, minLevel, exposeStack);
   }
 }

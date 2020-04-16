@@ -5,6 +5,8 @@ import { Helper } from "../Helper";
 import { basename as fileBasename, normalize as fileNormalize } from "path";
 import { format, types } from "util";
 
+type TLogLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
 interface IStackFrame {
   filePath: string;
   fullFilePath: string;
@@ -28,8 +30,23 @@ interface ILogObject extends IStackFrame {
 
 interface IErrorObject {
   isError: true;
+  name: string;
   message: string;
   stack: IStackFrame[];
+}
+
+export interface ITransportLogger<T> {
+  silly?: T;
+  trace?: T;
+  debug?: T;
+  info?: T;
+  warn?: T;
+  error?: T;
+}
+
+interface ITransportProvider {
+  minLevel: TLogLevel;
+  logger: ITransportLogger<(...args: any[]) => void>;
 }
 
 export class Logger {
@@ -41,37 +58,47 @@ export class Logger {
     4: "warn",
     5: "error",
   };
-
-  private readonly logLevelsColors = {
-    0: "#B0B0B0",
-    1: "#FFFFFF",
-    2: "#63C462",
-    3: "#2020C0",
-    4: "#CE8743",
-    5: "#CD444C",
-  };
-
   private ignoreStackLevels = 3;
-
-  private doOverwriteConsole = false;
-  private logAsJson = false;
+  private attachedTransports: ITransportProvider[] = [];
 
   constructor(
-    private nodeId: string,
-    private name?: string,
-    minLevel: number = 0
+    private readonly nodeId: string,
+    private readonly name?: string,
+    private readonly minLevel: number = 0,
+    private readonly exposeStack = false,
+    private readonly doOverwriteConsole = false,
+    private readonly logAsJson = false,
+    private readonly logLevelsColors = {
+      0: "#B0B0B0",
+      1: "#FFFFFF",
+      2: "#63C462",
+      3: "#2020C0",
+      4: "#CE8743",
+      5: "#CD444C",
+    }
   ) {
     this.errorToJsonHelper();
     // TODO: catch all errors & exceptions
     // x Log as json
     // x remove ms
     // transport (inkl. min level)
-    // config
     // override console.log
+    // named logger?
+    // return named logger from core
     // x print out logger name, if set
     if (this.doOverwriteConsole) {
       this.overwriteConsole();
     }
+  }
+
+  public attachTransport(
+    logger: ITransportLogger<(...args: any[]) => void>,
+    minLevel: TLogLevel = 0
+  ) {
+    this.attachedTransports.push({
+      minLevel,
+      logger,
+    });
   }
 
   public silly(...args: any[]) {
@@ -99,26 +126,35 @@ export class Logger {
   }
 
   private handleLog(
-    logLevel: 0 | 1 | 2 | 3 | 4 | 5,
+    logLevel: TLogLevel,
     logArguments: any[],
-    doExposeStack: boolean = true
+    doExposeStack: boolean = this.exposeStack
   ): ILogObject {
     const logObject = this.buildLogObject(
       logLevel,
       logArguments,
       doExposeStack
     );
-    if (!this.logAsJson) {
-      this.printPrettyLog(logObject);
-    } else {
-      this.printJsonLog(logObject);
+
+    if (logLevel >= this.minLevel) {
+      if (!this.logAsJson) {
+        this.printPrettyLog(logObject);
+      } else {
+        this.printJsonLog(logObject);
+      }
     }
+
+    this.attachedTransports.forEach((transport: ITransportProvider) => {
+      if (logLevel >= transport.minLevel) {
+        transport[this.logLevels[logLevel]](logObject);
+      }
+    });
 
     return logObject;
   }
 
   private buildLogObject(
-    logLevel: 0 | 1 | 2 | 3 | 4 | 5,
+    logLevel: TLogLevel,
     logArguments: any[],
     doExposeStack: boolean = true
   ): ILogObject {
@@ -150,6 +186,7 @@ export class Logger {
       } else if (typeof arg === "object" && types.isNativeError(arg)) {
         const errorStack = this.getCallSites(arg);
         const errorObject: IErrorObject = JSON.parse(JSON.stringify(arg));
+        errorObject.name = errorObject.name ?? "Error";
         errorObject.isError = true;
         errorObject.stack = this.toStackObjectArray(errorStack);
         logObject.argumentsArray.push(errorObject);
@@ -243,7 +280,7 @@ export class Logger {
     std.write("\n");
 
     if (logObject.stack != null) {
-      std.write("log stack:\n");
+      std.write(chalk`{underline.bold log stack:\n}`);
       this.printPrettyStack(std, logObject.stack);
     }
   }
