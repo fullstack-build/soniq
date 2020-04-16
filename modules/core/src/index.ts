@@ -32,6 +32,7 @@ export class Core {
       "@soniq/ENVIRONMENT",
       JSON.parse(JSON.stringify(this.ENVIRONMENT))
     );
+    // TODO: catch all errors & exceptions
     this.logger = new Logger(this.ENVIRONMENT.nodeId, { name: this.className });
   }
 

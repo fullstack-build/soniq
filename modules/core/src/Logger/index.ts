@@ -54,14 +54,6 @@ export class Logger {
     };
 
     this.errorToJsonHelper();
-    // TODO: catch all errors & exceptions
-    // x Log as json
-    // x remove ms
-    // x transport (inkl. min level)
-    // override console.log
-    // x named logger?
-    // x return named logger from core
-    // x print out logger name, if set
     if (this.doOverwriteConsole) {
       this.overwriteConsole();
     }
