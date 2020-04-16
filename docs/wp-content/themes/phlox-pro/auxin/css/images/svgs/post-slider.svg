@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #216eaf;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="post-slider" class="cls-1" d="M360,280v-2h30V258h2v22H360Zm23.805-15.886,3.372,3.375-3.372,3.375v-6.75Zm-18.994,3.375,3.372-3.375v6.75ZM362,278h-2V256h32v2H362v20Z" transform="translate(-360 -252)"/>
+</svg>

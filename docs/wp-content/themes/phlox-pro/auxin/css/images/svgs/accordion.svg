@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="26" viewBox="0 0 32 26">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #2170b0;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="accordion" class="cls-1" d="M308,282V270h2v-7h-2v-5h0v-2h32v7h-2v7h2v12H308Zm30-24H310v3h28v-3Zm-2,5H312v7h24v-7Zm2,9H310v3h28v-3Zm0,5H310v3h28v-3Z" transform="translate(-308 -256)"/>
+</svg>

@@ -1,0 +1,13 @@
+.has-email-mobie {z-index: 2000;}
+.swal2-container {z-index: 10000 !important;}
+.has-email-mobie h2.swal2-title {font-size: 18px;}
+div.has_sharing_email {width: 320px;z-index: 1001;background: #fff;}
+div.has_sharing_email_form_wrapper {padding: 15px;background: #fff;text-align: left;}
+div.has_success_response {background: #fff;text-align: center;}
+div.has_success_response div {background: #fff;text-align: center;}
+div.has_sharing_email_form_wrapper label {font-size: 12px;color: #333;font-weight: 700;display: block;padding: 0 0 4px;text-align: left;text-shadow: none;}
+div.has_sharing_email_form_wrapper input[type=text], div.has_sharing_email_form_wrapper input[type=email] {width: 100%;box-sizing: border-box;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;border: 1px solid #ccc;margin-bottom: 1em;background: #fff;font-size: 12px;color: #333;max-width: none;padding: 1px 3px;}
+div.has_sharing_email_form_wrapper #has_sharing_send {text-decoration: none !important;display: inline-block;font-size: 12px;font-family: "Open Sans",sans-serif;font-weight: 400;border-radius: 3px;color: #777 !important;background: #f8f8f8;border: 1px solid #ccc;box-shadow: 0 1px 0 rgba(0,0,0,.08);text-shadow: none;line-height: 23px;padding: 1px 8px 0 5px;}
+div.has_sharing_email_form_wrapper a#has_sharing_cancel, div.has_sharing_email_form_wrapper a#has_sharing_cancel:hover, div.has_sharing_email_form_wrapper a#has_sharing_cancel:visited, div.has_success_response a#has_sharing_cancel, div.has_success_response a#has_sharing_cancel:hover, div.has_success_response a#has_sharing_cancel:visited {text-transform: capitalize;padding: 0 0 0 1em;font-size: 12px;text-shadow: none;color: #1e73be;letter-spacing: inherit;}
+div.has_success_response a#has_sharing_cancel, div.has_success_response a#has_sharing_cancel:hover, div.has_success_response a#has_sharing_cancel:visited {padding: 0;}
+div.has_errors {color: #fff;background-color: #771a09;font-size: 12px;padding: 5px 8px;line-height: 1;margin: 10px 0 0;}

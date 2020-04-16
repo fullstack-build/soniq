@@ -1,0 +1,55 @@
+<wpml-config>
+  <admin-texts>
+    <key name="phlox-pro_theme_options">
+      <key name="header_logo_width"/>
+      <key name="content_typography_face"/>
+      <key name="content_typography_weight"/>
+      <key name="main_title_typography_face"/>
+      <key name="main_title_typography_wight"/>
+      <key name="page_title_typography_face"/>
+      <key name="page_title_typography_weight"/>
+      <key name="header_menu_typography_face"/>
+      <key name="header_menu_typography_weight"/>
+      <key name="site_header_mobile_menu_offcanvas_alignment"/>
+      <key name="topheader_message"/>
+      <key name="post_single_sidebar_position"/>
+      <key name="post_index_sidebar_position"/>
+      <key name="post_index_read_more_text"/>
+      <key name="post_taxonomy_archive_sidebar_position"/>
+      <key name="copyright"/>
+      <key name="site_secondary_logo_image"/>
+      <key name="site_secondary_logo_max_height"/>
+    </key>
+    <key name="theme_mods_phlox-pro">
+      <key name="font_urls">
+        <key name="auxin-fonts-google"/>
+      </key>
+      <key name="custom_logo"/>
+      <key name="custom_logo2"/>
+    </key>
+  </admin-texts>
+  <language-switcher-settings>
+    <key name="icl_lang_sel_config">
+      <key name="font-current-normal">#3D3D3D</key>
+      <key name="font-current-hover">#1bb0ce</key>
+      <key name="background-current-normal">#ffffff</key>
+      <key name="background-current-hover">#ffffff</key>
+      <key name="font-other-normal">#3D3D3D</key>
+      <key name="font-other-hover">#1bb0ce</key>
+      <key name="background-other-normal">#ffffff</key>
+      <key name="background-other-hover">#ffffff</key>
+      <key name="border">#ffffff</key>
+    </key>
+    <key name="icl_lang_sel_footer_config">
+      <key name="font-current-normal">#3D3D3D</key>
+      <key name="font-current-hover">#1bb0ce</key>
+      <key name="background-current-normal">#ffffff</key>
+      <key name="background-current-hover">#ffffff</key>
+      <key name="font-other-normal">#3D3D3D</key>
+      <key name="font-other-hover">#3D3D3D</key>
+      <key name="background-other-normal">#ffffff</key>
+      <key name="background-other-hover">#ffffff</key>
+      <key name="border">#ffffff</key>
+    </key>
+  </language-switcher-settings>
+</wpml-config>

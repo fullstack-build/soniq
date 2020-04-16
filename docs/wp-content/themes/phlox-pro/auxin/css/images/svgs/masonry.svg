@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="25" height="32" viewBox="0 0 25 32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #2170b0;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="masonry" class="cls-1" d="M118,341v-2h11v2H118Zm0-6V323h11v14H118v-2Zm9,0V325h-7v10h7Zm-9-16h11v2H118v-2Zm0-4v-6h11v8H118v-2Zm2,0h7v-4h-7v4Zm-16,24h11v2H104v-2Zm0-4v-6h11v8H104v-2Zm2,0h7v-4h-7v4Zm-2-10h11v2H104v-2Zm0-4V309h11v14H104v-2Zm2,0h7V311h-7v10Z" transform="translate(-104 -309)"/>
+</svg>

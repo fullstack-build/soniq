@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="56" viewBox="0 0 120 56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="stroke_copy_14" data-name="stroke copy 14" class="cls-1" d="M13,20h94v2H13V20Zm0,7h94v2H13V27Zm10,7H97v2H23V34ZM13,45h94v1H13V45Zm0-35h94v1H13V10Zm-15-12H122v60H-2v-60Zm2,2H120V56H0v-56Z"/>
+</svg>

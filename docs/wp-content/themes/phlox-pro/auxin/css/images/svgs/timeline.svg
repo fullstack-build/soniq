@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #2170b0;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="timeline" class="cls-1" d="M173,331v-2h11v2H173Zm0-6v-6h11v8H173v-2Zm2,0h7v-4h-7v4Zm-8-16h2v32h-2V309Zm-15,30h11v2H152v-2Zm0-4v-6h11v8H152v-2Zm2,0h7v-4h-7v4Zm-2-16h11v2H152v-2Zm0-4v-6h11v8H152v-2Zm2,0h7v-4h-7v4Zm6,9h-8v-2h8v2Zm18,10h-5v-2h5v2Z" transform="translate(-152 -309)"/>
+</svg>

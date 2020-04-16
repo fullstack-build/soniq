@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="88" viewBox="0 0 251 88">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="slider-skin-1" class="cls-1" d="M235.24,45.33h0l-3.5,3.66-1.75-1.83,3.5-3.66-3.5-3.66,1.75-1.83,5.251,5.49ZM60,58H191v2H60V58Zm0,0h0V30h2V58H60ZM189,30h2V58h-2V30ZM114,51V49h23v2H114ZM85,38h81v5H85V38ZM19.26,48.99l-3.5-3.66L14.01,43.5l5.25-5.49,1.751,1.83-3.5,3.66,3.5,3.66ZM60,28H191v2H60V28ZM-2-2H253V90H-2V-2ZM0,0H251V88H0V0Z"/>
+</svg>

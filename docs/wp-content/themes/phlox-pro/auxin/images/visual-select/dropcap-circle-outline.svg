@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="81" height="56" viewBox="0 0 81 56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="dropcap-circle-outline" class="cls-1" d="M-2-2H83v60H-2V-2Zm2,2H81V56H0v-56ZM44,27H76v3H44V27ZM13,41H81v3H13V41Zm31-7H81v3H44V34Zm0-14H81v3H44V20Zm0-7H81v3H44V13ZM13,48H81v3H13V48Zm0,7H81v1H13V55ZM25,13h2a12,12,0,0,1,0,24H25A12,12,0,0,1,25,13Zm0,2h2a10,10,0,0,1,0,20H25A10,10,0,0,1,25,15Zm7.731,17.012V19.232h-2.16l-4.23,7.812-4.23-7.812h-2.16v12.78h2.016v-9.2l3.816,6.966H26.9l3.8-6.966v9.2h2.034Z"/>
+</svg>

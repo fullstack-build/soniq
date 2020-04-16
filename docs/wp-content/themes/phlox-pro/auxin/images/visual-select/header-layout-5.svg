@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="88" viewBox="0 0 251 88">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="lines_copy" data-name="lines copy" class="cls-1" d="M-2-2H253V90H-2V-2ZM0,0H251V88H0V0ZM168,10h13v2H168V10Zm17,0h13v2H185V10Zm17,0h13v2H202V10Zm17,0h13v2H219V10ZM20,7H37v8H20V7ZM0,0H251V88H0V0Z"/>
+</svg>

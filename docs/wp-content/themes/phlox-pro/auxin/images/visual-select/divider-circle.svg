@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="38" viewBox="0 0 120 38">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="divider-circle" class="cls-1" d="M-2-2H122V40H-2V-2ZM0,0H120V38H0V0ZM107,20H64.971a4.5,4.5,0,0,1-8.942,0H13V19H56.03a4.5,4.5,0,0,1,8.941,0H107v1Z"/>
+</svg>

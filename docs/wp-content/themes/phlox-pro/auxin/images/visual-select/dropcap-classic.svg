@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="81" height="56" viewBox="0 0 81 56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="dropcap-classic" class="cls-1" d="M-2-2H83v60H-2V-2Zm2,2H81V56H0v-56ZM43,27H76v3H43V27ZM13,41H81v3H13V41Zm30-7H81v3H43V34Zm0-14H81v3H43V20Zm0-7H81v3H43V13ZM13,48H81v3H13V48Zm0,7H81v1H13V55ZM36.986,37.007V14H33.1L25.5,28.065,17.9,14H14.016v23h3.623V20.452L24.5,32.99H26.5L33.33,20.452V37.007h3.656Z"/>
+</svg>

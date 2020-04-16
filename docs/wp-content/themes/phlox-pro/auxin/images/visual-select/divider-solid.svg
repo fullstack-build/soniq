@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="38" viewBox="0 0 120 38">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="divider-solid" class="cls-1" d="M13,19h94v1H13V19ZM-2-2H122V40H-2V-2ZM0,0H120V38H0V0Z"/>
+</svg>

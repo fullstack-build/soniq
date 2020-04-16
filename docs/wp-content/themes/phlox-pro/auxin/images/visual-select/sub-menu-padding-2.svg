@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="96" viewBox="0 0 251 96">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="submenu-padding-2" class="cls-1" d="M-2-2H253V98H-2V-2ZM0,0H251V96H0V0ZM172,42V40h80v2H172ZM160,18h21v2H160V18Zm-27,0h21v2H133V18Zm-27,0h21v2H106V18ZM79,18h21v2H79V18ZM66.757,16h8.485L71,20.241ZM68,42H0V40H68v2Zm53-11H68V29h53v2ZM70,67H68V31h2V67Zm21-7H80V58H91v2ZM80,37H91v2H80V37ZM99,49H80V47H99v2Zm20,20H68V67h51v2Zm53,9H119V40h53V78ZM129,47h20v2H129V47Zm0,10h10v2H129V57Zm0,11h16v2H129V68Zm-8-37v9h-2V31h2Z"/>
+</svg>

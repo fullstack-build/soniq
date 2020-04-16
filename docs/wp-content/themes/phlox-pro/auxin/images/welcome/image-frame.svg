@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="848" height="403" viewBox="0 0 848 403">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #bbb;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="rectangle" class="cls-1" d="M5,7V5L842,396v2ZM842,7V5L5,396v2ZM0,0H848V1H0V0ZM0,1H1V402H0V1ZM847,1h1V402h-1V1ZM0,402H848v1H0v-1Z"/>
+</svg>

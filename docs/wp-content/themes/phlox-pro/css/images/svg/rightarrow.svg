@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4910 3687 30 12.728">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #3d3d3d;
+        stroke-width: 3px;
+      }
+
+      .cls-2 {
+        fill: #3d3d3d;
+      }
+    </style>
+  </defs>
+  <g id="right_arrow" data-name="right arrow" transform="translate(3741 2140)">
+    <g id="right_arrow-2" data-name="right arrow" transform="translate(2747.136 2502.864) rotate(180)">
+      <line id="divider" class="cls-1" x2="26.636" transform="translate(1551.5 949.5)"/>
+      <path id="Subtraction_1" data-name="Subtraction 1" class="cls-2" d="M-3735.636,12.728h0L-3742,6.364-3735.636,0l2,2L-3738,6.364l4.364,4.364-2,2Z" transform="translate(5290.136 943.136)"/>
+    </g>
+  </g>
+</svg>

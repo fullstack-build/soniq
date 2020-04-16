@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="56" viewBox="0 0 120 56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="pullquote-colorized" class="cls-1" d="M-2-2.005H122v60H-2v-60ZM0,0H120V56H0V0ZM104.993,41.781L102.639,46h-2.79l2.354-4.219h-2.109V37H105v4.781h-0.007ZM22,31h83v2H22V31Zm0-7h83v2H22V24Zm18-8h65v2H40V16Zm-5-1.778V19H30V14.219h0.007L32.406,10H35.25l-2.4,4.219H35Zm-8,0V19H22V14.219h0.007L24.406,10H27.25l-2.4,4.219H27ZM87,40H22V38H87v2Zm5.25,1.785V37h4.906v4.781H97.144L94.79,46H92l2.354-4.219h-2.1ZM12,6H113V50H12V6ZM7,6h3V50H7V6Z"/>
+</svg>

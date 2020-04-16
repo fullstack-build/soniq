@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="77" height="78" viewBox="0 0 77 78">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #d8d8d8;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="portfolio-single-wide" class="cls-1" d="M-2,79.994V-2H79v82H-2ZM77,0h0v0H0v78H77V35h0V33h0V32.068h0V0.924h0V0ZM39.614,16.5L38.5,16.032,77,0V0.924ZM27,45H19V43h8v2Zm4,4H19V48H31v1Zm-4,6H19V53h8v2Zm4,4H19V58H31v1Zm-4,6H19V63h8v2Zm4,4H19V68H31v1ZM53,46H38V43H53v3Zm5,4H38V49H58v1Zm0,4H38V53H58v1Zm0,4H38V57H58v1ZM46,62H38V61h8v1ZM0,33H77v2H0V33Zm77,0h0Zm0,0L38.5,16.96l1.114-.464L77,32.068V33h0ZM0,33H0V32.068L37.386,16.5,38.5,16.96ZM0,0.924V0L38.5,16.032l-1.114.464Z"/>
+</svg>

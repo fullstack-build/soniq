@@ -1,0 +1,26 @@
+#customize-theme-controls .code_editor {width: 100%;}
+.wp-full-overlay-sidebar {width: 316px;}
+.expanded .wp-full-overlay-footer {width: 315px;}
+.wp-full-overlay.expanded {margin-left: 316px;}
+@media screen and (max-width: 782px) {.wp-full-overlay.expanded {margin-left: 0;}}
+.wp-full-overlay.collapsed .wp-full-overlay-sidebar {margin-left: -316px;}
+.customize-section-title {top: 58px;width: 300px;z-index: 11;}
+.customize-section-description {padding-bottom: 16px;border-bottom: 1px solid #d0d0d0;box-shadow: 0 1px 0px 0px #fff;font-weight: 600;}
+.customize-control .auxin_user_custom_js-submit, .customize-control .auxin_user_custom_js_head-submit {margin-top: 15px;margin-bottom: 10px;}
+#customize-theme-controls #accordion-section-title_tagline {margin-top: 5px;}
+.customize-control-description {margin-bottom: 1em;}
+.customize-control-auxin_textarea textarea {max-width: 100%;width: 500px;margin-bottom: 5px;}
+.customize-control select {padding: 0 !important;}
+.customize-control .placeholder {max-width: 290px;}
+#customize-theme-controls .customize-themes-panel h3.customize-section-title:first-child {top: 46px;max-width: 100%;box-sizing: border-box;}
+#customize-controls .customize-themes-panel .accordion-section-title:nth-child(2) {margin-top: 0;top: 125px;box-sizing: border-box;}
+#customize-controls .customize-themes-panel .theme-browser {padding-top: 105px;}
+.preview-tablet .wp-full-overlay-main {width: 768px;}
+.control-section-auxin_link_section h3 {}
+.control-section-auxin_link_section .button {margin-top: -3px;margin-right: -4px;margin-left: 0;}
+#accordion-section-gopro-section {}
+#accordion-section-gopro-section h3 {background-image: -webkit-linear-gradient(330deg,#a763cd 0%,#6b4ce7 100%) !important;background-image: linear-gradient(120deg,#a763cd 0%,#6b4ce7 100%) !important;color: #fff !important;font-weight: 400;letter-spacing: .03em;}
+#accordion-section-gopro-section .button {padding-left: 25px;background-image: url("../images/welcome/rocket-dark.svg");background-position: 8px center;background-repeat: no-repeat;background-size: 13px auto;}
+#accordion-section-gopro-section .button:hover, #accordion-section-gopro-section .button:focus {border-color: #ccc !important;}
+.control-section-auxin_info_section {padding: 40px 20px 20px 20px;}
+.control-section-auxin_info_section p {margin-bottom: 0;}

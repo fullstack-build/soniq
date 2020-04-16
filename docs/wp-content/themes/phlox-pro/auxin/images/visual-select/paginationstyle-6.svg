@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="171" height="38" viewBox="0 0 171 38">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="paginationstyle-6" class="cls-1" d="M-2,39.994v-42H173v42H-2Zm173-40H0V38H171v-38ZM24,19H15V18h9v1Zm12,0H35V18h1v1Zm1-1v2H36V17h1v1Zm1-1v1H37V16h1v1Zm0,3v1H37V19h1v1Zm1-3H38V16h1v1Zm0,4H38V20h1v1Zm15-5v5H53V17H52V16h2Zm16,1H67V16h3v1Zm1,1H70V17h1v1Zm-3,1V18h2v1H68Zm3,1v1H67V19h1v1h3Zm14.5-9A7.5,7.5,0,1,1,78,18.5,7.5,7.5,0,0,1,85.5,11ZM84,17h3v1H85v1h2v1H84v1h3V20h1V19H87V18h1V17H87V16H84v1Zm16,2H99V18h1v1Zm2,0h-1V18h1v1Zm2,0h-1V18h1v1Zm12-1h-1V17h1v1Zm2-1h-2V16h3v4h-1V19h-2V18h2V17Zm-2,4V20h2v1h-2Zm17-4h-1V16h1v1Zm0,4h-1V20h1v1Zm1-4v1h-1V16h1v1Zm0,3v1h-1V19h1v1Zm1-2v2h-1V17h1v1Zm1,1h-1V18h1v1Zm21,0h-9V18h9v1Z"/>
+</svg>

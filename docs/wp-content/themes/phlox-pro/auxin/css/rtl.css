@@ -1,0 +1,18 @@
+.av3_container {direction: ltr;}
+.av3_option_panel {font-family: tahoma;}
+.av3_container input[type="text"], .av3_container input[type="password"], .av3_container input[type="email"], .av3_container input[type="tel"], .av3_container input[type="url"], .av3_container textarea, .av3_container select {font-family: tahoma;text-align: right;direction: rtl;}
+.av3_option_panel input[type="text"], .av3_option_panel input[type="url"], .av3_option_panel input[type="email"], .av3_option_panel input[type="tel"], .av3_option_panel input[type="password"], .av3_option_panel .tabs-content textarea {font-family: tahoma;text-align: right;direction: rtl;}
+.av3_container       .miniColors, .av3_option_panel .miniColors, #auxin_user_custom_css, #auxin_user_custom_js, #auxin_user_custom_head {text-align: left !important;direction: ltr !important;}
+.av3_container .uploader > input[type="text"] {text-align: left;direction: ltr;}
+.av3_container select {padding-right: 42px;}
+.pb_popup .pb_s_m label {font-size: 15px;}
+.av3_container .section-row > label {font-family: tahoma,sans-serif;}
+ul.elements_wrapper .symbol_block h5 {font-family: tahoma;}
+.g1_4, .g1_3, .g1_2, .g2_3, .g3_4, .g1_1, .g1 {float: right;}
+ul.elements_wrapper .controls > span {width: 70px;font-family: tahoma;}
+.pt_inner div.pt_cells {float: right;}
+.pt_inner .pt_add_col {left: auto;right: 133px;}
+.av3_container .pt_wrapper p {text-align: right;}
+#customize-control-site_header_mobile_menu_position_control .axi-visual-select .axi-select-item, #customize-control-site_header_navigation_sub_location_control .axi-visual-select .axi-select-item, #customize-control-site_header_navigation_sub_skin_control .axi-visual-select .axi-select-item, #customize-control-site_header_top_layout_control .axi-visual-select .axi-select-item:not([title="No header"]), #customize-control-post_index_template_type_control .axi-visual-select .axi-select-item, .axiAdminIcon-sidebar-none:before, .axiAdminIcon-content-full:before, .axiAdminIcon-content-boxed:before, .axiAdminIcon-bg-size-1:before, .axiAdminIcon-bg-size-2:before, .axiAdminIcon-repeat-xy:before, .axiAdminIcon-repeat-x:before, .axiAdminIcon-repeat-y:before {-webkit-transform: scaleX(-1);-ms-transform: scaleX(-1);transform: scaleX(-1);}
+.aux-about .three-col .col {margin-right: 0;margin-left: 16px !important;float: right;}
+.aux-about.aux-feedback .aux-featur {text-align: right;}

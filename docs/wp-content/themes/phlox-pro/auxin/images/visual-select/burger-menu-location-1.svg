@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="88" viewBox="0 0 251 88">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="burger-menu-location-1" class="cls-1" d="M0,58H251V88H0V58ZM-2-2H253V90H-2V-2ZM0,0H251V88H0V0ZM18,18H37v3H18V18Zm0,8H41v3H18V26Zm0,8H32v3H18V34Zm0,8H37v3H18V42ZM236.828,17.756l1.415,1.415-7.071,7.071-1.415-1.415Zm-5.656,0,7.071,7.071-1.415,1.415-7.071-7.071Z"/>
+</svg>

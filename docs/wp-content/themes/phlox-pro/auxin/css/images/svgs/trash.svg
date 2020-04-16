@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="11" height="12" viewBox="0 0 11 12">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="Trash" class="cls-1" d="M832,2739v9h-9v-9h-1v-1h3v-2h5v2h3v1h-1Zm-5,7h1v-6h-1v6Zm-2-6v6h1v-6h-1Zm4-3h-3v1h3v-1Zm1,3h-1v6h1v-6Z" transform="translate(-822 -2736)"/>
+</svg>

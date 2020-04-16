@@ -1,0 +1,24 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 16.888 16.888">
+  <defs>
+    <style>.a{fill:#fff;}.b{clip-path:url(#a);}</style>
+    <clipPath id="a">
+      <path class="a" d="M8.444,16.887a8.443,8.443,0,1,1,5.971-2.473A8.453,8.453,0,0,1,8.444,16.887Zm0-13.952A5.507,5.507,0,1,0,13.95,8.444,5.513,5.513,0,0,0,8.444,2.936Z"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(-852.999 -760)">
+    <g class="b" transform="translate(852.999 760.001)">
+      <rect class="a" width="8.81" height="16.887" transform="translate(8.077 -0.001)"/>
+    </g>
+    <circle class="a" cx="1.468" cy="1.468" r="1.468" transform="translate(859.608 760)"/>
+    <circle class="a" cx="1.468" cy="1.468" r="1.468" transform="translate(859.608 773.95)"/>
+  </g>
+  <animateTransform attributeType="xml"
+        attributeName="transform"
+        type="rotate"
+        from="0 0 0"
+        to="360 0 0"
+        dur="0.5s"
+        repeatCount="indefinite"/>
+</svg>

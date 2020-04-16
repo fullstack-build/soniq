@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="88" viewBox="0 0 251 88">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="off-canvas-aligment-left" class="cls-1" d="M251,0H65V88H251V0Zm2-2H-2V90H253V-2Zm-2,2H0V88H251V0ZM14,44H33v3H14V44Zm0,8H37v3H14V52Zm0,8H28v3H14V60Zm0,8H33v3H14V68Zm1.505-49.992-1.5,1.5,7.487,7.487,1.5-1.5Zm5.99,0-7.487,7.487,1.5,1.5L22.992,19.5Z"/>
+</svg>

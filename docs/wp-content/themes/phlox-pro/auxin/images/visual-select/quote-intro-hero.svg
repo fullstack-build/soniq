@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="56" viewBox="0 0 120 56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="quote-intro-hero" class="cls-1" d="M23,12H97v8H23V12ZM13,29h94v2H13V29Zm0,7h94v2H13V36Zm10,7H97v2H23V43Zm-25-45H122v60H-2v-60ZM0,0H120V56H0V0Z"/>
+</svg>

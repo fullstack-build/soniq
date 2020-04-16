@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 12">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #ffffff;
+      }
+    </style>
+  </defs>
+  <path id="install_icon" data-name="install icon" class="cls-1" d="M1-7v4H15V-7ZM4-4H2V-5H4Zm1-8H7v-3H9v3h2L8-9Z" transform="translate(-1 15)"/>
+</svg>

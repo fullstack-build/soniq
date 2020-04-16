@@ -1,0 +1,5 @@
+.aux-fhd .elementor-section-boxed>.elementor-container, .aux-fhd .elementor-add-section {width: auto;max-width: 1900px;}
+.aux-s-fhd .elementor-section-boxed>.elementor-container, .aux-s-fhd .elementor-add-section {width: auto;max-width: 1600px;}
+.aux-xhd .elementor-section-boxed>.elementor-container, .aux-xhd .elementor-add-section {width: auto;max-width: 1400px;}
+.aux-hd .elementor-section-boxed>.elementor-container, .aux-hd .elementor-add-section {width: auto;max-width: 1200px;}
+.aux-nd .elementor-section-boxed>.elementor-container, .aux-nd .elementor-add-section {width: auto;max-width: 1000px;}

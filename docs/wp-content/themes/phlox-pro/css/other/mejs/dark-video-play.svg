@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="131" height="196" viewBox="0 0 131 196">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #000000;
+      }
+
+      .cls-2 {
+        fill: #e2e2e2;
+      }
+
+      .cls-2, .cls-3 {
+        fill-rule: evenodd;
+      }
+
+      .cls-3 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <rect id="button" class="cls-1" x="30" y="30" width="71" height="48"/>
+  <rect id="button-2" data-name="button" class="cls-1" x="30" y="118" width="71" height="48"/>
+  <path id="play" class="cls-2" d="M69,54h0v1H68v1H67v1H66v1H65v1H64v1H63v1H62V60h0V47h2v1h1v1h1v1h1v1h1v1h1v1h1v1H69Zm-7-8h1v1H62V46Z"/>
+  <path id="play-2" data-name="play" class="cls-3" d="M69,142h0v1H68v1H67v1H66v1H65v1H64v1H63v1H62v-1h0V135h2v1h1v1h1v1h1v1h1v1h1v1h1v1H69Zm-7-8h1v1H62v-1Z"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="251" height="98" viewBox="0 0 251 98">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="titlebar-style-4" class="cls-1" d="M0,12H251v2H0V12ZM0,66H251v2H0V66ZM-2-2H253V100H-2V-2ZM0,0H251V98H0V0ZM167,0h13V2H167V0Zm17,0h13V2H184V0Zm17,0h13V2H201V0Zm17,0h13V2H218V0ZM20,0H37V3H20V0Zm0,40H125v5H20V40Zm0-15H45v2H20V25Zm0,27H84v3H20V52Zm0,29H231v2H20V81Zm0,17V83h2V98H20Zm209,0V83h2V98h-2ZM22,83L77,99.07V100L22,83.927V83Zm207,0L175,99.07V100l54-16.071V83Z"/>
+</svg>

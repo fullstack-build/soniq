@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="38" viewBox="0 0 120 38">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cdcdcd;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="divider-dashed" class="cls-1" d="M-2-2H122V40H-2V-2ZM0,0H120V38H0V0ZM13,19h94v1H13V19Zm9,0v1H19V19h3Zm10,0v1H29V19h3Zm10,0v1H39V19h3Zm10,0v1H49V19h3Zm10,0v1H59V19h3Zm10,0v1H69V19h3Zm10,0v1H79V19h3Zm10,0v1H89V19h3Zm10,0v1H99V19h3Z"/>
+</svg>

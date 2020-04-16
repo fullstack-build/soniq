@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="9" height="5" viewBox="0 0 9 5">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #4c4c4c;
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path id="thin_arrow_small_copy_6" data-name="thin arrow small copy 6" class="cls-1" d="M821,3713h1v1h-1v-1Zm0,0h1v1h-1v-1Zm1-1h1v1h-1v-1Zm1-1h1v1h-1v-1Zm1-1h1v1h-1v-1Zm1-1h1v1h-1v-1Zm1,1h1v1h-1v-1Zm1,1h1v1h-1v-1Zm1,1h1v1h-1v-1Zm1,1h1v1h-1v-1Z" transform="translate(-821 -3709)"/>
+</svg>
