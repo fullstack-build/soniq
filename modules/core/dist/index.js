@@ -18,7 +18,6 @@ exports.ContainerInstance = typedi_1.ContainerInstance;
 exports.Inject = typedi_1.Inject;
 exports.InjectMany = typedi_1.InjectMany;
 const Logger_1 = require("./Logger");
-exports.Logger = Logger_1.Logger;
 const BootLoader_1 = require("./BootLoader");
 const ConfigManager_1 = require("./ConfigManager");
 process.on("unhandledRejection", (reason, p) => {
@@ -31,7 +30,7 @@ let Core = class Core {
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
         typedi_1.Container.set("@soniq/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
-        this.logger = new Logger_1.Logger(this.ENVIRONMENT.nodeId, this.className);
+        this.logger = new Logger_1.Logger(this.ENVIRONMENT.nodeId, { name: this.className });
     }
     // draw CLI art
     drawCliArt() {
@@ -50,6 +49,9 @@ let Core = class Core {
         await this.bootLoader.boot();
         this.drawCliArt();
         return;
+    }
+    getLogger(name, minLevel = 0, exposeStack = false) {
+        return new Logger_1.Logger(this.ENVIRONMENT.nodeId, { name, minLevel, exposeStack });
     }
 };
 Core = __decorate([

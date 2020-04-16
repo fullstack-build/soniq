@@ -32,7 +32,7 @@ export class Core {
       "@soniq/ENVIRONMENT",
       JSON.parse(JSON.stringify(this.ENVIRONMENT))
     );
-    this.logger = new Logger(this.ENVIRONMENT.nodeId, this.className);
+    this.logger = new Logger(this.ENVIRONMENT.nodeId, { name: this.className });
   }
 
   // draw CLI art
@@ -58,6 +58,6 @@ export class Core {
   }
 
   public getLogger(name?: string, minLevel: number = 0, exposeStack = false) {
-    return new Logger(this.ENVIRONMENT.nodeId, name, minLevel, exposeStack);
+    return new Logger(this.ENVIRONMENT.nodeId, { name, minLevel, exposeStack });
   }
 }

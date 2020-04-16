@@ -4,87 +4,63 @@ import { highlight } from "cli-highlight";
 import { Helper } from "../Helper";
 import { basename as fileBasename, normalize as fileNormalize } from "path";
 import { format, types } from "util";
-
-type TLogLevel = 0 | 1 | 2 | 3 | 4 | 5;
-
-interface IStackFrame {
-  filePath: string;
-  fullFilePath: string;
-  fileName: string;
-  lineNumber: number | null;
-  columnNumber: number | null;
-  isConstructor: boolean | null;
-  functionName: string | null;
-  typeName: string | null;
-  methodName: string | null;
-}
-
-interface ILogObject extends IStackFrame {
-  loggerName: string;
-  date: Date;
-  logLevel: number;
-  logLevelName: string;
-  argumentsArray: (string | object)[];
-  stack?: IStackFrame[];
-}
-
-interface IErrorObject {
-  isError: true;
-  name: string;
-  message: string;
-  stack: IStackFrame[];
-}
-
-export interface ITransportLogger<T> {
-  silly?: T;
-  trace?: T;
-  debug?: T;
-  info?: T;
-  warn?: T;
-  error?: T;
-}
-
-interface ITransportProvider {
-  minLevel: TLogLevel;
-  logger: ITransportLogger<(...args: any[]) => void>;
-}
+import {
+  IErrorObject,
+  ILogLevel,
+  ILogObject,
+  ISettingsParam,
+  IStackFrame,
+  ITransportLogger,
+  ITransportProvider,
+  TLogLevel,
+} from "./interfaces";
+export { ITransportLogger };
 
 export class Logger {
-  private readonly logLevels = {
+  private readonly logLevels: ILogLevel = {
     0: "silly",
     1: "trace",
     2: "debug",
     3: "info",
     4: "warn",
     5: "error",
+    6: "fatal",
   };
   private ignoreStackLevels = 3;
   private attachedTransports: ITransportProvider[] = [];
 
-  constructor(
-    private readonly nodeId: string,
-    private readonly name?: string,
-    private readonly minLevel: number = 0,
-    private readonly exposeStack = false,
-    private readonly doOverwriteConsole = false,
-    private readonly logAsJson = false,
-    private readonly logLevelsColors = {
+  // Settings
+  private readonly name?: string;
+  private readonly minLevel: number;
+  private readonly exposeStack: boolean;
+  private readonly doOverwriteConsole: boolean;
+  private readonly logAsJson: boolean;
+  private readonly logLevelsColors: ILogLevel;
+
+  constructor(private readonly nodeId: string, settings: ISettingsParam) {
+    this.name = settings.name;
+    this.minLevel = settings.minLevel ?? 0;
+    this.exposeStack = settings.exposeStack ?? false;
+    this.doOverwriteConsole = settings.doOverwriteConsole ?? false;
+    this.logAsJson = settings.logAsJson ?? false;
+    this.logLevelsColors = settings.logLevelsColors ?? {
       0: "#B0B0B0",
       1: "#FFFFFF",
       2: "#63C462",
       3: "#2020C0",
       4: "#CE8743",
       5: "#CD444C",
-    }
-  ) {
+      6: "#FF0000",
+    };
+
     this.errorToJsonHelper();
     // TODO: catch all errors & exceptions
     // x Log as json
     // x remove ms
-    // transport (inkl. min level)
+    // x transport (inkl. min level)
     // override console.log
-    // named logger?
-    // return named logger from core
+    // x named logger?
+    // x return named logger from core
     // x print out logger name, if set
     if (this.doOverwriteConsole) {
       this.overwriteConsole();
@@ -123,6 +99,10 @@ export class Logger {
 
   public error(...args: any[]) {
     return this.handleLog.apply(this, [5, args]);
+  }
+
+  public fatal(...args: any[]) {
+    return this.handleLog.apply(this, [6, args]);
   }
 
   private handleLog(
@@ -353,10 +333,20 @@ export class Logger {
   private overwriteConsole() {
     const $this = this;
     ["log", "debug", "info", "warn", "trace", "error"].forEach(function (name) {
-      /*console[name] = (...args: any[]) => {
-        // force console.log!!
-        return $this.handleLog.apply($this, [5, args]);
-      };*/
+      console[name] = (...args: any[]) => {
+        const loglevelMapping = {
+          log: 0,
+          trace: 1,
+          debug: 2,
+          info: 3,
+          warn: 4,
+          error: 5,
+        };
+        return $this.handleLog.apply($this, [
+          loglevelMapping[name.toLowerCase()],
+          args,
+        ]);
+      };
     });
   }
 }

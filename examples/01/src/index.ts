@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-import { Container, Core, Logger } from "soniq";
+import { Container, Core } from "soniq";
 
 const $core: Core = Container.get("@soniq");
 
@@ -19,7 +19,7 @@ class ValidationError extends Error {
 }
 
 function soniqLogsExample() {
-  const logger = new Logger($core.ENVIRONMENT?.nodeId, "testLogger");
+  const logger = $core.getLogger("testLogger");
   logger.silly("Log in a function");
   logger.silly("silly");
   logger.trace("trace");
@@ -27,14 +27,30 @@ function soniqLogsExample() {
   logger.info("info");
   logger.warn("warn");
   logger.error("error");
+  logger.fatal("FATAL!!!");
 
   logger.info(new ValidationError("Much error. Very danger."));
+
+  logger.warn("Some fancy JS object", [
+    { id: 1, email: "abc@def.gh", active: true },
+    { id: 2, email: "abc@def.gh", active: false },
+    {
+      id: 3,
+      email: "abc@def.gh",
+      active: true,
+    },
+  ]);
+  logger.error("***", new Error("bar"), "###");
 
   test();
 
   function test() {
     logger.error("foo");
-    logger.warn("Some fancy JS object", [
+
+    console.log("CONSOLE LOG:");
+    console.trace("console tracing");
+    console.error("foo");
+    console.warn("Some fancy JS object", [
       { id: 1, email: "abc@def.gh", active: true },
       { id: 2, email: "abc@def.gh", active: false },
       {
@@ -43,7 +59,7 @@ function soniqLogsExample() {
         active: true,
       },
     ]);
-    logger.debug("---------");
-    logger.error("***", new Error("bar"), "###");
+    console.debug("---------");
+    console.error("***", new Error("bar"), "###");
   }
 }
