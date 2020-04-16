@@ -4,7 +4,6 @@ import * as _ from "lodash";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
-import { Helper } from "../Helper";
 export { IEnvironment };
 
 export class ConfigManager {
@@ -41,11 +40,9 @@ export class ConfigManager {
       defaultConfig = require(defaultConfigPath);
     } catch (err) {
       defaultConfig = {};
-      const cleanUpDefaultConfigPath = Helper.cleanUpFilePath(
-        defaultConfigPath
-      );
+
       console.warn(
-        `config.default.loading.error.not.found: Continuing without app configuration. Was expecting file at ${cleanUpDefaultConfigPath} ${defaultConfigPath}`
+        `config.default.loading.error.not.found: Continuing without app configuration. Was expecting file at ${defaultConfigPath}`
       );
     }
 

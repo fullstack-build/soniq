@@ -1,8 +1,10 @@
-import { wrapCallSite } from "source-map-support";
 import * as chalk from "chalk";
 import { highlight } from "cli-highlight";
-import { Helper } from "../Helper";
-import { basename as fileBasename, normalize as fileNormalize } from "path";
+import {
+  basename as fileBasename,
+  normalize as fileNormalize,
+  sep as pathSeparator,
+} from "path";
 import { format, types } from "util";
 import {
   IErrorObject,
@@ -14,6 +16,7 @@ import {
   ITransportProvider,
   TLogLevel,
 } from "./interfaces";
+import { LoggerHelper } from "./LoggerHelper";
 export { ITransportLogger };
 
 export class Logger {
@@ -54,9 +57,9 @@ export class Logger {
       6: "#FF0000",
     };
 
-    this.errorToJsonHelper();
+    LoggerHelper.errorToJsonHelper();
     if (this.doOverwriteConsole) {
-      this.overwriteConsole();
+      LoggerHelper.overwriteConsole(this, this.handleLog);
     }
   }
 
@@ -131,10 +134,10 @@ export class Logger {
     logArguments: any[],
     doExposeStack: boolean = true
   ): ILogObject {
-    const callSites: NodeJS.CallSite[] = this.getCallSites();
+    const callSites: NodeJS.CallSite[] = LoggerHelper.getCallSites();
     const relevantCallSites = callSites.splice(this.ignoreStackLevels);
-    const stackFrame = this.wrapCallSiteOrIgnore(relevantCallSites[0]);
-    const stackFrameObject = this.toStackFrameObject(stackFrame);
+    const stackFrame = LoggerHelper.wrapCallSiteOrIgnore(relevantCallSites[0]);
+    const stackFrameObject = Logger.toStackFrameObject(stackFrame);
 
     const logObject: ILogObject = {
       loggerName: this.name ?? "",
@@ -157,7 +160,7 @@ export class Logger {
       if (typeof arg === "object" && !types.isNativeError(arg)) {
         logObject.argumentsArray.push(JSON.parse(JSON.stringify(arg)));
       } else if (typeof arg === "object" && types.isNativeError(arg)) {
-        const errorStack = this.getCallSites(arg);
+        const errorStack = LoggerHelper.getCallSites(arg);
         const errorObject: IErrorObject = JSON.parse(JSON.stringify(arg));
         errorObject.name = errorObject.name ?? "Error";
         errorObject.isError = true;
@@ -179,7 +182,9 @@ export class Logger {
     let prettyStack: IStackFrame[] = Object.values(jsStack).reduce(
       (iPrettyStack: IStackFrame[], stackFrame: NodeJS.CallSite) => {
         iPrettyStack.push(
-          this.toStackFrameObject(this.wrapCallSiteOrIgnore(stackFrame))
+          Logger.toStackFrameObject(
+            LoggerHelper.wrapCallSiteOrIgnore(stackFrame)
+          )
         );
         return iPrettyStack;
       },
@@ -188,11 +193,11 @@ export class Logger {
     return prettyStack;
   }
 
-  private toStackFrameObject(stackFrame: NodeJS.CallSite): IStackFrame {
+  private static toStackFrameObject(stackFrame: NodeJS.CallSite): IStackFrame {
     const filePath = stackFrame.getFileName();
 
     return {
-      filePath: Helper.cleanUpFilePath(filePath) ?? "",
+      filePath: LoggerHelper.cleanUpFilePath(filePath) ?? "",
       fullFilePath: filePath ?? "",
       fileName: fileBasename(stackFrame.getFileName() ?? ""),
       lineNumber: stackFrame.getLineNumber(),
@@ -291,61 +296,5 @@ export class Logger {
         ? process.stdout
         : process.stderr;
     std.write(highlight(JSON.stringify(logObject)) + "\n");
-  }
-
-  private wrapCallSiteOrIgnore(
-    callSiteFrame: NodeJS.CallSite
-  ): NodeJS.CallSite {
-    try {
-      return wrapCallSite(callSiteFrame);
-    } catch {
-      return callSiteFrame;
-    }
-  }
-
-  private getCallSites(error?: Error): NodeJS.CallSite[] {
-    const _prepareStackTrace = Error.prepareStackTrace;
-    Error.prepareStackTrace = (_, stack) => stack;
-    const stack =
-      error == null ? (new Error().stack as any).slice(1) : error.stack;
-    Error.prepareStackTrace = _prepareStackTrace;
-    return stack;
-  }
-
-  private errorToJsonHelper(): void {
-    if (!("toJSON" in Error.prototype))
-      Object.defineProperty(Error.prototype, "toJSON", {
-        value: function () {
-          return Object.getOwnPropertyNames(this).reduce(
-            (alt: any, key: string) => {
-              alt[key] = this[key];
-              return alt;
-            },
-            {}
-          );
-        },
-        configurable: true,
-        writable: true,
-      });
-  }
-
-  private overwriteConsole() {
-    const $this = this;
-    ["log", "debug", "info", "warn", "trace", "error"].forEach(function (name) {
-      console[name] = (...args: any[]) => {
-        const loglevelMapping = {
-          log: 0,
-          trace: 1,
-          debug: 2,
-          info: 3,
-          warn: 4,
-          error: 5,
-        };
-        return $this.handleLog.apply($this, [
-          loglevelMapping[name.toLowerCase()],
-          args,
-        ]);
-      };
-    });
   }
 }
