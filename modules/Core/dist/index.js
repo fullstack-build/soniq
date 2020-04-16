@@ -30,6 +30,7 @@ let Core = class Core {
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
         typedi_1.Container.set("@soniq/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
+        // TODO: catch all errors & exceptions
         this.logger = new Logger_1.Logger(this.ENVIRONMENT.nodeId, { name: this.className });
     }
     // draw CLI art
