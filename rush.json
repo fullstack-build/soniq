@@ -409,15 +409,15 @@
     //   "reviewCategory": "tools"
     // }
     {
-      "packageName": "soniq",
-      "projectFolder": "modules/core",
+      "packageName": "tslog",
+      "projectFolder": "modules/Logger",
       "shouldPublish": true
     },
-    /*{
-      "packageName": "@soniq/logger",
-      "projectFolder": "modules/logger",
+    {
+      "packageName": "soniq",
+      "projectFolder": "modules/Core",
       "shouldPublish": true
-    },*/
+    },
     // examples
     {
       "packageName": "@soniq/examples_01",

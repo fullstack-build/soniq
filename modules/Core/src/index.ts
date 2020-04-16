@@ -8,7 +8,7 @@ import {
   InjectMany,
 } from "typedi";
 export { Service, Container, ContainerInstance, Inject, InjectMany };
-import { Logger } from "./Logger";
+import { Logger } from "tslog";
 import { BootLoader } from "./BootLoader";
 import { ConfigManager, IEnvironment } from "./ConfigManager";
 export { IEnvironment };

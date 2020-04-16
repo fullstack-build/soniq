@@ -1,6 +1,7 @@
 dependencies:
   '@rush-temp/examples_01': 'file:projects/examples_01.tgz'
   '@rush-temp/soniq': 'file:projects/soniq.tgz'
+  '@rush-temp/tslog': 'file:projects/tslog.tgz'
   '@rushstack/eslint-config': 0.5.7
   '@types/lodash': 4.14.149
   '@types/node': 13.11.1
@@ -2907,16 +2908,6 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-M5ZwvB6FU3jtc70i5lFth86/6Qj5XR5nMMBwVxZF4cZhpO7XcbWw6tbNiJo22Zx0KfjEj9py5DANhwLOkPPufw==
-  /ts-node-dev/1.0.0-pre.44/typescript@3.8.3:
-    dependencies:
-      ts-node: /ts-node/8.8.2/typescript@3.8.3
-    dev: false
-    engines:
-      node: '>=0.8.0'
-    hasBin: true
-    id: registry.npmjs.org/ts-node-dev/1.0.0-pre.44
-    resolution:
-      integrity: sha512-M5ZwvB6FU3jtc70i5lFth86/6Qj5XR5nMMBwVxZF4cZhpO7XcbWw6tbNiJo22Zx0KfjEj9py5DANhwLOkPPufw==
   /ts-node/8.8.2:
     dependencies:
       arg: 4.1.3
@@ -3170,7 +3161,7 @@ packages:
       pretty-format: 25.3.0
       source-map-support: 0.5.16
       ts-node: /ts-node/8.8.2/typescript@3.8.3
-      ts-node-dev: /ts-node-dev/1.0.0-pre.44/typescript@3.8.3
+      ts-node-dev: 1.0.0-pre.44
       typescript: 3.8.3
     dev: false
     name: '@rush-temp/examples_01'
@@ -3204,12 +3195,36 @@ packages:
       integrity: sha512-k9A9lZ1QAb2JR5gTo/V8UD3kgPYEPzdMVOOlEggPXhiFJfZNu/NClyuU3LQImBpWobmNjzU395FakXEAlwncjA==
       tarball: 'file:projects/soniq.tgz'
     version: 0.0.0
+  'file:projects/tslog.tgz':
+    dependencies:
+      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
+      '@types/lodash': 4.14.149
+      '@types/node': 13.11.1
+      '@types/source-map-support': 0.5.1
+      chalk: 4.0.0
+      cli-highlight: 2.1.4
+      eslint: 6.8.0
+      eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
+      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0+prettier@2.0.4
+      husky: 4.2.5
+      lint-staged: 10.1.3
+      prettier: 2.0.4
+      source-map-support: 0.5.16
+      ts-node: /ts-node/8.8.2/typescript@3.8.3
+      typescript: 3.8.3
+    dev: false
+    name: '@rush-temp/tslog'
+    resolution:
+      integrity: sha512-9JdcxR+KrO/D/M221z5eATr85pmNN9OpLmVfwra4qCSmORIhj9Jwr/X7D4k7nhiP/OlgvBH+eYyAX6T5P8UIEA==
+      tarball: 'file:projects/tslog.tgz'
+    version: 0.0.0
 registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
 specifiers:
   '@rush-temp/examples_01': 'file:./projects/examples_01.tgz'
   '@rush-temp/soniq': 'file:./projects/soniq.tgz'
+  '@rush-temp/tslog': 'file:./projects/tslog.tgz'
   '@rushstack/eslint-config': ^0.5.7
   '@types/lodash': ~4.14.149
   '@types/node': ^13.11.0
