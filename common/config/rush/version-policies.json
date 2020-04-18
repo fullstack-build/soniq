@@ -15,7 +15,7 @@
   //    *
   //    * The "lockStepVersion" mode specifies that the projects will use "lock-step versioning".  This
   //    * strategy is appropriate for a set of packages that act as selectable components of a
-  //    * unified product.  The entire set of packages are always published together, and always share
+  //    * unified product. The entire set of packages are always published together, and always share
   //    * the same NPM version number.  When the packages depend on other packages in the set, the
   //    * SemVer range is usually restricted to a single version.
   //    */
@@ -87,4 +87,20 @@
   //    */
   //   "exemptFromRushChange": false
   // }
+
+  {
+    "policyName": "soniq",
+    "definitionName": "lockStepVersion",
+    "version": "1.0.0-dev.1",
+    "nextBump": "prerelease",
+    "mainProject": "soniq",
+    "lockedMajor": 1
+  },
+  {
+    "policyName": "tslog",
+    "definitionName": "individualVersion",
+    "version": "1.0.0-dev.1",
+    "nextBump": "prerelease",
+    "lockedMajor": 1
+  }
 ]

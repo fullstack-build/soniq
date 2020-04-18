@@ -411,18 +411,21 @@
     {
       "packageName": "tslog",
       "projectFolder": "modules/Logger",
-      "shouldPublish": true
+      "shouldPublish": true,
+      versionPolicyName: "tslog"
     },
     {
       "packageName": "soniq",
       "projectFolder": "modules/Core",
-      "shouldPublish": true
+      "shouldPublish": true,
+      versionPolicyName: "soniq"
     },
     // examples
     {
       "packageName": "@soniq/examples_01",
       "projectFolder": "examples/01",
-      "shouldPublish": false
+      "shouldPublish": false,
+      "skipRushCheck": false
     }
   ]
 }
