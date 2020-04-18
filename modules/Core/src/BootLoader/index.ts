@@ -3,7 +3,7 @@ type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 export enum EBootState {
   Initial = "initial",
   Booting = "booting",
-  Finished = "finished",
+  Finished = "finished"
 }
 
 interface IFunctionObject {

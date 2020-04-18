@@ -49,7 +49,7 @@ class ConfigMergeHelper {
     callback: (key: string, val: any, nestedPath: string) => void,
     nestedPath = ""
   ) {
-    Object.entries(obj).map((entry) => {
+    Object.entries(obj).map(entry => {
       const newPath = `${nestedPath}${entry[0]}.`;
       typeof entry[1] === "object" && entry[1] != null
         ? this.deepForEach(entry[1], callback, newPath)
