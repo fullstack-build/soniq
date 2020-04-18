@@ -93,14 +93,11 @@
     "definitionName": "lockStepVersion",
     "version": "1.0.0-dev.1",
     "nextBump": "prerelease",
-    "mainProject": "soniq",
-    "lockedMajor": 1
+    "mainProject": "soniq"
   },
   {
     "policyName": "tslog",
     "definitionName": "individualVersion",
-    "version": "1.0.0-dev.1",
-    "nextBump": "prerelease",
     "lockedMajor": 1
   }
 ]

@@ -36,7 +36,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "soniq": "~0.2.0",
+    "soniq": "~1.0.0-dev.1",
     "debug": "^4.1.1",
     "debug-trace": "^2.2.3",
     "dotenv": "~8.2.0",
