@@ -412,13 +412,13 @@
       "packageName": "tslog",
       "projectFolder": "modules/Logger",
       "shouldPublish": true,
-      versionPolicyName: "tslog"
+      "versionPolicyName": "tslog"
     },
     {
       "packageName": "soniq",
       "projectFolder": "modules/Core",
       "shouldPublish": true,
-      versionPolicyName: "soniq"
+      "versionPolicyName": "soniq"
     },
     // examples
     {

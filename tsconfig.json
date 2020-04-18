@@ -1,7 +1,12 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "lib": ["es2019", "esnext.bigint", "es2020.string", "es2020.symbol.wellknown"],
+    "lib": [
+      "es2019",
+      "esnext.bigint",
+      "es2020.string",
+      "es2020.symbol.wellknown"
+    ],
     "target": "es2019",
     "module": "commonjs",
     "types": ["node"],
@@ -15,12 +20,9 @@
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test"
-  ],
   "include": [
-    "src", "index.ts"
-  ]
+    "modules/**/src/*.ts",
+    "modules/**/src/**/*.ts"
+  ],
+  "exclude": ["node_modules","**/node_modules", "**/dist", "**/test", "*.test.ts"]
 }
