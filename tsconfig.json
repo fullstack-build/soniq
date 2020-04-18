@@ -19,5 +19,8 @@
     "node_modules",
     "dist",
     "test"
+  ],
+  "include": [
+    "src", "index.ts"
   ]
 }
