@@ -4,6 +4,9 @@ export enum EBootState {
   Initial = "initial",
   Booting = "booting",
   Finished = "finished"
+
+
+
 }
 
 interface IFunctionObject {
