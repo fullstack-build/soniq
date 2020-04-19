@@ -7,33 +7,35 @@ import { IEnvironment } from "./IEnvironment";
 export { IEnvironment };
 
 export class ConfigManager {
-  private applicationConfig: any = {};
-  private config: any = {};
+  private _applicationConfig: object = {};
+  private _config: { Config: { namespace: string } } = {
+    Config: { namespace: "soniq" },
+  };
 
-  private readonly NODE_ENV: string = process.env?.NODE_ENV ?? "production";
+  private readonly _NODE_ENV: string = process.env?.NODE_ENV ?? "production";
   public readonly ENVIRONMENT: IEnvironment;
 
-  constructor() {
-    this.applicationConfig = this.loadApplicationConfig();
+  public constructor() {
+    this._applicationConfig = this._loadApplicationConfig();
     this.registerConfig(this.constructor.name, `${__dirname}/../config`);
 
-    const namespace = this.config?.Config?.namespace ?? "one";
+    const namespace: string = this._config.Config.namespace;
     this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(
-      this.NODE_ENV,
+      this._NODE_ENV,
       namespace
     );
   }
 
-  private loadApplicationConfig(): object {
-    const applicationConfigFolderPath = `${path.dirname(
+  private _loadApplicationConfig(): object {
+    const applicationConfigFolderPath: string = `${path.dirname(
       require.main?.filename ?? ""
     )}/config`;
-    return this.getConfigFromConfigFiles(applicationConfigFolderPath);
+    return this._getConfigFromConfigFiles(applicationConfigFolderPath);
   }
 
-  private getConfigFromConfigFiles(configDirectory: string): object {
-    const defaultConfigPath = `${configDirectory}/default.js`;
-    const environmentConfigPath = `${configDirectory}/${this.NODE_ENV}.js`;
+  private _getConfigFromConfigFiles(configDirectory: string): object {
+    const defaultConfigPath: string = `${configDirectory}/default.js`;
+    const environmentConfigPath: string = `${configDirectory}/${this._NODE_ENV}.js`;
 
     let defaultConfig: object;
     try {
@@ -56,15 +58,16 @@ export class ConfigManager {
     return _.defaultsDeep(environmentConfig, defaultConfig);
   }
 
-  private applyConfigModule(name: string, baseConfigModule: object): void {
-    if (name in this.config) return;
+  private _applyConfigModule(name: string, baseConfigModule: object): void {
+    if (name in this._config) return;
 
-    const applicationConfigOfModule = this.applicationConfig[name] || {};
-    const processEnvironmentConfigOfModule = ConfigMergeHelper.getProcessEnvironmentConfig(
+    const applicationConfigOfModule: object =
+      this._applicationConfig[name] || {};
+    const processEnvironmentConfigOfModule: object = ConfigMergeHelper.getProcessEnvironmentConfig(
       name
     );
 
-    const configModule = _.defaultsDeep(
+    const configModule: object = _.defaultsDeep(
       processEnvironmentConfigOfModule,
       applicationConfigOfModule,
       baseConfigModule
@@ -72,29 +75,30 @@ export class ConfigManager {
 
     ConfigMergeHelper.checkForMissingConfigProperties(name, configModule);
 
-    this.config[name] = configModule;
+    this._config[name] = configModule;
   }
 
-  public registerConfig(name: string, configDirectory: string): any {
-    const baseConfigModule = this.getConfigFromConfigFiles(configDirectory);
-    this.applyConfigModule(name, baseConfigModule);
+  public registerConfig(name: string, configDirectory: string): object {
+    const baseConfigModule: object = this._getConfigFromConfigFiles(
+      configDirectory
+    );
+    this._applyConfigModule(name, baseConfigModule);
     return this.getConfig(name);
   }
 
-  public registerApplicationConfigModule(name: string): any {
-    const baseConfigModule = {};
-    this.applyConfigModule(name, baseConfigModule);
+  public registerApplicationConfigModule(name: string): object {
+    this._applyConfigModule(name, {});
     return this.getConfig(name);
   }
 
-  public getConfig(name: string): any {
-    if (!_.has(this.config, name)) {
+  public getConfig(name: string): object {
+    if (!_.has(this._config, name)) {
       throw new Error(`config.module.not.found module name: ${name}`);
     }
-    return _.cloneDeep(this.config[name]);
+    return _.cloneDeep(this._config[name]);
   }
 
-  public dangerouslyGetWholeConfig(): any {
-    return _.cloneDeep(this.config);
+  public dangerouslyGetWholeConfig(): object {
+    return _.cloneDeep(this._config);
   }
 }

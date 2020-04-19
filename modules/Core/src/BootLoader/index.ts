@@ -1,12 +1,12 @@
+import { Logger } from "../index";
+
 type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
 export enum EBootState {
   Initial = "initial",
   Booting = "booting",
-  Finished = "finished"
-
-
-
+  Finished = "finished",
+  Failed = "failed",
 }
 
 interface IFunctionObject {
@@ -18,64 +18,70 @@ type IBootFunctionObject = IFunctionObject;
 type IAfterBootFunctionObject = IFunctionObject;
 
 export class BootLoader {
-  private state: EBootState = EBootState.Initial;
+  private readonly _logger: Logger;
+  private _state: EBootState = EBootState.Initial;
 
-  private bootFunctionObjects: IBootFunctionObject[] = [];
-  private afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
+  private _bootFunctionObjects: IBootFunctionObject[] = [];
+  private _afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
+  private _failedBootPromiseRejection: Function;
 
-  //private readonly logger: ILogger;
-
-  constructor() {
-    //this.logger = loggerFactory.create(this.constructor.name);
+  public constructor(logger: Logger) {
+    this._logger = logger;
   }
 
   public getBootState(): EBootState {
-    return this.state;
+    return this._state;
   }
 
   public isBooting(): boolean {
-    return this.state === EBootState.Booting;
+    return this._state === EBootState.Booting;
   }
 
   public hasBooted(): boolean {
-    return this.state === EBootState.Finished;
+    return this._state === EBootState.Finished;
   }
 
   public addBootFunction(name: string, fn: TBootFuntion): void {
-    //this.logger.trace("addBootFunction", name);
-    this.bootFunctionObjects.push({ name, fn });
+    this._logger.silly("addBootFunction", name);
+    this._bootFunctionObjects.push({ name, fn: fn });
   }
 
   public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
-    //this.logger.trace("onBootReady", name);
-    if (this.state === EBootState.Finished) {
+    this._logger.silly("onBootReady", name);
+    if (this._state === EBootState.Finished) {
       return fn();
     }
-    this.afterBootFunctionObjects.push({ name, fn });
+    this._afterBootFunctionObjects.push({ name, fn });
   }
 
   public getReadyPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.onBootReady("BootLoader.ready", () => resolve());
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.onBootReady("BootLoader is ready", () => resolve());
+      this._failedBootPromiseRejection = reject;
     });
   }
 
   public async boot(): Promise<void> {
-    this.state = EBootState.Booting;
+    this._state = EBootState.Booting;
+    this._logger.debug("booting functions starting...");
     try {
-      for (const fnObj of this.bootFunctionObjects) {
-        //this.logger.trace("boot.bootFunctions.start", fnObj.name);
+      for (const fnObj of this._bootFunctionObjects) {
+        this._logger.debug("booting function start: ", fnObj.name);
         await fnObj.fn(this);
-        //this.logger.trace("boot.bootFunctions.end", fnObj.name);
+        this._logger.debug("booting function end: ", fnObj.name);
       }
-      this.state = EBootState.Finished;
-      for (const fnObj of this.afterBootFunctionObjects) {
-        //this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
-        fnObj.fn(this);
-        //this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+      this._logger.debug("... finished booting function.");
+      this._state = EBootState.Finished;
+      for (const fnObj of this._afterBootFunctionObjects) {
+        this._logger.debug("after booting hook function start: ", fnObj.name);
+        await fnObj.fn(this);
+        this._logger.debug("after booting hook function end: ", fnObj.name);
       }
     } catch (err) {
-      //this.logger.error(`BootLoader.boot.error.caught: ${err}\n`);
+      this._logger.error("BootLoader caught Error:", err);
+      this._state = EBootState.Failed;
+      this._failedBootPromiseRejection(err);
       throw err;
     }
   }

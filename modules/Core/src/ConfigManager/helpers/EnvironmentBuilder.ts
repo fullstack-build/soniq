@@ -1,22 +1,25 @@
 import { randomBytes } from "crypto";
 import * as path from "path";
-
 import { IEnvironment } from "../IEnvironment";
 
-const nodeIdLength = 6;
-
 export default class EnvironmentBuilder {
+  public static readonly nodeIdLength: number = 6;
+
   public static buildEnvironment(
     NODE_ENV: string,
     namespace: string
   ): IEnvironment {
-    const frameworkVersion = require("../../../package.json").version;
-    const applicationRootPath = path.dirname(require.main?.filename ?? "");
+    const frameworkVersion: string = require("../../../package.json").version;
+    const applicationRootPath: string = path.dirname(
+      require.main?.filename ?? ""
+    );
     const {
       applicationName,
       applicationVersion,
-    } = this.getApplicationNameAndVersion(applicationRootPath);
-    const nodeId = this.generateNodeId(nodeIdLength);
+    } = this._getApplicationNameAndVersion(applicationRootPath);
+    const nodeId: string = this._generateNodeId(
+      EnvironmentBuilder.nodeIdLength
+    );
 
     return {
       frameworkVersion,
@@ -29,7 +32,7 @@ export default class EnvironmentBuilder {
     };
   }
 
-  private static getApplicationNameAndVersion(
+  private static _getApplicationNameAndVersion(
     applicationRootPath: string
   ): {
     applicationName: string | undefined;
@@ -41,7 +44,7 @@ export default class EnvironmentBuilder {
     };
   }
 
-  private static generateNodeId(length: number): string {
+  private static _generateNodeId(length: number): string {
     return randomBytes(20 + length)
       .toString("hex")
       .substr(5, length);

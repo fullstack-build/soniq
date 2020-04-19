@@ -1,5 +1,3 @@
 module.exports = {
-  Logger: {
-    test: true,
-  },
+  Logger: {},
 };

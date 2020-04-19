@@ -1,25 +1,18 @@
 require("dotenv").config();
 
-import { Container, Core } from "soniq";
+import { Container, Core, Logger } from "soniq";
 
 const $core: Core = Container.get("@soniq");
 
-(async () => {
-  await $core.boot();
-
-  soniqLogsExample();
-  //debugTraceExample();
-})();
-
 class ValidationError extends Error {
-  constructor(message: any) {
-    super(message); // (1)
-    this.name = "ValidationError"; // (2)
+  public constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
   }
 }
 
-function soniqLogsExample() {
-  const logger = $core.getLogger("testLogger");
+function soniqLogsExample(): void {
+  const logger: Logger = $core.getLogger("testLogger");
   logger.silly("Log in a function");
   logger.silly("silly");
   logger.trace("trace");
@@ -42,9 +35,7 @@ function soniqLogsExample() {
   ]);
   logger.error("***", new Error("bar"), "###");
 
-  test();
-
-  function test() {
+  (function test() {
     logger.error("foo");
 
     console.log("CONSOLE LOG:");
@@ -61,5 +52,14 @@ function soniqLogsExample() {
     ]);
     console.debug("---------");
     console.error("***", new Error("bar"), "###");
-  }
+  })();
 }
+
+$core
+  .boot()
+  .then(() => {
+    soniqLogsExample();
+  })
+  .catch((err) => {
+    console.error(err);
+  });

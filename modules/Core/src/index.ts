@@ -12,6 +12,7 @@ import { Logger } from "tslog";
 import { BootLoader } from "./BootLoader";
 import { ConfigManager, IEnvironment } from "./ConfigManager";
 export { IEnvironment };
+export { Logger };
 
 process.on("unhandledRejection", (reason, p) => {
   console.error("Unhandled Rejection:", reason);
@@ -19,13 +20,13 @@ process.on("unhandledRejection", (reason, p) => {
 
 @Service("@soniq")
 export class Core {
-  private readonly className = this.constructor.name;
-  private readonly bootLoader: BootLoader = new BootLoader();
+  private readonly _className: string = this.constructor.name;
+  private readonly _bootLoader: BootLoader;
+  private readonly _logger: Logger;
   public readonly configManager: ConfigManager | undefined;
   public readonly ENVIRONMENT: IEnvironment;
-  private readonly logger: Logger;
 
-  private constructor() {
+  public constructor() {
     this.configManager = new ConfigManager();
     this.ENVIRONMENT = this.configManager.ENVIRONMENT;
     Container.set(
@@ -33,11 +34,15 @@ export class Core {
       JSON.parse(JSON.stringify(this.ENVIRONMENT))
     );
     // TODO: catch all errors & exceptions
-    this.logger = new Logger(this.ENVIRONMENT.nodeId, { name: this.className });
+    this._logger = new Logger({
+      instanceId: this.ENVIRONMENT.nodeId,
+      name: this._className,
+    });
+    this._bootLoader = new BootLoader(this._logger);
   }
 
   // draw CLI art
-  private drawCliArt(): void {
+  private _drawCliArt(): void {
     process.stdout.write(
       `     
   ___  ___  _ __  _  __ _ 
@@ -48,17 +53,26 @@ export class Core {
                        |_|\n`
     );
     process.stdout.write("____________________________________\n");
-    process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2));
+    process.stdout.write(JSON.stringify(this.ENVIRONMENT, undefined, 2) + "\n");
     process.stdout.write("====================================\n");
   }
 
-  public async boot() {
-    await this.bootLoader.boot();
-    this.drawCliArt();
+  public async boot(): Promise<void> {
+    await this._bootLoader.boot();
+    this._drawCliArt();
     return;
   }
 
-  public getLogger(name?: string, minLevel: number = 0, exposeStack = false) {
-    return new Logger(this.ENVIRONMENT.nodeId, { name, minLevel, exposeStack });
+  public getLogger(
+    name?: string,
+    minLevel: number = 0,
+    exposeStack: boolean = false
+  ): Logger {
+    return new Logger({
+      instanceId: this.ENVIRONMENT.nodeId,
+      name,
+      minLevel,
+      exposeStack,
+    });
   }
 }
