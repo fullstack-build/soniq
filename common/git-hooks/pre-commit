@@ -1,23 +1,20 @@
-#!/usr/bin/env bash
-set -uo pipefail
-IFS=$'\n\t'
-
-#
-# Improvements from dahjelle/pre-commit.sh:
-# - does not lint deleted files,
-# - lints all staged files before exiting with an error code,
-# - handles spaces and other unusual chars in file names.
-#
-# Based also on @jancimajek's one liner in that Gist.
-#
-
+#!/bin/sh
 echo --------------------------------------------
 echo Starting Git hook: pre-commit
 
-# ESLint staged changes only
-git diff --diff-filter=d --cached --name-only -z -- '*.ts' \
-  | xargs -0 -I % sh -c 'git show ":%" | ./common/temp/node_modules/.bin/eslint --stdin --stdin-filename "%" --ext .ts --ignore-pattern tests/*;'
+# TypeScript files only
+FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" | sed 's| |\\ |g')
+[ -z "$FILES" ] && exit 0
+
+# Prettify all selected files
+echo "$FILES" | xargs ./node_modules/.bin/prettier --write
+
+# ESLint
+echo "$FILES" | xargs ./common/temp/node_modules/.bin/eslint --ext .ts --ignore-pattern tests/*
 eslint_exit=$?
+
+# Add back the modified/prettified files to staging
+echo "$FILES" | xargs git add
 
 if [ ${eslint_exit} -eq 0 ]; then
   echo "✓ ESLint passed"
