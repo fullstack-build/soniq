@@ -23,7 +23,7 @@ export class BootLoader {
 
   private _bootFunctionObjects: IBootFunctionObject[] = [];
   private _afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
-  private _failedBootPromiseRejection: Function;
+  private _failedBootPromiseRejection: Function | undefined;
 
   public constructor(logger: Logger) {
     this._logger = logger;
@@ -81,7 +81,9 @@ export class BootLoader {
     } catch (err) {
       this._logger.error("BootLoader caught Error:", err);
       this._state = EBootState.Failed;
-      this._failedBootPromiseRejection(err);
+      if (this._failedBootPromiseRejection != null) {
+        this._failedBootPromiseRejection(err);
+      }
       throw err;
     }
   }

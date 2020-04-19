@@ -18,6 +18,7 @@ exports.ContainerInstance = typedi_1.ContainerInstance;
 exports.Inject = typedi_1.Inject;
 exports.InjectMany = typedi_1.InjectMany;
 const tslog_1 = require("tslog");
+exports.Logger = tslog_1.Logger;
 const BootLoader_1 = require("./BootLoader");
 const ConfigManager_1 = require("./ConfigManager");
 process.on("unhandledRejection", (reason, p) => {
@@ -25,16 +26,19 @@ process.on("unhandledRejection", (reason, p) => {
 });
 let Core = class Core {
     constructor() {
-        this.className = this.constructor.name;
-        this.bootLoader = new BootLoader_1.BootLoader();
+        this._className = this.constructor.name;
         this.configManager = new ConfigManager_1.ConfigManager();
         this.ENVIRONMENT = this.configManager.ENVIRONMENT;
         typedi_1.Container.set("@soniq/ENVIRONMENT", JSON.parse(JSON.stringify(this.ENVIRONMENT)));
         // TODO: catch all errors & exceptions
-        this.logger = new tslog_1.Logger(this.ENVIRONMENT.nodeId, { name: this.className });
+        this._logger = new tslog_1.Logger({
+            instanceId: this.ENVIRONMENT.nodeId,
+            name: this._className,
+        });
+        this._bootLoader = new BootLoader_1.BootLoader(this._logger);
     }
     // draw CLI art
-    drawCliArt() {
+    _drawCliArt() {
         process.stdout.write(`     
   ___  ___  _ __  _  __ _ 
  / __|/ _ \\| '_ \\| |/ _\` |
@@ -43,16 +47,21 @@ let Core = class Core {
                        | |
                        |_|\n`);
         process.stdout.write("____________________________________\n");
-        process.stdout.write(JSON.stringify(this.ENVIRONMENT, null, 2));
+        process.stdout.write(JSON.stringify(this.ENVIRONMENT, undefined, 2) + "\n");
         process.stdout.write("====================================\n");
     }
     async boot() {
-        await this.bootLoader.boot();
-        this.drawCliArt();
+        await this._bootLoader.boot();
+        this._drawCliArt();
         return;
     }
     getLogger(name, minLevel = 0, exposeStack = false) {
-        return new tslog_1.Logger(this.ENVIRONMENT.nodeId, { name, minLevel, exposeStack });
+        return new tslog_1.Logger({
+            instanceId: this.ENVIRONMENT.nodeId,
+            name,
+            minLevel,
+            exposeStack,
+        });
     }
 };
 Core = __decorate([

@@ -21,10 +21,14 @@
     "allowSyntheticDefaultImports": true
   },
   "include": [
+    // when running in monorepo root
     "modules/**/src/*.ts",
     "modules/**/src/**/*.ts",
     "examples/**/src/*.ts",
-    "examples/**/src/**/*.ts"
+    "examples/**/src/**/*.ts",
+    // When running inside of a module/package
+    "src/*.ts",
+    "src/**/*.ts"
   ],
   "exclude": ["node_modules","**/node_modules", "**/dist", "**/test", "*.test.ts"]
 }
