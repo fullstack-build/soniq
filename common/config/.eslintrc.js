@@ -8,5 +8,8 @@ module.exports = {
     "eqeqeq": [2, "smart"]
   },
   extends: ["@rushstack/eslint-config", "plugin:prettier/recommended"],
-  parserOptions: { tsconfigRootDir: __dirname }
+  "ignorePatterns": ["node_modules/", "dist/", "tests", "*.test.ts"],
+  env: {
+    node: true
+  }
 };

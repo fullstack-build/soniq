@@ -137,8 +137,14 @@
       "enableParallelism": true,
       "ignoreMissingScript": true
     },
-
-
+    {
+      "commandKind": "bulk",
+      "name": "tsdoc",
+      "summary": "Create docs for all packages.",
+      "description": "Runs tsdoc in every package.",
+      "enableParallelism": true,
+      "ignoreMissingScript": true
+    }
   ],
 
   /**
