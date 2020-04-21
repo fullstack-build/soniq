@@ -45,34 +45,7 @@
     "tslog": "~1.0.0",
     "typedi": "~0.8.0"
   },
-  "ava": {
-    "verbose": true,
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
-  },
-  "nyc": {
-    "include": [
-      "index.ts",
-      "src/**/*.ts"
-    ],
-    "exclude": [
-      "src/**/*.d.ts"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "reporter": [
-      "text",
-      "html"
-    ],
-    "sourceMap": true,
-    "instrument": true
+  "eslintConfig": {
+    "extends": "../../common/config/eslintrc.js"
   }
 }
