@@ -8,9 +8,12 @@
     "build": "tsc",
     "eslint": "eslint . --ext .ts",
     "eslint-fix": "eslint . --ext .ts --fix",
-    "test": "ava",
-    "coverage": "nyc --all ava"
+    "test": "jest"
   },
+  "eslintConfig": {
+    "extends": "../../eslintrc.js"
+  },
+  "jest": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fullstack-build/soniq.git"
@@ -44,8 +47,5 @@
     "ts-node": "~8.8.2",
     "tslog": "~1.0.0",
     "typedi": "~0.8.0"
-  },
-  "eslintConfig": {
-    "extends": "../../common/config/eslintrc.js"
   }
 }
