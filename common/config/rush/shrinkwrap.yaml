@@ -7,9 +7,7 @@ dependencies:
   '@types/lodash': 4.14.150
   '@types/node': 13.13.0
   '@types/source-map-support': 0.5.1
-  ava: 3.7.0
   chalk: 4.0.0
-  cli-highlight: 2.1.4
   debug: 4.1.1
   debug-trace: 2.2.3
   dotenv: 8.2.0
@@ -20,14 +18,14 @@ dependencies:
   jest: 25.4.0
   lint-staged: 10.1.5
   lodash: 4.17.15
-  nyc: 15.0.1
   prettier: 2.0.4
   pretty-error: 2.1.1
   reflect-metadata: 0.1.13
   source-map-support: 0.5.16
   ts-jest: 25.4.0
-  ts-node: 8.8.2
+  ts-node: 8.9.0
   ts-node-dev: 1.0.0-pre.44
+  tslog: 1.0.0-dev.1
   typedi: 0.8.0
   typescript: 3.8.3
 packages:
@@ -6125,6 +6123,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-bwdKOBZ5L0gFRh4KOxNap/J/MpvX9Yxsq9lFDx65s3o7F/NiHy7JRaGIS8MwW6tZPAq9UXE207Il0cfcb5yu/Q==
+  /source-map-support/0.5.18:
+    dependencies:
+      buffer-from: 1.1.1
+      source-map: 0.6.1
+    dev: false
+    resolution:
+      integrity: sha512-9luZr/BZ2QeU6tO2uG8N2aZpVSli4TSAOAqFOyTO51AJcD9P99c0K1h6dD6r6qo5dyT44BR5exweOaLLeldTkQ==
   /source-map-url/0.4.0:
     dev: false
     resolution:
@@ -6715,9 +6720,9 @@ packages:
       node-notifier: 5.4.3
       resolve: 1.16.1
       rimraf: 2.7.1
-      source-map-support: 0.5.16
+      source-map-support: 0.5.18
       tree-kill: 1.2.2
-      ts-node: 8.8.2
+      ts-node: 8.9.0
       tsconfig: 7.0.0
     dev: false
     engines:
@@ -6740,23 +6745,38 @@ packages:
       typescript: '>=2.7'
     resolution:
       integrity: sha512-duVj6BpSpUpD/oM4MfhO98ozgkp3Gt9qIp3jGxwU2DFvl/3IRaEAvbLa8G60uS7C77457e/m5TMowjedeRxI1Q==
-  /ts-node/8.8.2/typescript@3.8.3:
+  /ts-node/8.9.0:
     dependencies:
       arg: 4.1.3
       diff: 4.0.2
       make-error: 1.3.6
-      source-map-support: 0.5.16
+      source-map-support: 0.5.18
+      yn: 3.1.1
+    dev: false
+    engines:
+      node: '>=6.0.0'
+    hasBin: true
+    peerDependencies:
+      typescript: '>=2.7'
+    resolution:
+      integrity: sha512-rwkXfOs9zmoHrV8xE++dmNd6ZIS+nmHHCxcV53ekGJrxFLMbp+pizpPS07ARvhwneCIECPppOwbZHvw9sQtU4w==
+  /ts-node/8.9.0/typescript@3.8.3:
+    dependencies:
+      arg: 4.1.3
+      diff: 4.0.2
+      make-error: 1.3.6
+      source-map-support: 0.5.18
       typescript: 3.8.3
       yn: 3.1.1
     dev: false
     engines:
       node: '>=6.0.0'
     hasBin: true
-    id: registry.npmjs.org/ts-node/8.8.2
+    id: registry.npmjs.org/ts-node/8.9.0
     peerDependencies:
       typescript: '>=2.7'
     resolution:
-      integrity: sha512-duVj6BpSpUpD/oM4MfhO98ozgkp3Gt9qIp3jGxwU2DFvl/3IRaEAvbLa8G60uS7C77457e/m5TMowjedeRxI1Q==
+      integrity: sha512-rwkXfOs9zmoHrV8xE++dmNd6ZIS+nmHHCxcV53ekGJrxFLMbp+pizpPS07ARvhwneCIECPppOwbZHvw9sQtU4w==
   /tsconfig/7.0.0:
     dependencies:
       '@types/strip-bom': 3.0.0
@@ -6770,6 +6790,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
+  /tslog/1.0.0-dev.1:
+    dependencies:
+      chalk: 4.0.0
+      source-map-support: 0.5.18
+      ts-node: 8.8.2
+    dev: false
+    resolution:
+      integrity: sha512-lG60WzFEI+9PGTY4dyYNutBhO5i3RZxNHE42JH/EDdcUIRvZhG+wtWQnV6tNhr7umpwIXNBVg4ZSdKPG8daZyQ==
   /tsutils/3.17.1:
     dependencies:
       tslib: 1.11.1
@@ -7232,49 +7260,50 @@ packages:
       integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
   'file:projects/examples_01.tgz':
     dependencies:
-      '@rushstack/eslint-config': 0.5.7
+      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
       '@types/node': 13.13.0
       debug: 4.1.1
       debug-trace: 2.2.3
       dotenv: 8.2.0
       eslint: 6.8.0
-      eslint-config-prettier: 6.10.1
-      eslint-plugin-prettier: 3.1.3
+      eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
+      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0+prettier@2.0.4
       husky: 4.2.5
       lint-staged: 10.1.5
       prettier: 2.0.4
       pretty-error: 2.1.1
-      ts-node: 8.8.2
+      ts-node: /ts-node/8.9.0/typescript@3.8.3
       ts-node-dev: 1.0.0-pre.44
       typescript: 3.8.3
     dev: false
     name: '@rush-temp/examples_01'
     resolution:
-      integrity: sha512-+HU1XRkb9F4CSrrL7hlJTbRN9FqNFez8z0S5v9u5AwhCRRoj/B6stbwAEj1hKa1hHjTAS4cTDkNK3DQ//0ITgw==
+      integrity: sha512-zjR3sqMYdbJA390p/63KhxU8aIVFirfiDEqmVinMSgjostdrA9BxQtKPY5Bq6BTPyRukiHBtXSiaWe6u8r2e8w==
       tarball: 'file:projects/examples_01.tgz'
     version: 0.0.0
   'file:projects/soniq.tgz':
     dependencies:
-      '@rushstack/eslint-config': 0.5.7
+      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
       '@types/lodash': 4.14.150
       '@types/node': 13.13.0
       '@types/source-map-support': 0.5.1
       chalk: 4.0.0
       cli-highlight: 2.1.4
       eslint: 6.8.0
-      eslint-config-prettier: 6.10.1
-      eslint-plugin-prettier: 3.1.3
+      eslint-config-prettier: /eslint-config-prettier/6.10.1/eslint@6.8.0
+      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0+prettier@2.0.4
       lodash: 4.17.15
       prettier: 2.0.4
       reflect-metadata: 0.1.13
       source-map-support: 0.5.16
-      ts-node: 8.8.2
+      ts-node: /ts-node/8.9.0/typescript@3.8.3
+      tslog: 1.0.0-dev.1
       typedi: 0.8.0
       typescript: 3.8.3
     dev: false
     name: '@rush-temp/soniq'
     resolution:
-      integrity: sha512-xZkbmmgtl1UfYGEkWEwinHDMXRGynCaHORDEARlM6pWT8BCgPqtp5+oo6bwwHLH/dgoVBFo7F/TdcMp+asdAig==
+      integrity: sha512-hhuiB59c1Nt2VJV2Lv7OM3brNx19sUTDeJk2iTqDxl/6fWmlOFWkM0Sq3RGb/SNtdGWCzM88JQ4w2puRMKRiMg==
       tarball: 'file:projects/soniq.tgz'
     version: 0.0.0
   'file:projects/tslog.tgz':
@@ -7295,13 +7324,13 @@ packages:
       prettier: 2.0.4
       source-map-support: 0.5.16
       ts-jest: /ts-jest/25.4.0/jest@25.4.0+typescript@3.8.3
-      ts-node: /ts-node/8.8.2/typescript@3.8.3
+      ts-node: /ts-node/8.9.0/typescript@3.8.3
       typedoc: /typedoc/0.17.4/typescript@3.8.3
       typescript: 3.8.3
     dev: false
     name: '@rush-temp/tslog'
     resolution:
-      integrity: sha512-+3uJOkBxErVs2E31SlKU17QijY46zDd5S5UHA9PlgvyiLkxXJ5KC+9tgTXXoa6ABdRXn4yBNXGnnH5ejrpRXNA==
+      integrity: sha512-7iBh1rYtqFh1j/6pZabbzjQXxMJxx+NDm1Jk9lIYn+ijKrh/lbgRUqTNsgyv7AoTTdNghrNB9nvk5urxKIpp6g==
       tarball: 'file:projects/tslog.tgz'
     version: 0.0.0
 registry: 'https://registry.npmjs.org/'
@@ -7316,9 +7345,7 @@ specifiers:
   '@types/lodash': ~4.14.149
   '@types/node': ^13.11.0
   '@types/source-map-support': ~0.5.1
-  ava: ~3.7.0
   chalk: ~4.0.0
-  cli-highlight: ~2.1.4
   debug: ^4.1.1
   debug-trace: ^2.2.3
   dotenv: ~8.2.0
@@ -7329,13 +7356,13 @@ specifiers:
   jest: ~25.4.0
   lint-staged: ~10.1.3
   lodash: ~4.17.15
-  nyc: ~15.0.1
   prettier: ^2.0.4
   pretty-error: ^2.1.1
   reflect-metadata: ~0.1.13
   source-map-support: ~0.5.16
   ts-jest: ~25.4.0
-  ts-node: ~8.8.2
+  ts-node: ~8.9.0
   ts-node-dev: ~1.0.0-pre.44
+  tslog: latest
   typedi: ~0.8.0
   typescript: ^3.8.3

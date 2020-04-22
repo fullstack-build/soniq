@@ -38,14 +38,14 @@
     "lint-staged": "~10.1.3",
     "prettier": "^2.0.4",
     "pretty-error": "^2.1.1",
-    "typescript": "^3.8.3"
+    "typescript": "^3.8.3",
+    "ts-node": "~8.9.0",
+    "ts-node-dev": "~1.0.0-pre.44"
   },
   "dependencies": {
-    "soniq": "~1.0.0-dev.1",
+    "soniq": "~1.0.0-dev.2",
     "debug": "^4.1.1",
     "debug-trace": "^2.2.3",
-    "dotenv": "~8.2.0",
-    "ts-node": "~8.8.2",
-    "ts-node-dev": "~1.0.0-pre.44"
+    "dotenv": "~8.2.0"
   }
 }
