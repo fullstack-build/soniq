@@ -1,6 +1,6 @@
 {
   "name": "soniq",
-  "version": "1.0.0-dev.2",
+  "version": "1.0.0-dev.3",
   "description": "A PostgreSQL centric GraphQL Framework",
   "main": "index",
   "typings": "src/index",
@@ -42,7 +42,7 @@
   "dependencies": {
     "lodash": "~4.17.15",
     "reflect-metadata": "~0.1.13",
-    "tslog": "latest",
+    "tslog": "1.0.0-dev.2",
     "typedi": "~0.8.0"
   }
 }
