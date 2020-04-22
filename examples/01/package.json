@@ -43,7 +43,7 @@
     "ts-node-dev": "~1.0.0-pre.44"
   },
   "dependencies": {
-    "soniq": "~1.0.0-dev.2",
+    "soniq": "~1.0.0-dev.3",
     "debug": "^4.1.1",
     "debug-trace": "^2.2.3",
     "dotenv": "~8.2.0"

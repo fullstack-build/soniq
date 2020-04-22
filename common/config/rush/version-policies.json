@@ -97,7 +97,9 @@
   },
   {
     "policyName": "tslog",
-    "definitionName": "individualVersion",
-    "lockedMajor": 1
+    "definitionName": "lockStepVersion",
+    "version": "1.0.0-dev.2",
+    "nextBump": "prerelease",
+    "mainProject": "tslog"
   }
 ]
