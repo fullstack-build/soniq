@@ -3,7 +3,7 @@ module.exports = {
   "preset": "ts-jest",
   "testEnvironment": "node",
   "collectCoverage": true,
-  "testMatch": ["/**/*.test.js","/**/*.test.ts"],
+  "testMatch": ["/**/*.test.ts"],
   "globals": {
     "ts-jest": {
       "packageJson": "package.json"
