@@ -4,8 +4,6 @@ soniq is a battery included Node.js GraphQL framework created on top of PostgreS
 
 > PostgreSQL, Node.js, TypeScript, GraphQL, DI
 
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-
 ## Features
 
 - Dependency Injection
@@ -21,6 +19,3 @@ soniq is a battery included Node.js GraphQL framework created on top of PostgreS
 - Auditing
 - GraphQL API (solved n+1 Problem)
 - File Storage (Any S3 Server)
-
-## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md).

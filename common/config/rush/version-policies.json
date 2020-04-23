@@ -94,12 +94,5 @@
     "version": "1.0.0-dev.3",
     "nextBump": "prerelease",
     "mainProject": "soniq"
-  },
-  {
-    "policyName": "tslog",
-    "definitionName": "lockStepVersion",
-    "version": "1.0.0-dev.2",
-    "nextBump": "prerelease",
-    "mainProject": "tslog"
   }
 ]

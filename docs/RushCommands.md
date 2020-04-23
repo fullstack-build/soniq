@@ -22,7 +22,7 @@ $ rush rebuild
 Publish to NPM:
 
 ```
-$ rush version --bump --override-bump minor
+$ rush version --bump
 $ rush publish --publish --include-all
 ```
 

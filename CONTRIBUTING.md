@@ -7,7 +7,7 @@ The soniq modules are developed in the **rushstack** monorepo on GitHub:
 
 ## Setting up your machine
 
-**NodeJS 12 or newer**: We recommend to use [nvm](https://github.com/creationix/nvm) (for Mac/Linux) or [nvm-windows](https://github.com/coreybutler/nvm-windows) (for Windows) so that you can easily switch between different NodeJS engine verisons.  When installing NodeJS, make sure to first uninstall any previous versions and clean up their files.  See [FAQ: After installing Rush, why am I stilling see the old version?](https://github.com/Microsoft/rushstack/wiki/Rush-~-FAQ#after-installing-rush-why-am-i-stilling-see-the-old-version) for more about this.
+**Node.js 12 or newer**: We recommend to use [nvm](https://github.com/creationix/nvm) (for Mac/Linux) or [nvm-windows](https://github.com/coreybutler/nvm-windows) (for Windows) so that you can easily switch between different NodeJS engine verisons.  When installing NodeJS, make sure to first uninstall any previous versions and clean up their files.  See [FAQ: After installing Rush, why am I stilling see the old version?](https://github.com/Microsoft/rushstack/wiki/Rush-~-FAQ#after-installing-rush-why-am-i-stilling-see-the-old-version) for more about this.
 
 
 ## Building the projects

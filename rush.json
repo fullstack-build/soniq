@@ -409,12 +409,6 @@
     //   "reviewCategory": "tools"
     // }
     {
-      "packageName": "tslog",
-      "projectFolder": "modules/Logger",
-      "shouldPublish": true,
-      "versionPolicyName": "tslog"
-    },
-    {
       "packageName": "soniq",
       "projectFolder": "modules/Core",
       "shouldPublish": true,
