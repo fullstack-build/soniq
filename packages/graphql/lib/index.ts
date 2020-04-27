@@ -62,6 +62,8 @@ export * from "./migration/helpers";
 export * from "./migration/ExpressionCompiler";
 export * from "./migration/interfaces";
 
+export * from "./schemaDefinition";
+
 @Service()
 export class GraphQl {
   private graphQlConfig: IGraphQlConfig;
@@ -145,8 +147,6 @@ export class GraphQl {
     const app = this.server.getApp();
 
     applyApolloMiddleware(app, getRuntimeConfig, pgPool, this.resolvers, this.graphQlConfig, this.logger, this.hookManager, this.operatorsBuilder);
-
-    console.log('>>', JSON.stringify(this.getColumnExtensionPropertySchemas()));
   }
   private async bootStudio(getModuleConfig: () => IModuleConfig, setModuleConfig: (moduleConfig: IModuleConfig) => void, server) {
     

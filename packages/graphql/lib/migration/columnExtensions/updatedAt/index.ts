@@ -1,5 +1,12 @@
 import { IColumnInfo, IGqlMigrationResult } from "../../interfaces";
-import { IColumnExtensionContext, IPropertieValidationResult, IColumnExtension, IQueryFieldData, IMutationFieldData, IColumnExtensionDeleteContext } from "../IColumnExtension";
+import {
+  IColumnExtensionContext,
+  IPropertieValidationResult,
+  IColumnExtension,
+  IQueryFieldData,
+  IMutationFieldData,
+  IColumnExtensionDeleteContext
+} from "../IColumnExtension";
 import { getPgRegClass, getPgSelector } from "../../helpers";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 import { IDbMutationColumn, IDbMutation } from "../../DbSchemaInterface";
@@ -21,13 +28,13 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
   type: "updatedAt",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "UpdatedAt Column Properties",
-      "additionalProperties": false
-    }
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "UpdatedAt Column Properties",
+      additionalProperties: false
+    };
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (context: IColumnExtensionContext): string => {
@@ -36,8 +43,8 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${context.column.name}: String`,
@@ -65,7 +72,9 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
       `ALTER TABLE ${getPgRegClass(context.table)} ADD COLUMN ${getPgSelector(
         context.column.name
       )} timestamp without time zone DEFAULT timezone('utc'::text, now()) NOT NULL;`,
-      `CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE ON ${getPgRegClass(context.table)} FOR EACH ROW EXECUTE PROCEDURE _graphql_meta.updated_at_trigger();`
+      `CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE ON ${getPgRegClass(
+        context.table
+      )} FOR EACH ROW EXECUTE PROCEDURE _graphql_meta.updated_at_trigger();`
     ];
 
     return {
@@ -114,7 +123,11 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
       }
       const triggerName = `updatedAt_trigger_${uuidv4()}`;
 
-      sqls.push(`CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE ON ${getPgRegClass(context.table)} FOR EACH ROW EXECUTE PROCEDURE _graphql_meta.updated_at_trigger();`);
+      sqls.push(
+        `CREATE TRIGGER ${getPgSelector(triggerName)} BEFORE UPDATE ON ${getPgRegClass(
+          context.table
+        )} FOR EACH ROW EXECUTE PROCEDURE _graphql_meta.updated_at_trigger();`
+      );
 
       result.commands.push({
         sqls,

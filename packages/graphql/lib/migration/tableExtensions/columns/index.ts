@@ -71,12 +71,12 @@ export const tableExtenstionColumns: ITableExtension = {
                     tableId: table.id,
                     columnId: column.id
                   }
-                }
+                };
               });
 
               mergeResult({
                 errors,
-                warnings: [], 
+                warnings: [],
                 commands: []
               });
 
@@ -260,7 +260,12 @@ export const tableExtenstionColumns: ITableExtension = {
               schema,
               table
             };
-            const cleanUpResult = await formerColumnExtension.cleanUp(columnExtensionCleanUpContext, updateColumn.columnInfo, dbClient, gqlMigrationContext);
+            const cleanUpResult = await formerColumnExtension.cleanUp(
+              columnExtensionCleanUpContext,
+              updateColumn.columnInfo,
+              dbClient,
+              gqlMigrationContext
+            );
             mergeResult(cleanUpResult);
           }
           result.commands.push({

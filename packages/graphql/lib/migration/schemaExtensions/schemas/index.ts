@@ -4,6 +4,26 @@ import { PoolClient, OPERATION_SORT_POSITION } from "@fullstack-one/core";
 import { IGqlMigrationResult } from "../../interfaces";
 import { getPgSelector } from "../../helpers";
 
+interface IForbiddenSchema {
+  schema: string;
+  reason: string;
+}
+
+const FORBIDDEN_SCHEMAS: IForbiddenSchema[] = [
+  {
+    schema: "public",
+    reason: "The public schema is used by many extensions, which would cause conflicts."
+  },
+  {
+    schema: "information_schema",
+    reason: "The information_schema schema is a postgres-internal schema."
+  },
+  {
+    schema: "pg_catalog",
+    reason: "The pg_catalog schema is a postgres-internal schema."
+  }
+];
+
 const getSchemas = async (dbClient: PoolClient): Promise<string[]> => {
   const { rows } = await dbClient.query(`SELECT schema_name FROM information_schema.schemata;`);
 
@@ -27,13 +47,31 @@ export const schemaExtensionSchemas: ISchemaExtension = {
     const currentSchemaNames = await getSchemas(dbClient);
 
     schema.schemas.forEach((schemaName) => {
+      FORBIDDEN_SCHEMAS.forEach((forbiddenSchema) => {
+        if (forbiddenSchema.schema === schemaName) {
+          result.errors.push({
+            message: `The schema "${schemaName}" is forbidden: ${forbiddenSchema.reason}`
+          });
+        }
+      });
+
       if (currentSchemaNames.indexOf(schemaName) < 0) {
         sqls.push(`CREATE SCHEMA ${getPgSelector(schemaName)};`);
       }
     });
 
-    if (schema.permissionViewSchema != null && currentSchemaNames.indexOf(schema.permissionViewSchema) < 0) {
-      sqls.push(`CREATE SCHEMA ${getPgSelector(schema.permissionViewSchema)};`);
+    if (schema.permissionViewSchema != null) {
+      FORBIDDEN_SCHEMAS.forEach((forbiddenSchema) => {
+        if (forbiddenSchema.schema === schema.permissionViewSchema) {
+          result.errors.push({
+            message: `The schema "${schema.permissionViewSchema}" is forbidden: ${forbiddenSchema.reason}`
+          });
+        }
+      });
+
+      if (currentSchemaNames.indexOf(schema.permissionViewSchema) < 0) {
+        sqls.push(`CREATE SCHEMA ${getPgSelector(schema.permissionViewSchema)};`);
+      }
     }
 
     if (sqls.length > 0) {

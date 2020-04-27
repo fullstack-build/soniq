@@ -1,5 +1,5 @@
 import { getPgSelector } from "@fullstack-one/core";
-import { IDbSchema, IDbTable, IDbColumn, IDbAppliedExpression } from "./DbSchemaInterface";
+import { IDbSchema, IDbTable, IDbColumn, IDbExpression } from "./DbSchemaInterface";
 import { ITableMeta, IGqlMigrationResult } from "./interfaces";
 import * as uuidValidate from "uuid-validate";
 
@@ -23,7 +23,8 @@ export const findColumnById = (table: IDbTable, columnId: string): IDbColumn | n
   return null;
 };
 
-export const findTableColumnInSchemaByColumnId = (schema: IDbSchema, columnId: string): {table: IDbTable, column: IDbColumn} | null => {
+export const findTableColumnInSchemaByColumnId = (schema: IDbSchema, columnId: string): { table: IDbTable; column: IDbColumn } | null => {
+  // tslint:disable-next-line:forin
   for (const i in schema.tables) {
     const table = schema.tables[i];
     for (const j in table.columns) {
@@ -38,10 +39,10 @@ export const findTableColumnInSchemaByColumnId = (schema: IDbSchema, columnId: s
   return null;
 };
 
-export const findAppliedExpressionById = (table: IDbTable, appliendExpressionId: string): IDbAppliedExpression | null => {
-  for (const i in table.appliedExpressions || []) {
-    if (table.appliedExpressions[i].id === appliendExpressionId) {
-      return table.appliedExpressions[i];
+export const findExpressionById = (schema: IDbSchema, expressionId: string): IDbExpression | null => {
+  for (const i in schema.expressions || []) {
+    if (schema.expressions[i].id === expressionId) {
+      return schema.expressions[i];
     }
   }
   return null;

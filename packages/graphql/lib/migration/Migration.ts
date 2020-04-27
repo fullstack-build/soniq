@@ -177,7 +177,7 @@ export class Migration {
 
     // Migration post-processing
     await asyncForEach(this.postProcessingExtensions, async (postProcessingExtension: IPostProcessingExtension) => {
-      result = await postProcessingExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext, result) as IModuleMigrationResult;
+      result = (await postProcessingExtension.generateCommands(schema, dbClient, helpers, gqlMigrationContext, result)) as IModuleMigrationResult;
     });
     if (result.errors.length > 0) {
       return result;
@@ -222,7 +222,6 @@ export class Migration {
     }
 
     // Generate other stuff like triggers etc.
-
 
     return result;
   }

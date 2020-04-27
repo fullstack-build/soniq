@@ -155,7 +155,14 @@ export const schemaExtensionTables: ISchemaExtension = {
             filteredTableExtensionData = filterTableExtensionData(tableMeta, preloadedDataByTableExtensionIndex[`${index}`]);
           }
 
-          const cleanUpResult = await tableExtension.cleanUpDeletedTable(schema, tableMeta, filteredTableExtensionData, helpers, dbClient, gqlMigrationContext);
+          const cleanUpResult = await tableExtension.cleanUpDeletedTable(
+            schema,
+            tableMeta,
+            filteredTableExtensionData,
+            helpers,
+            dbClient,
+            gqlMigrationContext
+          );
           mergeResult(cleanUpResult);
         }
       });
@@ -189,7 +196,14 @@ export const schemaExtensionTables: ISchemaExtension = {
           filteredTableExtensionData = filterTableExtensionData(existingTablesById[table.id], preloadedDataByTableExtensionIndex[`${index}`]);
         }
 
-        const extensionResult = await tableExtension.generateCommands(table, schema, filteredTableExtensionData, columnHelpers, dbClient, gqlMigrationContext);
+        const extensionResult = await tableExtension.generateCommands(
+          table,
+          schema,
+          filteredTableExtensionData,
+          columnHelpers,
+          dbClient,
+          gqlMigrationContext
+        );
         mergeResult(extensionResult);
       });
     });

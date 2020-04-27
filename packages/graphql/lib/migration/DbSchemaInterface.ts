@@ -6,6 +6,11 @@ export interface IDbSchema {
   functions?: IDbFunction[];
 }
 
+export interface IDbTableOptions {
+  disableSecurityBarrierForReadViews?: boolean;
+  disallowGenericRootLevelAggregation?: boolean;
+}
+
 export interface IDbTable {
   id: string;
   name: string;
@@ -13,12 +18,8 @@ export interface IDbTable {
   columns: IDbColumn[];
   indexes?: IDbIndex[];
   checks?: IDbCheck[];
-  appliedExpressions?: IDbAppliedExpression[];
   mutations?: IDbMutation[];
-  options?: {
-    disableSecurityBarrierForReadViews?: boolean;
-    disallowGenericRootLevelAggregation?: boolean;
-  };
+  options?: IDbTableOptions;
 }
 
 export interface IDbFunction {
@@ -33,7 +34,7 @@ export interface IDbColumn {
   type: string;
   name: string;
   properties?: any;
-  appliedQueryExpressionIds: string[];
+  queryExpressionIds: string[];
 }
 
 export interface IDbIndex {
@@ -54,7 +55,7 @@ export interface IDbMutation {
   name: string;
   type: "CREATE" | "UPDATE" | "DELETE";
   columns: IDbMutationColumn[];
-  appliedExpressionIds: string[];
+  expressionIds: string[];
   returnOnlyId?: boolean;
 }
 
@@ -63,44 +64,33 @@ export interface IDbMutationColumn {
   isRequired?: boolean;
 }
 
-export interface IDbAppliedExpression {
-  id: string;
-  name: string;
-  expressionId: string;
-  params: {
-    [placeholder: string]: string;
-  };
-}
-
-export interface IDbPlaceholderInterface {
+export interface IDbVariableInterface {
   key: string;
   type: string;
 }
 
-export interface IDbInputPlaceholder extends IDbPlaceholderInterface {
-  type: "INPUT";
-  inputType: "FOREIGN_TABLE" | "FOREIGN_COLUMN" | "LOCAL_COLUMN" | "STRING";
+export interface IDbColumnNameVariable extends IDbVariableInterface {
+  type: "COLUMN_NAME";
+  columnName: string;
 }
 
-export interface IDbStaticPlaceholder extends IDbPlaceholderInterface {
-  type: "STATIC";
-  inputType: "FOREIGN_TABLE" | "FOREIGN_COLUMN" | "LOCAL_COLUMN";
-  value: string;
+export interface IDbColumnIdVariable extends IDbVariableInterface {
+  type: "COLUMN_ID";
+  columnId: string;
 }
 
-export interface IDbExpressionPlaceholder extends IDbPlaceholderInterface {
+export interface IDbExpressionVariable extends IDbVariableInterface {
   type: "EXPRESSION";
-  appliedExpression: IDbAppliedExpression;
+  expressionId: string;
 }
 
-export type IDbPlaceholder = IDbInputPlaceholder | IDbStaticPlaceholder | IDbExpressionPlaceholder;
+export type IDbVariable = IDbColumnNameVariable | IDbColumnIdVariable | IDbExpressionVariable;
 
 export interface IDbExpression {
   id: string;
   name: string;
   gqlReturnType: string;
-  placeholders: IDbPlaceholder[];
-  localTableId?: string;
+  variables: IDbVariable[];
   authRequired?: boolean;
   excludeFromWhereClause?: boolean;
   sqlTemplate: string;

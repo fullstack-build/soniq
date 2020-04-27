@@ -112,6 +112,7 @@ export class MutationPermissionGenerator {
 
     const mutationName = `${mutation.type.toLowerCase()}${table.name}${mutation.type !== "DELETE" ? mutation.name : ""}`;
     const typeCamelCase = mutation.type.toLowerCase()[0].toUpperCase() + mutation.type.toLowerCase().substr(1);
+    // tslint:disable-next-line:prefer-template
     const viewName = `${table.name}_${typeCamelCase}${mutation.type !== "DELETE" ? "_" + mutation.name : ""}`;
 
     const mutationData: IMutationPermissionGeneratorResult = {
@@ -161,14 +162,14 @@ export class MutationPermissionGenerator {
       });
 
       if (mutation.type === "UPDATE" && hasUpdateMutationIdColumn !== true) {
-        throw new Error(`Each UPDATE mutations needs an id column. See ${mutation.name}.`);
+        throw new Error(`Each UPDATE mutation needs an id column. See ${mutation.name}.`);
       }
     } else {
       inputType.fields.push(`id: ID!`);
     }
 
-    const whereExpressions = mutation.appliedExpressionIds.map((appliedExpressionId) => {
-      const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId);
+    const whereExpressions = mutation.expressionIds.map((expressionId) => {
+      const compiledExpression = expressionGenerator.getCompiledExpressionById(expressionId);
 
       if (compiledExpression.authRequired === true) {
         mutationData.mutationViewMeta.authRequired = true;

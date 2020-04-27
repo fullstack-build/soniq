@@ -10,7 +10,7 @@ export class ExpressionGenerator {
 
   private addCompiledExpression(compiledExpression: ICompiledExpression) {
     for (const i in this.requiredCompiledExpressions) {
-      if (this.requiredCompiledExpressions[i].name === compiledExpression.name) {
+      if (this.requiredCompiledExpressions[i].id === compiledExpression.id) {
         // Already added
         return;
       }
@@ -18,13 +18,13 @@ export class ExpressionGenerator {
 
     this.requiredCompiledExpressions.push(compiledExpression);
 
-    compiledExpression.requiredCompiledExpressionNames.forEach((compiledExpressionName) => {
-      this.addCompiledExpression(this.expressionCompiler.getCompiledExpressionByName(compiledExpressionName));
+    compiledExpression.requiredExpressionIds.forEach((expressionId) => {
+      this.addCompiledExpression(this.expressionCompiler.compileExpression(expressionId));
     });
   }
 
   public getCompiledExpressionById(id: string, directRequired: boolean = true, addToRequiredList: boolean = true) {
-    const compiledExpression = this.expressionCompiler.getCompiledExpressionById(id);
+    const compiledExpression = this.expressionCompiler.compileExpression(id);
 
     compiledExpression.directRequired = directRequired;
 

@@ -162,62 +162,58 @@ export const columnExtensionManyToOne: IColumnExtension = {
   type: "manyToOne",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "ManyToOne Column Properties",
-      "required": ["foreignTableId"],
-      "properties": {
-        "foreignTableId": {
-          "$id": "#/properties/foreignTableId",
-          "type": "string",
-          "title": "FOREIGN_TABLE",
-          "description": "An foreignTableId another table",
-          "pattern": "^(.*)$"
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "ManyToOne Column Properties",
+      required: ["foreignTableId"],
+      properties: {
+        foreignTableId: {
+          $id: "#/properties/foreignTableId",
+          type: "string",
+          title: "FOREIGN_TABLE",
+          description: "An foreignTableId another table",
+          pattern: "^(.*)$"
         },
-        "nullable": {
-          "$id": "#/properties/nullable",
-          "type": "boolean",
-          "title": "Is column nullable or not",
-          "default": true,
-          "examples": [
-            true
-          ]
+        nullable: {
+          $id: "#/properties/nullable",
+          type: "boolean",
+          title: "Is column nullable or not",
+          default: true,
+          examples: [true]
         },
-        "defaultExpression": {
-          "$id": "#/properties/defaultExpression",
-          "type": "string",
-          "title": "The default value of the column as pg expression",
-          "default": null,
-          "examples": [
-            "'foobar'::text"
-          ],
-          "pattern": "^(.*)$"
+        defaultExpression: {
+          $id: "#/properties/defaultExpression",
+          type: "string",
+          title: "The default value of the column as pg expression",
+          default: null,
+          examples: ["'foobar'::text"],
+          pattern: "^(.*)$"
         },
-        "onDelete": {
-          "$id": "#/properties/onDelete",
-          "type": "string",
-          "title": "Relation onDelete behaviour",
-          "default": ACTION_TYPES[0],
-          "enum": ACTION_TYPES
+        onDelete: {
+          $id: "#/properties/onDelete",
+          type: "string",
+          title: "Relation onDelete behaviour",
+          default: ACTION_TYPES[0],
+          enum: ACTION_TYPES
         },
-        "onUpdate": {
-          "$id": "#/properties/onUpdate",
-          "type": "string",
-          "title": "Relation onUpdate behaviour",
-          "default": ACTION_TYPES[0],
-          "enum": ACTION_TYPES
+        onUpdate: {
+          $id: "#/properties/onUpdate",
+          type: "string",
+          title: "Relation onUpdate behaviour",
+          default: ACTION_TYPES[0],
+          enum: ACTION_TYPES
         },
-        "validation": {
-          "$id": "#/properties/validation",
-          "type": "string",
-          "title": "Relation validation",
-          "enum": VALIDATION_TYPES
-        },
+        validation: {
+          $id: "#/properties/validation",
+          type: "string",
+          title: "Relation validation",
+          enum: VALIDATION_TYPES
+        }
       },
-      "additionalProperties": false
-    }
+      additionalProperties: false
+    };
   },
   validateProperties: (context: IColumnExtensionContext) => {
     const result: IPropertieValidationResult = {
@@ -264,8 +260,8 @@ export const columnExtensionManyToOne: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     const foreignTable = findTableById(context.schema, context.column.properties.foreignTableId);
 

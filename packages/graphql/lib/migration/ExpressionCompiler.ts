@@ -1,12 +1,11 @@
 import {
   IDbExpression,
   IDbTable,
-  IDbAppliedExpression,
-  IDbInputPlaceholder,
   IDbColumn,
   IDbSchema,
-  IDbStaticPlaceholder,
-  IDbExpressionPlaceholder
+  IDbExpressionVariable,
+  IDbColumnIdVariable,
+  IDbColumnNameVariable
 } from "./DbSchemaInterface";
 import { getPgSelector, getPgRegClass } from "./helpers";
 import { IColumnExtension, IColumnExtensionContext } from "./columnExtensions/IColumnExtension";
@@ -16,6 +15,7 @@ import { template } from "lodash";
 export class ExpressionCompiler {
   private compiledExpressions: ICompiledExpressions = {};
   private expressionsById: IExpressionsById = {};
+  private expressionsByName: IExpressionsById = {};
   private schema: IDbSchema;
   private table: IDbTable;
   private helpers: IHelpers;
@@ -30,6 +30,11 @@ export class ExpressionCompiler {
         throw new Error(`Expression '${expression.id}' is defined at least twice.`);
       }
       this.expressionsById[expression.id] = expression;
+
+      if (this.expressionsByName[expression.name] != null) {
+        throw new Error(`Expression with name '${expression.name}' is defined at least twice.`);
+      }
+      this.expressionsByName[expression.name] = expression;
     });
 
     this.schema = schema;
@@ -37,12 +42,6 @@ export class ExpressionCompiler {
     this.helpers = helpers;
     this.localTableAlias = localTableAlias;
     this.generateDirectExpressions = generateDirectExpressions;
-
-    const appliedExpressions = table.appliedExpressions || [];
-
-    appliedExpressions.forEach((appliedExpression) => {
-      this.compileExpression(appliedExpression);
-    });
   }
 
   private getTableMetaById(tableId: string): IPlaceholderTable {
@@ -107,116 +106,72 @@ export class ExpressionCompiler {
     throw new Error(`Could not find column '${columnId}'.`);
   }
 
-  private getAppliedExpressionKey(appliedExpression: IDbAppliedExpression) {
-    return `${appliedExpression.expressionId}=>${JSON.stringify(appliedExpression.params)}`;
-  }
-
-  private compileExpression(appliedExpression: IDbAppliedExpression) {
-    if (this.expressionsById[appliedExpression.expressionId] == null) {
-      throw new Error(`Expression '${appliedExpression.expressionId}' does not exist.`);
+  public compileExpression(expressionId: string): ICompiledExpression {
+    if (this.expressionsById[expressionId] == null) {
+      throw new Error(`Expression '${expressionId}' does not exist.`);
     }
 
-    const appliedExpressionKey = this.getAppliedExpressionKey(appliedExpression);
-
-    if (this.compiledExpressions[appliedExpressionKey] != null) {
-      if (this.compiledExpressions[appliedExpressionKey].appliedExpressionIds.indexOf(appliedExpression.id) < 0) {
-        this.compiledExpressions[appliedExpressionKey].appliedExpressionIds.push(appliedExpression.id);
-      }
-      return this.compiledExpressions[appliedExpressionKey];
+    if (this.compiledExpressions[expressionId] != null) {
+      return this.compiledExpressions[expressionId];
     }
 
-    const placeholders = {};
-    const requiredCompiledExpressionNames: string[] = [];
-    const expression = this.expressionsById[appliedExpression.expressionId];
+    const variables = {};
+    const requiredExpressionIds: string[] = [];
+    const expression = this.expressionsById[expressionId];
     let authRequired: boolean = expression.authRequired === true;
 
     const setPlaceholder = (key: string, value: any) => {
-      if (placeholders[key] != null) {
+      if (variables[key] != null) {
         throw new Error(`Placeholder key '${key}' is used more than once in expression ${expression.id}.`);
       }
-      placeholders[key] = value;
+      variables[key] = value;
     };
 
     let highestSortPosition = 0;
 
-    expression.placeholders.forEach((placeholder) => {
+    expression.variables.forEach((placeholder) => {
       const type = placeholder.type;
       switch (type) {
-        case "INPUT":
-          const inputPlaceholder = placeholder as IDbInputPlaceholder;
-          if (appliedExpression.params[placeholder.key] == null) {
+        case "COLUMN_ID":
+          const columnIdPlaceholder = placeholder as IDbColumnIdVariable;
+          const column = this.getColumnMetaById(columnIdPlaceholder.columnId);
+          if (column.tableId !== this.table.id) {
             throw new Error(
-              `InputPlaceholder '${placeholder.key}' is not defined for expression ${expression.id} in applied expression ${appliedExpression.id}.`
+              `ColumnIdPlaceholder '${placeholder.key}' in expression ${expression.id}: The column must exist in the table the expression is used.`
             );
           }
-          if (inputPlaceholder.inputType === "STRING") {
-            setPlaceholder(placeholder.key, appliedExpression.params[placeholder.key]);
-            break;
-          }
-          if (inputPlaceholder.inputType === "FOREIGN_TABLE") {
-            setPlaceholder(placeholder.key, this.getTableMetaById(appliedExpression.params[placeholder.key]));
-            break;
-          }
-          if (inputPlaceholder.inputType === "FOREIGN_COLUMN") {
-            setPlaceholder(placeholder.key, this.getColumnMetaById(appliedExpression.params[placeholder.key]));
-            break;
-          }
-          if (inputPlaceholder.inputType === "LOCAL_COLUMN") {
-            const column = this.getColumnMetaById(appliedExpression.params[placeholder.key]);
 
-            column.columnSelector = `${getPgSelector(this.localTableAlias)}.${getPgSelector(column.columnName)}`;
+          column.columnSelector = `${getPgSelector(this.localTableAlias)}.${getPgSelector(column.columnName)}`;
 
-            setPlaceholder(placeholder.key, column);
-            break;
-          }
-          throw new Error(`InputPlaceholder '${placeholder.key}' has an invalid inputType '${inputPlaceholder.inputType}'.`);
-        case "STATIC":
-          const staticPlaceholder = placeholder as IDbStaticPlaceholder;
-          if (staticPlaceholder.value == null) {
-            throw new Error(`StaticPlaceholder '${placeholder.key}' has no value for expression ${expression.id}.`);
-          }
-          if (staticPlaceholder.inputType === "FOREIGN_TABLE") {
-            setPlaceholder(placeholder.key, this.getTableMetaById(staticPlaceholder.value));
-            break;
-          }
-          if (staticPlaceholder.inputType === "FOREIGN_COLUMN") {
-            setPlaceholder(placeholder.key, this.getColumnMetaById(staticPlaceholder.value));
-            break;
-          }
-          if (staticPlaceholder.inputType === "LOCAL_COLUMN") {
-            const column = this.getColumnMetaById(staticPlaceholder.value);
-            if (expression.localTableId == null || expression.localTableId !== column.tableId || expression.localTableId !== this.table.id) {
-              throw new Error(
-                `StaticPlaceholder '${placeholder.key}' in expression ${expression.id} in applied expression ${appliedExpression.id}: localColumn must exist in localTable and match the used table.`
-              );
-            }
+          setPlaceholder(placeholder.key, column.columnSelector);
+          break;
+        case "COLUMN_NAME":
+          const columnNamePlaceholder = placeholder as IDbColumnNameVariable;
 
-            column.columnSelector = `${getPgSelector(this.localTableAlias)}.${getPgSelector(column.columnName)}`;
+          const columnSelector = `${getPgSelector(this.localTableAlias)}.${getPgSelector(columnNamePlaceholder.columnName)}`;
 
-            setPlaceholder(placeholder.key, column);
-            break;
-          }
-          throw new Error(`StaticPlaceholder '${placeholder.key}' has an invalid inputType '${inputPlaceholder.inputType}'.`);
+          setPlaceholder(placeholder.key, columnSelector);
+          break;
         case "EXPRESSION":
-          const expressionPlaceholder = placeholder as IDbExpressionPlaceholder;
-          if (expressionPlaceholder.appliedExpression == null) {
-            throw new Error(`ExpressionPlaceholder '${placeholder.key}' has no appliedExpression for expression ${expression.id}.`);
+          const expressionPlaceholder = placeholder as IDbExpressionVariable;
+          if (expressionPlaceholder.expressionId == null) {
+            throw new Error(`ExpressionPlaceholder '${placeholder.key}' has no expressionId for expression ${expression.id}.`);
           }
-          const compiledExpression = this.compileExpression(expressionPlaceholder.appliedExpression);
+          const compiledExpression = this.compileExpression(expressionPlaceholder.expressionId);
 
           if (compiledExpression.sortPosition + 1 > highestSortPosition) {
             highestSortPosition = compiledExpression.sortPosition + 1;
           }
 
-          compiledExpression.requiredCompiledExpressionNames.forEach((compiledExpressionName) => {
-            requiredCompiledExpressionNames.push(compiledExpressionName);
+          compiledExpression.requiredExpressionIds.forEach((expId) => {
+            requiredExpressionIds.push(expId);
           });
 
           if (compiledExpression.authRequired === true) {
             authRequired = true;
           }
 
-          requiredCompiledExpressionNames.push(compiledExpression.name);
+          requiredExpressionIds.push(expressionId);
 
           setPlaceholder(placeholder.key, this.generateDirectExpressions === true ? compiledExpression.renderedSql : compiledExpression.alias);
           break;
@@ -225,19 +180,14 @@ export class ExpressionCompiler {
       }
     });
 
-    const name = appliedExpression.name;
+    const name = expression.name;
 
-    Object.values(this.compiledExpressions).forEach((compiledExpression) => {
-      if (compiledExpression.name === name) {
-        throw new Error(`Duplicate applied-expression names: '${name}' in expression '${expression.id}'`);
-      }
-    });
-
-    const renderedSql = template(expression.sqlTemplate, {})(placeholders);
-    let sql = expression.placeholders.length > 0 ? "LATERAL " : "";
+    const renderedSql = template(expression.sqlTemplate, {})(variables);
+    let sql = expression.variables.length > 0 ? "LATERAL " : "";
     sql += `(SELECT ${renderedSql} AS "${name}") AS "${name}"`;
 
-    this.compiledExpressions[appliedExpressionKey] = {
+    this.compiledExpressions[expressionId] = {
+      id: expressionId,
       name,
       alias: `${getPgSelector(name)}.${getPgSelector(name)}`,
       sql,
@@ -245,42 +195,15 @@ export class ExpressionCompiler {
       gqlReturnType: expression.gqlReturnType,
       authRequired,
       excludeFromWhereClause: expression.excludeFromWhereClause === true,
-      appliedExpressionIds: [appliedExpression.id],
       sortPosition: highestSortPosition,
-      requiredCompiledExpressionNames
+      requiredExpressionIds
     };
 
     if (renderedSql.toUpperCase() === "TRUE" || renderedSql.toUpperCase() === "FALSE") {
-      this.compiledExpressions[appliedExpressionKey].directBooleanResult = renderedSql.toUpperCase() === "TRUE";
+      this.compiledExpressions[expressionId].directBooleanResult = renderedSql.toUpperCase() === "TRUE";
     }
 
-    return this.compiledExpressions[appliedExpressionKey];
-  }
-
-  public getCompiledExpressionById(id: string): ICompiledExpression {
-    const keys = Object.keys(this.compiledExpressions);
-    for (const index in keys) {
-      if (keys.hasOwnProperty(index)) {
-        const key = keys[index];
-        if (this.compiledExpressions[key].appliedExpressionIds.indexOf(id) >= 0) {
-          return this.compiledExpressions[key];
-        }
-      }
-    }
-    throw new Error(`Could not find applied expression '${id}'.`);
-  }
-
-  public getCompiledExpressionByName(name: string): ICompiledExpression {
-    const keys = Object.keys(this.compiledExpressions);
-    for (const index in keys) {
-      if (keys.hasOwnProperty(index)) {
-        const key = keys[index];
-        if (this.compiledExpressions[key].name === name) {
-          return this.compiledExpressions[key];
-        }
-      }
-    }
-    throw new Error(`Could not find compiled expression '${name}'.`);
+    return this.compiledExpressions[expressionId];
   }
 }
 
@@ -313,11 +236,16 @@ export interface IExpressionsById {
   [id: string]: IDbExpression;
 }
 
+export interface IExpressionsByName {
+  [name: string]: IDbExpression;
+}
+
 export interface ICompiledExpressions {
   [key: string]: ICompiledExpression;
 }
 
 export interface ICompiledExpression {
+  id: string;
   name: string;
   alias: string;
   sql: string;
@@ -326,8 +254,7 @@ export interface ICompiledExpression {
   authRequired: boolean;
   sortPosition: number;
   excludeFromWhereClause: boolean;
-  appliedExpressionIds: string[];
-  requiredCompiledExpressionNames: string[];
+  requiredExpressionIds: string[];
   directBooleanResult?: boolean | null;
   directRequired?: boolean | null;
 }

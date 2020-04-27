@@ -26,53 +26,46 @@ export function createGenericColumnExtension(
     type: fixedGenericTypes.type,
     getPropertiesDefinition: () => {
       return {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "$id": "http://example.com/root.json",
-        "type": "object",
-        "title": "Generic Column Properties",
-        "required": [],
-        "properties": {
-          "nullable": {
-            "$id": "#/properties/nullable",
-            "type": "boolean",
-            "title": "Is column nullable or not",
-            "default": true,
-            "examples": [
-              true
-            ]
+        definitions: {},
+        $schema: "http://json-schema.org/draft-07/schema#",
+        $id: "http://example.com/root.json",
+        type: "object",
+        title: "Generic Column Properties",
+        required: [],
+        properties: {
+          nullable: {
+            $id: "#/properties/nullable",
+            type: "boolean",
+            title: "Is column nullable or not",
+            default: true,
+            examples: [true]
           },
-          "defaultExpression": {
-            "$id": "#/properties/defaultExpression",
-            "type": "string",
-            "title": "The default value of the column as pg expression",
-            "default": null,
-            "examples": [
-              "'foobar'::text"
-            ],
-            "pattern": "^(.*)$"
+          defaultExpression: {
+            $id: "#/properties/defaultExpression",
+            type: "string",
+            title: "The default value of the column as pg expression",
+            default: null,
+            examples: ["'foobar'::text"],
+            pattern: "^(.*)$"
           },
-          "moveSelectToQuery": {
-            "$id": "#/properties/moveSelectToQuery",
-            "type": "boolean",
-            "title": "Select the column in QueryBuilder not in view",
-            "default": false,
-            "examples": [
-              true,
-              false
-            ]
-          },
+          moveSelectToQuery: {
+            $id: "#/properties/moveSelectToQuery",
+            type: "boolean",
+            title: "Select the column in QueryBuilder not in view",
+            default: false,
+            examples: [true, false]
+          }
         },
-        "additionalProperties": false
-      }
+        additionalProperties: false
+      };
     },
     // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
     getPgColumnName,
     getQueryFieldData: (
       context: IColumnExtensionContext,
       localTableAlias: string,
-      getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-      getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+      getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+      getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
     ): IQueryFieldData => {
       const queryFieldData: IQueryFieldData = {
         field: `${getPgColumnName(context)}: ${fixedGenericTypes.gqlType}`,
@@ -88,7 +81,11 @@ export function createGenericColumnExtension(
       if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
         queryFieldData.pgSelectExpression = `TRUE`;
         queryFieldData.pgRootSelectExpression = `TRUE`;
-        queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT _temp_.${getPgSelector(getPgColumnName(context))} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL::text END`;
+        queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(
+          context.column.name
+        )} IS TRUE THEN (SELECT _temp_.${getPgSelector(getPgColumnName(context))} FROM ${getPgRegClass(
+          context.table
+        )} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL::text END`;
       }
 
       return queryFieldData;
@@ -123,7 +120,9 @@ export function createGenericColumnExtension(
       return {
         errors: [],
         warnings: [],
-        commands: [{ sqls: [sql], operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0) }]
+        commands: [
+          { sqls: [sql], operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0) }
+        ]
       };
     },
     update: async (context: IColumnExtensionContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {

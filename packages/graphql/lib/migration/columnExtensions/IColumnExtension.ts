@@ -54,14 +54,19 @@ export interface IColumnExtension {
   getPgExpression?: (context: IColumnExtensionContext, expressionGenerator: ExpressionGenerator) => string;
   create: (context: IColumnExtensionContext, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
   update: (context: IColumnExtensionContext, columnInfo: IColumnInfo, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
-  cleanUp?: (context: IColumnExtensionDeleteContext, columnInfo: IColumnInfo, pgClient: PoolClient, gqlMigrationContext: any) => Promise<IGqlMigrationResult>;
+  cleanUp?: (
+    context: IColumnExtensionDeleteContext,
+    columnInfo: IColumnInfo,
+    pgClient: PoolClient,
+    gqlMigrationContext: any
+  ) => Promise<IGqlMigrationResult>;
 
   // Helpers to create gql and ts types
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ) => IQueryFieldData;
   getMutationFieldData: (
     context: IColumnExtensionContext,

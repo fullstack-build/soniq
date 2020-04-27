@@ -1,5 +1,4 @@
-
-import { 
+import {
   IDbMutationColumn,
   IDbMutation,
   ICompiledExpression,
@@ -21,51 +20,45 @@ export const columnExtensionFile: IColumnExtension = {
   type: "file",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "ManyToOne Column Properties",
-      "required": [],
-      "properties": {
-        "types": {
-          "$id": "#/properties/types",
-          "type": "array",
-          "title": "ENUM_VALUES",
-          "uniqueItems": true,
-          "items": {
-            "$id": "#/properties/types/items",
-            "type": "string",
-            "title": "A file-type",
-            "default": "DEFAULT",
-            "examples": [
-              "DEFAULT"
-            ],
-            "pattern": "^(.*)$"
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "ManyToOne Column Properties",
+      required: [],
+      properties: {
+        types: {
+          $id: "#/properties/types",
+          type: "array",
+          title: "ENUM_VALUES",
+          uniqueItems: true,
+          items: {
+            $id: "#/properties/types/items",
+            type: "string",
+            title: "A file-type",
+            default: "DEFAULT",
+            examples: ["DEFAULT"],
+            pattern: "^(.*)$"
           }
         },
-        "nullable": {
-          "$id": "#/properties/nullable",
-          "type": "boolean",
-          "title": "Is column nullable or not",
-          "default": true,
-          "examples": [
-            true
-          ]
+        nullable: {
+          $id: "#/properties/nullable",
+          type: "boolean",
+          title: "Is column nullable or not",
+          default: true,
+          examples: [true]
         },
-        "defaultExpression": {
-          "$id": "#/properties/defaultExpression",
-          "type": "string",
-          "title": "The default value of the column as pg expression",
-          "default": null,
-          "examples": [
-            "'foobar'::text"
-          ],
-          "pattern": "^(.*)$"
+        defaultExpression: {
+          $id: "#/properties/defaultExpression",
+          type: "string",
+          title: "The default value of the column as pg expression",
+          default: null,
+          examples: ["'foobar'::text"],
+          pattern: "^(.*)$"
         }
       },
-      "additionalProperties": false
-    }
+      additionalProperties: false
+    };
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (context: IColumnExtensionContext): string => {
@@ -74,8 +67,8 @@ export const columnExtensionFile: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${context.column.name}: [BucketFile!]`,
@@ -86,11 +79,13 @@ export const columnExtensionFile: IColumnExtension = {
       columnSelectExpressionTemplate: `"{_local_table_}".${getPgSelector(context.column.name)}`,
       canBeFilteredAndOrdered: false,
       queryFieldMeta: {},
-      resolvers: [{
-        key: "@fullstack-one/file-storage/readFiles",
-        path: `${context.table.name}.${context.column.name}`,
-        config: {}
-      }]
+      resolvers: [
+        {
+          key: "@fullstack-one/file-storage/readFiles",
+          path: `${context.table.name}.${context.column.name}`,
+          config: {}
+        }
+      ]
     };
   },
   getMutationFieldData: (
@@ -127,7 +122,7 @@ export const columnExtensionFile: IColumnExtension = {
       gqlMigrationContext.fileStorageColumns = [];
     }
 
-    const fileColumn : IFileColumn = {
+    const fileColumn: IFileColumn = {
       id: null,
       schemaName: context.table.schema,
       tableName: context.table.name,
@@ -140,13 +135,20 @@ export const columnExtensionFile: IColumnExtension = {
     return {
       errors: [],
       warnings: [],
-      commands: [{ 
-        sqls: [sql],
-        operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0)
-      }]
+      commands: [
+        {
+          sqls: [sql],
+          operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0)
+        }
+      ]
     };
   },
-  update: async (context: IColumnExtensionContext, columnInfo: IColumnInfo, pgClient: PoolClient, gqlMigrationContext: any): Promise<IGqlMigrationResult> => {
+  update: async (
+    context: IColumnExtensionContext,
+    columnInfo: IColumnInfo,
+    pgClient: PoolClient,
+    gqlMigrationContext: any
+  ): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
       warnings: [],
@@ -162,7 +164,11 @@ export const columnExtensionFile: IColumnExtension = {
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN
       });
     }
-    if (column.properties != null && column.properties.defaultExpression != null && currentDefaultExpression !== column.properties.defaultExpression) {
+    if (
+      column.properties != null &&
+      column.properties.defaultExpression != null &&
+      currentDefaultExpression !== column.properties.defaultExpression
+    ) {
       result.commands.push({
         sqls: [`ALTER TABLE ${getPgRegClass(table)} ALTER COLUMN "${column.name}" SET DEFAULT ${column.properties.defaultExpression};`],
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
@@ -202,7 +208,7 @@ export const columnExtensionFile: IColumnExtension = {
       gqlMigrationContext.fileStorageColumns = [];
     }
 
-    const fileColumn : IFileColumn = {
+    const fileColumn: IFileColumn = {
       id: null,
       schemaName: context.table.schema,
       tableName: context.table.name,

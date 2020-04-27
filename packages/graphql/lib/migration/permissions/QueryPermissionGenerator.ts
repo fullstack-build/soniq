@@ -104,7 +104,13 @@ export class QueryPermissionGenerator {
 
     return def;
   }
-  public generate(schema: IDbSchema, table: IDbTable, helpers: IHelpers, expressionCompiler: ExpressionCompiler, rootExpressionCompiler: ExpressionCompiler): IQueryPermissionGeneratorResult {
+  public generate(
+    schema: IDbSchema,
+    table: IDbTable,
+    helpers: IHelpers,
+    expressionCompiler: ExpressionCompiler,
+    rootExpressionCompiler: ExpressionCompiler
+  ): IQueryPermissionGeneratorResult {
     const expressionGenerator = new ExpressionGenerator(expressionCompiler);
     const rootExpressionGenerator = new ExpressionGenerator(rootExpressionCompiler);
 
@@ -157,19 +163,24 @@ export class QueryPermissionGenerator {
       let authRequired: boolean = false;
 
       // Get field-data from the type
-      const queryFieldData = columnExtension.getQueryFieldData(columnExtensionContext, LOCAL_TABLE_ALIAS, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
-        const compiledExpression = expressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
+      const queryFieldData = columnExtension.getQueryFieldData(
+        columnExtensionContext,
+        LOCAL_TABLE_ALIAS,
+        (expressionId: string, addToRequiredList: boolean = false) => {
+          const compiledExpression = expressionGenerator.getCompiledExpressionById(expressionId, false, addToRequiredList);
 
-        if (compiledExpression.authRequired === true) {
-          authRequired = true;
+          if (compiledExpression.authRequired === true) {
+            authRequired = true;
+          }
+
+          return compiledExpression;
+        },
+        (expressionId: string, addToRequiredList: boolean = false) => {
+          const compiledExpression = rootExpressionGenerator.getCompiledExpressionById(expressionId, false, addToRequiredList);
+
+          return compiledExpression;
         }
-
-        return compiledExpression;
-      }, (appliedExpressionId: string, addToRequiredList: boolean = false) => {
-        const compiledExpression = rootExpressionGenerator.getCompiledExpressionById(appliedExpressionId, false, addToRequiredList);
-
-        return compiledExpression;
-      });
+      );
 
       // If this is null the column is not shown anywhere
       if (queryFieldData != null) {
@@ -203,11 +214,12 @@ export class QueryPermissionGenerator {
 
         let hasPublicTrueExpression: any = false;
 
-        const rootOnlyColumn = column.appliedQueryExpressionIds == null || !Array.isArray(column.appliedQueryExpressionIds) || column.appliedQueryExpressionIds.length <= 0;
+        const rootOnlyColumn =
+          column.queryExpressionIds == null || !Array.isArray(column.queryExpressionIds) || column.queryExpressionIds.length <= 0;
 
         if (rootOnlyColumn !== true) {
-          const compiledExpressions = column.appliedQueryExpressionIds.map((appliedExpressionId) => {
-            return expressionGenerator.getCompiledExpressionById(appliedExpressionId);
+          const compiledExpressions = column.queryExpressionIds.map((expressionId) => {
+            return expressionGenerator.getCompiledExpressionById(expressionId);
           });
 
           const publicCondition = compiledExpressions
@@ -308,15 +320,7 @@ export class QueryPermissionGenerator {
     }
 
     // Build root view
-    const rootViewSql = this.createView(
-      [],
-      [],
-      result.queryViewMeta.rootViewName,
-      rootColumnSelects,
-      schema,
-      table,
-      "_auth.is_root() IS TRUE"
-    );
+    const rootViewSql = this.createView([], [], result.queryViewMeta.rootViewName, rootColumnSelects, schema, table, "_auth.is_root() IS TRUE");
     result.views.push({
       name: result.queryViewMeta.rootViewName,
       sql: rootViewSql

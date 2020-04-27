@@ -17,23 +17,23 @@ export const columnExtensionOneToMany: IColumnExtension = {
   type: "oneToMany",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "OneToMany Column Properties",
-      "required": ["foreignColumnId"],
-      "properties": {
-        "foreignColumnId": {
-          "$id": "#/properties/foreignColumnId",
-          "type": "string",
-          "title": "FOREIGN_COLUMN_MANY_TO_ONE",
-          "description": "An foreignColumnId another table",
-          "pattern": "^(.*)$"
-        },
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "OneToMany Column Properties",
+      required: ["foreignColumnId"],
+      properties: {
+        foreignColumnId: {
+          $id: "#/properties/foreignColumnId",
+          type: "string",
+          title: "FOREIGN_COLUMN_MANY_TO_ONE",
+          description: "An foreignColumnId another table",
+          pattern: "^(.*)$"
+        }
       },
-      "additionalProperties": false
-    }
+      additionalProperties: false
+    };
   },
   validateProperties: (context: IColumnExtensionContext) => {
     const result: IPropertieValidationResult = {
@@ -43,14 +43,14 @@ export const columnExtensionOneToMany: IColumnExtension = {
     const properties = context.column.properties || {};
 
     if (uuidValidate(properties.foreignColumnId) !== true) {
-        result.errors.push({
-          message: `The property 'foreignColumnId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
-          meta: {
-            tableId: context.table.id,
-            columnId: context.column.id
-          }
-        });
-      } else {
+      result.errors.push({
+        message: `The property 'foreignColumnId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'oneToMany'.`,
+        meta: {
+          tableId: context.table.id,
+          columnId: context.column.id
+        }
+      });
+    } else {
       const foreignRelation = findTableColumnInSchemaByColumnId(context.schema, properties.foreignColumnId);
 
       if (foreignRelation == null) {
@@ -83,8 +83,8 @@ export const columnExtensionOneToMany: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     const foreignRelation = findTableColumnInSchemaByColumnId(context.schema, context.column.properties.foreignColumnId);
 

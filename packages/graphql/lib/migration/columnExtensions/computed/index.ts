@@ -9,7 +9,7 @@ import {
 } from "../IColumnExtension";
 import { IDbMutationColumn, IDbMutation } from "../../DbSchemaInterface";
 import * as uuidValidate from "uuid-validate";
-import { findTableById, getPgSelector, findAppliedExpressionById, getPgRegClass } from "../../helpers";
+import { findTableById, getPgSelector, findExpressionById, getPgRegClass } from "../../helpers";
 import { PoolClient } from "@fullstack-one/core";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 
@@ -17,36 +17,31 @@ export const columnExtensionComputed: IColumnExtension = {
   type: "computed",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "Computed Column Properties",
-      "required": ["appliedExpressionId"],
-      "properties": {
-        "appliedExpressionId": {
-          "$id": "#/properties/appliedExpressionId",
-          "type": "string",
-          "title": "APPLIED_EXPRESSION",
-          "description": "An appliedExpressionId from the local table",
-          "default": "",
-          "examples": [
-            "caa8b54a-eb5e-4134-8ae2-a3946a428ec7"
-          ],
-          "pattern": "^(.*)$"
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "Computed Column Properties",
+      required: ["expressionId"],
+      properties: {
+        expressionId: {
+          $id: "#/properties/expressionId",
+          type: "string",
+          title: "EXPRESSION",
+          description: "An expressionId from the local table",
+          default: "",
+          examples: ["caa8b54a-eb5e-4134-8ae2-a3946a428ec7"],
+          pattern: "^(.*)$"
         },
-        "moveSelectToQuery": {
-          "$id": "#/properties/moveSelectToQuery",
-          "type": "boolean",
-          "title": "Select the column in QueryBuilder not in view",
-          "default": false,
-          "examples": [
-            true,
-            false
-          ]
+        moveSelectToQuery: {
+          $id: "#/properties/moveSelectToQuery",
+          type: "boolean",
+          title: "Select the column in QueryBuilder not in view",
+          default: false,
+          examples: [true, false]
         }
       },
-      "additionalProperties": false
+      additionalProperties: false
     };
   },
   validateProperties: (context: IColumnExtensionContext) => {
@@ -56,19 +51,19 @@ export const columnExtensionComputed: IColumnExtension = {
     };
     const properties = context.column.properties || {};
 
-    if (uuidValidate(properties.appliedExpressionId) !== true) {
+    if (uuidValidate(properties.expressionId) !== true) {
       result.errors.push({
-        message: `The property 'appliedExpressionId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'.`,
+        message: `The property 'expressionId' must be an uuid on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'.`,
         meta: {
           tableId: context.table.id,
           columnId: context.column.id
         }
       });
     } else {
-      const appliedExpression = findAppliedExpressionById(context.table, properties.appliedExpressionId);
-      if (appliedExpression == null) {
+      const expression = findExpressionById(context.schema, properties.expressionId);
+      if (expression == null) {
         result.errors.push({
-          message: `The property 'appliedExpressionId' must be an id defined on the same table on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'. Could not find it.`,
+          message: `The property 'expressionId' must be a valid and existing expressionId on '${context.table.schema}.${context.table.name}.${context.column.name}' for type 'computed'. Could not find it.`,
           meta: {
             tableId: context.table.id,
             columnId: context.column.id
@@ -86,13 +81,13 @@ export const columnExtensionComputed: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     const moveSelectToQuery = context.column.properties != null && context.column.properties.moveSelectToQuery === true;
 
-    const compiledExpression = getCompiledExpressionById(context.column.properties.appliedExpressionId, moveSelectToQuery !== true);
-    const directCompiledExpression = getDirectCompiledExpressionById(context.column.properties.appliedExpressionId);
+    const compiledExpression = getCompiledExpressionById(context.column.properties.expressionId, moveSelectToQuery !== true);
+    const directCompiledExpression = getDirectCompiledExpressionById(context.column.properties.expressionId);
 
     const queryFieldData: IQueryFieldData = {
       field: `${context.column.name}: ${compiledExpression.gqlReturnType}`,
@@ -108,7 +103,11 @@ export const columnExtensionComputed: IColumnExtension = {
     if (context.column.properties != null && context.column.properties.moveSelectToQuery === true) {
       queryFieldData.pgSelectExpression = `TRUE`;
       queryFieldData.pgRootSelectExpression = `TRUE`;
-      queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(context.column.name)} IS TRUE THEN (SELECT ${directCompiledExpression.renderedSql.replace(/_local_table_/g, "_temp_")} FROM ${getPgRegClass(context.table)} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL END`;
+      queryFieldData.columnSelectExpressionTemplate = `CASE WHEN "{_local_table_}".${getPgSelector(
+        context.column.name
+      )} IS TRUE THEN (SELECT ${directCompiledExpression.renderedSql.replace(/_local_table_/g, "_temp_")} FROM ${getPgRegClass(
+        context.table
+      )} _temp_ WHERE _temp_.id = "{_local_table_}".id) ELSE NULL END`;
     }
 
     return queryFieldData;

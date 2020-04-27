@@ -18,13 +18,13 @@ export const columnExtensionCreatedAt: IColumnExtension = {
   type: "createdAt",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "CreatedAt Column Properties",
-      "additionalProperties": false
-    }
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "CreatedAt Column Properties",
+      additionalProperties: false
+    };
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (context: IColumnExtensionContext): string => {
@@ -33,8 +33,8 @@ export const columnExtensionCreatedAt: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${context.column.name}: String`,
@@ -65,7 +65,7 @@ export const columnExtensionCreatedAt: IColumnExtension = {
     return {
       errors: [],
       warnings: [],
-      commands: [{ sqls, operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN+ (context.columnIndex != null ? context.columnIndex / 100 : 0) }]
+      commands: [{ sqls, operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0) }]
     };
   },
   update: async (context: IColumnExtensionContext, columnInfo: IColumnInfo): Promise<IGqlMigrationResult> => {

@@ -25,13 +25,13 @@ export const columnExtensionId: IColumnExtension = {
   type: "id",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "Id Column Properties",
-      "additionalProperties": false
-    }
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "Id Column Properties",
+      additionalProperties: false
+    };
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName: (): string => {
@@ -40,8 +40,8 @@ export const columnExtensionId: IColumnExtension = {
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `id: ID`,

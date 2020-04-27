@@ -27,59 +27,52 @@ export const columnExtensionEnum: IColumnExtension = {
   type: "enum",
   getPropertiesDefinition: () => {
     return {
-      "definitions": {},
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "$id": "http://example.com/root.json",
-      "type": "object",
-      "title": "ManyToOne Column Properties",
-      "required": ["values"],
-      "properties": {
-        "values": {
-          "$id": "#/properties/values",
-          "type": "array",
-          "title": "ENUM_VALUES",
-          "uniqueItems": true,
-          "items": {
-            "$id": "#/properties/values/items",
-            "type": "string",
-            "title": "An enum value",
-            "examples": [
-              "FOO",
-              "BAR"
-            ],
-            "pattern": "^(.*)$"
+      definitions: {},
+      $schema: "http://json-schema.org/draft-07/schema#",
+      $id: "http://example.com/root.json",
+      type: "object",
+      title: "ManyToOne Column Properties",
+      required: ["values"],
+      properties: {
+        values: {
+          $id: "#/properties/values",
+          type: "array",
+          title: "ENUM_VALUES",
+          uniqueItems: true,
+          items: {
+            $id: "#/properties/values/items",
+            type: "string",
+            title: "An enum value",
+            examples: ["FOO", "BAR"],
+            pattern: "^(.*)$"
           }
         },
-        "nullable": {
-          "$id": "#/properties/nullable",
-          "type": "boolean",
-          "title": "Is column nullable or not",
-          "default": true,
-          "examples": [
-            true
-          ]
+        nullable: {
+          $id: "#/properties/nullable",
+          type: "boolean",
+          title: "Is column nullable or not",
+          default: true,
+          examples: [true]
         },
-        "defaultExpression": {
-          "$id": "#/properties/defaultExpression",
-          "type": "string",
-          "title": "The default value of the column as pg expression",
-          "default": null,
-          "examples": [
-            "'foobar'::text"
-          ],
-          "pattern": "^(.*)$"
+        defaultExpression: {
+          $id: "#/properties/defaultExpression",
+          type: "string",
+          title: "The default value of the column as pg expression",
+          default: null,
+          examples: ["'foobar'::text"],
+          pattern: "^(.*)$"
         }
       },
-      "additionalProperties": false
-    }
+      additionalProperties: false
+    };
   },
   // Get the columnName in DB (e.g. userId instead of user). Overwrite and return null if it is a virtual column
   getPgColumnName,
   getQueryFieldData: (
     context: IColumnExtensionContext,
     localTableAlias: string,
-    getCompiledExpressionById: (appliedExpressionId: string, addToList: boolean) => ICompiledExpression,
-    getDirectCompiledExpressionById: (appliedExpressionId: string) => ICompiledExpression
+    getCompiledExpressionById: (expressionId: string, addToList: boolean) => ICompiledExpression,
+    getDirectCompiledExpressionById: (expressionId: string) => ICompiledExpression
   ): IQueryFieldData => {
     return {
       field: `${getPgColumnName(context)}: Enum_${context.table.name}_${context.column.name}`,
