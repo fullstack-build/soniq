@@ -91,7 +91,7 @@ export const appConfig: IAppConfig = {
 export const pgConfig = {
   user: 'postgres',
   host: 'localhost',
-  database: 'one-mig-3',
+  database: 'one-mig-4',
   password: '',
   port: 5432,
 };
