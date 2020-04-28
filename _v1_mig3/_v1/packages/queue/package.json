@@ -1,0 +1,40 @@
+{
+  "name": "@fullstack-one/queue",
+<<<<<<< HEAD:_v1/packages/queue/package.json
+  "version": "0.6.23",
+=======
+  "version": "0.6.3",
+>>>>>>> mig3:packages/queue/package.json
+  "description": "fullstack.one queue package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+<<<<<<< HEAD:_v1/packages/queue/package.json
+    "@fullstack-one/boot-loader": "^0.6.23",
+    "@fullstack-one/config": "^0.6.23",
+    "@fullstack-one/db": "^0.6.23",
+    "@fullstack-one/di": "^0.6.23",
+    "@fullstack-one/graceful-shutdown": "^0.6.23",
+    "@fullstack-one/logger": "^0.6.23",
+=======
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/logger": "^0.5.25",
+>>>>>>> mig3:packages/queue/package.json
+    "pg-boss": "^3.1.0"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
+}

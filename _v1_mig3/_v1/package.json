@@ -1,0 +1,120 @@
+{
+  "name": "fullstack-one-repo",
+  "version": "0.1.0",
+  "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
+  "engines": {
+    "node": ">=10",
+    "npm": ">=8"
+  },
+  "main": "packages/server/main",
+  "scripts": {
+    "fix-style": "tslint-config-prettier-check ./tslint.json && npm run prettier && npm run tslint-fix",
+    "prettier": "prettier --write **/*.ts",
+    "tslint-fix": "tslint --project . --fix",
+    "tslint": "tslint --project .",
+    "docker-tslint": "sh docker/tslint.sh",
+    "test": "ava --verbose",
+    "docker-test": "sh docker/test.sh",
+    "coverage": "nyc --reporter=html --reporter=text ava --verbose",
+    "lerna-bootstrap": "lerna bootstrap",
+    "lerna-publish": "npm run clean:dist && npm run build && npm run lerna-publish-now",
+    "lerna-publish-now": "lerna publish",
+    "build": "lerna run build",
+    "clean:dist": "lerna exec -- rm -rf ./dist",
+    "clean:modules": "lerna clean",
+    "reinstall": "npm run clean:modules && npm run clean:dist && npm run lerna-bootstrap && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [
+    "PostgreSQL",
+    "Node.js",
+    "GraphQL",
+    "TypeScript",
+    "API",
+    "Framework"
+  ],
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/fullstack.one/issues"
+  },
+  "homepage": "https://github.com/fullstack-build/fullstack.one#readme",
+  "devDependencies": {
+    "@types/node": "^8.10.54",
+    "git-hooks": "^1.1.10",
+    "lerna": "^3.20.2",
+    "nyc": "^14.1.1",
+    "prettier": "^1.18.2",
+    "source-map-support": "^0.5.12",
+    "ts-node-dev": "^1.0.0-pre.43",
+    "tslint": "^5.20.0",
+    "tslint-config-airbnb": "^5.11.2",
+    "tslint-config-airbnb-base": "^0.1.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1"
+  },
+  "dependencies": {
+    "ava": "^2.4.0",
+    "reflect-metadata": "^0.1.13",
+    "ts-node": "^3.3.0",
+    "tsutils": "^2.28.0",
+    "typescript": "^3.3.4000"
+  },
+  "prettier": {
+    "printWidth": 150,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "none",
+    "bracketSpacing": true,
+    "arrowParens": "always"
+  },
+  "ava": {
+    "files": [
+      "packages/**/test/**/*",
+      "!packages/**/test/mock/**/*",
+      "!packages/**/test/queryBuildTestData/**/*",
+      "!packages/**/test/mutationBuildTestData/**/*"
+    ],
+    "helpers": [
+      "packages/**/test/mock/*",
+      "packages/**/test/helpers/*",
+      "packages/**/test/queryBuildTestData/**/*",
+      "packages/**/test/mutationBuildTestData/**/*"
+    ],
+    "sources": [
+      "packages/**/lib/**/*"
+    ],
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "nyc": {
+    "include": [
+      "packages/**/lib/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true
+  }
+}
