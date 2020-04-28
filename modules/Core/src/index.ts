@@ -8,7 +8,7 @@ import {
   InjectMany,
 } from "typedi";
 export { Service, Container, ContainerInstance, Inject, InjectMany };
-import { Logger } from "tslog";
+import { Logger, TLogLevelName } from "tslog";
 import { BootLoader } from "./BootLoader";
 import { ConfigManager, IEnvironment } from "./ConfigManager";
 export { IEnvironment };
@@ -35,8 +35,9 @@ export class Core {
     );
     // TODO: catch all errors & exceptions
     this._logger = new Logger({
-      instanceId: this.ENVIRONMENT.nodeId,
+      instanceName: this.ENVIRONMENT.nodeId,
       name: this._className,
+      displayInstanceName: true,
     });
     this._bootLoader = new BootLoader(this._logger);
   }
@@ -65,14 +66,15 @@ export class Core {
 
   public getLogger(
     name?: string,
-    minLevel: number = 0,
+    minLevel: TLogLevelName = "silly",
     exposeStack: boolean = false
   ): Logger {
     return new Logger({
-      instanceId: this.ENVIRONMENT.nodeId,
+      instanceName: this.ENVIRONMENT.nodeId,
       name,
       minLevel,
       exposeStack,
+      displayInstanceName: true,
     });
   }
 }
