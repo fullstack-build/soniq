@@ -1,0 +1,36 @@
+{
+  "name": "@fullstack-one/notifications",
+  "version": "0.6.3",
+  "description": "fullstack.one notifications package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/events": "^0.5.25",
+    "@fullstack-one/logger": "^0.5.25",
+    "@fullstack-one/queue": "^0.6.3",
+    "mailgen": "^2.0.5",
+    "nodemailer": "^4.6.8",
+    "nodemailer-direct-transport": "^3.3.2",
+    "nodemailer-html-to-text": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/mailgen": "^2.0.1",
+    "@types/nodemailer": "^4.3.2"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
+}

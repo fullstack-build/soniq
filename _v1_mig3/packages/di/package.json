@@ -1,0 +1,24 @@
+{
+  "name": "@fullstack-one/di",
+  "version": "0.5.20",
+  "description": "fullstack.one helper package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.8.0"
+  }
+}

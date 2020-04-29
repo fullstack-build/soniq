@@ -1,0 +1,26 @@
+{
+  "name": "@fullstack-one/logger",
+  "version": "0.5.25",
+  "description": "fullstack.one logger package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/di": "^0.5.20",
+    "debug-logger": "^0.4.1",
+    "tracer": "^0.9.8"
+  }
+}

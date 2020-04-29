@@ -1,5 +1,5 @@
 dependencies:
-  tslog: 1.0.0-dev.21
+  tslog: 1.0.1
 devDependencies:
   '@rushstack/eslint-config': 0.5.7_eslint@6.8.0+typescript@3.8.3
   '@types/node': 13.11.0
@@ -1352,13 +1352,13 @@ packages:
     dev: true
     resolution:
       integrity: sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
-  /tslog/1.0.0-dev.21:
+  /tslog/1.0.1:
     dependencies:
       chalk: 4.0.0
       source-map-support: 0.5.19
     dev: false
     resolution:
-      integrity: sha512-QdOnDRvry9fPMkf/jwJkOAPizr1rYPaqAgQrN91mWAbPAfl9gOTYEzZ01583mhvK/vDkQbb5wx5b79xMRF3RTA==
+      integrity: sha512-yJQqwD5hWefxslc2qFRC3qCo6pp56ykQTOT9/cu4MqQrtsNYZnSyErkXqhcq5qRhrEEdU04OFHGpZNrD4/tsVA==
   /tsutils/3.17.1_typescript@3.8.3:
     dependencies:
       tslib: 1.11.1
@@ -1439,5 +1439,5 @@ specifiers:
   eslint-config-prettier: ^6.10.1
   eslint-plugin-prettier: ^3.1.2
   prettier: ^2.0.4
-  tslog: ~1.0.0-dev.21
+  tslog: ~1.0.1
   typescript: ^3.8.3

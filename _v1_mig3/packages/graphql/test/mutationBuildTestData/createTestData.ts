@@ -1,0 +1,38 @@
+import { IMutationBuildObject, IParsedResolveInfo, IMutationInputObject } from "../../lib/getDefaultResolvers/types";
+import { ICreateViewMeta } from "@fullstack-one/schema-builder";
+import { IMutationBuildTestData } from "./types";
+
+const query: IParsedResolveInfo<IMutationInputObject> = {
+  name: "MOVIE_CREATE_ME",
+  alias: "MOVIE_CREATE_ME",
+  args: {
+    input: {
+      title: "Pulp Fiction",
+      author: "Quentin Tarantino"
+    }
+  },
+  fieldsByTypeName: {}
+};
+
+const mutation: ICreateViewMeta = {
+  name: "MOVIE_CREATE_ME",
+  viewSchemaName: "_graphql",
+  viewName: "MOVIE_CREATE_ME",
+  type: "CREATE",
+  requiresAuth: false,
+  gqlTypeName: "Movie",
+  gqlReturnTypeName: "ID",
+  extensions: {},
+  gqlInputTypeName: "MOVIE_CREATE_ME"
+};
+
+const expected: IMutationBuildObject = {
+  sql: `INSERT INTO "_graphql"."MOVIE_CREATE_ME" ("title", "author") VALUES ($1, $2);`,
+  values: ["Pulp Fiction", "Quentin Tarantino"],
+  mutation,
+  id: null
+};
+
+const data: IMutationBuildTestData = { query, mutation, expected };
+
+export default data;

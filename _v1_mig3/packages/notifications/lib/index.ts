@@ -1,0 +1,1 @@
+export { NotificationsEmail } from "./NotificationsEmail";
