@@ -14,16 +14,17 @@ import { ConfigManager, IEnvironment } from "./ConfigManager";
 export { IEnvironment };
 export { Logger };
 
+// TODO: move somewhere else later
 process.on("unhandledRejection", (reason, p) => {
   console.error("Unhandled Rejection:", reason);
 });
 
-@Service("@soniq")
+@Service()
 export class Core {
   private readonly _className: string = this.constructor.name;
   private readonly _bootLoader: BootLoader;
   private readonly _logger: Logger;
-  public readonly configManager: ConfigManager | undefined;
+  public readonly configManager: ConfigManager;
   public readonly ENVIRONMENT: IEnvironment;
 
   public constructor() {

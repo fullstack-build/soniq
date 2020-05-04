@@ -78,20 +78,20 @@ export class ConfigManager {
     this._config[name] = configModule;
   }
 
-  public registerConfig(name: string, configDirectory: string): object {
+  public registerConfig<T>(name: string, configDirectory: string): T {
     const baseConfigModule: object = this._getConfigFromConfigFiles(
       configDirectory
     );
     this._applyConfigModule(name, baseConfigModule);
-    return this.getConfig(name);
+    return this.getConfig<T>(name);
   }
 
-  public registerApplicationConfigModule(name: string): object {
+  public registerApplicationConfigModule<T>(name: string): T {
     this._applyConfigModule(name, {});
-    return this.getConfig(name);
+    return this.getConfig<T>(name);
   }
 
-  public getConfig(name: string): object {
+  public getConfig<T>(name: string): T {
     if (!_.has(this._config, name)) {
       throw new Error(`config.module.not.found module name: ${name}`);
     }

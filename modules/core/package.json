@@ -1,0 +1,45 @@
+{
+  "name": "soniq",
+  "version": "1.0.0-dev.3",
+  "description": "A PostgreSQL centric GraphQL Framework",
+  "main": "index",
+  "typings": "src/index",
+  "scripts": {
+    "build": "tsc",
+    "eslint": "eslint . --ext .ts",
+    "eslint-fix": "eslint . --ext .ts --fix",
+    "test": "jest"
+  },
+  "eslintConfig": {
+    "extends": "../../eslintrc.js"
+  },
+  "jest": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/soniq.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/soniq/issues"
+  },
+  "homepage": "https://soniq.js.org",
+  "devDependencies": {
+    "@rushstack/eslint-config": "^0.5.7",
+    "@types/lodash": "~4.14.150",
+    "@types/node": "^13.13.4",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5"
+  },
+  "dependencies": {
+    "lodash": "~4.17.15",
+    "reflect-metadata": "~0.1.13",
+    "tslog": "1.1.1",
+    "typedi": "~0.8.0"
+  }
+}
