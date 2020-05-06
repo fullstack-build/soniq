@@ -7,7 +7,7 @@ FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" | sed 's| |\\ |g
 [ -z "$FILES" ] && exit 0
 
 # Prettify all selected files
-echo "$FILES" | xargs ./node_modules/.bin/prettier --write
+echo "$FILES" | xargs ./common/temp/node_modules/.bin/prettier --write
 
 # ESLint
 echo "$FILES" | xargs ./common/temp/node_modules/.bin/eslint --ext .ts --ignore-pattern 'tests/*' --ignore-pattern '_v1/*'  --ignore-pattern '_v1_mig3/*'
