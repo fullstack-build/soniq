@@ -1,9 +1,9 @@
 import * as crypto from "crypto";
 import { PoolClient } from "@fullstack-one/core";
-import { IQueryBuildOject } from "../QueryBuilder";
+import { IQueryBuildObject } from "../QueryBuilder";
 import { UserInputError } from "../../GraphqlErrors";
 
-export default async function checkCosts(pgClient: PoolClient, queryBuild: IQueryBuildOject, costLimit: number) {
+export default async function checkCosts(pgClient: PoolClient, queryBuild: IQueryBuildObject, costLimit: number) {
   const currentCost = await getCurrentCosts(pgClient, queryBuild);
 
   if (currentCost > costLimit) {
@@ -26,7 +26,7 @@ function toSha1Base64Hash(input: string): string {
 const costCache = {};
 const COST_CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // TODO Dustin put in config
 
-async function getCurrentCosts(pgClient: PoolClient, queryBuild: IQueryBuildOject) {
+async function getCurrentCosts(pgClient: PoolClient, queryBuild: IQueryBuildObject) {
   const queryHash: string = toSha1Base64Hash(queryBuild.sql + queryBuild.values.join(""));
 
   if (costCache[queryHash] != null) {

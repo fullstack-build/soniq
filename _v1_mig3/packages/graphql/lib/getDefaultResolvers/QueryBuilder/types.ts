@@ -1,8 +1,9 @@
-export interface IQueryBuildOject {
+export interface IQueryBuildObject {
   sql: string;
   values: any[];
   queryName: string;
   authRequired: boolean;
+  useRootViews: boolean;
   subqueryCount: number;
 }
 
