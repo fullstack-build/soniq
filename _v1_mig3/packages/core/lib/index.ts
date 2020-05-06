@@ -28,7 +28,7 @@ import {
 import * as Ajv from "ajv";
 
 export interface IGetModuleRuntimeConfigResult {
-  runtimeConfig: IModuleRuntimeConfig,
+  runtimeConfig: IModuleRuntimeConfig;
   hasBeenUpdated: boolean;
 }
 
@@ -57,6 +57,7 @@ export class Core {
   private state: EBootState = EBootState.Initial;
 
   private modules: IModuleCoreFunctions[] = [];
+  // tslint:disable-next-line:array-type
   private bootReadyPromiseResolver: ((value?: any) => void)[] = [];
 
   private readonly logger: ILogger;

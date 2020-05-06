@@ -9,7 +9,7 @@ import { IDefaultMutationResolverContext, IMatch } from "./types";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import MutationBuilder, { IMutationBuildObject } from "./MutationBuilder";
-import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
+import QueryBuilder, { IQueryBuildObject } from "./QueryBuilder";
 import { ReturnIdHandler } from "../resolverTransactions/ReturnIdHandler";
 import { UserInputError } from "../GraphqlErrors";
 import { ICustomResolverCreator } from "../resolverTransactions";
@@ -25,13 +25,16 @@ export default function getDefaultMutationResolver(
       usesPgClientFromContext: true,
       resolver: async (obj, args, context: any, info, returnIdHandler: ReturnIdHandler) => {
         const isAuthenticated = context.accessToken != null;
+        const useRootViews = context.useRootViews === true;
 
         const mutationBuild: IMutationBuildObject = mutationBuilder.build(info, returnIdHandler);
         context.ctx.state.includesMutation = true;
 
+        const useContextPgClient = context.pgClient != null;
+
         const pgClient: PoolClient = context._transactionPgClient;
 
-        await hookManager.executePreQueryHooks(pgClient, context, context.accessToken != null, mutationBuild);
+        await hookManager.executePreQueryHooks(pgClient, context, isAuthenticated, mutationBuild, useContextPgClient);
 
         logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
@@ -43,7 +46,7 @@ export default function getDefaultMutationResolver(
           });
         }
 
-        let returnQueryBuild: IQueryBuildOject | undefined;
+        let returnQueryBuild: IQueryBuildObject | undefined;
         let returnData: any;
         let entityId = mutationBuild.id || null;
         let match: IMatch | undefined;
@@ -77,7 +80,7 @@ export default function getDefaultMutationResolver(
           };
 
           // Generate sql query for response-data of the mutation
-          returnQueryBuild = queryBuilder.build(info, isAuthenticated, match);
+          returnQueryBuild = queryBuilder.build(info, isAuthenticated, useRootViews, match);
 
           logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
 

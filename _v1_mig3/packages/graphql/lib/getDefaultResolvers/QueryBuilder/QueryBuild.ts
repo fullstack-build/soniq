@@ -1,7 +1,7 @@
 import { UserInputError } from "../../GraphqlErrors";
 import { IParsedResolveInfo, IMatch } from "../types";
 import { ClausesBuilder } from "./ClausesBuilder";
-import { IQueryBuildOject, IQueryClauseObject } from "./types";
+import { IQueryBuildObject, IQueryClauseObject } from "./types";
 import { IDefaultResolverMeta, IQueryViewMeta, IQueryFieldMeta } from "../../RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
 
@@ -147,7 +147,6 @@ export default class QueryBuild {
   }
 
   private getColumnExpressionTemplate(fieldMeta: IQueryFieldMeta, localName: string): string {
-    console.log('>>', fieldMeta);
     if (fieldMeta.rootOnlyColumn === true && this.useRootViews !== true) {
       throw new UserInputError(`The field '${fieldMeta.fieldName}' is only accessible with root privileges.`, { exposeDetails: true });
     }
@@ -155,15 +154,17 @@ export default class QueryBuild {
   }
 
   private getFromExpression(queryViewMeta: IQueryViewMeta, localName: string, authRequired: boolean): string {
+    // tslint:disable-next-line:prettier
     const viewName = this.useRootViews === true ? queryViewMeta.rootViewName : (authRequired === true ? queryViewMeta.authViewName : queryViewMeta.publicViewName);
     return `"${this.defaultResolverMeta.viewsSchemaName}"."${viewName}" AS "${localName}"`;
   }
 
-  public getBuildObject(): IQueryBuildOject {
+  public getBuildObject(): IQueryBuildObject {
     return {
       sql: this.sql,
       values: this.values,
       queryName: this.queryName,
+      useRootViews: this.useRootViews,
       authRequired: this.authRequired,
       subqueryCount: this.currentIndex + 1
     };

@@ -13,7 +13,15 @@ import {
 } from "@fullstack-one/core";
 import { Server } from "@fullstack-one/server";
 import { Config } from "@fullstack-one/config";
-import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError, AuthenticationError, ICustomResolverObject } from "@fullstack-one/graphql";
+import {
+  GraphQl,
+  ReturnIdHandler,
+  RevertibleResult,
+  UserInputError,
+  AuthenticationError,
+  ICustomResolverObject,
+  IQueryBuildObject
+} from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 import { CSRFProtection } from "./CSRFProtection";
@@ -113,9 +121,11 @@ export class Auth {
     this.addMiddleware(server);
   }
   private async migrate(appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
-    const authFactorProviders = this.authProviders.map((authProvider) => {
-      return authProvider.providerName;
-    }).join(":");
+    const authFactorProviders = this.authProviders
+      .map((authProvider) => {
+        return authProvider.providerName;
+      })
+      .join(":");
 
     return migrate(this.graphQl, appConfig, envConfig, pgClient, authFactorProviders);
   }
@@ -127,7 +137,7 @@ export class Auth {
     this.updateHelpers(runtimeConfig);
   }
 
-  private updateHelpers (runtimeConfig: any) {
+  private updateHelpers(runtimeConfig: any) {
     this.cryptoFactory = new CryptoFactory(runtimeConfig.secrets.encryptionKey, runtimeConfig.crypto.algorithm);
     this.signHelper = new SignHelper(runtimeConfig.secrets.admin, runtimeConfig.secrets.root, this.cryptoFactory);
 
@@ -166,12 +176,12 @@ export class Auth {
 
       const corsOptions = {
         ...runtimeConfig.corsOptions,
-        origin: (ctx) => {
-          return ctx.request.get("origin");
+        origin: (kctx) => {
+          return kctx.request.get("origin");
         }
       };
 
-      return await koaCors(corsOptions)(ctx, next);
+      return koaCors(corsOptions)(ctx, next);
     });
 
     // Parse AccessToken
@@ -182,11 +192,16 @@ export class Auth {
         this.accessTokenParser = new AccessTokenParser(runtimeConfig);
       }
 
-      return await this.accessTokenParser.parse(ctx, next);
+      return this.accessTokenParser.parse(ctx, next);
     });
   }
 
-  private async preQueryHook(pgClient, context, authRequired: boolean, buildObject) {
+  private async preQueryHook(pgClient, context, authRequired: boolean, buildObject: IQueryBuildObject, useContextPgClient: boolean) {
+    // Do nothing if this is a custom transaction
+    if (useContextPgClient === true) {
+      return;
+    }
+
     // If the current request is a query (not a mutation)
     if (context._isRequestGqlQuery === true) {
       if (authRequired === true && context.accessToken != null) {
@@ -198,8 +213,10 @@ export class Auth {
           throw err;
         }
       }
-      // TODO: Set root when available
-      // await this.authQueryHelper.setRoot(pgClient);
+      // Set root when required
+      if (buildObject.useRootViews === true) {
+        await this.authQueryHelper.setRoot(pgClient);
+      }
     } else {
       if (authRequired === true) {
         if (context.accessToken != null) {
@@ -434,9 +451,12 @@ export class Auth {
           usesPgClientFromContext: false,
           resolver: async (obj, args, context, info) => {
             return this.callAndHideErrorDetails(async () => {
-              return this.authQueryHelper.transaction(async (pgClientInternal) => {
-                return this.authConnector.getUserAuthentication(pgClientInternal, context.accessToken);
-              }, { accessToken: context.accessToken });
+              return this.authQueryHelper.transaction(
+                async (pgClientInternal) => {
+                  return this.authConnector.getUserAuthentication(pgClientInternal, context.accessToken);
+                },
+                { accessToken: context.accessToken }
+              );
             });
           }
         };

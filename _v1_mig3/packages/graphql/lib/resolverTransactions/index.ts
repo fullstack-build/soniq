@@ -146,6 +146,17 @@ function wrapMutationResolver<TSource, TContext, TParams>(
     }
 
     if (resolverMeta.usesPgClientFromContext === true) {
+      if (context.pgClient != null) {
+        context._transactionPgClient = context.pgClient;
+        const result = await resolverMeta.resolver(obj, args, context, info, returnIdHandler);
+
+        if (result instanceof RevertibleResult) {
+          return result.getResult();
+        } else {
+          return result;
+        }
+      }
+
       let rollbackFunction = null;
       let onCommitedHandler = null;
 

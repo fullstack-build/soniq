@@ -4,7 +4,7 @@ import { Pool } from "@fullstack-one/core";
 import { Container } from "@fullstack-one/di";
 import { ILogger } from "@fullstack-one/logger";
 
-import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
+import QueryBuilder, { IQueryBuildObject } from "./QueryBuilder";
 import checkCosts from "./checks/checkCosts";
 import checkQueryResultForInjection from "./checks/checkQueryResultForInjection";
 import { HookManager } from "../hooks";
@@ -21,17 +21,27 @@ export default function getDefaultQueryResolver(
       usesPgClientFromContext: false,
       resolver: async (obj, args, context, info, returnIdHandler) => {
         const isAuthenticated = context.accessToken != null;
+        const useRootViews = context.useRootViews === true;
 
-        const queryBuild: IQueryBuildOject = queryBuilder.build(info, isAuthenticated || process.env.FAKE_AUTHENTICATION_FOR_QUERIES === "true");
+        const queryBuild: IQueryBuildObject = queryBuilder.build(
+          info,
+          isAuthenticated || process.env.FAKE_AUTHENTICATION_FOR_QUERIES === "true",
+          useRootViews
+        );
 
-        const pgClient = await pgPool.connect();
+        const useContextPgClient = context.pgClient != null;
+
+        const pgClient = useContextPgClient ? context.pgClient : await pgPool.connect();
 
         try {
-          await pgClient.query("BEGIN;");
+          // Don't run transaction commands on context pgClients
+          if (useContextPgClient !== true) {
+            await pgClient.query("BEGIN;");
+          }
 
           setAuthRequiredInKoaStateForCacheHeaders(context, queryBuild.authRequired);
 
-          await hookManager.executePreQueryHooks(pgClient, context, queryBuild.authRequired, queryBuild);
+          await hookManager.executePreQueryHooks(pgClient, context, queryBuild.authRequired, queryBuild, useContextPgClient);
 
           logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
 
@@ -42,14 +52,23 @@ export default function getDefaultQueryResolver(
 
           const data = result.rows[0][queryBuild.queryName];
 
-          await pgClient.query("COMMIT;");
+          // Don't run transaction commands on context pgClients
+          if (useContextPgClient !== true) {
+            await pgClient.query("COMMIT;");
+          }
 
           return data;
         } catch (e) {
-          await pgClient.query("ROLLBACK;");
+          // Don't run transaction commands on context pgClients
+          if (useContextPgClient !== true) {
+            await pgClient.query("ROLLBACK;");
+          }
           throw e;
         } finally {
-          await pgClient.release();
+          // Don't run transaction commands on context pgClients
+          if (useContextPgClient !== true) {
+            await pgClient.release();
+          }
         }
       }
     };

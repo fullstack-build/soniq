@@ -1,6 +1,6 @@
 import { PoolClient } from "@fullstack-one/core";
 
-import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildOject } from "../getDefaultResolvers";
+import { IDefaultMutationResolverContext, IMutationBuildObject, IQueryBuildObject } from "../getDefaultResolvers";
 import { TPreQueryHookFunction } from "./types";
 
 export * from "./types";
@@ -16,10 +16,11 @@ export class HookManager {
     pgClient: PoolClient,
     context: IDefaultMutationResolverContext,
     authRequired: boolean,
-    buildObject: IMutationBuildObject | IQueryBuildOject
+    buildObject: IMutationBuildObject | IQueryBuildObject,
+    useContextPgClient: boolean
   ): Promise<void> {
     for (const hook of this.preQueryHooks) {
-      await hook(pgClient, context, authRequired, buildObject);
+      await hook(pgClient, context, authRequired, buildObject, useContextPgClient);
     }
   }
 }
