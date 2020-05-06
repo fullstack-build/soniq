@@ -30,17 +30,24 @@ export class AuthQueryHelper {
   }
 
   public async getCurrentUserIdFromAccessToken(accessToken: string) {
-    return this.transaction(async (pgClient) => {
-      return this.getCurrentUserIdFromClient(pgClient);
-    }, { accessToken });
+    return this.transaction(
+      async (pgClient) => {
+        return this.getCurrentUserIdFromClient(pgClient);
+      },
+      { accessToken }
+    );
   }
 
-  public async transaction(callback: (pgClient: PoolClient) => Promise<any>, transactionAuth: ITransactionAuth = {}, isolationLevel: IsolationLevel = "READ COMMITTED"): Promise<any> {
+  public async transaction(
+    callback: (pgClient: PoolClient) => Promise<any>,
+    transactionAuth: ITransactionAuth = {},
+    isolationLevel: IsolationLevel = "READ COMMITTED"
+  ): Promise<any> {
     const pgClient = await this.pgPool.connect();
 
     const tAuth: ITransactionAuth = {
       accessToken: transactionAuth.accessToken || null,
-      rootAccess: transactionAuth.rootAccess === true,
+      rootAccess: transactionAuth.rootAccess === true
     };
 
     try {
@@ -72,7 +79,7 @@ export class AuthQueryHelper {
 
     const tAuth: ITransactionAuth = {
       accessToken: transactionAuth.accessToken || null,
-      rootAccess: transactionAuth.rootAccess === true,
+      rootAccess: transactionAuth.rootAccess === true
     };
 
     try {

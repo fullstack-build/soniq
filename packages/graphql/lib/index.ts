@@ -36,7 +36,7 @@ import { IColumnExtension } from "./migration/columnExtensions/IColumnExtension"
 import { ISchemaExtension } from "./migration/schemaExtensions/ISchemaExtension";
 import { ITableExtension } from "./migration/tableExtensions/ITableExtension";
 import { IRuntimeConfigGql } from "./RuntimeInterfaces";
-import getDefaultResolvers from "./getDefaultResolvers";
+import getDefaultResolvers, { IQueryBuildObject } from "./getDefaultResolvers";
 import { migrate } from "./basicMigration";
 import { createMergeResultFunction } from "./migration/helpers";
 import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
@@ -51,7 +51,8 @@ export {
   ICustomResolverObject,
   ICustomResolverMeta,
   ICustomResolverCreator,
-  ICustomFieldResolver
+  ICustomFieldResolver,
+  IQueryBuildObject
 };
 
 export * from "./migration/DbSchemaInterface";
@@ -147,9 +148,6 @@ export class GraphQl {
     const app = this.server.getApp();
 
     applyApolloMiddleware(app, getRuntimeConfig, pgPool, this.resolvers, this.graphQlConfig, this.logger, this.hookManager, this.operatorsBuilder);
-  }
-  private async bootStudio(getModuleConfig: () => IModuleConfig, setModuleConfig: (moduleConfig: IModuleConfig) => void, server) {
-    
   }
   /* =====================================================================
       EXTERNAL EXTENSIONS
