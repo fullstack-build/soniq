@@ -1,6 +1,6 @@
 {
   "name": "@soniq/server",
-  "version": "1.0.0",
+  "version": "1.0.0-dev.3",
   "description": "@soniq/server",
   "main": "index",
   "typings": "src/index",
