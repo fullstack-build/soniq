@@ -432,6 +432,13 @@
       "shouldPublish": true,
       "versionPolicyName": "soniq"
     },
+    // shared eslint config
+    {
+      "packageName": "@soniq/eslint-config",
+      "projectFolder": "modules/eslint-config",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
     // examples
     {
       "packageName": "@soniq/examples_01",

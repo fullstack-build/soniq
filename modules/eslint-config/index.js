@@ -5,11 +5,18 @@ module.exports = {
   plugins: ["prettier"],
   rules: {
     "prettier/prettier": "error",
-    "eqeqeq": [2, "smart"]
+    eqeqeq: [2, "smart"],
   },
-  extends: ["./common/temp/node_modules/@rushstack/eslint-config", "plugin:prettier/recommended"],
-  "ignorePatterns": ["node_modules/", "dist/", "tests", "*.test.ts", "_v1", "_v1_mig3"],
+  extends: ["@rushstack/eslint-config", "plugin:prettier/recommended"],
+  ignorePatterns: [
+    "node_modules/",
+    "dist/",
+    "tests",
+    "*.test.ts",
+    "_v1",
+    "_v1_mig3",
+  ],
   env: {
-    node: true
-  }
+    node: true,
+  },
 };
