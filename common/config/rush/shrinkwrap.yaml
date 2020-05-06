@@ -1,4 +1,5 @@
 dependencies:
+  '@rush-temp/eslint-config': 'file:projects/eslint-config.tgz'
   '@rush-temp/examples_01': 'file:projects/examples_01.tgz'
   '@rush-temp/server': 'file:projects/server.tgz'
   '@rush-temp/soniq': 'file:projects/soniq.tgz'
@@ -21,7 +22,6 @@ dependencies:
   prettier: 2.0.5
   pretty-error: 2.1.1
   reflect-metadata: 0.1.13
-  soniq: 1.0.0-dev.3
   ts-node: 8.9.1
   tslog: 1.1.1
   typedi: 0.8.0
@@ -1055,6 +1055,19 @@ packages:
     dev: false
     engines:
       node: '>=6.0.0'
+    peerDependencies:
+      eslint: '>= 5.0.0'
+      prettier: '>= 1.13.0'
+    resolution:
+      integrity: sha512-+HG5jmu/dN3ZV3T6eCD7a4BlAySdN7mLIbJYo0z1cFQuI+r2DiTJEFeF68ots93PsnrMxbzIZ2S/ieX+mkrBeQ==
+  /eslint-plugin-prettier/3.1.3/eslint@6.8.0:
+    dependencies:
+      eslint: 6.8.0
+      prettier-linter-helpers: 1.0.0
+    dev: false
+    engines:
+      node: '>=6.0.0'
+    id: registry.npmjs.org/eslint-plugin-prettier/3.1.3
     peerDependencies:
       eslint: '>= 5.0.0'
       prettier: '>= 1.13.0'
@@ -2957,6 +2970,18 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
+  'file:projects/eslint-config.tgz':
+    dependencies:
+      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0
+      eslint: 6.8.0
+      eslint-config-prettier: /eslint-config-prettier/6.11.0/eslint@6.8.0
+      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0
+    dev: false
+    name: '@rush-temp/eslint-config'
+    resolution:
+      integrity: sha512-GBOR2Zc2SQiwX3ldANugs+l4wNU8oCQ7Ih+BZfgCFt7vE9Ja3MPoA1Xb/vsyZ9+nXuyh4lpDU9Ti1BK3wrd14Q==
+      tarball: 'file:projects/eslint-config.tgz'
+    version: 0.0.0
   'file:projects/examples_01.tgz':
     dependencies:
       '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0+typescript@3.8.3
@@ -2976,7 +3001,7 @@ packages:
     dev: false
     name: '@rush-temp/examples_01'
     resolution:
-      integrity: sha512-4B3gBOTV2aUphZoqOleel4c9qncoVoW1h9Jo6LuyZltCSWioKCdWCztLV4g7pKb12nsRQCqx3qq9tSecvRrDHA==
+      integrity: sha512-HS7pP1IRh8X9PScXMTj9dJWJ0Xrzw2/0BUZuDYexVrORLKFJTLSApzCWfdpSK882ntTke5bfLwYWYhHTBOFDqg==
       tarball: 'file:projects/examples_01.tgz'
     version: 0.0.0
   'file:projects/server.tgz':
@@ -2995,7 +3020,7 @@ packages:
     dev: false
     name: '@rush-temp/server'
     resolution:
-      integrity: sha512-YIjVQyVuD+d2YmpE9/RnLZs6jTdm18Swu7JDVLf4iHmcAbZabwKvO+N1X3ZHpWApgT4U4EUL5LWf1w/NDUks/Q==
+      integrity: sha512-EC4gglfyisG1Upgx1AW0072/brPl2ThJRVYRQ5e3dzVuhrQR1/MdIfihpd8eTSv9aBPPo3y8x13VgmKCEDtXQg==
       tarball: 'file:projects/server.tgz'
     version: 0.0.0
   'file:projects/soniq.tgz':
@@ -3014,13 +3039,14 @@ packages:
     dev: false
     name: '@rush-temp/soniq'
     resolution:
-      integrity: sha512-R9sL6g09A98SU+cqEyfreyAXY2wFBfoE1IYrUoMpScQiKlzqnM2TD4lGJQlcgt/R1gJH7cgrQrDh1KRbnJn/HQ==
+      integrity: sha512-nCpm2ujYIlNc7B3l0qAr8dqZ3isdpivGqF3Kpx2jBhB40ORo3xX0jSD1FD3Q7q0Edpf7xnDec214aByac5ft5A==
       tarball: 'file:projects/soniq.tgz'
     version: 0.0.0
 registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
 specifiers:
+  '@rush-temp/eslint-config': 'file:./projects/eslint-config.tgz'
   '@rush-temp/examples_01': 'file:./projects/examples_01.tgz'
   '@rush-temp/server': 'file:./projects/server.tgz'
   '@rush-temp/soniq': 'file:./projects/soniq.tgz'
@@ -3043,8 +3069,7 @@ specifiers:
   prettier: ^2.0.4
   pretty-error: ^2.1.1
   reflect-metadata: ~0.1.13
-  soniq: latest
   ts-node: ~8.9.1
-  tslog: latest
+  tslog: 1.1.1
   typedi: ~0.8.0
   typescript: ^3.8.3

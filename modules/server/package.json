@@ -11,7 +11,7 @@
     "test": "jest"
   },
   "eslintConfig": {
-    "extends": "../../eslintrc.js"
+    "extends": "@soniq/eslint-config"
   },
   "jest": {},
   "repository": {
