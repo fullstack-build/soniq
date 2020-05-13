@@ -1,11 +1,15 @@
 // This is a workaround for https://github.com/eslint/eslint/issues/3458
-require("./common/temp/node_modules/@rushstack/eslint-config/patch-eslint6");
+require("@rushstack/eslint-config/patch-eslint6");
+
+const prettierConfig = require("./prettier.config");
 
 module.exports = {
   plugins: ["prettier"],
   rules: {
-    "prettier/prettier": "error",
+    "prettier/prettier": ["error", prettierConfig],
     eqeqeq: [2, "smart"],
+    "@rushstack/no-null": [0],
+    // "@typescript-eslint/typedef": [2, {variableDeclaration: false}]
   },
   extends: ["@rushstack/eslint-config", "plugin:prettier/recommended"],
   ignorePatterns: [
@@ -18,5 +22,5 @@ module.exports = {
   ],
   env: {
     node: true,
-  },
+  }
 };

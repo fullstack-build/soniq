@@ -1,9 +1,9 @@
 require("dotenv").config();
-import { Server } from "@soniq/server";
-import { Container, Core, Logger } from "soniq";
-
-const $core: Core = Container.get(Core);
-Container.get(Server);
+// import { Server } from "@soniq/server";
+// import { Container, Logger } from "soniq";
+import { Logger } from "soniq";
+// const $core: Core = Container.get(Core);
+// Container.get(Server);
 
 /*  tslog example START * /
 class MyClass {
@@ -108,7 +108,7 @@ try {
   log.fatal(err);
 }
 /* tslog example END */
-
+/*
 $core
   .boot()
   .then(() => {
@@ -117,3 +117,4 @@ $core
   .catch((err) => {
     console.error(err);
   });
+*/

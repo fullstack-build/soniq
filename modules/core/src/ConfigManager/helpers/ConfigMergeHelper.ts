@@ -3,10 +3,7 @@ import * as _ from "lodash";
 import { MissingConfigPropertiesError } from "../errors";
 
 class ConfigMergeHelper {
-  public static checkForMissingConfigProperties(
-    moduleName: string,
-    config: object
-  ): void {
+  public static checkForMissingConfigProperties(moduleName: string, config: object): void {
     const missingProperties: string[] = [];
     this._deepForEach(config, (key, val, nestedPath) => {
       if (val == null) {
@@ -22,17 +19,14 @@ class ConfigMergeHelper {
   public static getProcessEnvironmentConfig(moduleName: string): object {
     const processEnvironmentConfig: object = {};
 
-    Object.entries(process.env).forEach(
-      ([key, value]: [string, string | undefined]) => {
-        if (value != null) {
-          const parsedValue: boolean = this._parseTrueAndFalseToBooleans(value);
-          _.set(processEnvironmentConfig, key, parsedValue);
-        }
+    Object.entries(process.env).forEach(([key, value]: [string, string | undefined]) => {
+      if (value != null) {
+        const parsedValue: boolean = this._parseTrueAndFalseToBooleans(value);
+        _.set(processEnvironmentConfig, key, parsedValue);
       }
-    );
+    });
 
-    const processEnvironmentConfigOfModule: [string, string | undefined] =
-      processEnvironmentConfig[moduleName] || {};
+    const processEnvironmentConfigOfModule: [string, string | undefined] = processEnvironmentConfig[moduleName] || {};
 
     return processEnvironmentConfigOfModule;
   }

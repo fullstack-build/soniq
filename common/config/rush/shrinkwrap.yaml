@@ -9,16 +9,24 @@ dependencies:
   '@rush-temp/soniq': 'file:projects/soniq.tgz'
   '@rushstack/eslint-config': 0.5.7
   '@types/graphql': 0.13.4
+  '@types/graphql-type-json': 0.3.2
+  '@types/jsonwebtoken': 8.3.9
   '@types/koa': 2.11.3
+  '@types/koa-bodyparser': 4.3.0
+  '@types/koa-compose': 3.2.5
   '@types/koa-compress': 2.0.9
   '@types/koa-mount': 3.0.1
+  '@types/koa-passport': 4.0.2
+  '@types/koa-router': 7.4.0
+  '@types/koa-session': 5.10.2
   '@types/luxon': 1.22.1
   '@types/node': 13.13.5
+  '@types/sodium-native': 2.3.5
   '@types/uuid-validate': 0.0.1
-  ajv: 6.12.2
   apollo-cache-inmemory: 1.6.2
   apollo-client: 2.6.3
   apollo-link-schema: 1.2.3
+  apollo-server-env: 2.4.3
   apollo-server-koa: 2.4.8
   debug: 4.1.1
   debug-trace: 2.2.3
@@ -28,11 +36,12 @@ dependencies:
   eslint-plugin-prettier: 3.1.3
   graphql: 0.13.2
   graphql-parse-resolve-info: 0.1.0-alpha.18
-  graphql-tools: 3.1.1
+  graphql-tools: 3.0.0
   graphql-type-json: 0.1.4
   jsonwebtoken: 8.5.1
   koa: 2.11.0
   koa-bodyparser: 4.3.0
+  koa-compose: 4.1.0
   koa-compress: 4.0.1
   koa-passport: 4.1.3
   koa-router: 7.4.0
@@ -46,7 +55,6 @@ dependencies:
   pretty-error: 2.1.1
   reflect-metadata: 0.1.13
   sodium-native: 2.4.9
-  soniq: 1.0.0-dev.3
   ts-node: 8.9.1
   tslog: 1.1.1
   typedi: 0.8.0
@@ -179,36 +187,8 @@ packages:
       typescript: '>=3.0.0'
     resolution:
       integrity: sha512-a7Ww6pI0T7S4XF+C9SZAkx+pNwljCW4zLgyYOmpyc3ofLZYcVn9ErRCd09b9Hh+U37GlMfpjFdIt2PtVSoX/0g==
-  /@rushstack/eslint-config/0.5.7/eslint@6.8.0:
-    dependencies:
-      '@rushstack/eslint-plugin': /@rushstack/eslint-plugin/0.3.2/eslint@6.8.0
-      '@typescript-eslint/eslint-plugin': /@typescript-eslint/eslint-plugin/2.3.3/f0766d8be4bc402ca30190f19e0fd887
-      '@typescript-eslint/experimental-utils': /@typescript-eslint/experimental-utils/2.3.3/eslint@6.8.0
-      '@typescript-eslint/parser': /@typescript-eslint/parser/2.3.3/eslint@6.8.0
-      '@typescript-eslint/typescript-estree': 2.3.3
-      eslint: 6.8.0
-      eslint-plugin-promise: 4.2.1
-      eslint-plugin-react: /eslint-plugin-react/7.16.0/eslint@6.8.0
-      eslint-plugin-security: 1.4.0
-      eslint-plugin-tsdoc: 0.2.4
-    dev: false
-    id: registry.npmjs.org/@rushstack/eslint-config/0.5.7
-    peerDependencies:
-      eslint: ^5.0.0 || ^6.0.0
-      typescript: '>=3.0.0'
-    resolution:
-      integrity: sha512-a7Ww6pI0T7S4XF+C9SZAkx+pNwljCW4zLgyYOmpyc3ofLZYcVn9ErRCd09b9Hh+U37GlMfpjFdIt2PtVSoX/0g==
   /@rushstack/eslint-plugin/0.3.2:
     dev: false
-    peerDependencies:
-      eslint: ^5.0.0 || ^6.0.0
-    resolution:
-      integrity: sha512-Fzg91tfXtft6IdZlE6altWXuglGT29P/6ZfFGj9IVM8FIEAjMrO7MELINF5LssbFG0Xlu7306cBJVRAyzOCPCw==
-  /@rushstack/eslint-plugin/0.3.2/eslint@6.8.0:
-    dependencies:
-      eslint: 6.8.0
-    dev: false
-    id: registry.npmjs.org/@rushstack/eslint-plugin/0.3.2
     peerDependencies:
       eslint: ^5.0.0 || ^6.0.0
     resolution:
@@ -223,14 +203,14 @@ packages:
       integrity: sha512-MI4Xx6LHs4Webyvi6EbspgyAb4D2Q2VtnCQ1blOJcoLS6mVa8lNN2rkIy1CVxfTUpoyIbCTkXES1rLXztFD1lg==
   /@types/accepts/1.3.5:
     dependencies:
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
     dev: false
     resolution:
       integrity: sha512-jOdnI/3qTpHABjM5cx1Hc0sKsPoYCp+DP/GJRGtDlPd7fiV9oXGGIcjW/ZOxLIvjGz8MA+uMZI9metHlgqbgwQ==
   /@types/body-parser/1.19.0:
     dependencies:
       '@types/connect': 3.4.33
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
     dev: false
     resolution:
       integrity: sha512-W98JrE0j2K78swW4ukqMleo8R7h/pFETjM2DQ90MF6XK2i4LO4W3gQ71Lt4w3bfm2EvVSyWHplECvB5sK22yFQ==
@@ -240,7 +220,7 @@ packages:
       integrity: sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==
   /@types/connect/3.4.33:
     dependencies:
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
     dev: false
     resolution:
       integrity: sha512-2+FrkXY4zllzTNfJth7jOqEHC+enpLeGslEhpnTAkg21GkRrWV4SsAtqchtT4YS9/nODBU2/ZfsBY2X4J/dX7A==
@@ -253,7 +233,7 @@ packages:
       '@types/connect': 3.4.33
       '@types/express': 4.17.6
       '@types/keygrip': 1.0.2
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
     dev: false
     resolution:
       integrity: sha512-oTGtMzZZAVuEjTwCjIh8T8FrC8n/uwy+PG0yTvQcdZ7etoel7C7/3MSd7qrukENTgQtotG7gvBlBojuVs7X5rw==
@@ -267,23 +247,29 @@ packages:
     dev: false
     resolution:
       integrity: sha512-OCutwjDZ4aFS6PB1UZ988C4YgwlBHJd6wCeQqaLdmadZ/7e+w79+hbMUFC1QXDNCmdyoRfAFdm0RypzwR+Qpag==
-  /@types/express-serve-static-core/4.17.6:
+  /@types/express-serve-static-core/4.17.7:
     dependencies:
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
       '@types/qs': 6.9.2
       '@types/range-parser': 1.2.3
     dev: false
     resolution:
-      integrity: sha512-U2oynuRIB17GIbEdvjFrrEACOy7GQkzsX7bPEBz1H41vZYEU4j0fLL97sawmHDwHUXpUQDBMHIyM9vejqP9o1A==
+      integrity: sha512-EMgTj/DF9qpgLXyc+Btimg+XoH7A2liE8uKul8qSmMTHCeNYzydDKFdsJskDvw42UsesCnhO63dO0Grbj8J4Dw==
   /@types/express/4.17.6:
     dependencies:
       '@types/body-parser': 1.19.0
-      '@types/express-serve-static-core': 4.17.6
+      '@types/express-serve-static-core': 4.17.7
       '@types/qs': 6.9.2
       '@types/serve-static': 1.13.3
     dev: false
     resolution:
       integrity: sha512-n/mr9tZI83kd4azlPG5y997C/M4DNABK9yErhFM6hKdym4kkmd9j0vtsJyjFIwfRBxtrxZtAfGZCNRIBMFLK5w==
+  /@types/graphql-type-json/0.3.2:
+    dependencies:
+      graphql: 14.6.0
+    dev: false
+    resolution:
+      integrity: sha512-c1cq4o8EhY0Z39ua8UXwG8uBs23xBYA/Uw0tXFl6SuTUpkVv/IJqf6pHQbfdC7nwFRhX2ifTOV/UIg0Q/IJsbg==
   /@types/graphql/0.13.4:
     dev: false
     resolution:
@@ -296,6 +282,12 @@ packages:
     dev: false
     resolution:
       integrity: sha512-8+KAKzEvSUdeo+kmqnKrqgeE+LcA0tjYWFY7RPProVYwnqDjukzO+3b6dLD56rYX5TdWejnEOLJYOIeh4CXKuA==
+  /@types/jsonwebtoken/8.3.9:
+    dependencies:
+      '@types/node': 13.13.5
+    dev: false
+    resolution:
+      integrity: sha512-00rI8GbOKuRtoYxltFSRTVUXCRLbuYwln2/nUMPtFU9JGS7if+nnmLjeoFGmqsNCmblPLAaeQ/zMLVsHr6T5bg==
   /@types/keygrip/1.0.2:
     dev: false
     resolution:
@@ -325,6 +317,26 @@ packages:
     dev: false
     resolution:
       integrity: sha512-SkAE5yjrbJCeRoeU2mxQsopskcIMksQ4GXIHEaK87XRUHDESLtUpsfOdiCQOtYGiNXVljR/LzWYBq+r6BIW/dw==
+  /@types/koa-passport/4.0.2:
+    dependencies:
+      '@types/koa': 2.11.3
+      '@types/passport': 1.0.3
+    dev: false
+    resolution:
+      integrity: sha512-WDQhhOW+coTCe//wTaPViim9oodEuAscXiwDUSRlcNH2j7MYa4bqlLq3UdkUp5rY/b0wE4blkBxI90jpwEc1Mg==
+  /@types/koa-router/7.4.0:
+    dependencies:
+      '@types/koa': 2.11.3
+    dev: false
+    resolution:
+      integrity: sha512-CkNyhGOCJ6rpBEG0rlSQhwHsHNwMzGLE49tV3jE5f0TvMzy/SmoCAIlHWdOLs8Mro+BqtKFH6e/lDaibWkydag==
+  /@types/koa-session/5.10.2:
+    dependencies:
+      '@types/cookies': 0.7.4
+      '@types/koa': 2.11.3
+    dev: false
+    resolution:
+      integrity: sha512-BAEiWtYAh0L2PutFkuQgWE6JJHjQiSxtmriLVBbReZmrt3SlMbhjzC3lxhdazjrcHuDSj89DlYIxLMNTMq9Bag==
   /@types/koa/2.11.3:
     dependencies:
       '@types/accepts': 1.3.5
@@ -333,7 +345,7 @@ packages:
       '@types/http-assert': 1.5.1
       '@types/keygrip': 1.0.2
       '@types/koa-compose': 3.2.5
-      '@types/node': 13.13.5
+      '@types/node': 13.13.6
     dev: false
     resolution:
       integrity: sha512-ABxVkrNWa4O/Jp24EYI/hRNqEVRlhB9g09p48neQp4m3xL1TJtdWk2NyNQSMCU45ejeELMQZBYyfstyVvO2H3Q==
@@ -363,10 +375,24 @@ packages:
     dev: false
     resolution:
       integrity: sha512-3ySmiBYJPqgjiHA7oEaIo2Rzz0HrOZ7yrNO5HWyaE5q0lQ3BppDZ3N53Miz8bw2I7gh1/zir2MGVZBvpb1zq9g==
+  /@types/node/13.13.6:
+    dev: false
+    resolution:
+      integrity: sha512-zqRj8ugfROCjXCNbmPBe2mmQ0fJWP9lQaN519hwunOgpHgVykme4G6FW95++dyNFDvJUk4rtExkVkL0eciu5NA==
+  /@types/node/9.6.55:
+    dev: false
+    resolution:
+      integrity: sha512-e/5tg8Ok0gSrN6pvHphnwTK0/CD9VPZrtZqpvvpEFAtfs+ZntusgGaWkf2lSEq1OFe2EDPeUMiMVpy4nZpJ4AQ==
   /@types/parse-json/4.0.0:
     dev: false
     resolution:
       integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==
+  /@types/passport/1.0.3:
+    dependencies:
+      '@types/express': 4.17.6
+    dev: false
+    resolution:
+      integrity: sha512-nyztuxtDPQv9utCzU0qW7Gl8BY2Dn8BKlYAFFyxKipFxjaVd96celbkLCV/tRqqBUZ+JB8If3UfgV8347DTo3Q==
   /@types/qs/6.9.2:
     dev: false
     resolution:
@@ -377,11 +403,17 @@ packages:
       integrity: sha512-ewFXqrQHlFsgc09MK5jP5iR7vumV/BYayNC6PgJO2LPe8vrnNFyjQjSppfEngITi0qvfKtzFvgKymGheFM9UOA==
   /@types/serve-static/1.13.3:
     dependencies:
-      '@types/express-serve-static-core': 4.17.6
+      '@types/express-serve-static-core': 4.17.7
       '@types/mime': 2.0.1
     dev: false
     resolution:
       integrity: sha512-oprSwp094zOglVrXdlo/4bAHtKTAxX6VT8FOZlBKrmyLbNvE1zxZyJ6yikMVtHIvwP45+ZQGJn+FdXGKTozq0g==
+  /@types/sodium-native/2.3.5:
+    dependencies:
+      '@types/node': 13.13.5
+    dev: false
+    resolution:
+      integrity: sha512-a3DAIpW8+36XAY8aIR36JBQQsfOabxHuJwx11DL/PTvnbwEWPAXW66b8QbMi0r2vUnkOfREsketxdvjBmQxqDQ==
   /@types/uuid-validate/0.0.1:
     dev: false
     resolution:
@@ -421,24 +453,6 @@ packages:
       eslint: ^5.0.0 || ^6.0.0
     resolution:
       integrity: sha512-12cCbwu5PbQudkq2xCIS/QhB7hCMrsNPXK+vJtqy/zFqtzVkPRGy12O5Yy0gUK086f3VHV/P4a4R4CjMW853pA==
-  /@typescript-eslint/eslint-plugin/2.3.3/f0766d8be4bc402ca30190f19e0fd887:
-    dependencies:
-      '@typescript-eslint/experimental-utils': /@typescript-eslint/experimental-utils/2.3.3/eslint@6.8.0
-      '@typescript-eslint/parser': /@typescript-eslint/parser/2.3.3/eslint@6.8.0
-      eslint: 6.8.0
-      eslint-utils: 1.4.3
-      functional-red-black-tree: 1.0.1
-      regexpp: 2.0.1
-      tsutils: 3.17.1
-    dev: false
-    engines:
-      node: ^8.10.0 || ^10.13.0 || >=11.10.1
-    id: registry.npmjs.org/@typescript-eslint/eslint-plugin/2.3.3
-    peerDependencies:
-      '@typescript-eslint/parser': ^2.0.0
-      eslint: ^5.0.0 || ^6.0.0
-    resolution:
-      integrity: sha512-12cCbwu5PbQudkq2xCIS/QhB7hCMrsNPXK+vJtqy/zFqtzVkPRGy12O5Yy0gUK086f3VHV/P4a4R4CjMW853pA==
   /@typescript-eslint/experimental-utils/2.3.3:
     dependencies:
       '@types/json-schema': 7.0.4
@@ -447,20 +461,6 @@ packages:
     dev: false
     engines:
       node: ^8.10.0 || ^10.13.0 || >=11.10.1
-    peerDependencies:
-      eslint: '*'
-    resolution:
-      integrity: sha512-MQ4jKPMTU1ty4TigJCRKFPye2qyQdH8jzIIkceaHgecKFmkNS1hXPqKiZ+mOehkz6+HcN5Nuvwm+frmWZR9tdg==
-  /@typescript-eslint/experimental-utils/2.3.3/eslint@6.8.0:
-    dependencies:
-      '@types/json-schema': 7.0.4
-      '@typescript-eslint/typescript-estree': 2.3.3
-      eslint: 6.8.0
-      eslint-scope: 5.0.0
-    dev: false
-    engines:
-      node: ^8.10.0 || ^10.13.0 || >=11.10.1
-    id: registry.npmjs.org/@typescript-eslint/experimental-utils/2.3.3
     peerDependencies:
       eslint: '*'
     resolution:
@@ -474,21 +474,6 @@ packages:
     dev: false
     engines:
       node: ^8.10.0 || ^10.13.0 || >=11.10.1
-    peerDependencies:
-      eslint: ^5.0.0 || ^6.0.0
-    resolution:
-      integrity: sha512-+cV53HuYFeeyrNW8x/rgPmbVrzzp/rpRmwbJnNtwn4K8mroL1BdjxwQh7X9cUHp9rm4BBiEWmD3cSBjKG7d5mw==
-  /@typescript-eslint/parser/2.3.3/eslint@6.8.0:
-    dependencies:
-      '@types/eslint-visitor-keys': 1.0.0
-      '@typescript-eslint/experimental-utils': /@typescript-eslint/experimental-utils/2.3.3/eslint@6.8.0
-      '@typescript-eslint/typescript-estree': 2.3.3
-      eslint: 6.8.0
-      eslint-visitor-keys: 1.1.0
-    dev: false
-    engines:
-      node: ^8.10.0 || ^10.13.0 || >=11.10.1
-    id: registry.npmjs.org/@typescript-eslint/parser/2.3.3
     peerDependencies:
       eslint: ^5.0.0 || ^6.0.0
     resolution:
@@ -651,6 +636,18 @@ packages:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-uehXDUrd3Qim+nzxqqN7XT1YTbNSyumW3/FY5BxbKZTI8d4oPG4eyVQKqaggooSjswKQnOoIQVes3+qg9tGAkw==
+  /apollo-cache-control/0.5.2/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+      graphql-extensions: /graphql-extensions/0.5.4/graphql@0.13.2
+    dev: false
+    engines:
+      node: '>=6.0'
+    id: registry.npmjs.org/apollo-cache-control/0.5.2
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-uehXDUrd3Qim+nzxqqN7XT1YTbNSyumW3/FY5BxbKZTI8d4oPG4eyVQKqaggooSjswKQnOoIQVes3+qg9tGAkw==
   /apollo-cache-inmemory/1.6.2:
     dependencies:
       apollo-cache: 1.3.4
@@ -659,6 +656,17 @@ packages:
       ts-invariant: 0.4.4
       tslib: 1.11.2
     dev: false
+    peerDependencies:
+      graphql: 0.11.7 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-AyCl3PGFv5Qv1w4N9vlg63GBPHXgMCekZy5mhlS042ji0GW84uTySX+r3F61ZX3+KM1vA4m9hQyctrEGiv5XjQ==
+  /apollo-cache-inmemory/1.6.2/graphql@0.13.2:
+    dependencies:
+      apollo-cache: /apollo-cache/1.3.4/graphql@0.13.2
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-cache-inmemory/1.6.2
     peerDependencies:
       graphql: 0.11.7 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -679,6 +687,16 @@ packages:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-7X5aGbqaOWYG+SSkCzJNHTz2ZKDcyRwtmvW4mGVLRqdQs+HxfXS4dUS2CcwrAj449se6tZ6NLUMnjko4KMt3KA==
+  /apollo-cache/1.3.4/graphql@0.13.2:
+    dependencies:
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-cache/1.3.4
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-7X5aGbqaOWYG+SSkCzJNHTz2ZKDcyRwtmvW4mGVLRqdQs+HxfXS4dUS2CcwrAj449se6tZ6NLUMnjko4KMt3KA==
   /apollo-client/2.6.3:
     dependencies:
       '@types/zen-observable': 0.8.0
@@ -690,6 +708,17 @@ packages:
       tslib: 1.11.2
       zen-observable: 0.8.15
     dev: false
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-DS8pmF5CGiiJ658dG+mDn8pmCMMQIljKJSTeMNHnFuDLV0uAPZoeaAwVFiAmB408Ujqt92oIZ/8yJJAwSIhd4A==
+  /apollo-client/2.6.3/graphql@0.13.2:
+    dependencies:
+      apollo-link: /apollo-link/1.2.14/graphql@0.13.2
+      apollo-utilities: /apollo-utilities/1.3.2/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-client/2.6.3
     peerDependencies:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -762,6 +791,36 @@ packages:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-cQ/PvJsV5tnlG2j7RCqgX4NZqA/N4JpoblN1l76N/56SFIoHU7mNujXc/tmPzBjJN6U+2BIbVKTcWJw0GvLWQA==
+  /apollo-link-schema/1.2.3/graphql@0.13.2:
+    dependencies:
+      apollo-link: /apollo-link/1.2.14/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-link-schema/1.2.3
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-cQ/PvJsV5tnlG2j7RCqgX4NZqA/N4JpoblN1l76N/56SFIoHU7mNujXc/tmPzBjJN6U+2BIbVKTcWJw0GvLWQA==
+  /apollo-link/1.2.1:
+    dependencies:
+      '@types/node': 9.6.55
+      apollo-utilities: 1.3.3
+      zen-observable-ts: 0.8.21
+    dev: false
+    peerDependencies:
+      graphql: ^0.11.3 || ^0.12.3 || ^0.13.0
+    resolution:
+      integrity: sha512-6Ghf+j3cQLCIvjXd2dJrLw+16HZbWbwmB1qlTc41BviB2hv+rK1nJr17Y9dWK0UD4p3i9Hfddx3tthpMKrueHg==
+  /apollo-link/1.2.1/graphql@0.13.2:
+    dependencies:
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-link/1.2.1
+    peerDependencies:
+      graphql: ^0.11.3 || ^0.12.3 || ^0.13.0
+    resolution:
+      integrity: sha512-6Ghf+j3cQLCIvjXd2dJrLw+16HZbWbwmB1qlTc41BviB2hv+rK1nJr17Y9dWK0UD4p3i9Hfddx3tthpMKrueHg==
   /apollo-link/1.2.14:
     dependencies:
       apollo-utilities: 1.3.3
@@ -769,6 +828,16 @@ packages:
       tslib: 1.11.2
       zen-observable-ts: 0.8.21
     dev: false
+    peerDependencies:
+      graphql: ^0.11.3 || ^0.12.3 || ^0.13.0 || ^14.0.0 || ^15.0.0
+    resolution:
+      integrity: sha512-p67CMEFP7kOG1JZ0ZkYZwRDa369w5PIjtMjvrQd/HnIV8FRsHRqLqK+oAZQnFa1DDdZtOtHTi+aMIW6EatC2jg==
+  /apollo-link/1.2.14/graphql@0.13.2:
+    dependencies:
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-link/1.2.14
     peerDependencies:
       graphql: ^0.11.3 || ^0.12.3 || ^0.13.0 || ^14.0.0 || ^15.0.0
     resolution:
@@ -810,6 +879,27 @@ packages:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-N+5UOzHhMOnHizEiArJtNvEe/cGhSHQyTn5tlU4RJ36FDBJ/WlYZfPbGDMLISSUCJ6t+aP8GLL4Mnudt9d2PDQ==
+  /apollo-server-core/2.4.8/graphql@0.13.2:
+    dependencies:
+      apollo-cache-control: /apollo-cache-control/0.5.2/graphql@0.13.2
+      apollo-server-errors: /apollo-server-errors/2.2.1/graphql@0.13.2
+      apollo-server-plugin-base: /apollo-server-plugin-base/0.3.7/graphql@0.13.2
+      apollo-tracing: /apollo-tracing/0.5.2/graphql@0.13.2
+      graphql: 0.13.2
+      graphql-extensions: /graphql-extensions/0.5.7/graphql@0.13.2
+      graphql-subscriptions: /graphql-subscriptions/1.1.0/graphql@0.13.2
+      graphql-tag: /graphql-tag/2.10.3/graphql@0.13.2
+      graphql-tools: /graphql-tools/4.0.8/graphql@0.13.2
+      graphql-upload: /graphql-upload/8.1.0/graphql@0.13.2
+      subscriptions-transport-ws: /subscriptions-transport-ws/0.9.16/graphql@0.13.2
+    dev: false
+    engines:
+      node: '>=6'
+    id: registry.npmjs.org/apollo-server-core/2.4.8
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-N+5UOzHhMOnHizEiArJtNvEe/cGhSHQyTn5tlU4RJ36FDBJ/WlYZfPbGDMLISSUCJ6t+aP8GLL4Mnudt9d2PDQ==
   /apollo-server-env/2.2.0:
     dependencies:
       node-fetch: 2.6.0
@@ -819,10 +909,30 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-wjJiI5nQWPBpNmpiLP389Ezpstp71szS6DHAeTgYLb/ulCw3CTuuA+0/E1bsThVWiQaDeHZE0sE3yI8q2zrYiA==
+  /apollo-server-env/2.4.3:
+    dependencies:
+      node-fetch: 2.6.0
+      util.promisify: 1.0.1
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-23R5Xo9OMYX0iyTu2/qT0EUb+AULCBriA9w8HDfMoChB8M+lFClqUkYtaTTHDfp6eoARLW8kDBhPOBavsvKAjA==
   /apollo-server-errors/2.2.1:
     dev: false
     engines:
       node: '>=6'
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-wY/YE3iJVMYC+WYIf8QODBjIP4jhI+oc7kiYo9mrz7LdYPKAgxr/he+NteGcqn/0Ea9K5/ZFTGJDbEstSMeP8g==
+  /apollo-server-errors/2.2.1/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    engines:
+      node: '>=6'
+    id: registry.npmjs.org/apollo-server-errors/2.2.1
     peerDependencies:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -852,10 +962,35 @@ packages:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-0zHDhJ8CigTUPfWS3hXdapkl1dQgw34TZYCW2ca1GFzOGGjHEkKPLXis7m6J7eVETwDaugRkp9f2IiGPyrXZsg==
+  /apollo-server-koa/2.4.8/graphql@0.13.2:
+    dependencies:
+      apollo-server-core: /apollo-server-core/2.4.8/graphql@0.13.2
+      graphql: 0.13.2
+      graphql-subscriptions: /graphql-subscriptions/1.1.0/graphql@0.13.2
+      graphql-tools: /graphql-tools/4.0.8/graphql@0.13.2
+    dev: false
+    engines:
+      node: '>=6'
+    id: registry.npmjs.org/apollo-server-koa/2.4.8
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-0zHDhJ8CigTUPfWS3hXdapkl1dQgw34TZYCW2ca1GFzOGGjHEkKPLXis7m6J7eVETwDaugRkp9f2IiGPyrXZsg==
   /apollo-server-plugin-base/0.3.7:
     dev: false
     engines:
       node: '>=6'
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-hW1jaLKf9qNOxMTwRq2CSqz3eqXsZuEiCc8/mmEtOciiVBq1GMtxFf19oIYM9HQuPvQU2RWpns1VrYN59L3vbg==
+  /apollo-server-plugin-base/0.3.7/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    engines:
+      node: '>=6'
+    id: registry.npmjs.org/apollo-server-plugin-base/0.3.7
     peerDependencies:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -871,6 +1006,18 @@ packages:
       graphql: 0.10.x - 14.1.x
     resolution:
       integrity: sha512-2FdwRvPIq9uuF6OzONroXep6VBGqzHOkP6LlcFQe7SdwxfRP+SD/ycHNSC1acVg2b8d+am9Kzqg2vV54UpOIKA==
+  /apollo-tracing/0.5.2/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+      graphql-extensions: /graphql-extensions/0.5.4/graphql@0.13.2
+    dev: false
+    engines:
+      node: '>=4.0'
+    id: registry.npmjs.org/apollo-tracing/0.5.2
+    peerDependencies:
+      graphql: 0.10.x - 14.1.x
+    resolution:
+      integrity: sha512-2FdwRvPIq9uuF6OzONroXep6VBGqzHOkP6LlcFQe7SdwxfRP+SD/ycHNSC1acVg2b8d+am9Kzqg2vV54UpOIKA==
   /apollo-utilities/1.3.2:
     dependencies:
       '@wry/equality': 0.1.11
@@ -882,6 +1029,15 @@ packages:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-JWNHj8XChz7S4OZghV6yc9FNnzEXj285QYp/nLNh943iObycI5GTDO3NGR9Dth12LRrSFMeDOConPfPln+WGfg==
+  /apollo-utilities/1.3.2/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-utilities/1.3.2
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-JWNHj8XChz7S4OZghV6yc9FNnzEXj285QYp/nLNh943iObycI5GTDO3NGR9Dth12LRrSFMeDOConPfPln+WGfg==
   /apollo-utilities/1.3.3:
     dependencies:
       '@wry/equality': 0.1.11
@@ -889,6 +1045,15 @@ packages:
       ts-invariant: 0.4.4
       tslib: 1.11.2
     dev: false
+    peerDependencies:
+      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-F14aX2R/fKNYMvhuP2t9GD9fggID7zp5I96MF5QeKYWDWTrkRdHRp4+SVfXUVN+cXOaB/IebfvRtzPf25CM0zw==
+  /apollo-utilities/1.3.3/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/apollo-utilities/1.3.3
     peerDependencies:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -1555,47 +1720,12 @@ packages:
       eslint: '>=3.14.1'
     resolution:
       integrity: sha512-oB8cpLWSAjOVFEJhhyMZh6NOEOtBVziaqdDQ86+qhDHFbZXoRTM7pNSvFRfW/W/L/LrQ38C99J5CGuRBBzBsdA==
-  /eslint-config-prettier/6.11.0/eslint@6.8.0:
-    dependencies:
-      eslint: 6.8.0
-      get-stdin: 6.0.0
-    dev: false
-    hasBin: true
-    id: registry.npmjs.org/eslint-config-prettier/6.11.0
-    peerDependencies:
-      eslint: '>=3.14.1'
-    resolution:
-      integrity: sha512-oB8cpLWSAjOVFEJhhyMZh6NOEOtBVziaqdDQ86+qhDHFbZXoRTM7pNSvFRfW/W/L/LrQ38C99J5CGuRBBzBsdA==
   /eslint-plugin-prettier/3.1.3:
     dependencies:
       prettier-linter-helpers: 1.0.0
     dev: false
     engines:
       node: '>=6.0.0'
-    peerDependencies:
-      eslint: '>= 5.0.0'
-      prettier: '>= 1.13.0'
-    resolution:
-      integrity: sha512-+HG5jmu/dN3ZV3T6eCD7a4BlAySdN7mLIbJYo0z1cFQuI+r2DiTJEFeF68ots93PsnrMxbzIZ2S/ieX+mkrBeQ==
-  /eslint-plugin-prettier/3.1.3/eslint@6.8.0:
-    dependencies:
-      eslint: 6.8.0
-    dev: false
-    engines:
-      node: '>=6.0.0'
-    id: registry.npmjs.org/eslint-plugin-prettier/3.1.3
-    peerDependencies:
-      eslint: '>= 5.0.0'
-      prettier: '>= 1.13.0'
-    resolution:
-      integrity: sha512-+HG5jmu/dN3ZV3T6eCD7a4BlAySdN7mLIbJYo0z1cFQuI+r2DiTJEFeF68ots93PsnrMxbzIZ2S/ieX+mkrBeQ==
-  /eslint-plugin-prettier/3.1.3/eslint@6.8.0+prettier@2.0.5:
-    dependencies:
-      prettier-linter-helpers: 1.0.0
-    dev: false
-    engines:
-      node: '>=6.0.0'
-    id: registry.npmjs.org/eslint-plugin-prettier/3.1.3
     peerDependencies:
       eslint: '>= 5.0.0'
       prettier: '>= 1.13.0'
@@ -1621,26 +1751,6 @@ packages:
     dev: false
     engines:
       node: '>=4'
-    peerDependencies:
-      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
-    resolution:
-      integrity: sha512-GacBAATewhhptbK3/vTP09CbFrgUJmBSaaRcWdbQLFvUZy9yVcQxigBNHGPU/KE2AyHpzj3AWXpxoMTsIDiHug==
-  /eslint-plugin-react/7.16.0/eslint@6.8.0:
-    dependencies:
-      array-includes: 3.1.1
-      doctrine: 2.1.0
-      eslint: 6.8.0
-      has: 1.0.3
-      jsx-ast-utils: 2.2.3
-      object.entries: 1.1.1
-      object.fromentries: 2.0.2
-      object.values: 1.1.1
-      prop-types: 15.7.2
-      resolve: 1.17.0
-    dev: false
-    engines:
-      node: '>=4'
-    id: registry.npmjs.org/eslint-plugin-react/7.16.0
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
     resolution:
@@ -1970,12 +2080,34 @@ packages:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-qLThJGVMqcItE7GDf/xX/E40m/aeqFheEKiR5bfra4q5eHxQKGjnIc20P9CVqjOn9I0FkEiU9ypOobfmIf7t6g==
+  /graphql-extensions/0.5.4/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    engines:
+      node: '>=6.0'
+    id: registry.npmjs.org/graphql-extensions/0.5.4
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-qLThJGVMqcItE7GDf/xX/E40m/aeqFheEKiR5bfra4q5eHxQKGjnIc20P9CVqjOn9I0FkEiU9ypOobfmIf7t6g==
   /graphql-extensions/0.5.7:
     dependencies:
       '@apollographql/apollo-tools': 0.3.7
     dev: false
     engines:
       node: '>=6.0'
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-HrU6APE1PiehZ46scMB3S5DezSeCATd8v+e4mmg2bqszMyCFkmAnmK6hR1b5VjHxhzt5/FX21x1WsXfqF4FwdQ==
+  /graphql-extensions/0.5.7/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    engines:
+      node: '>=6.0'
+    id: registry.npmjs.org/graphql-extensions/0.5.7
     peerDependencies:
       graphql: ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -1989,10 +2121,28 @@ packages:
       graphql: '>=0.9 <1'
     resolution:
       integrity: sha512-K0RyCtVuK01yEpAtWmAvVWie2idaAUkf62czyfM0Z4s8YvSzW5O32Ks4Y5WXJnmLTLYQPZfvJRaXyZTRb5cTUA==
+  /graphql-parse-resolve-info/0.1.0-alpha.18/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-parse-resolve-info/0.1.0-alpha.18
+    peerDependencies:
+      graphql: '>=0.9 <1'
+    resolution:
+      integrity: sha512-K0RyCtVuK01yEpAtWmAvVWie2idaAUkf62czyfM0Z4s8YvSzW5O32Ks4Y5WXJnmLTLYQPZfvJRaXyZTRb5cTUA==
   /graphql-subscriptions/1.1.0:
     dependencies:
       iterall: 1.3.0
     dev: false
+    peerDependencies:
+      graphql: ^0.10.5 || ^0.11.3 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-6WzlBFC0lWmXJbIVE8OgFgXIP4RJi3OQgTPa0DVMsDXdpRDjTsM1K9wfl5HSYX7R87QAGlvcv2Y4BIZa/ItonA==
+  /graphql-subscriptions/1.1.0/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-subscriptions/1.1.0
     peerDependencies:
       graphql: ^0.10.5 || ^0.11.3 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
@@ -2003,18 +2153,38 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-4FOv3ZKfA4WdOKJeHdz6B3F/vxBLSgmBcGeAFPf4n1F64ltJUvOOerNj0rsJxONQGdhUMynQIvd6LzB+1J5oKA==
-  /graphql-tools/3.1.1:
+  /graphql-tag/2.10.3/graphql@0.13.2:
     dependencies:
-      apollo-link: 1.2.14
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-tag/2.10.3
+    peerDependencies:
+      graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
+    resolution:
+      integrity: sha512-4FOv3ZKfA4WdOKJeHdz6B3F/vxBLSgmBcGeAFPf4n1F64ltJUvOOerNj0rsJxONQGdhUMynQIvd6LzB+1J5oKA==
+  /graphql-tools/3.0.0:
+    dependencies:
+      apollo-link: 1.2.1
       apollo-utilities: 1.3.3
       deprecated-decorator: 0.1.6
       iterall: 1.3.0
       uuid: 3.4.0
     dev: false
     peerDependencies:
-      graphql: ^0.13.0
+      graphql: ^0.12.0 || ^0.13.0
     resolution:
-      integrity: sha512-yHvPkweUB0+Q/GWH5wIG60bpt8CTwBklCSzQdEHmRUgAdEQKxw+9B7zB3dG7wB3Ym7M7lfrS4Ej+jtDZfA2UXg==
+      integrity: sha512-orcLQm0pc6dcIvFyAudgmno/akZy07bbMalTv5dj6B8uW2ZPmwIANr7pDEJoiumb67h2kZjsU9yvgTwmF0kMPQ==
+  /graphql-tools/3.0.0/graphql@0.13.2:
+    dependencies:
+      apollo-link: /apollo-link/1.2.1/graphql@0.13.2
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-tools/3.0.0
+    peerDependencies:
+      graphql: ^0.12.0 || ^0.13.0
+    resolution:
+      integrity: sha512-orcLQm0pc6dcIvFyAudgmno/akZy07bbMalTv5dj6B8uW2ZPmwIANr7pDEJoiumb67h2kZjsU9yvgTwmF0kMPQ==
   /graphql-tools/4.0.8:
     dependencies:
       apollo-link: 1.2.14
@@ -2027,8 +2197,28 @@ packages:
       graphql: ^0.13.0 || ^14.0.0 || ^15.0.0
     resolution:
       integrity: sha512-MW+ioleBrwhRjalKjYaLQbr+920pHBgy9vM/n47sswtns8+96sRn5M/G+J1eu7IMeKWiN/9p6tmwCHU7552VJg==
+  /graphql-tools/4.0.8/graphql@0.13.2:
+    dependencies:
+      apollo-link: /apollo-link/1.2.14/graphql@0.13.2
+      apollo-utilities: /apollo-utilities/1.3.3/graphql@0.13.2
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-tools/4.0.8
+    peerDependencies:
+      graphql: ^0.13.0 || ^14.0.0 || ^15.0.0
+    resolution:
+      integrity: sha512-MW+ioleBrwhRjalKjYaLQbr+920pHBgy9vM/n47sswtns8+96sRn5M/G+J1eu7IMeKWiN/9p6tmwCHU7552VJg==
   /graphql-type-json/0.1.4:
     dev: false
+    peerDependencies:
+      graphql: '>=0.4.0'
+    resolution:
+      integrity: sha1-ifE/XTLOCMmnbHn9+cGWg4TYGk4=
+  /graphql-type-json/0.1.4/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/graphql-type-json/0.1.4
     peerDependencies:
       graphql: '>=0.4.0'
     resolution:
@@ -2046,12 +2236,31 @@ packages:
       graphql: 0.13.1 - 14
     resolution:
       integrity: sha512-U2OiDI5VxYmzRKw0Z2dmfk0zkqMRaecH9Smh1U277gVgVe9Qn+18xqf4skwr4YJszGIh7iQDZ57+5ygOK9sM/Q==
+  /graphql-upload/8.1.0/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    engines:
+      node: '>=8.5'
+    id: registry.npmjs.org/graphql-upload/8.1.0
+    peerDependencies:
+      graphql: 0.13.1 - 14
+    resolution:
+      integrity: sha512-U2OiDI5VxYmzRKw0Z2dmfk0zkqMRaecH9Smh1U277gVgVe9Qn+18xqf4skwr4YJszGIh7iQDZ57+5ygOK9sM/Q==
   /graphql/0.13.2:
     dependencies:
       iterall: 1.3.0
     dev: false
     resolution:
       integrity: sha512-QZ5BL8ZO/B20VA8APauGBg3GyEgZ19eduvpLWoq5x7gMmWnHoy8rlQWPLmWgFvo1yNgjSEFMesmS4R6pPr7xog==
+  /graphql/14.6.0:
+    dependencies:
+      iterall: 1.3.0
+    dev: false
+    engines:
+      node: '>= 6.x'
+    resolution:
+      integrity: sha512-VKzfvHEKybTKjQVpTFrA5yUq2S9ihcZvfJAtsDBBCuV6wauPu1xl/f9ehgVf0FcEJJs4vz6ysb/ZMkGigQZseg==
   /has-ansi/2.0.0:
     dependencies:
       ansi-regex: 2.1.1
@@ -3172,15 +3381,6 @@ packages:
       pg: '>=8.0'
     resolution:
       integrity: sha512-kYH6S0mcZF1TPg1F9boFee2JlCSm2oqnlR2Mz2Wgn1psQbEBNVeNTJCw2wCK48QsctwvGUzbxLMg/lYV6hL/3A==
-  /pg-pool/3.1.1/pg@8.0.3:
-    dependencies:
-      pg: /pg/8.0.3/pg@8.0.3
-    dev: false
-    id: registry.npmjs.org/pg-pool/3.1.1
-    peerDependencies:
-      pg: '>=8.0'
-    resolution:
-      integrity: sha512-kYH6S0mcZF1TPg1F9boFee2JlCSm2oqnlR2Mz2Wgn1psQbEBNVeNTJCw2wCK48QsctwvGUzbxLMg/lYV6hL/3A==
   /pg-protocol/1.2.2:
     dev: false
     resolution:
@@ -3210,15 +3410,6 @@ packages:
     dev: false
     engines:
       node: '>= 8.0.0'
-    resolution:
-      integrity: sha512-fvcNXn4o/iq4jKq15Ix/e58q3jPSmzOp6/8C3CaHoSR/bsxdg+1FXfDRePdtE/zBb3++TytvOrS1hNef3WC/Kg==
-  /pg/8.0.3/pg@8.0.3:
-    dependencies:
-      pg-pool: /pg-pool/3.1.1/pg@8.0.3
-    dev: false
-    engines:
-      node: '>= 8.0.0'
-    id: registry.npmjs.org/pg/8.0.3
     resolution:
       integrity: sha512-fvcNXn4o/iq4jKq15Ix/e58q3jPSmzOp6/8C3CaHoSR/bsxdg+1FXfDRePdtE/zBb3++TytvOrS1hNef3WC/Kg==
   /pgpass/1.0.2:
@@ -3797,6 +3988,15 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.1 || ^14.0.2
     resolution:
       integrity: sha512-pQdoU7nC+EpStXnCfh/+ho0zE0Z+ma+i7xvj7bkXKb1dvYHSZxgRPaU6spRP+Bjzow67c/rRDoix5RT0uU9omw==
+  /subscriptions-transport-ws/0.9.16/graphql@0.13.2:
+    dependencies:
+      graphql: 0.13.2
+    dev: false
+    id: registry.npmjs.org/subscriptions-transport-ws/0.9.16
+    peerDependencies:
+      graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.1 || ^14.0.2
+    resolution:
+      integrity: sha512-pQdoU7nC+EpStXnCfh/+ho0zE0Z+ma+i7xvj7bkXKb1dvYHSZxgRPaU6spRP+Bjzow67c/rRDoix5RT0uU9omw==
   /supports-color/2.0.0:
     dev: false
     engines:
@@ -4125,8 +4325,15 @@ packages:
     dependencies:
       '@koa/cors': 2.2.3
       '@rushstack/eslint-config': 0.5.7
+      '@types/jsonwebtoken': 8.3.9
+      '@types/koa-bodyparser': 4.3.0
+      '@types/koa-passport': 4.0.2
+      '@types/koa-router': 7.4.0
+      '@types/koa-session': 5.10.2
+      '@types/lodash': 4.14.150
       '@types/luxon': 1.22.1
       '@types/node': 13.13.5
+      '@types/sodium-native': 2.3.5
       '@types/uuid': 3.4.9
       eslint: 6.8.0
       eslint-config-prettier: 6.11.0
@@ -4146,15 +4353,15 @@ packages:
     dev: false
     name: '@rush-temp/auth'
     resolution:
-      integrity: sha512-wCN/8B0pm+KoOEFi0LMhJANstfW/UecxMWs2WTkdNgPCAiiECASS297a9HGB2PgMQ9atSXsYW8c4RngRlqGVKA==
+      integrity: sha512-LN0ZGAh/HGpBssJAOEbYZ2DxJwo0lf5bP43D+xDbgAwpLtcx3JKlRXWMDWoM01npq84Q6KFA+1nAb/X4WQRidA==
       tarball: 'file:projects/auth.tgz'
     version: 0.0.0
   'file:projects/eslint-config.tgz':
     dependencies:
-      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0
+      '@rushstack/eslint-config': 0.5.7
       eslint: 6.8.0
-      eslint-config-prettier: /eslint-config-prettier/6.11.0/eslint@6.8.0
-      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0
+      eslint-config-prettier: 6.11.0
+      eslint-plugin-prettier: 3.1.3
     dev: false
     name: '@rush-temp/eslint-config'
     resolution:
@@ -4202,39 +4409,39 @@ packages:
     dev: false
     name: '@rush-temp/examples_02'
     resolution:
-      integrity: sha512-Pofm01dM2AQDYCsmrtRF4Z9N9Z7HPEzQHhRxkyi4vo+kAowms7b3zELROtO0BtVfahjHb40SeM/uyxL9yTP7XA==
+      integrity: sha512-PnhzKg/V55AIp/+M+QBNXg2+vqx2Cb1e+o5lD+T4SI7ohFr2gMF+WjEvXUQ/vzELYotLQHtPK/JwQXmuGfMt0A==
       tarball: 'file:projects/examples_02.tgz'
     version: 0.0.0
   'file:projects/graphql.tgz':
     dependencies:
-      '@rushstack/eslint-config': 0.5.7
       '@types/graphql': 0.13.4
+      '@types/graphql-type-json': 0.3.2
+      '@types/koa-compose': 3.2.5
       '@types/koa-mount': 3.0.1
       '@types/lodash': 4.14.150
       '@types/node': 13.13.5
       '@types/uuid': 7.0.3
       '@types/uuid-validate': 0.0.1
       ajv: 6.12.2
-      apollo-cache-inmemory: 1.6.2
-      apollo-client: 2.6.3
-      apollo-link-schema: 1.2.3
-      apollo-server-koa: 2.4.8
+      apollo-cache-inmemory: /apollo-cache-inmemory/1.6.2/graphql@0.13.2
+      apollo-client: /apollo-client/2.6.3/graphql@0.13.2
+      apollo-link-schema: /apollo-link-schema/1.2.3/graphql@0.13.2
+      apollo-server-env: 2.4.3
+      apollo-server-koa: /apollo-server-koa/2.4.8/graphql@0.13.2
       eslint: 6.8.0
-      eslint-config-prettier: 6.11.0
-      eslint-plugin-prettier: 3.1.3
       graphql: 0.13.2
-      graphql-parse-resolve-info: 0.1.0-alpha.18
-      graphql-tools: 3.1.1
-      graphql-type-json: 0.1.4
+      graphql-parse-resolve-info: /graphql-parse-resolve-info/0.1.0-alpha.18/graphql@0.13.2
+      graphql-tools: /graphql-tools/3.0.0/graphql@0.13.2
+      graphql-type-json: /graphql-type-json/0.1.4/graphql@0.13.2
+      koa-compose: 4.1.0
       lodash: 4.17.15
       prettier: 2.0.5
-      soniq: 1.0.0-dev.3
       uuid: 7.0.3
       uuid-validate: 0.0.3
     dev: false
     name: '@rush-temp/graphql'
     resolution:
-      integrity: sha512-Hgq8Ggu5ktajDgI4iKjfMCuHcScL+Xb5EGJmt2s4OSDlcf4IRPG70WNHcJDR1mIMfTnepMJ97gZlSZSQKZ6AqQ==
+      integrity: sha512-aOgzf1RLSbtUZJX9PL3Tb1NUpSnFSL9sXIVE2N9vNaSjmh/lotmOnOIaB/hpkf1SPQQg7ecOfFmh6WIExFM95w==
       tarball: 'file:projects/graphql.tgz'
     version: 0.0.0
   'file:projects/server.tgz':
@@ -4257,14 +4464,12 @@ packages:
     version: 0.0.0
   'file:projects/soniq.tgz':
     dependencies:
-      '@rushstack/eslint-config': /@rushstack/eslint-config/0.5.7/eslint@6.8.0
       '@types/lodash': 4.14.150
       '@types/node': 13.13.5
+      ajv: 6.12.2
       eslint: 6.8.0
-      eslint-config-prettier: /eslint-config-prettier/6.11.0/eslint@6.8.0
-      eslint-plugin-prettier: /eslint-plugin-prettier/3.1.3/eslint@6.8.0+prettier@2.0.5
       lodash: 4.17.15
-      pg: /pg/8.0.3/pg@8.0.3
+      pg: 8.0.3
       prettier: 2.0.5
       reflect-metadata: 0.1.13
       tslog: 1.1.1
@@ -4272,7 +4477,7 @@ packages:
     dev: false
     name: '@rush-temp/soniq'
     resolution:
-      integrity: sha512-rST/PT77Nu6il3mvCuBPM4uEiYcV34E+uAyNvOYXWCQOxmbnPZIucER/L4R6ihXT6CfQjQS5J586ITyDy+ZZAg==
+      integrity: sha512-bCPlv6c9sDaarW8l3RWn2J1ArYhFdg51fVhHBLn6w0LNAIOU22hV8xy+XVsGVOl1Q/KCiBezdmnC92Sn6qsq0A==
       tarball: 'file:projects/soniq.tgz'
     version: 0.0.0
 registry: 'https://registry.npmjs.org/'
@@ -4289,16 +4494,24 @@ specifiers:
   '@rush-temp/soniq': 'file:./projects/soniq.tgz'
   '@rushstack/eslint-config': ^0.5.7
   '@types/graphql': 0.13.4
+  '@types/graphql-type-json': ~0.3.2
+  '@types/jsonwebtoken': ~8.3.9
   '@types/koa': ~2.11.3
+  '@types/koa-bodyparser': ~4.3.0
+  '@types/koa-compose': ~3.2.5
   '@types/koa-compress': ~2.0.9
   '@types/koa-mount': ^3.0.1
+  '@types/koa-passport': ~4.0.2
+  '@types/koa-router': ~7.4.0
+  '@types/koa-session': ~5.10.2
   '@types/luxon': ^1.15.2
   '@types/node': ^13.13.4
+  '@types/sodium-native': ~2.3.5
   '@types/uuid-validate': 0.0.1
-  ajv: ^6.11.0
   apollo-cache-inmemory: 1.6.2
   apollo-client: 2.6.3
   apollo-link-schema: 1.2.3
+  apollo-server-env: ~2.4.3
   apollo-server-koa: 2.4.8
   debug: ^4.1.1
   debug-trace: ^2.2.3
@@ -4308,11 +4521,12 @@ specifiers:
   eslint-plugin-prettier: ^3.1.2
   graphql: 0.13.2
   graphql-parse-resolve-info: 0.1.0-alpha.18
-  graphql-tools: ^3.0.0
-  graphql-type-json: ^0.1.4
+  graphql-tools: 3.0.0
+  graphql-type-json: 0.1.4
   jsonwebtoken: ^8.5.1
   koa: ~2.11.0
   koa-bodyparser: ^4.2.0
+  koa-compose: ~4.1.0
   koa-compress: ~4.0.1
   koa-passport: ^4.1.3
   koa-router: ^7.3.0
@@ -4326,7 +4540,6 @@ specifiers:
   pretty-error: ^2.1.1
   reflect-metadata: ~0.1.13
   sodium-native: ^2.4.2
-  soniq: latest
   ts-node: ~8.9.1
   tslog: 1.1.1
   typedi: ~0.8.0

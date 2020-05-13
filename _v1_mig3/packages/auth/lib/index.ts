@@ -9,7 +9,7 @@ import {
   IModuleMigrationResult,
   IModuleRuntimeConfig,
   Pool,
-  TGetModuleRuntimeConfig
+  TGetModuleRuntimeConfig,
 } from "@fullstack-one/core";
 import { Server } from "@fullstack-one/server";
 import { Config } from "@fullstack-one/config";
@@ -20,7 +20,7 @@ import {
   UserInputError,
   AuthenticationError,
   ICustomResolverObject,
-  IQueryBuildObject
+  IQueryBuildObject,
 } from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
@@ -29,7 +29,11 @@ import { AuthConnector } from "./AuthConnector";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { AccessTokenParser } from "./AccessTokenParser";
 import { AuthProvider } from "./AuthProvider";
-import { IAuthFactorForProof, IUserAuthentication, ILoginData } from "./interfaces";
+import {
+  IAuthFactorForProof,
+  IUserAuthentication,
+  ILoginData,
+} from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 import * as _ from "lodash";
@@ -59,7 +63,9 @@ export class Auth {
   // DI
   private logger: ILogger;
   private loggerFactory: LoggerFactory;
-  private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
+  private userRegistrationCallback: (
+    userAuthentication: IUserAuthentication
+  ) => void;
   private authProviders: AuthProvider[] = [];
   private getRuntimeConfig: TGetModuleRuntimeConfig;
   private pgPool: Pool;
@@ -75,7 +81,7 @@ export class Auth {
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory
   ) {
     // register package config
-    this.authConfig = config.registerConfig("Auth", `${__dirname}/../config`);
+    this.authConfig = config.registerConfig("Auth", defaultConfig);
 
     // orm.addMigrations(migrations);
 
@@ -87,7 +93,7 @@ export class Auth {
     this.core.addCoreFunctions({
       key: this.constructor.name,
       migrate: this.migrate.bind(this),
-      boot: this.boot.bind(this)
+      boot: this.boot.bind(this),
     });
     // this.orm = orm;
 
@@ -110,7 +116,7 @@ export class Auth {
           return {
             path: `${splittedKey[2]}.${splittedKey[3]}`,
             key,
-            config: {}
+            config: {},
           };
         };
       })
@@ -120,14 +126,24 @@ export class Auth {
 
     this.addMiddleware(server);
   }
-  private async migrate(appConfig: IModuleAppConfig, envConfig: IModuleEnvConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
+  private async migrate(
+    appConfig: IModuleAppConfig,
+    envConfig: IModuleEnvConfig,
+    pgClient: PoolClient
+  ): Promise<IModuleMigrationResult> {
     const authFactorProviders = this.authProviders
       .map((authProvider) => {
         return authProvider.providerName;
       })
       .join(":");
 
-    return migrate(this.graphQl, appConfig, envConfig, pgClient, authFactorProviders);
+    return migrate(
+      this.graphQl,
+      appConfig,
+      envConfig,
+      pgClient,
+      authFactorProviders
+    );
   }
   private async boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) {
     this.getRuntimeConfig = getRuntimeConfig;
@@ -138,14 +154,36 @@ export class Auth {
   }
 
   private updateHelpers(runtimeConfig: any) {
-    this.cryptoFactory = new CryptoFactory(runtimeConfig.secrets.encryptionKey, runtimeConfig.crypto.algorithm);
-    this.signHelper = new SignHelper(runtimeConfig.secrets.admin, runtimeConfig.secrets.root, this.cryptoFactory);
+    this.cryptoFactory = new CryptoFactory(
+      runtimeConfig.secrets.encryptionKey,
+      runtimeConfig.crypto.algorithm
+    );
+    this.signHelper = new SignHelper(
+      runtimeConfig.secrets.admin,
+      runtimeConfig.secrets.root,
+      this.cryptoFactory
+    );
 
-    this.authQueryHelper = new AuthQueryHelper(this.pgPool, this.logger, this.cryptoFactory, this.signHelper);
-    this.authConnector = new AuthConnector(this.authQueryHelper, this.logger, this.cryptoFactory, runtimeConfig);
+    this.authQueryHelper = new AuthQueryHelper(
+      this.pgPool,
+      this.logger,
+      this.cryptoFactory,
+      this.signHelper
+    );
+    this.authConnector = new AuthConnector(
+      this.authQueryHelper,
+      this.logger,
+      this.cryptoFactory,
+      runtimeConfig
+    );
 
     this.authProviders.forEach((authProvider) => {
-      authProvider._boot(this.authConnector, this.authQueryHelper, this.signHelper, runtimeConfig);
+      authProvider._boot(
+        this.authConnector,
+        this.authQueryHelper,
+        this.signHelper,
+        runtimeConfig
+      );
     });
   }
 
@@ -154,7 +192,9 @@ export class Auth {
 
     // Prevent CSRF
     app.use(async (ctx, next) => {
-      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("CSRF");
+      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig(
+        "CSRF"
+      );
 
       if (hasBeenUpdated) {
         this.updateHelpers(runtimeConfig);
@@ -178,7 +218,7 @@ export class Auth {
         ...runtimeConfig.corsOptions,
         origin: (kctx) => {
           return kctx.request.get("origin");
-        }
+        },
       };
 
       return koaCors(corsOptions)(ctx, next);
@@ -186,7 +226,9 @@ export class Auth {
 
     // Parse AccessToken
     app.use(async (ctx, next) => {
-      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("ACCESS_TOKEN");
+      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig(
+        "ACCESS_TOKEN"
+      );
 
       if (hasBeenUpdated || this.csrfProtection == null) {
         this.accessTokenParser = new AccessTokenParser(runtimeConfig);
@@ -196,7 +238,13 @@ export class Auth {
     });
   }
 
-  private async preQueryHook(pgClient, context, authRequired: boolean, buildObject: IQueryBuildObject, useContextPgClient: boolean) {
+  private async preQueryHook(
+    pgClient,
+    context,
+    authRequired: boolean,
+    buildObject: IQueryBuildObject,
+    useContextPgClient: boolean
+  ) {
     // Do nothing if this is a custom transaction
     if (useContextPgClient === true) {
       return;
@@ -206,7 +254,10 @@ export class Auth {
     if (context._isRequestGqlQuery === true) {
       if (authRequired === true && context.accessToken != null) {
         try {
-          await this.authQueryHelper.authenticateTransaction(pgClient, context.accessToken);
+          await this.authQueryHelper.authenticateTransaction(
+            pgClient,
+            context.accessToken
+          );
         } catch (err) {
           this.logger.trace("authenticateTransaction.failed", err);
           await this.deleteAccessTokenCookie(context.ctx);
@@ -222,7 +273,10 @@ export class Auth {
         if (context.accessToken != null) {
           if (context._transactionIsAuthenticated !== true) {
             try {
-              await this.authQueryHelper.authenticateTransaction(pgClient, context.accessToken);
+              await this.authQueryHelper.authenticateTransaction(
+                pgClient,
+                context.accessToken
+              );
               context._transactionIsAuthenticated = true;
             } catch (err) {
               this.logger.trace("authenticateTransaction.failed", err);
@@ -231,7 +285,9 @@ export class Auth {
             }
           }
         } else {
-          throw new AuthenticationError("Authentication is required for this mutation. AccessToken missing.");
+          throw new AuthenticationError(
+            "Authentication is required for this mutation. AccessToken missing."
+          );
         }
       } else {
         if (context._transactionIsAuthenticated === true) {
@@ -251,10 +307,14 @@ export class Auth {
     const { runtimeConfig } = await this.getRuntimeConfig();
     const cookieOptions = {
       ...runtimeConfig.cookie,
-      maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000
+      maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000,
     };
 
-    ctx.cookies.set(runtimeConfig.cookie.name, loginData.accessToken, cookieOptions);
+    ctx.cookies.set(
+      runtimeConfig.cookie.name,
+      loginData.accessToken,
+      cookieOptions
+    );
   }
 
   private async deleteAccessTokenCookie(ctx: any) {
@@ -277,29 +337,50 @@ export class Auth {
       "@fullstack-one/auth/Mutation/getUserIdentifier": (resolver) => {
         return {
           usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+          resolver: async (
+            obj,
+            args,
+            context,
+            info,
+            returnIdHandler: ReturnIdHandler
+          ) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              const userIdentifierObject = await this.authConnector.findUser(pgClient, args.username, args.tenant || null);
-              if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
+              const userIdentifierObject = await this.authConnector.findUser(
+                pgClient,
+                args.username,
+                args.tenant || null
+              );
+              if (
+                returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)
+              ) {
                 return "Token hidden due to returnId usage.";
               }
               return userIdentifierObject.userIdentifier;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/login": (resolver) => {
         return {
           usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+          resolver: async (
+            obj,
+            args,
+            context,
+            info,
+            returnIdHandler: ReturnIdHandler
+          ) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+              const clientIdentifier =
+                context.ctx.securityContext.clientIdentifier;
 
               const loginData = await this.authConnector.login(
                 pgClient,
-                args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+                args.authFactorProofTokens.map(
+                  returnIdHandler.getReturnId.bind(returnIdHandler)
+                ),
                 clientIdentifier || null
               );
 
@@ -310,40 +391,61 @@ export class Auth {
               }
               return loginData;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/modifyAuthFactors": (resolver) => {
         return {
           usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+          resolver: async (
+            obj,
+            args,
+            context,
+            info,
+            returnIdHandler: ReturnIdHandler
+          ) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
               // tslint:disable-next-line:prettier
               await this.authConnector.modifyAuthFactors(
                 pgClient,
-                args.authFactorProofTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
+                args.authFactorProofTokens.map(
+                  returnIdHandler.getReturnId.bind(returnIdHandler)
+                ),
                 args.isActive,
                 args.loginProviderSets,
                 args.modifyProviderSets,
-                args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler)),
-                args.removeAuthFactorIds.map(returnIdHandler.getReturnId.bind(returnIdHandler))
+                args.authFactorCreationTokens.map(
+                  returnIdHandler.getReturnId.bind(returnIdHandler)
+                ),
+                args.removeAuthFactorIds.map(
+                  returnIdHandler.getReturnId.bind(returnIdHandler)
+                )
               );
               return true;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/proofAuthFactor": (resolver) => {
         return {
           usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+          resolver: async (
+            obj,
+            args,
+            context,
+            info,
+            returnIdHandler: ReturnIdHandler
+          ) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              await this.authConnector.proofAuthFactor(pgClient, returnIdHandler.getReturnId(args.authFactorProofToken));
+              await this.authConnector.proofAuthFactor(
+                pgClient,
+                returnIdHandler.getReturnId(args.authFactorProofToken)
+              );
               return true;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/invalidateAccessToken": (resolver) => {
@@ -353,10 +455,13 @@ export class Auth {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
               await this.deleteAccessTokenCookie(context.ctx);
-              await this.authConnector.invalidateAccessToken(pgClient, context.accessToken);
+              await this.authConnector.invalidateAccessToken(
+                pgClient,
+                context.accessToken
+              );
               return true;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/invalidateAllAccessTokens": (resolver) => {
@@ -366,10 +471,13 @@ export class Auth {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
               await this.deleteAccessTokenCookie(context.ctx);
-              await this.authConnector.invalidateAllAccessTokens(pgClient, context.accessToken);
+              await this.authConnector.invalidateAllAccessTokens(
+                pgClient,
+                context.accessToken
+              );
               return true;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/refreshAccessToken": (resolver) => {
@@ -378,7 +486,8 @@ export class Auth {
           resolver: async (obj, args, context, info) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
-              const clientIdentifier = context.ctx.securityContext.clientIdentifier;
+              const clientIdentifier =
+                context.ctx.securityContext.clientIdentifier;
 
               const loginData = await this.authConnector.refreshAccessToken(
                 pgClient,
@@ -394,7 +503,7 @@ export class Auth {
               }
               return loginData;
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/getTokenMeta": (resolver) => {
@@ -404,20 +513,29 @@ export class Auth {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
               try {
-                const tokenMeta = await this.authConnector.getTokenMeta(pgClient, context.accessToken);
+                const tokenMeta = await this.authConnector.getTokenMeta(
+                  pgClient,
+                  context.accessToken
+                );
                 return tokenMeta;
               } catch (err) {
                 await this.deleteAccessTokenCookie(context.ctx);
                 throw err;
               }
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Mutation/createUserAuthentication": (resolver) => {
         return {
           usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+          resolver: async (
+            obj,
+            args,
+            context,
+            info,
+            returnIdHandler: ReturnIdHandler
+          ) => {
             return this.callAndHideErrorDetails(async () => {
               const pgClient = context._transactionPgClient;
 
@@ -427,7 +545,9 @@ export class Auth {
                 args.isActive || true,
                 args.loginProviderSets,
                 args.modifyProviderSets,
-                args.authFactorCreationTokens.map(returnIdHandler.getReturnId.bind(returnIdHandler))
+                args.authFactorCreationTokens.map(
+                  returnIdHandler.getReturnId.bind(returnIdHandler)
+                )
               );
 
               return new RevertibleResult(
@@ -436,14 +556,19 @@ export class Auth {
                   /* Rollback happens with db-client-transaction */
                 },
                 async () => {
-                  await this.authQueryHelper.transaction(async (pgClientInternal) => {
-                    const userAuthentication = await this.authConnector.getUserAuthenticationById(pgClientInternal, userAuthenticationId);
-                    this.userRegistrationCallback(userAuthentication);
-                  });
+                  await this.authQueryHelper.transaction(
+                    async (pgClientInternal) => {
+                      const userAuthentication = await this.authConnector.getUserAuthenticationById(
+                        pgClientInternal,
+                        userAuthenticationId
+                      );
+                      this.userRegistrationCallback(userAuthentication);
+                    }
+                  );
                 }
               );
             });
-          }
+          },
         };
       },
       "@fullstack-one/auth/Query/getUserAuthentication": (resolver) => {
@@ -453,31 +578,43 @@ export class Auth {
             return this.callAndHideErrorDetails(async () => {
               return this.authQueryHelper.transaction(
                 async (pgClientInternal) => {
-                  return this.authConnector.getUserAuthentication(pgClientInternal, context.accessToken);
+                  return this.authConnector.getUserAuthentication(
+                    pgClientInternal,
+                    context.accessToken
+                  );
                 },
                 { accessToken: context.accessToken }
               );
             });
-          }
+          },
         };
-      }
+      },
     };
   }
 
-  public registerUserRegistrationCallback(callback: (userAuthentication: IUserAuthentication) => void) {
+  public registerUserRegistrationCallback(
+    callback: (userAuthentication: IUserAuthentication) => void
+  ) {
     if (this.userRegistrationCallback != null) {
-      throw new Error("Auth 'registerUserRegistrationCallback' can only be called once.");
+      throw new Error(
+        "Auth 'registerUserRegistrationCallback' can only be called once."
+      );
     }
     this.userRegistrationCallback = callback;
   }
 
-  public createAuthProvider(providerName: string, authFactorProofTokenMaxAgeInSeconds: number = null): AuthProvider {
+  public createAuthProvider(
+    providerName: string,
+    authFactorProofTokenMaxAgeInSeconds: number = null
+  ): AuthProvider {
     const authProvider = new AuthProvider(
       providerName,
       this.authConnector,
       this.authQueryHelper,
       this.signHelper,
-      this.loggerFactory.create(`${this.constructor.name}.AuthProvider.${providerName}`),
+      this.loggerFactory.create(
+        `${this.constructor.name}.AuthProvider.${providerName}`
+      ),
       this.authConfig,
       authFactorProofTokenMaxAgeInSeconds
     );

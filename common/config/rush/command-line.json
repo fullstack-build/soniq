@@ -139,6 +139,14 @@
     },
     {
       "commandKind": "bulk",
+      "name": "eslint-fix",
+      "summary": "Lint and fix all packages.",
+      "description": "Runs eslint-fix in every package.",
+      "enableParallelism": true,
+      "ignoreMissingScript": true
+    },
+    {
+      "commandKind": "bulk",
       "name": "tsdoc",
       "summary": "Create docs for all packages.",
       "description": "Runs tsdoc in every package.",

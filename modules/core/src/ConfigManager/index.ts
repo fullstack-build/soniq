@@ -20,16 +20,11 @@ export class ConfigManager {
     this.registerConfig(this.constructor.name, `${__dirname}/../config`);
 
     const namespace: string = this._config.Config.namespace;
-    this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(
-      this._NODE_ENV,
-      namespace
-    );
+    this.ENVIRONMENT = EnvironmentBuilder.buildEnvironment(this._NODE_ENV, namespace);
   }
 
   private _loadApplicationConfig(): object {
-    const applicationConfigFolderPath: string = `${path.dirname(
-      require.main?.filename ?? ""
-    )}/config`;
+    const applicationConfigFolderPath: string = `${path.dirname(require.main?.filename ?? "")}/config`;
     return this._getConfigFromConfigFiles(applicationConfigFolderPath);
   }
 
@@ -61,11 +56,8 @@ export class ConfigManager {
   private _applyConfigModule(name: string, baseConfigModule: object): void {
     if (name in this._config) return;
 
-    const applicationConfigOfModule: object =
-      this._applicationConfig[name] || {};
-    const processEnvironmentConfigOfModule: object = ConfigMergeHelper.getProcessEnvironmentConfig(
-      name
-    );
+    const applicationConfigOfModule: object = this._applicationConfig[name] || {};
+    const processEnvironmentConfigOfModule: object = ConfigMergeHelper.getProcessEnvironmentConfig(name);
 
     const configModule: object = _.defaultsDeep(
       processEnvironmentConfigOfModule,
@@ -79,9 +71,7 @@ export class ConfigManager {
   }
 
   public registerConfig<T>(name: string, configDirectory: string): T {
-    const baseConfigModule: object = this._getConfigFromConfigFiles(
-      configDirectory
-    );
+    const baseConfigModule: object = this._getConfigFromConfigFiles(configDirectory);
     this._applyConfigModule(name, baseConfigModule);
     return this.getConfig<T>(name);
   }

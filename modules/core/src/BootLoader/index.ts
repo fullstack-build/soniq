@@ -69,10 +69,7 @@ export class BootLoader {
       }
       this._state = EBootState.Finished;
 
-      this._logger.info(
-        "core.boot.ready",
-        `It took ${process.hrtime(STARTUP_TIME)} seconds.`
-      );
+      this._logger.info("core.boot.ready", `It took ${process.hrtime(STARTUP_TIME)} seconds.`);
 
       for (const resolverFunction of this._bootReadyPromiseResolver) {
         try {
