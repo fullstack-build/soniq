@@ -21,9 +21,9 @@ eslint_exit=$?
 echo "$FILES" | xargs git add
 
 if [ ${eslint_exit} -eq 0 ]; then
-  echo "✓ ESLint passed"
+  echo "\x1b[32m ✓ ESLint passed"
 else
-  echo "✘ ESLint failed!" 1>&2
+  echo "\x1b[31m ✘ ESLint failed!" 1>&2
   exit ${eslint_exit}
 fi
 
