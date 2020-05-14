@@ -249,9 +249,7 @@ export class Core {
       const pgClient: PoolClient = await this._runTimePgPool.connect();
       try {
         // eslint-disable-next-line prettier/prettier
-        const latestMigration: ICoreMigration = await getLatestMigrationVersion(
-          pgClient
-        );
+        const latestMigration: ICoreMigration = await getLatestMigrationVersion(pgClient);
         await pgClient.release();
 
         if (latestMigration == null) {
@@ -430,7 +428,7 @@ export class Core {
     secondGenerationResult.commands.forEach((command) => {
       if (command.autoAppConfigFixes != null && firstGenerationResult.autoAppConfigFixes != null) {
         command.autoAppConfigFixes.forEach((autoSchemaFix) => {
-          //@ts-ignore TODO: @eugene Check
+          //@ts-ignore TODO: @eugene This is set before
           firstGenerationResult.autoAppConfigFixes.push(autoSchemaFix);
         });
         firstGenerationResult.warnings.push({

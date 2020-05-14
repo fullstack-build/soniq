@@ -284,15 +284,15 @@ export class Auth {
       maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000,
     };
 
-    //@ts-ignore This is correct
+    //@ts-ignore TODO: @eugene This is correct
     ctx.cookies.set(runtimeConfig.cookie.name, loginData.accessToken, cookieOptions);
   }
 
   private async _deleteAccessTokenCookie(ctx: Koa.Context): Promise<void> {
     const { runtimeConfig } = await this.getRuntimeConfig();
-    //@ts-ignore This is correct
+    //@ts-ignore TODO: @eugene This is correct
     ctx.cookies.set(runtimeConfig.cookie.name, null);
-    //@ts-ignore This is correct
+    //@ts-ignore TODO: @eugene This is correct
     ctx.cookies.set(`${runtimeConfig.cookie.name}.sig`, null);
   }
 

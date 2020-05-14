@@ -63,7 +63,9 @@ export class Schema {
     };
 
     this._tables.forEach(({ table, identifier }) => {
-      //@ts-ignore TODO: @eugene this._id is set before
+      if (this._id == null) {
+        throw new Error("Id is missing. Should be set before");
+      }
       table._setId(uuidv5(identifier.toString(), this._id));
     });
 

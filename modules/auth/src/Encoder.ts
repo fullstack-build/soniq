@@ -85,8 +85,12 @@ export class Encoder {
   public stringToHex(str: string): string {
     const strArray: string[] = str.split("");
     let hex: string = "";
-    //@ts-ignore TODO: WTF? This code works.
-    let leadingZeros: number = this.charToNumber(strArray.shift());
+
+    const firstChar: string | null = strArray.shift() || null;
+    if (firstChar == null) {
+      throw new Error("The input string cannot be empty.");
+    }
+    let leadingZeros: number = this.charToNumber(firstChar);
 
     while (strArray.length > 0) {
       const substrArray: string[] = strArray.splice(-this._strChars);
@@ -100,7 +104,6 @@ export class Encoder {
     }
 
     while (leadingZeros > 0) {
-      // tslint:disable-next-line:no-increment-decrement This rule sucks
       leadingZeros--;
       hex = `${this._alphabet[0]}${hex}`;
     }
