@@ -97,7 +97,7 @@ function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQ
       ) {
         return new ErrorClass(message);
       }
-      // Always hide the stacktrace. There is no reason to send it.
+      // Always hide the stacktrace. There is no reason to send it
       _.set(error, "extensions.exception.stacktrace", null);
 
       // Mask pg-errors
