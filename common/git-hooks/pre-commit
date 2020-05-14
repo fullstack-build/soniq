@@ -9,7 +9,7 @@ FILES=$(git diff --cached --name-only --diff-filter=ACMR "*.ts" | sed 's| |\\ |g
 echo "Prettify..."
 
 # Prettify all selected files
-# echo "$FILES" | xargs ./common/temp/node_modules/.bin/prettier --write -config ./modules/eslint-config/prettier.config.js
+echo "$FILES" | xargs ./common/temp/node_modules/.bin/prettier --write --config ./modules/eslint-config/prettier.config.js
 
 echo "ESLint..."
 

@@ -159,7 +159,6 @@ function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQ
 function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: Logger): Config {
   return {
     schema,
-    //@ts-ignore TODO: WTF?
     context: ({ ctx }) => {
       ctx.state.authRequired = false;
       ctx.state.includesMutation = false;
@@ -179,7 +178,6 @@ function createApolloServer(schema: GraphQLSchema, runtimeConfig: IRuntimeConfig
   koaGraphQlConfig.playground = runtimeConfig.defaultResolverMeta.playgroundActive;
   koaGraphQlConfig.introspection = runtimeConfig.defaultResolverMeta.introspectionActive;
 
-  //@ts-ignore
   const server: ApolloServer = new ApolloServer(koaGraphQlConfig);
 
   return server;
