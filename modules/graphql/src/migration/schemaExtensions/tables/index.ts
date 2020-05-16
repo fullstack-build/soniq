@@ -1,7 +1,7 @@
 import { ISchemaExtension, IHelpers } from "../ISchemaExtension";
 import { IDbSchema, IDbTable } from "../../DbSchemaInterface";
 import { PoolClient, OPERATION_SORT_POSITION, asyncForEach } from "soniq";
-import { IGqlMigrationResult, ITableMeta, ITableMetaByTableId } from "../../interfaces";
+import { IGqlMigrationResult, ITableMeta, ITableMetaByTableId, IGqlMigrationContext } from "../../interfaces";
 import { createMergeResultFunction, ONE_PREFIX } from "../../helpers";
 import { getTables } from "./queryHelper";
 import {
@@ -31,8 +31,7 @@ export const schemaExtensionTables: ISchemaExtension = {
     schema: IDbSchema,
     dbClient: PoolClient,
     helpers: IHelpers,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    gqlMigrationContext: any
+    gqlMigrationContext: IGqlMigrationContext
   ): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
@@ -113,9 +112,7 @@ export const schemaExtensionTables: ISchemaExtension = {
       if (tableMeta.id != null && proceededTableIds.indexOf(tableMeta.id) >= 0) {
         return;
       }
-      // TODO: This is any because TS sucks with booleans and loop-functions
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let tableProceeded: any = false;
+      let tableProceeded: unknown = false;
 
       schemaTables.forEach((table: IDbTable) => {
         if (proceededTableIds.indexOf(table.id) >= 0) {

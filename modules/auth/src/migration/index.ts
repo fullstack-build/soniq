@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/camelcase */
 import { generateAuthSchema } from "./basic";
 import { GraphQl, IDbSchema } from "@soniq/graphql";
@@ -12,6 +11,7 @@ import {
 } from "soniq";
 import { ConfigMergeHelper } from "./ConfigMergeHelper";
 import { Migration } from "@soniq/graphql/src/migration/Migration";
+import { IPgSettings } from "../interfaces";
 
 const requiredSecrets: string[] = [
   "access_token_secret",
@@ -35,9 +35,9 @@ async function doesSettingsTableExist(pgClient: PoolClient): Promise<boolean> {
   return rows[0] != null && rows[0].exists != null && rows[0].exists === true;
 }
 
-async function getCurrentSettings(pgClient: PoolClient): Promise<any> {
+async function getCurrentSettings(pgClient: PoolClient): Promise<IPgSettings> {
   const settingsTableExists: boolean = await doesSettingsTableExist(pgClient);
-  const settings: any = {};
+  const settings: IPgSettings = {};
 
   if (settingsTableExists) {
     const { rows } = await pgClient.query(`SELECT key, value FROM _auth."Settings";`);

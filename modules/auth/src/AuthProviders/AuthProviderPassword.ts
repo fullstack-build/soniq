@@ -63,8 +63,7 @@ export class AuthProviderPassword {
     return result.authFactorProofToken;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async _callAndHideErrorDetails(callback: any): Promise<any> {
+  private async _callAndHideErrorDetails(callback: Function): Promise<unknown> {
     try {
       return await callback();
     } catch (error) {

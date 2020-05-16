@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PoolClient, Pool, QueryResult } from "soniq";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IsolationLevel = any;
@@ -32,8 +31,7 @@ export class AuthQueryHelper {
     isolationLevel: IsolationLevel = "READ COMMITTED"
   ): Promise<PoolClient> {
     const isolationLevelIndex: number = this._possibleTransactionIsolationLevels.findIndex(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (item: any) => isolationLevel.toLowerCase() === item.toLowerCase()
+      (item: string) => isolationLevel.toLowerCase() === item.toLowerCase()
     );
     const isolationLevelToUse: string = this._possibleTransactionIsolationLevels[isolationLevelIndex];
 
@@ -91,7 +89,8 @@ export class AuthQueryHelper {
     }
   }
 
-  public async query(transactionAuth: ITransactionAuth = {}, ...queryArguments: [string, ...any[]]): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async query(transactionAuth: ITransactionAuth = {}, ...queryArguments: [string, ...any[]]): Promise<unknown> {
     const pgClient: PoolClient = await this._pgPool.connect();
 
     const tAuth: ITransactionAuth = {
@@ -124,9 +123,9 @@ export class AuthQueryHelper {
   }
 
   public async adminTransaction(
-    callback: (pgClient: PoolClient) => Promise<any>,
+    callback: (pgClient: PoolClient) => Promise<unknown>,
     isolationLevel: IsolationLevel = "READ COMMITTED"
-  ): Promise<any> {
+  ): Promise<unknown> {
     const pgClient: PoolClient = await this._pgPool.connect();
 
     try {
@@ -145,6 +144,7 @@ export class AuthQueryHelper {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async adminQuery(...queryArguments: [string, ...any[]]): Promise<QueryResult> {
     const pgClient: PoolClient = await this._pgPool.connect();
 
@@ -168,6 +168,7 @@ export class AuthQueryHelper {
 
   public async adminQueryWithPgClient(
     pgClient: PoolClient,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...queryArguments: [string, ...any[]]
   ): Promise<QueryResult> {
     await this.setAdmin(pgClient);

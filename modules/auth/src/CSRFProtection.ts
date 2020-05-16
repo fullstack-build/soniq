@@ -1,16 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { sha256 } from "./crypto";
 import { URL } from "url";
 import { Logger } from "soniq";
 import { Koa } from "@soniq/server";
+import { IAuthRuntimeConfig } from "./interfaces";
 
 export class CSRFProtection {
   private _logger: Logger;
-  private _authConfig: any;
+  private _authRuntimeConfig: IAuthRuntimeConfig;
 
-  public constructor(logger: Logger, authConfig: any) {
+  public constructor(logger: Logger, authConfig: IAuthRuntimeConfig) {
     this._logger = logger;
-    this._authConfig = authConfig;
+    this._authRuntimeConfig = authConfig;
   }
 
   public async createSecurityContext(ctx: Koa.Context, next: Koa.Next): Promise<Koa.Next> {
@@ -32,7 +32,7 @@ export class CSRFProtection {
 
     // Check if https is used on production
     if (process.env.NODE_ENV === "production") {
-      if (this._authConfig.enforceHttpsOnProduction !== false && ctx.request.protocol !== "https") {
+      if (this._authRuntimeConfig.enforceHttpsOnProduction !== false && ctx.request.protocol !== "https") {
         this._logger.warn(
           "Request rejected: Unsecure requests are not allowed here. Please use HTTPS.",
           ctx.securityContext
@@ -46,7 +46,7 @@ export class CSRFProtection {
     let referrerOrigin: string | null = null;
 
     // Validate same origin policy by origin header
-    if (origin != null && origin !== "" && this._authConfig.validOrigins.includes(origin)) {
+    if (origin != null && origin !== "" && this._authRuntimeConfig.validOrigins.includes(origin)) {
       ctx.securityContext.sameOriginApproved.byOrigin = true;
     }
 
@@ -54,7 +54,7 @@ export class CSRFProtection {
     if (referrer != null && referrer !== "") {
       const referrerUrl: URL = new URL(referrer);
       referrerOrigin = referrerUrl.origin;
-      if (referrerOrigin != null && this._authConfig.validOrigins.includes(referrerOrigin)) {
+      if (referrerOrigin != null && this._authRuntimeConfig.validOrigins.includes(referrerOrigin)) {
         ctx.securityContext.sameOriginApproved.byReferrer = true;
       }
     }
@@ -71,7 +71,7 @@ export class CSRFProtection {
     }
 
     // If the client is not a browser we don't need to worry about CORS.
-    if (this._authConfig.apiClientOrigins.indexOf(origin) >= 0) {
+    if (this._authRuntimeConfig.apiClientOrigins.indexOf(origin) >= 0) {
       ctx.securityContext.isApiClient = true;
       ctx.securityContext.isBrowser = false;
     }

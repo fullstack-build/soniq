@@ -30,9 +30,7 @@ export function createConfig(config: ISodiumConfigOptional): ISodiumConfig {
 }
 
 export function newHash(password: string, sodiumConfig: ISodiumConfig): Promise<IPasswordData> {
-  // TODO: @eugene reject has a parameter which is explicit any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new Promise<IPasswordData>((resolve: (passwordData: IPasswordData) => void, reject: (err: any) => void) => {
+  return new Promise<IPasswordData>((resolve: (passwordData: IPasswordData) => void, reject: (err: Error) => void) => {
     const passwordBuffer: Buffer = Buffer.from(password);
 
     const hashBuffer: Buffer = Buffer.allocUnsafe(sodiumConfig.hashBytes);
@@ -56,9 +54,7 @@ export function newHash(password: string, sodiumConfig: ISodiumConfig): Promise<
       sodiumConfig.opslimit,
       sodiumConfig.memlimit,
       sodiumConfig.algorithm,
-      // TODO: @eugene err is explicit any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err: any) => {
+      (err: Error | null) => {
         if (err != null) {
           return reject(err);
         }
@@ -75,9 +71,7 @@ export function newHash(password: string, sodiumConfig: ISodiumConfig): Promise<
 }
 
 export function hashByMeta(password: string, meta: IPasswordMeta): Promise<IPasswordData> {
-  // TODO: @eugene reject has a parameter which is explicit any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new Promise((resolve: (passwordData: IPasswordData) => void, reject: (err: any) => void) => {
+  return new Promise((resolve: (passwordData: IPasswordData) => void, reject: (err: Error) => void) => {
     const passwordBuffer: Buffer = Buffer.from(password);
 
     const hashBuffer: Buffer = Buffer.allocUnsafe(meta.hashBytes);
@@ -91,9 +85,7 @@ export function hashByMeta(password: string, meta: IPasswordMeta): Promise<IPass
       meta.opslimit,
       meta.memlimit,
       meta.algorithm,
-      // TODO: @eugene err is explicit any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err: any) => {
+      (err: Error | null) => {
         if (err != null) {
           return reject(err);
         }

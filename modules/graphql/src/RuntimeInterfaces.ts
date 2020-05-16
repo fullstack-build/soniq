@@ -1,4 +1,4 @@
-export interface IRuntimeConfigGql {
+export interface IGraphqlRuntimeConfig {
   gqlTypeDefs: string;
   resolvers: IResolver[];
   defaultResolverMeta: IDefaultResolverMeta;
@@ -14,6 +14,7 @@ export interface IResolver {
 }
 
 export interface IDefaultResolverMeta {
+  endpointPath: string;
   viewsSchemaName: string;
   costLimit: number;
   minSubqueryCountToCheckCostLimit: number;
@@ -87,3 +88,10 @@ export interface IMutationsMeta {
   resolvers: IResolver[];
   mutationViewMetas: IMutationViewMeta[];
 }
+
+export interface IGetAuthModuleRuntimeConfigResult {
+  runtimeConfig: IGraphqlRuntimeConfig;
+  hasBeenUpdated: boolean;
+}
+
+export type TGetGraphqlModuleRuntimeConfig = (updateKey?: string) => Promise<IGetAuthModuleRuntimeConfigResult>;

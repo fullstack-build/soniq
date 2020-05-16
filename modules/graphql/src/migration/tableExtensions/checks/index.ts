@@ -66,8 +66,7 @@ export const tableExtenstionChecks: ITableExtension = {
     }
 
     checks.forEach((existingCheck: ICheck) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let foundInSchema: any = false;
+      let foundInSchema: unknown = false;
 
       tableChecks.forEach((check: IDbCheck) => {
         const constraintName: string = createConstraintName(check.id);

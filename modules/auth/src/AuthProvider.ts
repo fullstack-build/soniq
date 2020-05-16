@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AuthConnector } from "./AuthConnector";
 import {
   IAuthFactorCreation,
@@ -8,6 +7,8 @@ import {
   IAuthFactorForProofResponse,
   IPasswordData,
   ISodiumConfig,
+  IAuthRuntimeConfig,
+  IAuthFactorMeta,
 } from "./interfaces";
 import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./crypto";
 import uuid = require("uuid");
@@ -21,7 +22,7 @@ export class AuthProvider {
   private _authQueryHelper: AuthQueryHelper | null = null;
   private _signHelper: SignHelper | null = null;
   private _logger: Logger;
-  public runtimeConfig: any;
+  private _authRuntimeConfig: IAuthRuntimeConfig | null;
   public readonly providerName: string;
   public authFactorProofTokenMaxAgeInSeconds: number | null;
 
@@ -31,14 +32,14 @@ export class AuthProvider {
     authQueryHelper: AuthQueryHelper | null,
     signHelper: SignHelper | null,
     logger: Logger,
-    runtimeConfig: any,
+    authRuntimeConfig: IAuthRuntimeConfig | null,
     authFactorProofTokenMaxAgeInSeconds: number | null = null
   ) {
     this._authConnector = authConnector;
     this._authQueryHelper = authQueryHelper;
     this._signHelper = signHelper;
     this._logger = logger;
-    this.runtimeConfig = runtimeConfig;
+    this._authRuntimeConfig = authRuntimeConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
   }
@@ -48,7 +49,7 @@ export class AuthProvider {
     passwordData: IPasswordData;
   }> {
     const randomPassword: string = generateRandomPassword();
-    const sodiumConfig: ISodiumConfig = createConfig(this.runtimeConfig.sodium);
+    const sodiumConfig: ISodiumConfig = createConfig(this.getAuthRuntimeConfig().sodium);
     const passwordData: IPasswordData = await newHash(randomPassword, sodiumConfig);
 
     const randomTime: string = DateTime.fromMillis(Math.round(Date.now() * Math.random()), { zone: "utc" }).toISO();
@@ -74,12 +75,12 @@ export class AuthProvider {
     password: string,
     communicationAddress: string | null = null,
     isProofed: boolean = false,
-    providerMeta: any = {}
+    providerMeta: unknown = {}
   ): Promise<string> {
-    const sodiumConfig: ISodiumConfig = createConfig(this.runtimeConfig.sodium);
+    const sodiumConfig: ISodiumConfig = createConfig(this.getAuthRuntimeConfig().sodium);
 
     const providerSignature: string = this.getSignHelper().getProviderSignature(
-      this.runtimeConfig.secrets.authProviderHashSignature,
+      this.getAuthRuntimeConfig().secrets.authProviderHashSignature,
       this.providerName,
       ""
     );
@@ -110,12 +111,12 @@ export class AuthProvider {
     try {
       authFactor = await this.getAuthConnector().getAuthFactorForProof(pgClient, userIdentifier, provider);
 
-      const meta: any = JSON.parse(authFactor.meta);
+      const meta: IAuthFactorMeta = JSON.parse(authFactor.meta);
 
       const password: string | null = await getPassword(authFactor);
 
       const providerSignature: string = this.getSignHelper().getProviderSignature(
-        this.runtimeConfig.secrets.authProviderHashSignature,
+        this.getAuthRuntimeConfig().secrets.authProviderHashSignature,
         meta.isOldPassword === true ? "local" : provider,
         meta.isOldPassword === true ? authFactor.userId : ""
       );
@@ -201,15 +202,22 @@ export class AuthProvider {
     return this._signHelper;
   }
 
+  public getAuthRuntimeConfig(): IAuthRuntimeConfig {
+    if (this._authRuntimeConfig == null) {
+      throw new Error(`AuthRuntimeConfig has not been initialised yet.`);
+    }
+    return this._authRuntimeConfig;
+  }
+
   public _boot(
     authConnector: AuthConnector,
     authQueryHelper: AuthQueryHelper,
     signHelper: SignHelper,
-    runtimeConfig: any
+    runtimeConfig: IAuthRuntimeConfig
   ): void {
     this._authConnector = authConnector;
     this._authQueryHelper = authQueryHelper;
     this._signHelper = signHelper;
-    this.runtimeConfig = runtimeConfig;
+    this._authRuntimeConfig = runtimeConfig;
   }
 }

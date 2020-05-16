@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
-export const defaultConfig: unknown = {
+import { IAuthApplicationConfig } from "../interfaces";
+
+export const defaultConfig: IAuthApplicationConfig = {
   secrets: {
     admin: null,
     root: null,

@@ -61,11 +61,7 @@ export class AuthProviderEmail {
 
   private async _initiateEmailProof(userIdentifier: string, info: string | undefined = undefined): Promise<unknown> {
     return this._authProvider.getAuthQueryHelper().transaction(async (pgClient) => {
-      let currentAuthFactor:
-        | IAuthFactorForProof
-        | undefined
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        | any = undefined;
+      let currentAuthFactor: IAuthFactorForProof | null = null;
 
       const authFactorProofToken: string = (
         await this._authProvider.proof(pgClient, userIdentifier, async (authFactor: IAuthFactorForProof) => {
@@ -75,12 +71,15 @@ export class AuthProviderEmail {
         })
       ).authFactorProofToken;
 
-      if (currentAuthFactor != null && currentAuthFactor.communicationAddress != null) {
+      const authFactor: IAuthFactorForProof | null =
+        currentAuthFactor != null ? (currentAuthFactor as IAuthFactorForProof) : null;
+
+      if (authFactor != null && authFactor.communicationAddress != null) {
         const proofMailPayload: IProofMailPayload = {
-          email: currentAuthFactor.communicationAddress,
+          email: authFactor.communicationAddress,
           authFactorProofToken,
-          userId: currentAuthFactor.userId,
-          userAuthenticationId: currentAuthFactor.userAuthenticationId,
+          userId: authFactor.userId,
+          userAuthenticationId: authFactor.userAuthenticationId,
           info,
         };
 

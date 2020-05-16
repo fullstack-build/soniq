@@ -1,5 +1,5 @@
-/* eslint-disable require-atomic-updates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable require-atomic-updates */
 import * as graphQLJSON from "graphql-type-json";
 import { GraphQLResolveInfo } from "graphql";
 import { MergeInfo, IFieldResolver, IResolvers } from "graphql-tools";
@@ -133,7 +133,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
         await context._transactionPgClient.query("BEGIN;");
         context._transactionIsAuthenticated = false;
         const result: unknown = await resolverMeta.resolver(obj, args, context, info, returnIdHandler);
-        let finalResult: any;
+        let finalResult: unknown;
 
         if (result instanceof RevertibleResult) {
           rollbackFunction = result.getRollbackFunction();

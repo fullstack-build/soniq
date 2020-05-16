@@ -235,8 +235,7 @@ export class QueryPermissionGenerator {
           `${queryFieldData.pgRootSelectExpression} AS ${getPgSelector(queryFieldData.viewColumnName)}`
         );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let hasPublicTrueExpression: any = false;
+        let hasPublicTrueExpression: unknown = false;
 
         const rootOnlyColumn: boolean =
           column.queryExpressionIds == null ||

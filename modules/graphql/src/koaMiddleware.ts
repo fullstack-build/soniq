@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable require-atomic-updates */
 import { GraphQLSchema, GraphQLError, GraphQLFormattedError } from "graphql";
 import {
@@ -12,11 +11,10 @@ import {
 } from "apollo-server-koa";
 import * as _ from "lodash";
 
-import IGraphQlConfig from "./IGraphQlConfig";
 import { Logger } from "soniq";
 import { Koa } from "@soniq/server";
-import { TGetModuleRuntimeConfig, Pool } from "soniq";
-import { IRuntimeConfigGql } from "./RuntimeInterfaces";
+import { Pool } from "soniq";
+import { IGraphqlRuntimeConfig, TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
 import getDefaultResolvers from "./getDefaultResolvers";
 import { getResolvers, ICustomResolverObject, ICustomResolverCreator } from "./resolverTransactions";
 import { makeExecutableSchema, IResolvers } from "graphql-tools";
@@ -33,7 +31,7 @@ import * as compose from "koa-compose";
 } */
 
 async function makeSchema(
-  runtimeConfig: IRuntimeConfigGql,
+  runtimeConfig: IGraphqlRuntimeConfig,
   diResolvers: ICustomResolverObject,
   pgPool: Pool,
   hookManager: HookManager,
@@ -52,6 +50,7 @@ async function makeSchema(
     [x: string]: ICustomResolverCreator;
   } = { ...defaultResolvers, ...diResolvers };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resolvers: IResolvers<any, any> = getResolvers(runtimeConfig.resolvers, runtimeResolvers, pgPool, logger);
   return makeExecutableSchema({
     typeDefs: runtimeConfig.gqlTypeDefs,
@@ -60,6 +59,7 @@ async function makeSchema(
 }
 
 function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQLFormattedError {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (error: any) => {
     const errorCode: string = _.get(error, "extensions.code");
     // If any Error has a exposeDetails flag just return it to the user
@@ -73,7 +73,7 @@ function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQ
 
       // Mask pg-errors
       if (_.get(error, "extensions.exception.name", null) === "QueryFailedError") {
-        const exception: any = _.get(error, "extensions.exception", {});
+        const exception: { [key: string]: string } = _.get(error, "extensions.exception", {});
         error.extensions.exception = {
           message: exception.message,
           detail: exception.detail != null && exception.detail.indexOf("LINE") < 0 ? exception.detail : null,
@@ -88,7 +88,8 @@ function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQ
     }
 
     // tslint:disable-next-line:variable-name
-    const handleGenericError: (ErrorClass: any, message: any) => any = (ErrorClass: any, message: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGenericError: (ErrorClass: any, message: string) => Error = (ErrorClass: any, message: string) => {
       logger.trace(error);
 
       if (
@@ -102,6 +103,7 @@ function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQ
 
       // Mask pg-errors
       if (_.get(error, "extensions.exception.name", null) === "QueryFailedError") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const exception: any = _.get(error, "extensions.exception", {});
         error.extensions.exception = {
           message: exception.message,
@@ -172,8 +174,8 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: Logger): Co
   };
 }
 
-function createApolloServer(schema: GraphQLSchema, runtimeConfig: IRuntimeConfigGql, logger: Logger): ApolloServer {
-  const koaGraphQlConfig: any = getKoaGraphQLOptionsFunction(schema, logger);
+function createApolloServer(schema: GraphQLSchema, runtimeConfig: IGraphqlRuntimeConfig, logger: Logger): ApolloServer {
+  const koaGraphQlConfig: Config = getKoaGraphQLOptionsFunction(schema, logger);
 
   koaGraphQlConfig.playground = runtimeConfig.defaultResolverMeta.playgroundActive;
   koaGraphQlConfig.introspection = runtimeConfig.defaultResolverMeta.introspectionActive;
@@ -183,8 +185,8 @@ function createApolloServer(schema: GraphQLSchema, runtimeConfig: IRuntimeConfig
   return server;
 }
 
-function setCacheHeaders(path: string): any {
-  return async (ctx: any, next: () => any) => {
+function setCacheHeaders(path: string): Koa.Middleware {
+  return async (ctx: Koa.Context, next: Koa.Next) => {
     if (ctx.request.path.startsWith(path) !== true) {
       return next();
     }
@@ -204,7 +206,7 @@ function setCacheHeaders(path: string): any {
   };
 }
 
-function enforceOriginMatch(path: string): any {
+function enforceOriginMatch(path: string): Koa.Middleware {
   return (ctx: Koa.Context, next: Koa.Next) => {
     if (ctx.request.path.startsWith(path) !== true) {
       return next();
@@ -238,10 +240,9 @@ function enforceOriginMatch(path: string): any {
 
 export async function applyApolloMiddleware(
   app: Koa,
-  getRuntimeConfig: TGetModuleRuntimeConfig,
+  getRuntimeConfig: TGetGraphqlModuleRuntimeConfig,
   pgPool: Pool,
   diResolvers: ICustomResolverObject,
-  config: IGraphQlConfig,
   logger: Logger,
   hookManager: HookManager,
   operatorsBuilder: OperatorsBuilder
@@ -261,7 +262,7 @@ export async function applyApolloMiddleware(
         operatorsBuilder
       );
       const server: ApolloServer = createApolloServer(schema, runtimeConfig, logger);
-      const path: string = config.endpoint;
+      const path: string = runtimeConfig.defaultResolverMeta.endpointPath;
 
       gqlApp = null;
       gqlApp = new Koa();

@@ -150,8 +150,7 @@ export class MutationPermissionGenerator {
     const selects: string[] = [];
 
     if (mutation.type === "CREATE" || mutation.type === "UPDATE") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let hasUpdateMutationIdColumn: any = false;
+      let hasUpdateMutationIdColumn: unknown = false;
 
       mutation.columns.forEach((mutationColumn) => {
         const column: IDbColumn = this._findColumnById(table, mutationColumn.columnId);

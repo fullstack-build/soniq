@@ -7,7 +7,6 @@ import {
   PoolClient,
   IModuleMigrationResult,
   Pool,
-  TGetModuleRuntimeConfig,
   Service,
   Inject,
   Logger,
@@ -39,6 +38,7 @@ import { IQueryBuildObject, IMutationBuildObject } from "./getDefaultResolvers";
 import { migrate } from "./basicMigration";
 import { createMergeResultFunction } from "./migration/helpers";
 import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
+import { TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
 export {
   ApolloServer,
   AuthenticationError,
@@ -67,14 +67,6 @@ export * from "./schemaDefinition";
 
 @Service()
 export class GraphQl {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _graphQlConfig: any = {
-    endpoint: "/graphql",
-    playgroundActive: true,
-    queryCostLimit: 2000000,
-    minQueryDepthToCheckCostLimit: 3,
-  };
-
   // DI
   private _server: Server;
   private _resolvers: ICustomResolverObject = {};
@@ -142,7 +134,7 @@ export class GraphQl {
 
     return result;
   }
-  private async _boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool): Promise<void> {
+  private async _boot(getRuntimeConfig: TGetGraphqlModuleRuntimeConfig, pgPool: Pool): Promise<void> {
     this.addResolvers({
       "@fullstack-one/graphql/Mutation/beginTransaction": getBeginTransactionResolver(pgPool, this._logger),
       "@fullstack-one/graphql/Mutation/commitTransaction": getCommitTransactionResolver(pgPool, this._logger),
@@ -155,7 +147,6 @@ export class GraphQl {
       getRuntimeConfig,
       pgPool,
       this._resolvers,
-      this._graphQlConfig,
       this._logger,
       this._hookManager,
       this._operatorsBuilder

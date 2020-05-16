@@ -1,17 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IQueryClauseObject, INestedFilter } from "../types";
 import { FilterBuilder } from "./FilterBuilder";
 import { UserInputError } from "../../../GraphqlErrors";
 import { OperatorsBuilder } from "../../../logicalOperators";
 
 export class ClausesBuilder {
-  private _getParam: (value: any) => string;
+  private _getParam: (value: unknown) => string;
   private _getColumn: (columnName: string) => string;
   private _filterBuilder: FilterBuilder;
 
   public constructor(
     operatorsBuilder: OperatorsBuilder,
-    getParam: (value: any) => string,
+    getParam: (value: unknown) => string,
     getColumn: (columnName: string) => string
   ) {
     this._filterBuilder = new FilterBuilder(operatorsBuilder, getParam, getColumn);

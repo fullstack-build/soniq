@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fs from "fs";
 //@ts-ignore TODO: @eugene Koa-cors has no type-def
 import * as koaCors from "@koa/cors";
@@ -29,7 +28,15 @@ import { AuthConnector } from "./AuthConnector";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { AccessTokenParser } from "./AccessTokenParser";
 import { AuthProvider } from "./AuthProvider";
-import { IAuthFactorForProof, IUserAuthentication, ILoginData, IFindUserResponse, ITokenMeta } from "./interfaces";
+import {
+  IAuthFactorForProof,
+  IUserAuthentication,
+  ILoginData,
+  IFindUserResponse,
+  ITokenMeta,
+  IAuthRuntimeConfig,
+  TGetAuthModuleRuntimeConfig,
+} from "./interfaces";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 import * as _ from "lodash";
@@ -48,7 +55,7 @@ export { AuthProvider, IAuthFactorForProof };
 
 @Service()
 export class Auth {
-  private _authConfig: unknown;
+  private _authRuntimeConfig: IAuthRuntimeConfig | null = null;
   private _cryptoFactory: CryptoFactory | null = null;
   private _signHelper: SignHelper | null = null;
   private _authQueryHelper: AuthQueryHelper | null = null;
@@ -66,7 +73,7 @@ export class Auth {
   // eslint-disable-next-line @typescript-eslint/member-naming
   private userRegistrationCallback: ((userAuthentication: IUserAuthentication) => void) | null = null;
   // eslint-disable-next-line @typescript-eslint/member-naming
-  private getRuntimeConfig: TGetModuleRuntimeConfig = (updateKey?: string) => {
+  private getRuntimeConfig: TGetAuthModuleRuntimeConfig = (updateKey?: string) => {
     throw new Error(`Cannot get RuntimeConfig while booting hasn't finished.`);
   };
 
@@ -76,20 +83,6 @@ export class Auth {
     @Inject((type) => Server) server: Server,
     @Inject((type) => GraphQl) graphQl: GraphQl
   ) {
-    // register package config
-    this._authConfig = {
-      oAuth: {
-        cookie: {
-          maxAge: 86400000,
-          overwrite: true,
-          httpOnly: true,
-          signed: true,
-        },
-        providers: {},
-        frontendOrigins: ["*"],
-        serverApiAddress: "http://localhost:3000",
-      },
-    };
     this._graphQl = graphQl;
     this._core = core;
 
@@ -148,12 +141,12 @@ export class Auth {
   private async _boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool): Promise<void> {
     this.getRuntimeConfig = getRuntimeConfig;
     this._pgPool = pgPool;
-    const { runtimeConfig } = await getRuntimeConfig();
+    const { runtimeConfig } = await this.getRuntimeConfig();
 
     this._updateHelpers(runtimeConfig);
   }
 
-  private _updateHelpers(runtimeConfig: any): void {
+  private _updateHelpers(runtimeConfig: IAuthRuntimeConfig): void {
     this._cryptoFactory = new CryptoFactory(runtimeConfig.secrets.encryptionKey, runtimeConfig.crypto.algorithm);
     this._signHelper = new SignHelper(runtimeConfig.secrets.admin, runtimeConfig.secrets.root, this._cryptoFactory);
 
@@ -216,6 +209,7 @@ export class Auth {
 
   private async _preQueryHook(
     pgClient: PoolClient,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     context: any,
     authRequired: boolean,
     buildObject: IMutationBuildObject | IQueryBuildObject,
@@ -296,7 +290,7 @@ export class Auth {
     ctx.cookies.set(`${runtimeConfig.cookie.name}.sig`, null);
   }
 
-  private async _callAndHideErrorDetails(callback: any): Promise<any> {
+  private async _callAndHideErrorDetails(callback: Function): Promise<unknown> {
     try {
       return await callback();
     } catch (error) {
@@ -531,7 +525,7 @@ export class Auth {
       this._authQueryHelper,
       this._signHelper,
       this._logger,
-      this._authConfig,
+      this._authRuntimeConfig,
       authFactorProofTokenMaxAgeInSeconds
     );
 

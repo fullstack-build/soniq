@@ -46,8 +46,6 @@ export interface IRootFieldData {
 export interface IColumnExtension {
   // Meta and validation
   type: string;
-  // TODO: @dustin Check if this is deprecated
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPropertiesDefinition: () => boolean | object;
   validateProperties?: (context: IColumnExtensionContext) => IPropertieValidationResult;
 

@@ -147,8 +147,7 @@ export const tableExtenstionColumns: ITableExtension = {
       if (columnInfo.id != null && updateColumns[columnInfo.id] != null) {
         return;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let columnProceeded: any = false;
+      let columnProceeded: unknown = false;
 
       // Try to match columns by name
       columns.forEach((column: IDbColumn | null | undefined, columnIndex: number) => {

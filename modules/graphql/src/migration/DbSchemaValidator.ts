@@ -155,8 +155,7 @@ export class DbSchemaValidator {
             });
           } else {
             const migrationError: IMigrationError = error as IMigrationError;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const meta: any =
+            const meta: unknown =
               migrationError.meta != null
                 ? {
                     ...migrationError.meta,

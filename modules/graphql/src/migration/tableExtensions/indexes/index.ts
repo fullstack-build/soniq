@@ -125,8 +125,7 @@ export const tableExtenstionIndexes: ITableExtension = {
     indexes.forEach((existingIndex: IIndex) => {
       // Only proceed indexes created by one. Ignoring others
       if (existingIndex.index_name.startsWith(ONE_INDEX_PREFIX)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let foundInSchema: any = false;
+        let foundInSchema: unknown = false;
 
         tableIndexes.forEach((index: IDbIndex) => {
           const indexName: string = createIndexName(index.id);

@@ -1,5 +1,4 @@
 /* eslint-disable require-atomic-updates */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Logger } from "soniq";
 import { Pool } from "soniq";
 import { ICustomResolverCreator } from ".";
@@ -8,7 +7,7 @@ export function getBeginTransactionResolver(pgPool: Pool, logger: Logger): ICust
   return (resolver) => {
     return {
       usesPgClientFromContext: false,
-      resolver: async (obj, args, context: any, info, revertibleResult) => {
+      resolver: async (obj, args, context, info, revertibleResult) => {
         if (context._transactionPgClient != null) {
           throw new Error("You cannot begin a second transaction within another.");
         }
@@ -51,7 +50,7 @@ export function getCommitTransactionResolver(pgPool: Pool, logger: Logger): ICus
   return (resolver) => {
     return {
       usesPgClientFromContext: true,
-      resolver: async (obj, args, context: any, info) => {
+      resolver: async (obj, args, context, info) => {
         if (context._transactionRunning !== true) {
           throw new Error("You cannot commit a not existing transaction.");
         }

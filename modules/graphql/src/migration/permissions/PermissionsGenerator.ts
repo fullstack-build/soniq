@@ -98,6 +98,7 @@ export class PermissionGenerator {
         envConfig.minSubqueryCountToCheckCostLimit != null ? envConfig.minSubqueryCountToCheckCostLimit : 3,
       playgroundActive: envConfig.playgroundActive === true,
       introspectionActive: envConfig.introspectionActive === true,
+      endpointPath: envConfig.endpointPath || "/graphql",
     };
 
     if (schema.tables != null) {

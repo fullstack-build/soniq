@@ -15,8 +15,7 @@ export default function resolveUpdateMutation(
   const fieldAssignments: string = Object.keys(query.args.input)
     .filter((fieldName) => fieldName !== "id")
     .map((fieldName, index) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const value: any = query.args.input[fieldName];
+      const value: unknown = query.args.input[fieldName];
       const finalValue: string | null = parseValue(value, returnIdHandler);
 
       if (finalValue != null) {

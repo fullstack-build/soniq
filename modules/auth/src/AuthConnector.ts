@@ -1,5 +1,4 @@
 /* eslint-disable @rushstack/no-null */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PoolClient, Logger, QueryResult } from "soniq";
 import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
@@ -17,18 +16,24 @@ import {
   IUserAuthentication,
   ILoginResult,
   IValidateAccessTokenResult,
+  IAuthRuntimeConfig,
 } from "./interfaces";
 import { Encoder } from "./Encoder";
 
 export class AuthConnector {
   private _logger: Logger;
-  private _authConfig: any;
+  private _authRuntimeConfig: IAuthRuntimeConfig;
   private _cryptoFactory: CryptoFactory;
   private _authQueryHelper: AuthQueryHelper;
   private _encoder: Encoder = new Encoder();
 
-  public constructor(authQueryHelper: AuthQueryHelper, logger: Logger, cryptoFactory: CryptoFactory, authConfig: any) {
-    this._authConfig = authConfig;
+  public constructor(
+    authQueryHelper: AuthQueryHelper,
+    logger: Logger,
+    cryptoFactory: CryptoFactory,
+    authConfig: IAuthRuntimeConfig
+  ) {
+    this._authRuntimeConfig = authConfig;
     this._logger = logger;
     this._authQueryHelper = authQueryHelper;
     this._cryptoFactory = cryptoFactory;
@@ -43,7 +48,7 @@ export class AuthConnector {
     authFactorProof.maxAgeInSeconds =
       authFactorProof.maxAgeInSeconds != null && Number.isInteger(authFactorProof.maxAgeInSeconds)
         ? authFactorProof.maxAgeInSeconds
-        : this._authConfig.authFactorProofTokenMaxAgeInSeconds;
+        : this._authRuntimeConfig.authFactorProofTokenMaxAgeInSeconds;
 
     authFactorProof.hash = this._encoder.hexToString(authFactorProof.hash);
 
@@ -138,7 +143,7 @@ export class AuthConnector {
       throw new UserInputError("Invalid UserIdentifier. 'issuedAt' is missing.");
     }
     // tslint:disable-next-line:prettier
-    if (userIdentifierObject.issuedAt + this._authConfig.userIdentifierMaxAgeInSeconds * 1000 < Date.now()) {
+    if (userIdentifierObject.issuedAt + this._authRuntimeConfig.userIdentifierMaxAgeInSeconds * 1000 < Date.now()) {
       throw new UserInputError("Expired UserIdentifier.");
     }
 

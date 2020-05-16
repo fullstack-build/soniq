@@ -1,7 +1,6 @@
 export interface IQueryBuildObject {
   sql: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  values: any[];
+  values: unknown[];
   queryName: string;
   authRequired: boolean;
   useRootViews: boolean;

@@ -155,8 +155,7 @@ export const columnExtensionEnum: IColumnExtension = {
     const enumValues: string[] = await getEnum(dbClient, enumTypeName);
 
     // TODO: TS Sucks with booleans and function-loops
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let hasEnumChanged: any = false;
+    let hasEnumChanged: unknown = false;
 
     const removedValues: string[] = [];
 

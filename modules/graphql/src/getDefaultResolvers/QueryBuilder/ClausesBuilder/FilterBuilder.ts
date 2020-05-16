@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { INestedFilter, IFilterLeaf } from "../types";
 import { OperatorsBuilder, IOperatorContext, IOperator } from "../../../logicalOperators";
 import { UserInputError } from "../../../GraphqlErrors";
 
 export class FilterBuilder {
   private _operatorsBuilder: OperatorsBuilder;
-  private _getParam: (value: any) => string;
+  private _getParam: (value: unknown) => string;
   private _getColumn: (columnName: string) => string;
 
   public constructor(
     operatorsBuilder: OperatorsBuilder,
-    getParam: (value: any) => string,
+    getParam: (value: unknown) => string,
     getColumn: (columnName: string) => string
   ) {
     this._operatorsBuilder = operatorsBuilder;
@@ -32,7 +31,7 @@ export class FilterBuilder {
       .join(" AND ");
   }
 
-  private _generateOperatorFilter(operatorName: string, columnName: string, value: any): string {
+  private _generateOperatorFilter(operatorName: string, columnName: string, value: unknown): string {
     const operator: IOperator = this._operatorsBuilder.getOperatorByName(operatorName);
     if (operator == null) {
       throw new UserInputError(`Operator '${operatorName}' not found.`, {

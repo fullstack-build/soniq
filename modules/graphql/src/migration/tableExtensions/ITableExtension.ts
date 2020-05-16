@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IDbSchema, IDbTable, IDbColumn } from "../DbSchemaInterface";
-import { ITableMeta, IGqlMigrationResult } from "../interfaces";
+import { ITableMeta, IGqlMigrationResult, IGqlMigrationContext } from "../interfaces";
 import { PoolClient } from "soniq";
 import { IColumnExtension } from "../columnExtensions/IColumnExtension";
 import { IHelpers } from "../schemaExtensions/ISchemaExtension";
@@ -12,14 +12,18 @@ export interface ITableExtensionData {
 }
 
 export interface ITableExtension {
-  preloadData?: (schema: IDbSchema, dbClient: PoolClient, gqlMigrationContext: any) => Promise<ITableExtensionData[]>;
+  preloadData?: (
+    schema: IDbSchema,
+    dbClient: PoolClient,
+    gqlMigrationContext: IGqlMigrationContext
+  ) => Promise<ITableExtensionData[]>;
   generateCommands: (
     table: IDbTable,
     schema: IDbSchema,
     extensionData: any[], // ITableExtensionData
     helpers: IHelpersWithColumnHelper,
     dbClient: PoolClient,
-    gqlMigrationContext: any
+    gqlMigrationContext: IGqlMigrationContext
   ) => Promise<IGqlMigrationResult>;
   cleanUpDeletedTable?: (
     schema: IDbSchema,
@@ -27,7 +31,7 @@ export interface ITableExtension {
     extensionData: any[], //ITableExtensionData
     helpers: IHelpers,
     dbClient: PoolClient,
-    gqlMigrationContext: any
+    gqlMigrationContext: IGqlMigrationContext
   ) => Promise<IGqlMigrationResult>;
 }
 

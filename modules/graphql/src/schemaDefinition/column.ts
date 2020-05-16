@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IDbColumn, IDbExpression } from "../migration/DbSchemaInterface";
 import { Table } from "./table";
 import { Schema } from "./schema";
@@ -10,8 +9,10 @@ export class Column {
   private _type: string;
   private _table: Table | null = null;
   private _queryExpressions: Expression[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public properties: any;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public constructor(name: string, type: string, properties?: any) {
     this._name = name;
     this._type = type;
