@@ -1,12 +1,4 @@
-import {
-  PoolClient,
-  IModuleMigrationResult,
-  asyncForEach,
-  IModuleEnvConfig,
-  IModuleAppConfig,
-  IMigrationError,
-} from "soniq";
-import { IDbSchema } from "./DbSchemaInterface";
+import { PoolClient, IModuleMigrationResult, asyncForEach, IMigrationError } from "soniq";
 import { DbSchemaValidator } from "./DbSchemaValidator";
 import * as uuidValidate from "uuid-validate";
 import { IColumnExtension } from "./columnExtensions/IColumnExtension";
@@ -47,6 +39,8 @@ import { schemaExtensionFunctions } from "./schemaExtensions/functions";
 import { IResolver } from "../RuntimeInterfaces";
 import { columnExtensionComputed } from "./columnExtensions/computed";
 import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult } from "./interfaces";
+import { IGraphqlAppConfig, IGraphqlOptionsInput } from "../moduleDefinition/interfaces";
+import { IDbSchema } from "./DbSchemaInterface";
 
 export type ITypeDefsExtension = () => string;
 export type IResolverExtension = () => IResolver;
@@ -120,12 +114,12 @@ export class Migration {
   }
 
   public async generateSchemaMigrationCommands(
-    appConfig: IModuleAppConfig,
-    envConfig: IModuleEnvConfig,
-    dbClient: PoolClient
+    appConfig: IGraphqlAppConfig,
+    pgClient: PoolClient
   ): Promise<IModuleMigrationResult> {
-    const schema: IDbSchema = appConfig;
     const gqlMigrationContext: IGqlMigrationContext = {};
+    const options: IGraphqlOptionsInput = appConfig.options;
+    const schema: IDbSchema = appConfig.schema;
 
     let result: IModuleMigrationResult = {
       moduleRuntimeConfig: {},
@@ -176,8 +170,8 @@ export class Migration {
     // Generate Table-Migrations
     await asyncForEach(this._schemaExtensions, async (schemaExtension: ISchemaExtension) => {
       const extensionResult: IGqlMigrationResult = await schemaExtension.generateCommands(
-        schema,
-        dbClient,
+        appConfig,
+        pgClient,
         helpers,
         gqlMigrationContext
       );
@@ -191,8 +185,8 @@ export class Migration {
     await asyncForEach(this._postProcessingExtensions, async (postProcessingExtension: IPostProcessingExtension) => {
       // eslint-disable-next-line require-atomic-updates
       result = (await postProcessingExtension.generateCommands(
-        schema,
-        dbClient,
+        appConfig,
+        pgClient,
         helpers,
         gqlMigrationContext,
         result
@@ -205,12 +199,7 @@ export class Migration {
     // Generate Gql-Schema, Permission-Views and Metadata
     if (schema.permissionViewSchema != null) {
       const permissionGenerator: PermissionGenerator = new PermissionGenerator();
-      const permissions: IPermissionGeneratorResult = await permissionGenerator.generate(
-        schema,
-        dbClient,
-        helpers,
-        envConfig
-      );
+      const permissions: IPermissionGeneratorResult = await permissionGenerator.generate(schema, pgClient, helpers);
       permissions.commands.forEach((command: IGqlCommand) => {
         result.commands.push(command);
       });
@@ -243,6 +232,14 @@ export class Migration {
         gqlTypeDefs: print(gqlSchema),
         defaultResolverMeta: permissions.defaultResolverMeta,
         resolvers,
+        options: {
+          costLimit: options.costLimit != null ? options.costLimit : 2000000000,
+          minSubqueryCountToCheckCostLimit:
+            options.minSubqueryCountToCheckCostLimit != null ? options.minSubqueryCountToCheckCostLimit : 3,
+          playgroundActive: options.playgroundActive === true,
+          introspectionActive: options.introspectionActive === true,
+          endpointPath: options.endpointPath || "/graphql",
+        },
       };
     }
 

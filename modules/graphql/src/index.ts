@@ -1,16 +1,6 @@
 import { ApolloServer } from "apollo-server-koa";
 
-import {
-  Core,
-  IModuleAppConfig,
-  IModuleEnvConfig,
-  PoolClient,
-  IModuleMigrationResult,
-  Pool,
-  Service,
-  Inject,
-  Logger,
-} from "soniq";
+import { Core, IModuleAppConfig, PoolClient, IModuleMigrationResult, Pool, Service, Inject, Logger } from "soniq";
 import { Server, Koa } from "@soniq/server";
 
 import { applyApolloMiddleware } from "./koaMiddleware";
@@ -63,7 +53,8 @@ export * from "./migration/helpers";
 export * from "./migration/ExpressionCompiler";
 export * from "./migration/interfaces";
 
-export * from "./schemaDefinition";
+export * from "./moduleDefinition";
+export * from "./moduleDefinition/interfaces";
 
 @Service()
 export class GraphQl {
@@ -107,11 +98,7 @@ export class GraphQl {
       };
     });
   }
-  private async _migrate(
-    appConfig: IModuleAppConfig,
-    envConfig: IModuleEnvConfig,
-    pgClient: PoolClient
-  ): Promise<IModuleMigrationResult> {
+  private async _migrate(appConfig: IModuleAppConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
     const result: IModuleMigrationResult = {
       moduleRuntimeConfig: {},
       commands: [],
@@ -120,12 +107,11 @@ export class GraphQl {
     };
     const mergeResult: (newResult: IModuleMigrationResult) => void = createMergeResultFunction(result);
 
-    const basicResult: IModuleMigrationResult = await migrate(this, appConfig, envConfig, pgClient);
+    const basicResult: IModuleMigrationResult = await migrate(this, appConfig, pgClient);
     mergeResult(basicResult);
 
     const userResult: IModuleMigrationResult = await this._migration.generateSchemaMigrationCommands(
       appConfig,
-      envConfig,
       pgClient
     );
     mergeResult(userResult);

@@ -42,22 +42,12 @@ export interface IMigrationResult {
 }
 
 export interface IAppConfig {
-  environments: IAppEnvironment[];
   modules: IModuleConfig[];
 }
 
 export interface IModuleConfig {
   key: string;
   appConfig: IModuleAppConfig;
-  envConfig: {
-    [envKey: string]: IModuleEnvConfig;
-  };
-}
-
-export interface IAppEnvironment {
-  key: string;
-  name: string;
-  color: string;
 }
 
 export interface IMigrationResultWithFixes {

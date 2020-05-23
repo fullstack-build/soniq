@@ -43,7 +43,8 @@ async function makeSchema(
     runtimeConfig.defaultResolverMeta,
     hookManager,
     pgPool,
-    logger
+    logger,
+    runtimeConfig.options
   );
 
   const runtimeResolvers: {
@@ -177,8 +178,8 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: Logger): Co
 function createApolloServer(schema: GraphQLSchema, runtimeConfig: IGraphqlRuntimeConfig, logger: Logger): ApolloServer {
   const koaGraphQlConfig: Config = getKoaGraphQLOptionsFunction(schema, logger);
 
-  koaGraphQlConfig.playground = runtimeConfig.defaultResolverMeta.playgroundActive;
-  koaGraphQlConfig.introspection = runtimeConfig.defaultResolverMeta.introspectionActive;
+  koaGraphQlConfig.playground = runtimeConfig.options.playgroundActive;
+  koaGraphQlConfig.introspection = runtimeConfig.options.introspectionActive;
 
   const server: ApolloServer = new ApolloServer(koaGraphQlConfig);
 
@@ -247,7 +248,7 @@ export async function applyApolloMiddleware(
   hookManager: HookManager,
   operatorsBuilder: OperatorsBuilder
 ): Promise<void> {
-  let gqlApp: Koa | null;
+  let gqlApp: Koa | null = null;
 
   app.use(async (ctx: Koa.Context, next: Koa.Next) => {
     const { runtimeConfig, hasBeenUpdated } = await getRuntimeConfig("APOLLO"); // IRuntimeConfigGql
@@ -262,7 +263,7 @@ export async function applyApolloMiddleware(
         operatorsBuilder
       );
       const server: ApolloServer = createApolloServer(schema, runtimeConfig, logger);
-      const path: string = runtimeConfig.defaultResolverMeta.endpointPath;
+      const path: string = runtimeConfig.options.endpointPath;
 
       gqlApp = null;
       gqlApp = new Koa();

@@ -9,6 +9,7 @@ import { ICustomResolverObject, ICustomResolverCreator } from "../resolverTransa
 import { IDefaultResolverMeta } from "../RuntimeInterfaces";
 import { OperatorsBuilder } from "../logicalOperators";
 import { HookManager } from "../hooks";
+import { IGraphqlOptions } from "../moduleDefinition/interfaces";
 
 export * from "./types";
 
@@ -17,9 +18,10 @@ export default function getDefaultResolvers(
   defaultResolverMeta: IDefaultResolverMeta,
   hookManager: HookManager,
   pgPool: Pool,
-  logger: Logger
+  logger: Logger,
+  options: IGraphqlOptions
 ): ICustomResolverObject {
-  const queryBuilder: QueryBuilder = new QueryBuilder(operatorsBuilder, defaultResolverMeta);
+  const queryBuilder: QueryBuilder = new QueryBuilder(operatorsBuilder, defaultResolverMeta, options);
   const mutationBuilder: MutationBuilder = new MutationBuilder(defaultResolverMeta);
 
   const queryResolver: ICustomResolverCreator = getDefaultQueryResolver(logger, hookManager, queryBuilder, pgPool);

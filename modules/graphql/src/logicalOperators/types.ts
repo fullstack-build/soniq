@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IOperatorContext {
   fieldPgSelector: string;
-  value: unknown;
-  getParam: (value: unknown) => string;
+  value: any;
+  getParam: (value: any) => string;
 }
 
 export interface IOperator {

@@ -6,7 +6,6 @@ import { Service, Container, ContainerInstance, Inject, InjectMany } from "typed
 
 import {
   IModuleRuntimeConfig,
-  IModuleEnvConfig,
   IModuleAppConfig,
   IMigrationResult,
   IAppConfig,
@@ -38,11 +37,7 @@ export interface IGetModuleRuntimeConfigResult {
 }
 
 export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
-export type TMigrationFuntion = (
-  appConfig: IModuleAppConfig,
-  envConfig: IModuleEnvConfig,
-  pgClient: PoolClient
-) => Promise<IModuleMigrationResult>;
+export type TMigrationFuntion = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
 export type TBootFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
 
 interface IModuleCoreFunctions {
@@ -54,6 +49,7 @@ interface IModuleCoreFunctions {
 export * from "./interfaces";
 export * from "./helpers";
 export * from "./ConfigManager";
+export * from "./Application";
 export { Pool, PoolClient, PoolConfig, QueryResult, Ajv };
 
 export enum EBootState {
@@ -64,6 +60,7 @@ export enum EBootState {
 
 export { Service, Container, ContainerInstance, Inject, InjectMany };
 import { Logger, TLogLevelName } from "tslog";
+import { SoniqApp, SoniqEnvironment, SoniqAppConfigOverwrite } from "./Application";
 export { Logger };
 
 // TODO: move somewhere else later
@@ -95,7 +92,6 @@ export class Core {
   private async _generateModuleMigrations(
     version: string,
     appConfig: IAppConfig,
-    envKey: string,
     pgClient: PoolClient
   ): Promise<IMigrationResult> {
     const result: IMigrationResult = {
@@ -113,12 +109,9 @@ export class Core {
           message: `The module with key '${moduleConfig.key}' does not exist on this system.`,
         });
       } else {
-        const moduleEnvConfig: unknown = moduleConfig.envConfig[envKey] || {};
-
         if (moduleCoreFunctions.migrate != null) {
           const moduleMigrationResult: IModuleMigrationResult = await moduleCoreFunctions.migrate(
             moduleConfig.appConfig,
-            moduleEnvConfig,
             pgClient
           );
 
@@ -142,13 +135,7 @@ export class Core {
       }
     });
 
-    const finalResult: IMigrationResult = await this._generateCoreMigrations(
-      version,
-      appConfig,
-      envKey,
-      pgClient,
-      result
-    );
+    const finalResult: IMigrationResult = await this._generateCoreMigrations(version, appConfig, pgClient, result);
 
     finalResult.commands = result.commands.sort((a, b) => {
       return a.operationSortPosition - b.operationSortPosition;
@@ -160,7 +147,6 @@ export class Core {
   private async _generateCoreMigrations(
     version: string,
     appConfig: IAppConfig,
-    envKey: string,
     pgClient: PoolClient,
     migrationResult: IMigrationResult
   ): Promise<IMigrationResult> {
@@ -292,18 +278,33 @@ export class Core {
     }
   }
 
-  public async generateMigration(
+  public async deployApp(app: SoniqApp, env: SoniqEnvironment): Promise<void> {
+    const migrationResult: IMigrationResultWithFixes = await this.generateMigration(app, env);
+
+    this.printMigrationResult(migrationResult);
+
+    await this.applyMigrationResult(migrationResult, env.getPgConfig());
+  }
+
+  public async generateMigration(app: SoniqApp, env: SoniqEnvironment): Promise<IMigrationResultWithFixes> {
+    let appConfig: IAppConfig = app._build();
+
+    env.getAppConfigOverwrites().forEach((appConfigOverwrite: SoniqAppConfigOverwrite) => {
+      appConfig = appConfigOverwrite._build(JSON.parse(JSON.stringify(appConfig)));
+    });
+
+    return this.generateMigrationWithAppConfigAndPool("v" + Math.random().toString(), appConfig, env.getPgConfig());
+  }
+
+  public async generateMigrationWithAppConfigAndPool(
     version: string,
     appConfig: IAppConfig,
-    envKey: string,
     pgPoolConfig: PoolConfig
   ): Promise<IMigrationResultWithFixes> {
-    // TODO: @eugene: When I create an object of a class it makes no sense to define the type.
-    // eslint-disable-next-line @typescript-eslint/typedef
-    const pgPool = new Pool(pgPoolConfig);
+    const pgPool: Pool = new Pool(pgPoolConfig);
 
     try {
-      return await this.generateMigrationWithPgPool(version, appConfig, envKey, pgPool);
+      return await this.generateMigrationWithPgPool(version, appConfig, pgPool);
     } catch (e) {
       return {
         commands: [],
@@ -323,7 +324,6 @@ export class Core {
   public async generateMigrationWithPgPool(
     version: string,
     appConfig: IAppConfig,
-    envKey: string,
     pgPool: Pool,
     throwErrorOnInfiniteMigration: boolean = false
   ): Promise<IMigrationResultWithFixes> {
@@ -333,7 +333,7 @@ export class Core {
     let firstGenerationResult: IMigrationResultWithFixes;
     try {
       await firstDbClient.query("BEGIN;");
-      firstGenerationResult = await this._generateModuleMigrations(version, appConfig, envKey, firstDbClient);
+      firstGenerationResult = await this._generateModuleMigrations(version, appConfig, firstDbClient);
       await firstDbClient.query("ROLLBACK;");
     } catch (err) {
       await firstDbClient.query("ROLLBACK;");
@@ -380,7 +380,7 @@ export class Core {
       // 3) try to generate the commands again to check if there are any infinite-migrations
       this._logger.info("Starting second migration generation...");
       try {
-        secondGenerationResult = await this._generateModuleMigrations(version, appConfig, envKey, secondDbClient);
+        secondGenerationResult = await this._generateModuleMigrations(version, appConfig, secondDbClient);
       } catch (err) {
         firstGenerationResult.errors.push({
           message: `Failed to generate second migration commands.`,
@@ -481,7 +481,6 @@ export class Core {
       thirdMigrationResult = await this.generateMigrationWithPgPool(
         version,
         firstGenerationResult.fixedAppConfig,
-        envKey,
         pgPool,
         true
       );

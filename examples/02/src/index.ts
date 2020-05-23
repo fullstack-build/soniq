@@ -1,5 +1,5 @@
 require("dotenv").config();
-import { pgConfig } from "./db";
+import { dev } from "./app/envs/dev";
 import { $core } from "./main";
 import { Logger } from "soniq";
 
@@ -9,7 +9,7 @@ import { Logger } from "soniq";
 
   logger.info("Booting Application");
 
-  await $core.boot(pgConfig);
+  await $core.boot(dev.getPgConfig());
 
   logger.info("Booted Application");
 })();

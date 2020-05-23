@@ -1,5 +1,5 @@
 import { IDbSchema } from "../DbSchemaInterface";
-import { PoolClient, OPERATION_SORT_POSITION, IModuleEnvConfig } from "soniq";
+import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
 import { IHelpers } from "../schemaExtensions/ISchemaExtension";
 import { ExpressionCompiler } from "../ExpressionCompiler";
 import { QueryPermissionGenerator } from "./QueryPermissionGenerator";
@@ -82,8 +82,7 @@ export class PermissionGenerator {
   public async generate(
     schema: IDbSchema,
     dbClient: PoolClient,
-    helpers: IHelpers,
-    envConfig: IModuleEnvConfig
+    helpers: IHelpers
   ): Promise<IPermissionGeneratorResult> {
     let gqlTypeDefs: string = "";
     const commands: IGqlCommand[] = [];
@@ -93,12 +92,6 @@ export class PermissionGenerator {
       viewsSchemaName: schema.permissionViewSchema || "_gql",
       query: {},
       mutation: {},
-      costLimit: envConfig.costLimit != null ? envConfig.costLimit : 2000000000,
-      minSubqueryCountToCheckCostLimit:
-        envConfig.minSubqueryCountToCheckCostLimit != null ? envConfig.minSubqueryCountToCheckCostLimit : 3,
-      playgroundActive: envConfig.playgroundActive === true,
-      introspectionActive: envConfig.introspectionActive === true,
-      endpointPath: envConfig.endpointPath || "/graphql",
     };
 
     if (schema.tables != null) {

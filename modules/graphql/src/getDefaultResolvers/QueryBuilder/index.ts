@@ -5,16 +5,23 @@ import { IQueryBuildObject, IQueryClauseObject } from "./types";
 import QueryBuild from "./QueryBuild";
 import { IDefaultResolverMeta } from "../../RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
+import { IGraphqlOptions } from "../../moduleDefinition/interfaces";
 
 export * from "./types";
 
 export default class QueryBuilder {
   private _operatorsBuilder: OperatorsBuilder;
   private _defaultResolverMeta: IDefaultResolverMeta;
+  private _options: IGraphqlOptions;
 
-  public constructor(operatorsBuilder: OperatorsBuilder, defaultResolverMeta: IDefaultResolverMeta) {
+  public constructor(
+    operatorsBuilder: OperatorsBuilder,
+    defaultResolverMeta: IDefaultResolverMeta,
+    options: IGraphqlOptions
+  ) {
     this._operatorsBuilder = operatorsBuilder;
     this._defaultResolverMeta = defaultResolverMeta;
+    this._options = options;
   }
 
   public build(
@@ -37,6 +44,6 @@ export default class QueryBuilder {
   }
 
   public getCostLimit(): number {
-    return this._defaultResolverMeta.costLimit;
+    return this._options.costLimit;
   }
 }

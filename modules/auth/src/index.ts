@@ -5,7 +5,6 @@ import { Service, Inject } from "soniq";
 import {
   Core,
   IModuleAppConfig,
-  IModuleEnvConfig,
   PoolClient,
   IModuleMigrationResult,
   Pool,
@@ -47,6 +46,7 @@ const schema: string = fs.readFileSync(require.resolve("../schema.gql"), "utf-8"
 export * from "./SignHelper";
 export * from "./interfaces";
 export * from "./AuthProviders/AuthProviderEmail";
+export * from "./moduleDefinition";
 
 // TODO: @dustin Migrate oAuth to mig3
 // export * from "./AuthProviders/AuthProviderOAuth";
@@ -125,18 +125,14 @@ export class Auth {
 
     this._addMiddleware(server);
   }
-  private async _migrate(
-    appConfig: IModuleAppConfig,
-    envConfig: IModuleEnvConfig,
-    pgClient: PoolClient
-  ): Promise<IModuleMigrationResult> {
+  private async _migrate(appConfig: IModuleAppConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
     const authFactorProviders: string = this._authProviders
       .map((authProvider) => {
         return authProvider.providerName;
       })
       .join(":");
 
-    return migrate(this._graphQl, appConfig, envConfig, pgClient, authFactorProviders);
+    return migrate(this._graphQl, appConfig, pgClient, authFactorProviders);
   }
   private async _boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool): Promise<void> {
     this.getRuntimeConfig = getRuntimeConfig;

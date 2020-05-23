@@ -174,8 +174,9 @@ export interface IAuthApplicationConfig {
     transaction_token_max_age_in_seconds: number;
     admin_token_secret: string | null;
     root_token_secret: string | null;
-    admin_token_max_age_in_seconds: 60;
-    root_token_max_age_in_seconds: 3600;
+    admin_token_max_age_in_seconds: number;
+    root_token_max_age_in_seconds: number;
+    [key: string]: unknown;
   };
 }
 
@@ -190,7 +191,7 @@ export interface IAuthApplicationConfigOverwrite {
   sodium?: ISodiumConfigOptional;
   authFactorProofTokenMaxAgeInSeconds?: number;
   userIdentifierMaxAgeInSeconds?: number;
-  cookie: {
+  cookie?: {
     name?: string;
     maxAge?: number;
     overwrite?: boolean;
@@ -220,8 +221,56 @@ export interface IAuthApplicationConfigOverwrite {
     transaction_token_max_age_in_seconds?: number;
     admin_token_secret?: string;
     root_token_secret?: string;
-    admin_token_max_age_in_seconds?: 60;
-    root_token_max_age_in_seconds?: 3600;
+    admin_token_max_age_in_seconds?: number;
+    root_token_max_age_in_seconds?: number;
+    [key: string]: unknown;
+  };
+}
+
+export interface IAuthApplicationConfigOverwriteOptional {
+  secrets?: {
+    admin?: string;
+    root?: string;
+    cookie?: string;
+    encryptionKey?: string;
+    authProviderHashSignature?: string;
+  };
+  sodium?: ISodiumConfigOptional;
+  authFactorProofTokenMaxAgeInSeconds?: number;
+  userIdentifierMaxAgeInSeconds?: number;
+  cookie?: {
+    name?: string;
+    maxAge?: number;
+    overwrite?: boolean;
+    httpOnly?: boolean;
+    signed?: boolean;
+  };
+  tokenQueryParameter?: string;
+  validOrigins?: string[];
+  isServerBehindProxy?: boolean;
+  enforceHttpsOnProduction?: boolean;
+  allowAllCorsOriginsOnDev?: boolean;
+  apiClientOrigins?: string[];
+  corsOptions?: {
+    allowMethods?: string[];
+    credentials?: boolean;
+    maxAge?: number;
+  };
+  crypto?: {
+    algorithm?: string;
+  };
+  pgConfig?: {
+    access_token_bf_iter_count?: number;
+    access_token_max_age_in_seconds?: number;
+    get_tenant_by_user_id_query?: string;
+    hash_bf_iter_count?: number;
+    refresh_token_bf_iter_count?: number;
+    transaction_token_max_age_in_seconds?: number;
+    admin_token_secret?: string;
+    root_token_secret?: string;
+    admin_token_max_age_in_seconds?: number;
+    root_token_max_age_in_seconds?: number;
+    [key: string]: unknown;
   };
 }
 
@@ -256,6 +305,19 @@ export interface IAuthRuntimeConfig {
   };
   crypto: {
     algorithm: string;
+  };
+  pgConfig?: {
+    access_token_bf_iter_count?: number;
+    access_token_max_age_in_seconds?: number;
+    get_tenant_by_user_id_query?: string;
+    hash_bf_iter_count?: number;
+    refresh_token_bf_iter_count?: number;
+    transaction_token_max_age_in_seconds?: number;
+    admin_token_secret?: string;
+    root_token_secret?: string;
+    admin_token_max_age_in_seconds?: number;
+    root_token_max_age_in_seconds?: number;
+    [key: string]: unknown;
   };
 }
 

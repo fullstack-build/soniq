@@ -1,17 +1,11 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import { generateAuthSchema } from "./basic";
-import { GraphQl, IDbSchema } from "@soniq/graphql";
-import {
-  IModuleAppConfig,
-  IModuleEnvConfig,
-  PoolClient,
-  OPERATION_SORT_POSITION,
-  IModuleMigrationResult,
-  IMigrationError,
-} from "soniq";
-import { ConfigMergeHelper } from "./ConfigMergeHelper";
+import { GraphQl, IDbSchema, IGraphqlAppConfig } from "@soniq/graphql";
+import { PoolClient, OPERATION_SORT_POSITION, IModuleMigrationResult, IMigrationError } from "soniq";
 import { Migration } from "@soniq/graphql/src/migration/Migration";
-import { IPgSettings } from "../interfaces";
+import { IPgSettings, IAuthApplicationConfig } from "../interfaces";
+import { ConfigMergeHelper } from "./ConfigMergeHelper";
+import { defaultConfig } from "./defaultConfig";
 
 const requiredSecrets: string[] = [
   "access_token_secret",
@@ -52,18 +46,25 @@ async function getCurrentSettings(pgClient: PoolClient): Promise<IPgSettings> {
 
 export async function migrate(
   graphQl: GraphQl,
-  appConfig: IModuleAppConfig,
-  envConfig: IModuleEnvConfig,
+  appConfig: IAuthApplicationConfig,
   pgClient: PoolClient,
   authFactorProviders: string
 ): Promise<IModuleMigrationResult> {
   const authSchema: IDbSchema = await generateAuthSchema();
 
+  const authSchemaAppConfig: IGraphqlAppConfig = {
+    schema: authSchema,
+    options: {},
+  };
+
   const gqlMigration: Migration = graphQl.getMigration();
 
-  const result: IModuleMigrationResult = await gqlMigration.generateSchemaMigrationCommands(authSchema, {}, pgClient);
+  const result: IModuleMigrationResult = await gqlMigration.generateSchemaMigrationCommands(
+    authSchemaAppConfig,
+    pgClient
+  );
 
-  const { runtimeConfig, errors } = ConfigMergeHelper.merge(appConfig, envConfig);
+  const { runtimeConfig, errors } = ConfigMergeHelper.merge(defaultConfig, appConfig);
 
   errors.forEach((error: IMigrationError) => {
     result.errors.push(error);

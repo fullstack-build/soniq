@@ -1,5 +1,5 @@
 import { IDbSchema, IDbFunction } from "../index";
-import { authTablesSchema } from "./tables";
+import { graphqlTablesSchema } from "./tables";
 
 import { readFile, readdir } from "fs";
 
@@ -43,7 +43,7 @@ async function loadGraphqlMetaFunctions(): Promise<IDbFunction[]> {
 }
 
 export async function generateGraphqlMetaSchema(): Promise<IDbSchema> {
-  const schema: IDbSchema = JSON.parse(JSON.stringify(authTablesSchema));
+  const schema: IDbSchema = JSON.parse(JSON.stringify(graphqlTablesSchema));
 
   schema.functions = await loadGraphqlMetaFunctions();
 

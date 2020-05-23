@@ -1,7 +1,10 @@
+import { IGraphqlOptions } from "./moduleDefinition/interfaces";
+
 export interface IGraphqlRuntimeConfig {
   gqlTypeDefs: string;
   resolvers: IResolver[];
   defaultResolverMeta: IDefaultResolverMeta;
+  options: IGraphqlOptions;
 }
 
 export interface IResolver {
@@ -14,12 +17,7 @@ export interface IResolver {
 }
 
 export interface IDefaultResolverMeta {
-  endpointPath: string;
   viewsSchemaName: string;
-  costLimit: number;
-  minSubqueryCountToCheckCostLimit: number;
-  playgroundActive: boolean;
-  introspectionActive: boolean;
   query: {
     [name: string]: IQueryViewMeta;
   };

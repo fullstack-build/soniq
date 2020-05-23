@@ -1,12 +1,12 @@
-import { IDbSchema } from "../DbSchemaInterface";
 import { IGqlMigrationResult, IGqlMigrationContext } from "../interfaces";
 import { PoolClient } from "soniq";
 import { IColumnExtension } from "../columnExtensions/IColumnExtension";
 import { ITableExtension } from "../tableExtensions/ITableExtension";
+import { IGraphqlAppConfig } from "../../moduleDefinition/interfaces";
 
 export interface ISchemaExtension {
   generateCommands: (
-    schema: IDbSchema,
+    appConfig: IGraphqlAppConfig,
     dbClient: PoolClient,
     helpers: IHelpers,
     gqlMigrationContext: IGqlMigrationContext

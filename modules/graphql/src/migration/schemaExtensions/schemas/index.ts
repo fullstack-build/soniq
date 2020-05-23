@@ -3,6 +3,7 @@ import { IDbSchema } from "../../DbSchemaInterface";
 import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
 import { IGqlMigrationResult } from "../../interfaces";
 import { getPgSelector } from "../../helpers";
+import { IGraphqlAppConfig } from "../../../moduleDefinition/interfaces";
 
 interface IForbiddenSchema {
   schema: string;
@@ -35,7 +36,8 @@ async function getSchemas(dbClient: PoolClient): Promise<string[]> {
 }
 
 export const schemaExtensionSchemas: ISchemaExtension = {
-  generateCommands: async (schema: IDbSchema, dbClient: PoolClient): Promise<IGqlMigrationResult> => {
+  generateCommands: async (appConfig: IGraphqlAppConfig, dbClient: PoolClient): Promise<IGqlMigrationResult> => {
+    const schema: IDbSchema = appConfig.schema;
     const result: IGqlMigrationResult = {
       errors: [],
       warnings: [],

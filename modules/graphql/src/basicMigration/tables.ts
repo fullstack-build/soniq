@@ -1,6 +1,6 @@
 import { IDbSchema } from "../migration/DbSchemaInterface";
 
-export const authTablesSchema: IDbSchema = {
+export const graphqlTablesSchema: IDbSchema = {
   schemas: ["_graphql_meta"],
   tables: [],
 };
