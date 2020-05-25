@@ -4,6 +4,9 @@
   "description": "@soniq/graphql",
   "main": "index",
   "typings": "src/index",
+  "engines": {
+    "node": ">=12"
+  },
   "scripts": {
     "build": "tsc",
     "eslint": "eslint . --ext .ts",
