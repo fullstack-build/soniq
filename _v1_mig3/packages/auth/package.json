@@ -1,0 +1,44 @@
+{
+  "name": "@fullstack-one/auth",
+  "version": "0.6.7",
+  "description": "fullstack.one auth package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/core": "^0.5.25",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/graphql": "^0.6.7",
+    "@fullstack-one/logger": "^0.5.25",
+    "@fullstack-one/server": "^0.6.3",
+    "@koa/cors": "^2.2.3",
+    "jsonwebtoken": "^8.5.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-passport": "^4.1.3",
+    "koa-router": "^7.3.0",
+    "koa-session": "^5.12.2",
+    "lodash": "^4.17.15",
+    "luxon": "^1.17.1",
+    "passport-local": "^1.0.0",
+    "sodium-native": "^2.4.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "^1.15.2",
+    "@types/uuid": "^3.4.5"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
+}

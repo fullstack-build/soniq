@@ -1,0 +1,86 @@
+{
+  "name": "@fullstack-one/graphql",
+<<<<<<< HEAD:_v1/packages/graphql/package.json
+  "version": "0.6.23",
+=======
+  "version": "0.6.7",
+>>>>>>> mig3:packages/graphql/package.json
+  "description": "fullstack.one GraphQL package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "dev": "parcel gui-lib/index.html --out-dir gui-dist",
+    "gui-build": "parcel build gui-lib/index.html --out-dir gui-dist"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+<<<<<<< HEAD:_v1/packages/graphql/package.json
+    "@fullstack-one/boot-loader": "^0.6.23",
+    "@fullstack-one/config": "^0.6.23",
+    "@fullstack-one/db": "^0.6.23",
+    "@fullstack-one/di": "^0.6.23",
+    "@fullstack-one/helper": "^0.6.23",
+    "@fullstack-one/logger": "^0.6.23",
+    "@fullstack-one/schema-builder": "^0.6.23",
+    "@fullstack-one/server": "^0.6.23",
+=======
+    "@fullstack-one/boot-loader": "^0.5.25",
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/core": "^0.5.25",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/logger": "^0.5.25",
+    "@fullstack-one/server": "^0.6.3",
+>>>>>>> mig3:packages/graphql/package.json
+    "@types/graphql": "0.13.4",
+    "@types/koa-mount": "^3.0.1",
+    "@types/lodash": "^4.14.136",
+    "ajv": "^6.11.0",
+    "apollo-cache-inmemory": "1.6.2",
+    "apollo-client": "2.6.3",
+    "apollo-link-schema": "1.2.3",
+    "apollo-server-koa": "^2.11.0",
+    "graphql": "0.13.2",
+    "graphql-parse-resolve-info": "0.1.0-alpha.18",
+    "graphql-tools": "^3.0.0",
+    "graphql-type-json": "^0.1.4",
+    "koa": "2.5.2",
+    "koa-mount": "^4.0.0",
+    "koa-router": "^7.4.0",
+    "lodash": "^4.17.15",
+    "uuid": "^7.0.3",
+    "uuid-validate": "0.0.3"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad",
+  "devDependencies": {
+    "@babel/core": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
+    "@babel/preset-react": "^7.8.3",
+    "@types/uuid": "^7.0.2",
+    "@types/uuid-validate": "0.0.1",
+    "ace-builds": "^1.4.8",
+    "fela": "^11.0.2",
+    "fela-dom": "^11.0.2",
+    "fela-monolithic": "^11.0.2",
+    "fela-plugin-friendly-pseudo-class": "^11.0.2",
+    "fela-preset-web": "^11.0.2",
+    "parcel-bundler": "^1.12.4",
+    "prop-types": "^15.7.2",
+    "react": "^16.12.0",
+    "react-ace": "^8.0.0",
+    "react-dom": "^16.12.0",
+    "react-fela": "^11.0.2",
+    "react-select": "^3.0.8",
+    "react-tagsinput": "^3.19.0",
+    "sql-formatter": "^2.3.3"
+  }
+}

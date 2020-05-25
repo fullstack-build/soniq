@@ -32,6 +32,13 @@ Check dependencies of each package.
 $ rush check
 ```
 
+Install a package
+
+```
+$ cd modules/core
+$ rush add -p lodash (--dev)
+```
+
 # Custom commands
 
 Open `common/config/rush/command-line.json` and add a custom command.

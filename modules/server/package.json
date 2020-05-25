@@ -1,0 +1,49 @@
+{
+  "name": "@soniq/server",
+  "version": "1.0.0-dev.3",
+  "description": "@soniq/server",
+  "main": "index",
+  "typings": "src/index",
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "build": "tsc",
+    "eslint": "eslint . --ext .ts",
+    "eslint-fix": "eslint . --ext .ts --fix",
+    "test": "jest"
+  },
+  "eslintConfig": {
+    "extends": "@soniq/eslint-config"
+  },
+  "jest": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/soniq.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/soniq/issues"
+  },
+  "homepage": "https://soniq.js.org",
+  "devDependencies": {
+    "@rushstack/eslint-config": "^0.5.7",
+    "@types/node": "^13.13.4",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "@soniq/eslint-config": "1.0.0-dev.3",
+    "prettier": "^2.0.5",
+    "@types/koa-compress": "~2.0.9",
+    "@types/koa": "~2.11.3"
+  },
+  "dependencies": {
+    "soniq": "1.0.0-dev.3",
+    "koa": "~2.11.0",
+    "koa-compress": "~4.0.1"
+  }
+}

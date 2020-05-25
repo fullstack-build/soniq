@@ -1,0 +1,36 @@
+{
+  "name": "@fullstack-one/events",
+  "version": "0.6.23",
+  "description": "fullstack.one events package",
+  "main": "index.js",
+  "types": "lib/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/fullstack.one.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+<<<<<<< HEAD:_v1/packages/events/package.json
+    "@fullstack-one/boot-loader": "^0.6.23",
+    "@fullstack-one/config": "^0.6.23",
+    "@fullstack-one/di": "^0.6.23",
+    "@fullstack-one/logger": "^0.6.23",
+=======
+    "@fullstack-one/config": "^0.5.20",
+    "@fullstack-one/di": "^0.5.20",
+    "@fullstack-one/logger": "^0.5.25",
+>>>>>>> mig3:packages/events/package.json
+    "@types/pg": "^7.4.14",
+    "eventemitter2": "^5.0.1",
+    "pg": "^7.10.0"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
+}

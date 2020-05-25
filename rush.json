@@ -410,7 +410,32 @@
     // }
     {
       "packageName": "soniq",
-      "projectFolder": "modules/Core",
+      "projectFolder": "modules/core",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
+    {
+      "packageName": "@soniq/server",
+      "projectFolder": "modules/server",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
+    {
+      "packageName": "@soniq/graphql",
+      "projectFolder": "modules/graphql",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
+    {
+      "packageName": "@soniq/auth",
+      "projectFolder": "modules/auth",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
+    // shared eslint config
+    {
+      "packageName": "@soniq/eslint-config",
+      "projectFolder": "modules/eslint-config",
       "shouldPublish": true,
       "versionPolicyName": "soniq"
     },
@@ -418,6 +443,12 @@
     {
       "packageName": "@soniq/examples_01",
       "projectFolder": "examples/01",
+      "shouldPublish": false,
+      "skipRushCheck": false
+    },
+    {
+      "packageName": "@soniq/examples_02",
+      "projectFolder": "examples/02",
       "shouldPublish": false,
       "skipRushCheck": false
     }

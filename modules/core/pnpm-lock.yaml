@@ -1,0 +1,49 @@
+dependencies:
+  tslog: 2.0.0
+devDependencies:
+  '@types/pg': 7.14.3
+lockfileVersion: 5.1
+packages:
+  /@types/node/13.13.9:
+    dev: true
+    resolution:
+      integrity: sha512-EPZBIGed5gNnfWCiwEIwTE2Jdg4813odnG8iNPMQGrqVxrI+wL68SPtPeCX+ZxGBaA6pKAVc6jaKgP/Q0QzfdQ==
+  /@types/pg-types/1.11.5:
+    dev: true
+    resolution:
+      integrity: sha512-L8ogeT6vDzT1vxlW3KITTCt+BVXXVkLXfZ/XNm6UqbcJgxf+KPO7yjWx7dQQE8RW07KopL10x2gNMs41+IkMGQ==
+  /@types/pg/7.14.3:
+    dependencies:
+      '@types/node': 13.13.9
+      '@types/pg-types': 1.11.5
+    dev: true
+    resolution:
+      integrity: sha512-go5zddQ1FrUQHeBvqPzQ1svKo4KKucSwvqLsvwc/EIuQ9sxDA21b68xc/RwhzAK5pPCnez8NrkYatFIGdJBVvA==
+  /buffer-from/1.1.1:
+    dev: false
+    resolution:
+      integrity: sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
+  /source-map-support/0.5.19:
+    dependencies:
+      buffer-from: 1.1.1
+      source-map: 0.6.1
+    dev: false
+    resolution:
+      integrity: sha512-Wonm7zOCIJzBGQdB+thsPar0kYuCIzYvxZwlBa87yi/Mdjv7Tip2cyVbLj5o0cFPN4EVkuTwb3GDDyUx2DGnGw==
+  /source-map/0.6.1:
+    dev: false
+    engines:
+      node: '>=0.10.0'
+    resolution:
+      integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
+  /tslog/2.0.0:
+    dependencies:
+      source-map-support: 0.5.19
+    dev: false
+    engines:
+      node: '>=8'
+    resolution:
+      integrity: sha512-qySZKsf9X9FmSo2dYywvbpKCf6ZDd4Mdk3xK3fh3TUXkxsYtLLIfOVPMICky54kMNc3HaUbFP5/3tcCy5ITX0A==
+specifiers:
+  '@types/pg': ^7.14.3
+  tslog: 2.0.0

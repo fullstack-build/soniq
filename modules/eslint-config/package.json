@@ -1,0 +1,30 @@
+{
+  "name": "@soniq/eslint-config",
+  "version": "1.0.0-dev.3",
+  "description": "Shared eslint config for soniq",
+  "main": "index",
+  "scripts": {
+    "start": "echo \"Error: no start specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"Error: no build specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/soniq.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/soniq/issues"
+  },
+  "homepage": "https://soniq.js.org",
+  "dependencies": {
+    "eslint": ">= 3",
+    "@rushstack/eslint-config": "^0.5.7",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3"
+  }
+}

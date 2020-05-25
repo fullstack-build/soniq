@@ -1,0 +1,126 @@
+
+type AccessTokenPayload {
+  userId: ID!
+  provider: String!
+  timestamp: String!
+  userToken: String!
+  userTokenMaxAgeInSeconds: Int!
+}
+
+type LoginData {
+  refreshToken: String
+  accessToken: String
+  tokenMeta: TokenMeta!
+}
+
+type TokenMeta {
+  userId: ID!
+  providerSet: String!
+  issuedAt: String!
+  expiresAt: String!
+}
+
+type PrivacyAgreementAcceptanceToken {
+  token: String!
+  acceptedAtInUTC: String!
+  acceptedVersion: String!
+}
+
+type AuthToken {
+  token: String!
+  payload: AuthTokenPayload
+}
+
+type AuthTokenPayload {
+  email: String!
+  providerName: String!
+  profileId: String!
+  tenant: String!
+  profile: JSON
+}
+
+type UserAuthentication {
+  id: ID!
+  userId: ID!
+  isActive: Boolean!
+  loginProviderSets: [String!]!
+  modifyProviderSets: [String!]!
+  totalLogoutTimestamp: String!
+  invalidTokenTimestamps: [String!]!
+  createdAt: String!
+  authFactors: [AuthFactor!]!
+}
+
+type AuthFactor {
+  id: ID!
+  provider: String!
+  communicationAddress: String
+  proofedAt: String
+  deletedAt: String
+  createdAt: String!
+}
+
+extend type Mutation {
+
+  """
+  Find a user by username and tenant, returning two encrypted uuids to identify the user
+  This will never fail. When the user could not be found it will return fake-data.
+  """
+  getUserIdentifier(username: String!, tenant: String, returnId: ID): String!
+
+  """
+  Login a user. Get back an accessToken and metadata about it.
+  """
+  login(authFactorProofTokens: [String!]!): LoginData!
+
+  """
+  Creates a temporary token and sends it to the user, to create a new password.
+
+  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...). Another use-case could be to use this mutation to re-send a registration-email.
+  """
+  modifyAuthFactors(authFactorProofTokens: [String!]!, isActive: Boolean, loginProviderSets: [String!], modifyProviderSets: [String!], authFactorCreationTokens: [String!], removeAuthFactorIds: [String!]): Boolean!
+
+  """
+  Set a new password with a temporary token. This will invalidate all other sessions.
+  """
+  proofAuthFactor(authFactorProofToken: String!): Boolean!
+
+  """
+  Invalidates the given accessToken and deletes the auth cookie if set.
+  """
+  invalidateAccessToken: Boolean!
+
+  """
+  Invalidates all accessTokens ever issued to the user and deletes the auth cookie if set.
+  """
+  invalidateAllAccessTokens: Boolean!
+
+  """
+  Sets the given accessToken into a cookie. With a set cookie, normal queries an mutations are authorized. However, auth mutations will ignore this cookie.
+  """
+  refreshAccessToken(refreshToken: String!): LoginData!
+
+  """
+  Tells if the given token is valid and gives some meta information.
+
+  Removes the cookie if invalid.
+  """
+  getTokenMeta: TokenMeta!
+
+  """
+  Creates a temporary token and sends it to the user, to create a new password.
+
+  You can provide `meta` information. This can help if you want to send different emails depending on the client of the user (Native App, Webapp, Desktop, ...). Another use-case could be to use this mutation to re-send a registration-email.
+  """
+  createUserAuthentication(userId: ID!, isActive: Boolean, loginProviderSets: [String!]!, modifyProviderSets: [String!]!, authFactorCreationTokens: [String!]!, meta: String): ID!
+
+}
+
+extend type Query {
+
+  """
+  Tells if the given token is valid and gives some meta information.
+  """
+  getUserAuthentication: UserAuthentication!
+
+}

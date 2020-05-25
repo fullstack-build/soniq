@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.js"],"names":["console","log"],"mappings":";AAAAA,QAAQC,IAAI","file":"gui-lib.3059ce00.js","sourceRoot":"../gui-lib","sourcesContent":["console.log(\"Foobar!\");"]}

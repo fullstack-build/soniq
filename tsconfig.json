@@ -19,7 +19,8 @@
     "declarationMap": true,
     "strict": true,
     "suppressImplicitAnyIndexErrors": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
   "include": [
     "modules/**/src/*.ts",

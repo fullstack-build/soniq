@@ -1,0 +1,20 @@
+
+extend type Mutation {
+
+  """
+  Validates a Facebook-Token and generates AuthFactorCreationTokens or AuthFactorProofTokens.
+  """
+  authenticateFacebookToken(token: String!, tenant: String): FacebookTokenAuthentication @custom(resolver: "@fullstack-one/auth-fb-token/authenticateFacebookToken")
+}
+
+type FacebookTokenAuthentication {
+  email: String!
+  profile: JSON
+  authFactorProofTokens: FacebookAuthFactorTokens
+  authFactorCreationTokens: FacebookAuthFactorTokens
+}
+
+type FacebookAuthFactorTokens {
+  email: String!
+  facebook: String!
+}

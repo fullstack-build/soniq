@@ -1,0 +1,20 @@
+import { PoolClient, Pool } from 'pg';
+import { Koa, ModuleAppConfig, ModuleEnvConfig, ModuleRuntimeConfig, IMigrationResult, IStudioSettings } from "./interfaces";
+
+export class DemoModule {
+  constructor() {
+
+  }
+  public async bootStudio(koaApp: Koa): Promise<IStudioSettings> {
+    return null;
+  }
+  public async migrate(appConfig: ModuleAppConfig, envConfig: ModuleEnvConfig, pgClient: PoolClient): Promise<IMigrationResult> {
+    return null;
+  }
+  public async boot(runtimeConfig: ModuleRuntimeConfig, envConfig: ModuleEnvConfig, pgPool: Pool): Promise<void> {
+    return null;
+  }
+  public async updateRuntimeContig(runtimeConfig: ModuleRuntimeConfig, envConfig: ModuleEnvConfig): Promise<void> {
+    return null;
+  }
+}
