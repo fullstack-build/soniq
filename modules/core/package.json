@@ -30,16 +30,17 @@
   "devDependencies": {
     "@types/lodash": "~4.14.150",
     "@types/node": "^13.13.4",
+    "@types/pg": "^7.14.3",
     "eslint": "^6.8.0",
     "prettier": "^2.0.5"
   },
   "dependencies": {
+    "@soniq/eslint-config": "~1.0.0-dev.3",
+    "ajv": "~6.12.2",
     "lodash": "~4.17.15",
+    "pg": "~8.0.3",
     "reflect-metadata": "~0.1.13",
     "tslog": "1.1.1",
-    "typedi": "~0.8.0",
-    "pg": "~8.0.3",
-    "@soniq/eslint-config": "~1.0.0-dev.3",
-    "ajv": "~6.12.2"
+    "typedi": "~0.8.0"
   }
 }
