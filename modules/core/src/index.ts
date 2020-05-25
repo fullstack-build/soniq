@@ -82,11 +82,7 @@ export class Core {
 
   public constructor() {
     // TODO: catch all errors & exceptions
-    this._logger = new Logger({
-      instanceName: "", // TODO: Set instance-name
-      name: this._className,
-      displayInstanceName: true,
-    });
+    this._logger = this.getLogger(this._className);
   }
 
   private async _generateModuleMigrations(
@@ -687,7 +683,7 @@ ____) | |__| | |___| |____| |____ ____) |___) |
 
   public getLogger(name?: string, minLevel: TLogLevelName = "silly", exposeStack: boolean = false): Logger {
     return new Logger({
-      instanceName: "", // TODO: Set instance-name
+      instanceName: "123", // TODO: Set instance-name
       name,
       minLevel,
       exposeStack,

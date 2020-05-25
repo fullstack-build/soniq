@@ -14,7 +14,7 @@ echo "$FILES" | xargs ./common/temp/node_modules/.bin/prettier --write --config 
 echo "ESLint..."
 
 # ESLint
-echo "$FILES" | xargs ./common/temp/node_modules/.bin/eslint --ext .ts --ignore-pattern 'tests/*' --ignore-pattern '_v1/*'  --ignore-pattern '_v1_mig3/*'
+echo "$FILES" | xargs ./common/temp/node_modules/.bin/eslint --config ./modules/eslint-config/index.js --ext .ts --ignore-pattern 'tests/*' --ignore-pattern '_v1/*'  --ignore-pattern '_v1_mig3/*'
 eslint_exit=$?
 
 # Add back the modified/prettified files to staging
