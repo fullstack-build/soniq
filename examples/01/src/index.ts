@@ -101,12 +101,7 @@ log.info("I am an info log.");
 log.warn("I am a warn log with a json object:", { foo: "bar" });
 log.error("I am an error log.");
 log.fatal("I am a fatal log.");
-try {
-  // @ts-ignore
-  undefined.f();
-} catch (err) {
-  log.fatal(err);
-}
+
 /* tslog example END */
 /*
 $core
