@@ -9,14 +9,6 @@ import {
 } from "./interfaces";
 import * as _ from "lodash";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function asyncForEach(array: any, callback: any): Promise<any> {
-  // tslint:disable-next-line:no-increment-decrement
-  for (let index: number = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-}
-
 export function getPgSelector(selector: string): string {
   if (selector.toLowerCase() === selector && selector.match("-") == null) {
     return selector;
