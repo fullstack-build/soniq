@@ -42,4 +42,7 @@ user.addMutation(new DeleteMutation(userId, [ownerById]));
 
 user.addIndex(new Index([firstName, lastName], { isUniqueIndex: true }));
 
-user.addCheck(new Check(`("firstName" NOT LIKE \'%fuck%\'::text)`));
+user.addCheck(new Check(`("firstName" !~~ \'%fuck%\'::text)`));
+
+// TODO: @eugene This is a check which will be autoFixed
+// user.addCheck(new Check(`("firstName" NOT LIKE \'%fuck%\'::text)`));

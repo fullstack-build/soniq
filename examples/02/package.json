@@ -10,6 +10,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start-ts": "ts-node src/index.ts",
+    "deploy": "node dist/deploy.js",
     "deploy-ts": "ts-node src/deploy.ts",
     "dev": "onchange -i \"../../**/*.ts\" -- npm run start-ts",
     "test": "echo \"Error: no test specified\" && exit 1",
