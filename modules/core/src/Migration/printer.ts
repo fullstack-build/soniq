@@ -73,7 +73,7 @@ export function printMigrationResult(
       if (error.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === error.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
@@ -95,7 +95,7 @@ export function printMigrationResult(
       if (warning.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === warning.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
@@ -115,7 +115,7 @@ export function printMigrationResult(
       if (autoFix.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === autoFix.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
