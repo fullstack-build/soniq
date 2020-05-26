@@ -14,6 +14,7 @@ import {
   ICommand,
   OPERATION_SORT_POSITION,
   IModuleMigrationResult,
+  IObjectTrace,
 } from "./interfaces";
 
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
@@ -201,16 +202,26 @@ export class Core {
       });
     }
 
-    if (migrationResult.commands.length > 0) {
+    if (migrationResult.commands.length > 0 && migrationResult.errors.length === 0) {
+      let latestMigration: ICoreMigration | null = null;
+
+      if (currentTableNames.indexOf("Migrations") >= 0) {
+        latestMigration = await getLatestMigrationVersion(pgClient);
+      }
       // .replace(new RegExp("'", "g"), "\\'")
-      migrationResult.commands.push({
-        sqls: [
-          `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $OneJsonToken$${JSON.stringify(
-            appConfig
-          )}$OneJsonToken$, $OneJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$OneJsonToken$);`,
-        ],
-        operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA,
-      });
+      if (
+        latestMigration == null ||
+        JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig)
+      ) {
+        migrationResult.commands.push({
+          sqls: [
+            `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $OneJsonToken$${JSON.stringify(
+              appConfig
+            )}$OneJsonToken$, $OneJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$OneJsonToken$);`,
+          ],
+          operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA,
+        });
+      }
     }
 
     return migrationResult;
@@ -234,7 +245,6 @@ export class Core {
 
       const pgClient: PoolClient = await this._runTimePgPool.connect();
       try {
-        // eslint-disable-next-line prettier/prettier
         const latestMigration: ICoreMigration = await getLatestMigrationVersion(pgClient);
         await pgClient.release();
 
@@ -280,8 +290,9 @@ export class Core {
 
   public async deployApp(app: SoniqApp, env: SoniqEnvironment): Promise<void> {
     const migrationResult: IMigrationResultWithFixes = await this.generateMigration(app, env);
+    const objectTraces: IObjectTrace[] = app._buildObjectTraces();
 
-    this.printMigrationResult(migrationResult);
+    this.printMigrationResult(migrationResult, objectTraces);
 
     await this.applyMigrationResult(migrationResult, env.getPgConfig());
   }
@@ -327,6 +338,7 @@ export class Core {
     pgPool: Pool,
     throwErrorOnInfiniteMigration: boolean = false
   ): Promise<IMigrationResultWithFixes> {
+    this._logger.info("Start of generating migration commands...");
     // 1) Generate commands for the first time
     this._logger.info("Starting first migration generation...");
     const firstDbClient: PoolClient = await pgPool.connect();
@@ -337,7 +349,8 @@ export class Core {
       await firstDbClient.query("ROLLBACK;");
     } catch (err) {
       await firstDbClient.query("ROLLBACK;");
-      return {
+      this._logger.error("First migration generation failed.");
+      const result: IMigrationResultWithFixes = {
         errors: [
           {
             message: "Failed to generate migration commands.",
@@ -347,12 +360,19 @@ export class Core {
         warnings: [],
         commands: [],
       };
+
+      this._logger.info("Migration generation finished.");
+
+      return result;
     } finally {
       firstDbClient.release();
     }
 
     // If there are errors, or there is nothing to do, just return here
     if (firstGenerationResult.errors.length > 0 || firstGenerationResult.commands.length < 1) {
+      this._logger.info("First migration generation finished with errors or no commands.");
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     }
 
@@ -376,6 +396,7 @@ export class Core {
           }
         });
       });
+      this._logger.info("First migration run finished successfully.");
 
       // 3) try to generate the commands again to check if there are any infinite-migrations
       this._logger.info("Starting second migration generation...");
@@ -391,12 +412,15 @@ export class Core {
       await secondDbClient.query("ROLLBACK;");
     } catch (err) {
       await secondDbClient.query("ROLLBACK;");
+      this._logger.info("First migration run or second generation failed.");
       if (firstGenerationResult.errors.length < 1) {
         firstGenerationResult.errors.push({
           message: "Failed to run migrations and second command generation",
           error: err,
         });
       }
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     } finally {
       secondDbClient.release();
@@ -404,6 +428,7 @@ export class Core {
 
     // When we got any errors in second run inform the user and return with error
     if (secondGenerationResult.errors.length > 0) {
+      this._logger.info("Second migration generation finished with errors.");
       firstGenerationResult.errors.push({
         message: "Second migration-command generation finished with errors. Adding them next, prefixed with 2).",
       });
@@ -413,20 +438,27 @@ export class Core {
           message: `2) ${error.message}`,
         });
       });
+      this._logger.info("Migration generation finished.");
+
       return firstGenerationResult;
     }
 
     // If there are no commands in the second migration and we came here without an error, the migration is fine
     if (secondGenerationResult.commands.length < 1) {
+      this._logger.info("Second migration generation finished without commands. So the first is valid:");
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     }
+
+    this._logger.info("Second migration generation finished with commands. Trying to find auto-fixes...");
 
     firstGenerationResult.autoAppConfigFixes = [];
 
     // When there are commands in second migration this is an infinite-migration
     // Check if we can auto-fix them
     secondGenerationResult.commands.forEach((command) => {
-      if (command.autoAppConfigFixes != null && firstGenerationResult.autoAppConfigFixes != null) {
+      if (command.autoAppConfigFixes != null) {
         command.autoAppConfigFixes.forEach((autoSchemaFix) => {
           //@ts-ignore TODO: @eugene This is set before
           firstGenerationResult.autoAppConfigFixes.push(autoSchemaFix);
@@ -444,6 +476,10 @@ export class Core {
       }
     });
 
+    if (firstGenerationResult.autoAppConfigFixes.length > 0) {
+      this._logger.info("Found some auto-fixes. Trying to apply them...");
+    }
+
     // Apply the auto-fixes to a new appConfig
     try {
       firstGenerationResult.fixedAppConfig = applyAutoAppConfigFixes(
@@ -451,6 +487,7 @@ export class Core {
         firstGenerationResult.autoAppConfigFixes
       );
     } catch (err) {
+      this._logger.info("Auto-Fixing failed.");
       firstGenerationResult.errors.push({
         message: "Your appConfig leads to infinite-migrations. Auto-fix failed:",
         error: err,
@@ -459,6 +496,9 @@ export class Core {
 
     // If something failed until here, just return the errors
     if (firstGenerationResult.errors.length > 0) {
+      this._logger.info("Some auto-fixes failed.");
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     }
 
@@ -467,8 +507,13 @@ export class Core {
       firstGenerationResult.errors.push({
         message: "Your appConfig leads to infinite-migrations. Auto-fix disabled.",
       });
+      this._logger.info("Auto-fixing disabled. We do not apply them.");
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     }
+
+    this._logger.info("Starting Third migration generation with applied auto-fixes...");
 
     let thirdMigrationResult: IMigrationResultWithFixes;
 
@@ -486,14 +531,21 @@ export class Core {
       );
 
       if (thirdMigrationResult.errors.length > 0) {
+        this._logger.info("Third migration generation finished with errors.");
         throw new Error("Result contains errors");
       }
-    } catch (e) {
+    } catch (error) {
       firstGenerationResult.errors.push({
         message: "Your appConfig leads to infinite-migrations. Auto-fix tried but not working.",
+        error,
       });
+      this._logger.info("Third migration generation failed.");
+      this._logger.info("Migration generation finished.");
+
       return castMigrationResult(firstGenerationResult);
     }
+
+    this._logger.info("Third migration generation successful. Please apply auto-fixes.");
 
     // If we come here the migration would run infinite, but could get auto-fixed
     thirdMigrationResult.warnings.push({
@@ -504,55 +556,125 @@ export class Core {
     thirdMigrationResult.fixedAppConfig = firstGenerationResult.fixedAppConfig;
     thirdMigrationResult.autoAppConfigFixes = firstGenerationResult.autoAppConfigFixes;
 
+    this._logger.info("Migration generation finished.");
+
     return castMigrationResult(thirdMigrationResult);
   }
 
-  public printMigrationResult(result: IMigrationResultWithFixes): void {
-    if (result.errors.length > 0) {
-      // tslint:disable-next-line:no-console
-      console.log("\x1b[31m");
-      // tslint:disable-next-line:no-console
-      console.log(" ===  Ordered Commands:  === ");
+  public addSpaces(str: string, numb: number): string {
+    while (str.length < numb) {
+      str += " ";
+    }
+    return str;
+  }
 
-      result.commands.forEach((command: ICommand) => {
-        command.sqls.forEach((sql) => {
+  public printMigrationResultSummary(result: IMigrationResultWithFixes): void {
+    let color: string = "\u001b[0m";
+
+    const commands: string = this.addSpaces(result.commands.length.toString(), 5);
+    const warnings: string = this.addSpaces(result.warnings.length.toString(), 5);
+    const errors: string = this.addSpaces(result.errors.length.toString(), 5);
+
+    if (result.commands.length > 0) {
+      color = "\u001b[34;1m";
+    }
+    console.log(color + `  ${commands} Command${result.commands.length === 1 ? "" : "s"}`);
+    color = "\u001b[0m";
+
+    if (result.warnings.length > 0) {
+      color = "\u001b[33;1m";
+    }
+    console.log(color + `  ${warnings} Warning${result.warnings.length === 1 ? "" : "s"}`);
+    color = "\u001b[0m";
+
+    if (result.errors.length > 0) {
+      color = "\u001b[31;1m";
+    }
+    console.log(color + `  ${errors} Error${result.errors.length === 1 ? "" : "s"}`);
+    color = "\u001b[0m";
+  }
+
+  public printMigrationResult(result: IMigrationResultWithFixes, objectTraces: IObjectTrace[]): void {
+    console.log("\n\u001b[34;1mMigration-Result:\n\n");
+
+    if (result.errors.length < 1 && result.commands.length > 0) {
+      console.log(`\u001b[34;1m${result.warnings.length} COMMANDS\n`);
+
+      result.commands.forEach((command: ICommand, index) => {
+        console.log(
+          `\u001b[34;1mCOMMAND [${index + 1}/${result.commands.length}] has ${command.sqls.length} SQL-Commands`
+        );
+
+        command.sqls.forEach((sql, subIndex) => {
           if (sql.startsWith(`INSERT INTO "_core"."Migrations"`) !== true) {
-            // tslint:disable-next-line:no-console
-            console.log(sql);
+            console.log(`\u001b[0m-> [${subIndex}/${command.sqls.length}]`, "\u001b[0m", sql);
+          } else {
+            console.log(
+              `\u001b[0m-> [${subIndex}/${command.sqls.length}]`,
+              "\u001b[0m",
+              "This system-internal command is hidden bacause of it's size."
+            );
           }
         });
       });
 
-      // tslint:disable-next-line:no-console
-      console.log("\x1b[31m");
-      // tslint:disable-next-line:no-console
-      console.log(" ===  Errors:  === ");
+      console.log("\n");
+    }
 
-      result.errors.forEach((error) => {
-        // tslint:disable-next-line:no-console
-        console.log("\x1b[31m", error.message);
+    if (result.errors.length > 0) {
+      console.log(`\u001b[31;1m${result.errors.length} ERRORS`);
+
+      result.errors.forEach((error, index) => {
+        console.log(`\n\u001b[31;1mERR [${index + 1}/${result.errors.length}]`, "\u001b[0m", error.message);
+        if (error.objectId != null) {
+          for (const objectTrace of objectTraces) {
+            if (objectTrace.objectId === error.objectId) {
+              this._logger.info("Have a look at this object: ", objectTrace.trace);
+            }
+          }
+        }
         if (error.error != null) {
-          // tslint:disable-next-line:no-console
-          console.log("\x1b[31m", " ->", error);
+          this._logger.info("This error has been thrown: ", error.error);
         }
         if (error.command != null) {
-          // tslint:disable-next-line:no-console
-          console.log("\x1b[31m", " ->", error.command);
+          this._logger.info("Happend while running this command: ", error.command);
         }
-        // tslint:disable-next-line:no-console
-        // console.log("\x1b[31m", ' ->', JSON.stringify(error, null, 2));
       });
+      console.log("\n");
     }
 
     if (result.warnings.length > 0) {
-      // tslint:disable-next-line:no-console
-      console.log("\x1b[33m");
-      // tslint:disable-next-line:no-console
-      console.log(" ===  Warnings:  === ");
+      console.log(`\u001b[33;1m${result.warnings.length} WARNINGS`);
 
-      result.warnings.forEach((warning) => {
-        // tslint:disable-next-line:no-console
-        console.log("\x1b[33m", warning.message);
+      result.warnings.forEach((warning, index) => {
+        console.log(`\n\u001b[33;1mWARN [${index + 1}/${result.warnings.length}]`, "\u001b[0m", warning.message);
+        if (warning.objectId != null) {
+          for (const objectTrace of objectTraces) {
+            if (objectTrace.objectId === warning.objectId) {
+              this._logger.info("Have a look at this object: ", objectTrace.trace);
+            }
+          }
+        }
+        if (warning.error != null) {
+          this._logger.info("This error has been thrown: ", warning.error);
+        }
+      });
+      console.log("\n");
+    }
+
+    if (result.autoAppConfigFixes != null && result.autoAppConfigFixes.length > 0) {
+      const fixesLength: number = result.autoAppConfigFixes.length;
+      console.log(`\u001b[36;1m${fixesLength} AUTO-FIXES`);
+
+      result.autoAppConfigFixes.forEach((autoFix, index) => {
+        console.log(`\n\u001b[36;1mFIX [${index + 1}/${fixesLength}]`, "\u001b[0m", autoFix.message);
+        if (autoFix.objectId != null) {
+          for (const objectTrace of objectTraces) {
+            if (objectTrace.objectId === autoFix.objectId) {
+              this._logger.info("Have a look at this object: ", objectTrace.trace);
+            }
+          }
+        }
         // tslint:disable-next-line:no-console
         // console.log("\x1b[33m", ' ->', JSON.stringify(warning, null, 2));
       });
@@ -565,37 +687,33 @@ export class Core {
         console.log(sql);
       });
     });*/
-    if (result.errors.length < 1) {
-      // tslint:disable-next-line:no-console
-      console.log("\x1b[32m");
-      // tslint:disable-next-line:no-console
-      console.log(" ===  Ordered Commands:  === ");
 
-      result.commands.forEach((command: ICommand) => {
-        command.sqls.forEach((sql) => {
-          if (sql.startsWith(`INSERT INTO "_core"."Migrations"`) !== true) {
-            // tslint:disable-next-line:no-console
-            console.log(sql);
-          }
-        });
-      });
+    console.log("\n\u001b[34;1m DEPLOYMENT SUMMARY:");
+    console.log("\u001b[34;1m ____________________________________________________________________\n");
+    this.printMigrationResultSummary(result);
+    console.log("");
 
-      // tslint:disable-next-line:no-console
-      console.log("\x1b[32m");
-      // tslint:disable-next-line:no-console
-      console.log(`
-  _____ _    _  _____ _____ ______  _____ _____ 
-/ ____| |  | |/ ____/ ____|  ____|/ ____/ ____|
-| (___ | |  | | |   | |    | |__  | (___| (___  
-\\___ \\| |  | | |   | |    |  __|  \\___ \\\\___ \\ 
-____) | |__| | |___| |____| |____ ____) |___) |
-|_____/ \\____/ \\_____\\_____|______|_____/_____/ 
-    `);
+    if (result.errors.length > 0) {
+      console.log(`\u001b[31;1mThe migration-generation finished with some errors.`);
+      console.log(`\u001b[31;1mYour Application cannot be deployed.`);
+    } else {
+      if (result.warnings.length > 0) {
+        console.log(`\u001b[33;1mThe migration-generation finished with some warnings.`);
+      }
+      if (result.autoAppConfigFixes != null && result.autoAppConfigFixes.length > 0) {
+        console.log(`\u001b[33;1mThere are some auto-fixes you should apply.`);
+      }
+      if (result.commands.length > 0) {
+        console.log(`\n\u001b[32;1mYour app can be deployed.`);
+      } else {
+        console.log(`\n\u001b[32;1mNothing to deploy. Everything is fine.`);
+      }
     }
   }
 
   public async applyMigrationResult(result: IMigrationResultWithFixes, pgPoolConfig: PoolConfig): Promise<void> {
     if (result.errors.length < 1 && result.commands.length > 0) {
+      this._logger.info("Deploying application...");
       const pgPool: Pool = new Pool(pgPoolConfig);
 
       const pgClient: PoolClient = await pgPool.connect();
@@ -608,18 +726,17 @@ ____) | |__| | |___| |____| |____ ____) |___) |
           });
         });
         await pgClient.query("COMMIT;");
-        // tslint:disable-next-line:no-console
-        console.log("\x1b[32m");
-        // tslint:disable-next-line:no-console
-        console.log("SUCCESSFUL MIGRATION!");
+        this._logger.info("Deployment successful.");
+        console.log("\u001b[32;1mSUCCESSFUL DEPLOYMENT!");
       } catch (e) {
+        this._logger.info("Deployment failed.", e);
         // tslint:disable-next-line:no-console
-        console.error("\x1b[31m", "Migration Failed", e);
+        console.error("\x1b[31m", "Deployment Failed");
         await pgClient.query("ROLLBACK;");
       } finally {
         await pgClient.release();
       }
-      this._logger.info("core.migration.ready", `Took ${process.hrtime(STARTUP_TIME)} seconds.`);
+      this._logger.info(`Finished Took ${process.hrtime(STARTUP_TIME)} seconds.`);
       await pgPool.end();
     }
   }

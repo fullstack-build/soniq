@@ -1,4 +1,4 @@
-import { IModuleConfig, IAppConfig } from "./interfaces";
+import { IModuleConfig, IAppConfig, IObjectTrace } from "./interfaces";
 import { PoolConfig } from ".";
 
 export class SoniqApp {
@@ -21,11 +21,20 @@ export class SoniqApp {
       return module._build(this._appId);
     });
 
-    console.log(JSON.stringify(modules, null, 2));
-
     return {
       modules,
     };
+  }
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    this._modules.forEach((module) => {
+      module._buildObjectTraces(this._appId).forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    return objectTraces;
   }
 }
 
@@ -42,6 +51,10 @@ export class SoniqModule {
 
   public _build(appId: string): IModuleConfig {
     throw new Error("Build is not implemented for SoniqModule Interface");
+  }
+
+  public _buildObjectTraces(appId: string): IObjectTrace[] {
+    return [];
   }
 }
 

@@ -8,8 +8,11 @@ export interface ICommand {
 }
 
 export interface IAutoAppConfigFix {
+  moduleKey: string;
   path: string;
   value: any;
+  objectId?: string;
+  message: string;
 }
 
 export interface IMigrationError {
@@ -18,6 +21,7 @@ export interface IMigrationError {
   command?: ICommand;
   meta?: any;
   moduleKey?: string;
+  objectId?: string;
 }
 
 export type IModuleAppConfig = any;
@@ -75,3 +79,8 @@ export const OPERATION_SORT_POSITION: IOperatorSortPositions = {
   SET_COMMENT: 10000,
   INSERT_DATA: 11000,
 };
+
+export interface IObjectTrace {
+  objectId: string;
+  trace: Error;
+}

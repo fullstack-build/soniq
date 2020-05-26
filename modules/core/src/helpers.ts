@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PoolClient } from "pg";
-import { IAppConfig, IAutoAppConfigFix, IMigrationResult, IMigrationResultWithFixes } from "./interfaces";
+import {
+  IAppConfig,
+  IAutoAppConfigFix,
+  IMigrationResult,
+  IMigrationResultWithFixes,
+  IModuleConfig,
+} from "./interfaces";
 import * as _ from "lodash";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,8 +73,22 @@ export async function getLatestMigrationVersion(pgClient: PoolClient): Promise<I
 export function applyAutoAppConfigFixes(appConfig: IAppConfig, autoAppConfigFixes: IAutoAppConfigFix[]): IAppConfig {
   const newAppConfig: IAppConfig = JSON.parse(JSON.stringify(appConfig));
 
+  const indexByModuleKey: {
+    [key: string]: number;
+  } = {};
+
+  newAppConfig.modules.forEach((moduleConfig: IModuleConfig, index: number) => {
+    indexByModuleKey[moduleConfig.key] = index;
+  });
+
   autoAppConfigFixes.forEach((autoAppConfigFix) => {
-    _.set(newAppConfig, autoAppConfigFix.path, autoAppConfigFix.value);
+    const moduleIndex: number = indexByModuleKey[autoAppConfigFix.moduleKey];
+
+    newAppConfig.modules[moduleIndex].appConfig = _.set(
+      newAppConfig.modules[moduleIndex].appConfig,
+      autoAppConfigFix.path,
+      autoAppConfigFix.value
+    );
   });
 
   return newAppConfig;
