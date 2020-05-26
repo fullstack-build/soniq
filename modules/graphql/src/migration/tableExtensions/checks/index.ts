@@ -47,7 +47,9 @@ export const tableExtenstionChecks: ITableExtension = {
           message: `ID of check ${check.id} is invalid: ${idValidation}.`,
           meta: {
             tableId: table.id,
+            checkId: check.id,
           },
+          objectId: check.id,
         });
       }
 
@@ -56,7 +58,9 @@ export const tableExtenstionChecks: ITableExtension = {
           message: `Field 'definition' of check ${check.id} is invalid. It has to be a string.`,
           meta: {
             tableId: table.id,
+            checkId: check.id,
           },
+          objectId: check.id,
         });
       }
     });
@@ -92,6 +96,7 @@ export const tableExtenstionChecks: ITableExtension = {
                   checkId: check.id,
                   key: "definition",
                   value: existingCheck.definition,
+                  message: `Please change the definition of check "${check.id}" to "${existingCheck.definition}".`,
                 },
               ],
             });

@@ -101,6 +101,7 @@ export const schemaExtensionFunctions: ISchemaExtension = {
       if (schema.schemas.indexOf(fn.schema) < 0) {
         result.errors.push({
           message: `The schema of a function with name '${fn.name}' is not managed by One. (Schema: '${fn.name}').`,
+          objectId: `Function_"${fn.schema}"."${fn.name}"`,
         });
         return;
       }

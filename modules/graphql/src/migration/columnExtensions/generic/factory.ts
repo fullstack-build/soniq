@@ -52,6 +52,7 @@ export function getDefaultAndNotNullChange(
           columnId: column.id,
           key: "properties.defaultExpression",
           value: currentDefaultExpression,
+          message: `Please change the defaultExpression of column "${table.schema}"."${table.name}"."${column.name}" to "${currentDefaultExpression}".`,
         },
       ],
     });
@@ -210,9 +211,17 @@ export function createGenericColumnExtension(
         getPgColumnName(context)
       );
 
-      migrateTypes(context, columnInfo).forEach((sql: string) => {
-        sqls.push(sql);
-      });
+      try {
+        migrateTypes(context, columnInfo).forEach((sql: string) => {
+          sqls.push(sql);
+        });
+      } catch (error) {
+        result.errors.push({
+          message: `Failed to migrate type: ${error.message}`,
+          error,
+          objectId: context.column.id,
+        });
+      }
 
       if (sqls.length > 0) {
         result.commands.push({

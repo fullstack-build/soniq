@@ -92,14 +92,15 @@ export const columnExtensionId: IColumnExtension = {
     };
 
     if (columnInfo.data_type !== "uuid") {
-      result.errors.push({ message: "Id column is no uuid." });
+      result.errors.push({ message: "Id column is no uuid.", objectId: context.column.id });
     }
     if (columnInfo.is_nullable.toUpperCase() === "YES") {
-      result.errors.push({ message: "Id column is nullable." });
+      result.errors.push({ message: "Id column is nullable.", objectId: context.column.id });
     }
     if (columnInfo.column_default !== "_graphql_meta.uuid_generate_v4()") {
       result.errors.push({
         message: "Id column has not _graphql_meta.uuid_generate_v4() as default.",
+        objectId: context.column.id,
       });
     }
 

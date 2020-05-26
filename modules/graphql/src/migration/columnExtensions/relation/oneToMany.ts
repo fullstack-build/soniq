@@ -53,6 +53,7 @@ export const columnExtensionOneToMany: IColumnExtension = {
           tableId: context.table.id,
           columnId: context.column.id,
         },
+        objectId: context.column.id,
       });
     } else {
       const foreignRelation: {
@@ -67,6 +68,7 @@ export const columnExtensionOneToMany: IColumnExtension = {
             tableId: context.table.id,
             columnId: context.column.id,
           },
+          objectId: context.column.id,
         });
       } else {
         if (foreignRelation.column.type !== "manyToOne") {
@@ -76,6 +78,7 @@ export const columnExtensionOneToMany: IColumnExtension = {
               tableId: context.table.id,
               columnId: context.column.id,
             },
+            objectId: context.column.id,
           });
         }
       }

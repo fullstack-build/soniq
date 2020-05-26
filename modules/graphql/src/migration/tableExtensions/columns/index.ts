@@ -51,6 +51,7 @@ export const tableExtenstionColumns: ITableExtension = {
               tableId: table.id,
               columnId: column.id,
             },
+            objectId: column.id,
           });
         } else {
           const columnExtensionContext: IColumnExtensionContext = {
@@ -67,6 +68,7 @@ export const tableExtenstionColumns: ITableExtension = {
                 tableId: table.id,
                 columnId: column.id,
               },
+              objectId: column.id,
             });
             return null;
           } else {
@@ -83,6 +85,7 @@ export const tableExtenstionColumns: ITableExtension = {
                       tableId: table.id,
                       columnId: column.id,
                     },
+                    objectId: column.id,
                   };
                 }
               );
@@ -112,6 +115,7 @@ export const tableExtenstionColumns: ITableExtension = {
                   tableId: table.id,
                   columnId: column.id,
                 },
+                objectId: column.id,
               });
             }
           }
@@ -190,6 +194,7 @@ export const tableExtenstionColumns: ITableExtension = {
               tableId: table.id,
               columnId: column.id,
             },
+            objectId: column.id,
           });
         }
       });
@@ -261,6 +266,7 @@ export const tableExtenstionColumns: ITableExtension = {
               tableId: table.id,
               columnId: column.id,
             },
+            objectId: column.id,
           });
         }
       }
@@ -349,6 +355,7 @@ export const tableExtenstionColumns: ITableExtension = {
             tableId: table.id,
             columnId: updateColumn.column.id,
           },
+          objectId: updateColumn.column.id,
         });
       }
     });

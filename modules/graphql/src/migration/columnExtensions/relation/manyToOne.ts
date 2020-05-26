@@ -257,6 +257,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
           tableId: context.table.id,
           columnId: context.column.id,
         },
+        objectId: context.column.id,
       });
     } else {
       const foreignTable: IDbTable | null = findTableById(context.schema, properties.foreignTableId);
@@ -267,6 +268,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
             tableId: context.table.id,
             columnId: context.column.id,
           },
+          objectId: context.column.id,
         });
       } else {
         if (findColumnByType(foreignTable, "id") == null) {
@@ -276,6 +278,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
               tableId: context.table.id,
               columnId: context.column.id,
             },
+            objectId: context.column.id,
           });
         }
       }
@@ -342,22 +345,36 @@ export const columnExtensionManyToOne: IColumnExtension = {
 
     sql += ";";
 
-    const constraintSql: string | null = generateConstraint(context, null);
+    try {
+      const constraintSql: string | null = generateConstraint(context, null);
 
-    if (constraintSql == null) {
-      throw new Error("Something is broken. This Error should not be possible.");
+      if (constraintSql == null) {
+        throw new Error("Something is broken. This Error should not be possible.");
+      }
+
+      return {
+        errors: [],
+        warnings: [],
+        commands: [
+          {
+            sqls: [sql, constraintSql],
+            operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + 100,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        errors: [
+          {
+            message: `Failed to generateConstraint: ${error.message}`,
+            error,
+            objectId: context.column.id,
+          },
+        ],
+        warnings: [],
+        commands: [],
+      };
     }
-
-    return {
-      errors: [],
-      warnings: [],
-      commands: [
-        {
-          sqls: [sql, constraintSql],
-          operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + 100,
-        },
-      ],
-    };
   },
   update: async (
     context: IColumnExtensionContext,
@@ -371,23 +388,31 @@ export const columnExtensionManyToOne: IColumnExtension = {
       getPgColumnName(context)
     );
 
-    const relations: IRelation[] = await getRelations(
-      dbClient,
-      columnInfo.table_schema,
-      columnInfo.table_name,
-      columnInfo.column_name
-    );
+    try {
+      const relations: IRelation[] = await getRelations(
+        dbClient,
+        columnInfo.table_schema,
+        columnInfo.table_name,
+        columnInfo.column_name
+      );
 
-    const constraintSql: string | null = generateConstraint(context, relations);
-    if (constraintSql != null) {
-      result.commands.push({
-        sqls: [constraintSql],
-        operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+      const constraintSql: string | null = generateConstraint(context, relations);
+      if (constraintSql != null) {
+        result.commands.push({
+          sqls: [constraintSql],
+          operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        });
+      }
+    } catch (error) {
+      result.errors.push({
+        message: `Failed to getRelations or generateConstraint: ${error.message}`,
+        error,
+        objectId: context.column.id,
       });
     }
 
     if (columnInfo.data_type !== "uuid") {
-      result.errors.push({ message: "Id column is no uuid." });
+      result.errors.push({ message: "Id column is no uuid.", objectId: context.column.id });
     }
 
     return result;

@@ -84,14 +84,16 @@ export const columnExtensionCreatedAt: IColumnExtension = {
     if (columnInfo.data_type !== "timestamp without time zone") {
       result.errors.push({
         message: "CreatedAt column is not timestamp without time zone.",
+        objectId: context.column.id,
       });
     }
     if (columnInfo.is_nullable.toUpperCase() === "YES") {
-      result.errors.push({ message: "CreatedAt column is nullable." });
+      result.errors.push({ message: "CreatedAt column is nullable.", objectId: context.column.id });
     }
     if (columnInfo.column_default !== "timezone('utc'::text, now())") {
       result.errors.push({
         message: "CreatedAt column default is not 'timezone('utc'::text, now())'.",
+        objectId: context.column.id,
       });
     }
 

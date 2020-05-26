@@ -63,6 +63,7 @@ export const columnExtensionComputed: IColumnExtension = {
           tableId: context.table.id,
           columnId: context.column.id,
         },
+        objectId: context.column.id,
       });
     } else {
       const expression: IDbExpression | null = findExpressionById(context.schema, properties.expressionId);
@@ -73,6 +74,7 @@ export const columnExtensionComputed: IColumnExtension = {
             tableId: context.table.id,
             columnId: context.column.id,
           },
+          objectId: context.column.id,
         });
       }
     }

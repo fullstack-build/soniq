@@ -190,6 +190,7 @@ export const columnExtensionEnum: IColumnExtension = {
             tableId: context.table.id,
             columnId: context.column.id,
           },
+          objectId: context.column.id,
         });
       }
     });
@@ -253,6 +254,7 @@ export const columnExtensionEnum: IColumnExtension = {
             columnId: column.id,
             key: "properties.defaultExpression",
             value: currentDefaultExpression,
+            message: `Please change the defaultExpression of enum-column "${table.schema}"."${table.name}"."${column.name}" to "${currentDefaultExpression}".`,
           },
         ],
       });
@@ -287,6 +289,7 @@ export const columnExtensionEnum: IColumnExtension = {
           tableId: context.table.id,
           columnId: context.column.id,
         },
+        objectId: context.column.id,
       });
     }
 

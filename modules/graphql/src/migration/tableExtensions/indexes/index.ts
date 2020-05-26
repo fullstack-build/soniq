@@ -103,6 +103,7 @@ export const tableExtenstionIndexes: ITableExtension = {
             indexId: index.id,
             tableId: table.id,
           },
+          objectId: index.id,
         });
       }
       try {
@@ -114,6 +115,7 @@ export const tableExtenstionIndexes: ITableExtension = {
             indexId: index.id,
             tableId: table.id,
           },
+          objectId: index.id,
         });
       }
     });
@@ -146,6 +148,8 @@ export const tableExtenstionIndexes: ITableExtension = {
               const startCheck: string = `${indexDefinition} WHERE `;
 
               if (existingIndex.index_def.startsWith(startCheck)) {
+                const autoFixValue: string = existingIndex.index_def.substr(startCheck.length - 1).trim();
+
                 result.commands.push({
                   sqls: [dropSql, createSql],
                   operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
@@ -154,7 +158,8 @@ export const tableExtenstionIndexes: ITableExtension = {
                       tableId: table.id,
                       indexId: index.id,
                       key: "condition",
-                      value: existingIndex.index_def.substr(startCheck.length - 1).trim(),
+                      value: autoFixValue,
+                      message: `Please change the condition of index "${index.id}" to "${autoFixValue}".`,
                     },
                   ],
                 });

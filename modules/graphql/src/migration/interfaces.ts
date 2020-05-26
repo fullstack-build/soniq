@@ -66,6 +66,7 @@ export interface IAutoSchemaFix {
   indexId?: string;
   key: string;
   value: any;
+  message: string;
 }
 
 export interface IGqlMigrationResult {

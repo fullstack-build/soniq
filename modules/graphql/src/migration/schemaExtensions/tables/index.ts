@@ -69,6 +69,7 @@ export const schemaExtensionTables: ISchemaExtension = {
         result.errors.push({
           message: `Duplicate id-comment on [${listOfTables.join(", ")}]. Remove them to try auto-fix.`,
           meta: { tableId },
+          objectId: tableId,
         });
       }
     });
@@ -135,6 +136,7 @@ export const schemaExtensionTables: ISchemaExtension = {
           result.warnings.push({
             message: `Do not manipulate the id-comment on "${table.schema}"."${table.name}". [fixed]`,
             meta: { tableId: table.id },
+            objectId: table.id,
           });
         }
       });

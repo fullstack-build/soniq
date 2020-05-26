@@ -1,4 +1,4 @@
-import { PoolClient, IModuleMigrationResult, asyncForEach, IMigrationError } from "soniq";
+import { PoolClient, IModuleMigrationResult, asyncForEach, IMigrationError, ICommand, IAutoAppConfigFix } from "soniq";
 import { DbSchemaValidator } from "./DbSchemaValidator";
 import * as uuidValidate from "uuid-validate";
 import { IColumnExtension } from "./columnExtensions/IColumnExtension";
@@ -38,9 +38,9 @@ import { columnExtensionUpdatedAt } from "./columnExtensions/updatedAt";
 import { schemaExtensionFunctions } from "./schemaExtensions/functions";
 import { IResolver } from "../RuntimeInterfaces";
 import { columnExtensionComputed } from "./columnExtensions/computed";
-import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult } from "./interfaces";
+import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult, IAutoSchemaFix } from "./interfaces";
 import { IGraphqlAppConfig, IGraphqlOptionsInput } from "../moduleDefinition/interfaces";
-import { IDbSchema } from "./DbSchemaInterface";
+import { IDbSchema, IDbTable, IDbColumn, IDbIndex, IDbCheck } from "./DbSchemaInterface";
 
 export type ITypeDefsExtension = () => string;
 export type IResolverExtension = () => IResolver;
@@ -242,6 +242,79 @@ export class Migration {
         },
       };
     }
+
+    // eslint-disable-next-line require-atomic-updates
+    result.commands = result.commands.map(
+      (command: IGqlCommand): ICommand => {
+        if (command.autoSchemaFixes != null) {
+          command.autoAppConfigFixes = command.autoSchemaFixes.map(
+            (autoSchemaFix: IAutoSchemaFix): IAutoAppConfigFix => {
+              const autoAppConfigFix: IAutoAppConfigFix = {
+                moduleKey: "GraphQl",
+                path: "schema",
+                value: autoSchemaFix.value,
+                message: autoSchemaFix.message,
+              };
+
+              if (autoSchemaFix.tableId != null && schema.tables != null) {
+                const tableIndex: number = schema.tables.findIndex((table: IDbTable) => {
+                  return table.id === autoSchemaFix.tableId;
+                });
+                autoAppConfigFix.objectId = autoSchemaFix.tableId;
+                autoAppConfigFix.path += `.tables.${tableIndex}`;
+
+                if (autoSchemaFix.columnId != null) {
+                  const columnIndex: number = schema.tables[tableIndex].columns.findIndex((column: IDbColumn) => {
+                    return column.id === autoSchemaFix.columnId;
+                  });
+
+                  autoAppConfigFix.objectId = autoSchemaFix.columnId;
+                  autoAppConfigFix.path += `.columns.${columnIndex}`;
+                } else if (autoSchemaFix.indexId != null && schema.tables[tableIndex].indexes != null) {
+                  const indexIndex: number | undefined = schema.tables[tableIndex].indexes?.findIndex(
+                    (index: IDbIndex) => {
+                      return index.id === autoSchemaFix.indexId;
+                    }
+                  );
+
+                  if (indexIndex == null) {
+                    throw new Error(
+                      `Could not find indexId. This AutoSchemaFix is invalid: ${JSON.stringify(autoSchemaFix, null, 2)}`
+                    );
+                  }
+
+                  autoAppConfigFix.objectId = autoSchemaFix.indexId;
+                  autoAppConfigFix.path += `.indexes.${indexIndex}`;
+                } else if (autoSchemaFix.checkId != null && schema.tables[tableIndex].checks != null) {
+                  const checkIndex: number | undefined = schema.tables[tableIndex].checks?.findIndex(
+                    (check: IDbCheck) => {
+                      return check.id === autoSchemaFix.checkId;
+                    }
+                  );
+
+                  if (checkIndex == null) {
+                    throw new Error(
+                      `Could not find checkId. This AutoSchemaFix is invalid: ${JSON.stringify(autoSchemaFix, null, 2)}`
+                    );
+                  }
+
+                  autoAppConfigFix.objectId = autoSchemaFix.checkId;
+                  autoAppConfigFix.path += `.checks.${checkIndex}`;
+                } else {
+                  throw new Error(`This AutoSchemaFix is invalid: ${JSON.stringify(autoSchemaFix, null, 2)}`);
+                }
+              }
+
+              autoAppConfigFix.path += autoSchemaFix.key === "" ? "" : `.${autoSchemaFix.key}`;
+
+              return autoAppConfigFix;
+            }
+          );
+        }
+
+        return command;
+      }
+    );
 
     // Generate other stuff like triggers etc.
 
