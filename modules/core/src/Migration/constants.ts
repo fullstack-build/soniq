@@ -1,0 +1,15 @@
+import { IOperatorSortPositions } from "./interfaces";
+
+export const OPERATION_SORT_POSITION: IOperatorSortPositions = {
+  CREATE_SCHEMA: 1000,
+  CREATE_TABLE: 2000,
+  RENAME_TABLE: 3000,
+  ALTER_TABLE: 4000,
+  ADD_COLUMN: 5000,
+  RENAME_COLUMN: 6000,
+  ALTER_COLUMN: 7000,
+  DROP_COLUMN: 8000,
+  DROP_TABLE: 9000,
+  SET_COMMENT: 10000,
+  INSERT_DATA: 11000,
+};

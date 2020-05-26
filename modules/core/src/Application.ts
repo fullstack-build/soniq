@@ -1,5 +1,6 @@
-import { IModuleConfig, IAppConfig, IObjectTrace } from "./interfaces";
+import { IModuleConfig, IAppConfig } from "./interfaces";
 import { PoolConfig } from ".";
+import { IObjectTrace } from "./Migration/interfaces";
 
 export class SoniqApp {
   private _modules: SoniqModule[] = [];
