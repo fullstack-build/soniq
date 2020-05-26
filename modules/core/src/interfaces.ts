@@ -29,20 +29,25 @@ export type IModuleEnvConfig = any;
 export type IModuleRuntimeConfig = any;
 export type IRuntimeConfig = any;
 
-export interface IModuleMigrationResult {
-  moduleRuntimeConfig: IModuleRuntimeConfig;
+export interface IMigrationResult {
   errors: IMigrationError[];
   warnings: IMigrationError[];
   commands: ICommand[];
 }
 
-export interface IMigrationResult {
+export interface IModuleMigrationResult extends IMigrationResult {
+  moduleRuntimeConfig: IModuleRuntimeConfig;
+}
+
+export interface IAppMigrationResult extends IMigrationResult {
   runtimeConfig: {
     [moduleKey: string]: IRuntimeConfig;
   };
-  errors: IMigrationError[];
-  warnings: IMigrationError[];
-  commands: ICommand[];
+}
+
+export interface IMigrationResultWithFixes extends IMigrationResult {
+  autoAppConfigFixes: IAutoAppConfigFix[];
+  fixedAppConfig?: IAppConfig;
 }
 
 export interface IAppConfig {
@@ -52,14 +57,6 @@ export interface IAppConfig {
 export interface IModuleConfig {
   key: string;
   appConfig: IModuleAppConfig;
-}
-
-export interface IMigrationResultWithFixes {
-  errors: IMigrationError[];
-  warnings: IMigrationError[];
-  commands: ICommand[];
-  fixedAppConfig?: IAppConfig;
-  autoAppConfigFixes?: IAutoAppConfigFix[];
 }
 
 export interface IOperatorSortPositions {

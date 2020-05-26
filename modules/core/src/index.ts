@@ -1,4 +1,3 @@
-/* eslint-disable require-atomic-updates */
 import "reflect-metadata";
 const STARTUP_TIME: [number, number] = process.hrtime();
 // DI
@@ -9,11 +8,13 @@ import {
   IModuleAppConfig,
   IMigrationResult,
   IAppConfig,
-  IMigrationResultWithFixes,
   ICommand,
   OPERATION_SORT_POSITION,
   IModuleMigrationResult,
   IObjectTrace,
+  IAutoAppConfigFix,
+  IAppMigrationResult,
+  IMigrationResultWithFixes,
 } from "./interfaces";
 
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
@@ -22,7 +23,7 @@ import {
   getPgSelector,
   applyAutoAppConfigFixes,
   getTables,
-  castMigrationResult,
+  buildMigrationResult,
   getExtensions,
   getLatestMigrationVersion,
   ICoreMigration,
@@ -89,7 +90,7 @@ export class Core {
     appConfig: IAppConfig,
     pgClient: PoolClient
   ): Promise<IMigrationResult> {
-    const result: IMigrationResult = {
+    const result: IAppMigrationResult = {
       runtimeConfig: {},
       errors: [],
       warnings: [],
@@ -130,20 +131,20 @@ export class Core {
       }
     }
 
-    const finalResult: IMigrationResult = await this._generateCoreMigrations(version, appConfig, pgClient, result);
+    const rawResult: IMigrationResult = await this._generateCoreMigrations(version, appConfig, pgClient, result);
 
-    finalResult.commands = result.commands.sort((a, b) => {
+    rawResult.commands.sort((a, b) => {
       return a.operationSortPosition - b.operationSortPosition;
     });
 
-    return finalResult;
+    return rawResult;
   }
 
   private async _generateCoreMigrations(
     version: string,
     appConfig: IAppConfig,
     pgClient: PoolClient,
-    migrationResult: IMigrationResult
+    migrationResult: IAppMigrationResult
   ): Promise<IMigrationResult> {
     const currentSchemaNames: string[] = await getSchemas(pgClient);
     const currentTableNames: string[] = await getTables(pgClient, ["_core"]);
@@ -311,7 +312,7 @@ export class Core {
     try {
       return await this.generateMigrationWithPgPool(version, appConfig, pgPool);
     } catch (e) {
-      return {
+      return buildMigrationResult({
         commands: [],
         errors: [
           {
@@ -320,7 +321,7 @@ export class Core {
           },
         ],
         warnings: [],
-      };
+      });
     } finally {
       await pgPool.end();
     }
@@ -336,7 +337,10 @@ export class Core {
     // 1) Generate commands for the first time
     this._logger.info("Starting first migration generation...");
     const firstDbClient: PoolClient = await pgPool.connect();
-    let firstGenerationResult: IMigrationResultWithFixes;
+    let firstGenerationResult: IMigrationResult;
+    const autoAppConfigFixes: IAutoAppConfigFix[] = [];
+    let fixedAppConfig: IAppConfig | null = null;
+
     try {
       await firstDbClient.query("BEGIN;");
       firstGenerationResult = await this._generateModuleMigrations(version, appConfig, firstDbClient);
@@ -344,7 +348,10 @@ export class Core {
     } catch (err) {
       await firstDbClient.query("ROLLBACK;");
       this._logger.error("First migration generation failed.");
-      const result: IMigrationResultWithFixes = {
+
+      this._logger.info("Migration generation finished.");
+
+      return buildMigrationResult({
         errors: [
           {
             message: "Failed to generate migration commands.",
@@ -353,11 +360,7 @@ export class Core {
         ],
         warnings: [],
         commands: [],
-      };
-
-      this._logger.info("Migration generation finished.");
-
-      return result;
+      });
     } finally {
       firstDbClient.release();
     }
@@ -367,12 +370,12 @@ export class Core {
       this._logger.info("First migration generation finished with errors or no commands.");
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult);
     }
 
     // 2) Try to run the migration
     const secondDbClient: PoolClient = await pgPool.connect();
-    let secondGenerationResult: IMigrationResultWithFixes;
+    let secondGenerationResult: IMigrationResult;
     this._logger.info("Run first migration...");
     try {
       await secondDbClient.query("BEGIN;");
@@ -415,7 +418,7 @@ export class Core {
       }
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult);
     } finally {
       secondDbClient.release();
     }
@@ -434,7 +437,7 @@ export class Core {
       });
       this._logger.info("Migration generation finished.");
 
-      return firstGenerationResult;
+      return buildMigrationResult(firstGenerationResult);
     }
 
     // If there are no commands in the second migration and we came here without an error, the migration is fine
@@ -442,20 +445,17 @@ export class Core {
       this._logger.info("Second migration generation finished without commands. So the first is valid:");
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult);
     }
 
     this._logger.info("Second migration generation finished with commands. Trying to find auto-fixes...");
-
-    firstGenerationResult.autoAppConfigFixes = [];
 
     // When there are commands in second migration this is an infinite-migration
     // Check if we can auto-fix them
     secondGenerationResult.commands.forEach((command) => {
       if (command.autoAppConfigFixes != null) {
         command.autoAppConfigFixes.forEach((autoSchemaFix) => {
-          //@ts-ignore TODO: @eugene This is set before
-          firstGenerationResult.autoAppConfigFixes.push(autoSchemaFix);
+          autoAppConfigFixes.push(autoSchemaFix);
         });
         firstGenerationResult.warnings.push({
           message:
@@ -470,16 +470,13 @@ export class Core {
       }
     });
 
-    if (firstGenerationResult.autoAppConfigFixes.length > 0) {
+    if (autoAppConfigFixes.length > 0) {
       this._logger.info("Found some auto-fixes. Trying to apply them...");
     }
 
     // Apply the auto-fixes to a new appConfig
     try {
-      firstGenerationResult.fixedAppConfig = applyAutoAppConfigFixes(
-        appConfig,
-        firstGenerationResult.autoAppConfigFixes
-      );
+      fixedAppConfig = applyAutoAppConfigFixes(appConfig, autoAppConfigFixes);
     } catch (err) {
       this._logger.info("Auto-Fixing failed.");
       firstGenerationResult.errors.push({
@@ -493,7 +490,7 @@ export class Core {
       this._logger.info("Some auto-fixes failed.");
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult, autoAppConfigFixes);
     }
 
     // If the auto-fix is disabled just return the errors
@@ -504,7 +501,7 @@ export class Core {
       this._logger.info("Auto-fixing disabled. We do not apply them.");
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult, autoAppConfigFixes);
     }
 
     this._logger.info("Starting Third migration generation with applied auto-fixes...");
@@ -513,16 +510,11 @@ export class Core {
 
     // Try to re-run the migration with fixes, to see if they worked
     try {
-      if (firstGenerationResult.fixedAppConfig == null) {
+      if (fixedAppConfig == null) {
         throw new Error("The first run has not returned a fixedAppConfig.");
       }
 
-      thirdMigrationResult = await this.generateMigrationWithPgPool(
-        version,
-        firstGenerationResult.fixedAppConfig,
-        pgPool,
-        true
-      );
+      thirdMigrationResult = await this.generateMigrationWithPgPool(version, fixedAppConfig, pgPool, true);
 
       if (thirdMigrationResult.errors.length > 0) {
         this._logger.info("Third migration generation finished with errors.");
@@ -536,7 +528,7 @@ export class Core {
       this._logger.info("Third migration generation failed.");
       this._logger.info("Migration generation finished.");
 
-      return castMigrationResult(firstGenerationResult);
+      return buildMigrationResult(firstGenerationResult, autoAppConfigFixes);
     }
 
     this._logger.info("Third migration generation successful. Please apply auto-fixes.");
@@ -547,12 +539,9 @@ export class Core {
         "Your appConfig leads to infinite-migrations. It has been auto-fixed. You can remove this warning by applying the auto-fixes to your appConfig or taking the fixed appConfig.",
     });
 
-    thirdMigrationResult.fixedAppConfig = firstGenerationResult.fixedAppConfig;
-    thirdMigrationResult.autoAppConfigFixes = firstGenerationResult.autoAppConfigFixes;
-
     this._logger.info("Migration generation finished.");
 
-    return castMigrationResult(thirdMigrationResult);
+    return buildMigrationResult(thirdMigrationResult, autoAppConfigFixes, fixedAppConfig);
   }
 
   public addSpaces(str: string, numb: number): string {

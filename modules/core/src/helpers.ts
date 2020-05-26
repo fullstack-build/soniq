@@ -3,9 +3,9 @@ import { PoolClient } from "pg";
 import {
   IAppConfig,
   IAutoAppConfigFix,
+  IModuleConfig,
   IMigrationResult,
   IMigrationResultWithFixes,
-  IModuleConfig,
 } from "./interfaces";
 import * as _ from "lodash";
 
@@ -86,21 +86,20 @@ export function applyAutoAppConfigFixes(appConfig: IAppConfig, autoAppConfigFixe
   return newAppConfig;
 }
 
-export function castMigrationResult(
-  migrationResult: IMigrationResult | IMigrationResultWithFixes | any
+export function buildMigrationResult(
+  migrationResult: IMigrationResult,
+  autoAppConfigFixes?: IAutoAppConfigFix[],
+  fixedAppConfig?: IAppConfig | null
 ): IMigrationResultWithFixes {
   const result: IMigrationResultWithFixes = {
     commands: migrationResult.commands,
     errors: migrationResult.errors,
     warnings: migrationResult.warnings,
+    autoAppConfigFixes: autoAppConfigFixes || [],
   };
 
-  if (migrationResult.autoAppConfigFixes != null) {
-    result.autoAppConfigFixes = migrationResult.autoAppConfigFixes;
-  }
-
-  if (migrationResult.fixedAppConfig != null) {
-    result.fixedAppConfig = migrationResult.fixedAppConfig;
+  if (fixedAppConfig != null) {
+    result.fixedAppConfig = fixedAppConfig;
   }
 
   return result;
