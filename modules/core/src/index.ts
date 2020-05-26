@@ -2,16 +2,13 @@ import "reflect-metadata";
 const STARTUP_TIME: [number, number] = process.hrtime();
 // DI
 import { Service, Container, ContainerInstance, Inject, InjectMany } from "typedi";
-
-import { IModuleRuntimeConfig, IModuleAppConfig } from "./interfaces";
-
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
-import { getLatestMigrationVersion, ICoreMigration } from "./helpers";
-
-import { Migration } from "./Migration";
-
 import * as Ajv from "ajv";
 import { Logger, TLogLevelName } from "tslog";
+
+import { IModuleRuntimeConfig, IModuleAppConfig } from "./interfaces";
+import { getLatestMigrationVersion, ICoreMigration } from "./helpers";
+import { Migration } from "./Migration";
 import { SoniqApp, SoniqEnvironment } from "./Application";
 import { IModuleMigrationResult } from "./Migration/interfaces";
 
@@ -34,7 +31,6 @@ export * from "./interfaces";
 export * from "./Migration/interfaces";
 export * from "./Migration/constants";
 export * from "./Migration/helpers";
-export * from "./ConfigManager";
 export * from "./Application";
 export { Pool, PoolClient, PoolConfig, QueryResult, Ajv };
 
@@ -137,13 +133,11 @@ export class Core {
   public async boot(pgPoolConfig: PoolConfig): Promise<void> {
     this._logger.info("Booting Application...");
     this._runTimePgPool = new Pool(pgPoolConfig);
-
     this._state = EBootState.Booting;
 
     try {
       for (const moduleObject of this._modules) {
         if (moduleObject.boot != null) {
-          // const moduleRuntimeConfig = latestMigration.runtimeConfig[moduleObject.key] || {};
           this._logger.info("Module-boot: Start => ", moduleObject.key);
           await moduleObject.boot(this._getModuleRuntimeConfigGetter(moduleObject.key), this._runTimePgPool);
           this._logger.info("Module-boot: Finished => ", moduleObject.key);
