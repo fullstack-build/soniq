@@ -1,6 +1,6 @@
 import { ISchemaExtension, IHelpers } from "../ISchemaExtension";
 import { IDbSchema, IDbTable } from "../../DbSchemaInterface";
-import { PoolClient, OPERATION_SORT_POSITION, asyncForEach } from "soniq";
+import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
 import { IGqlMigrationResult, ITableMeta, ITableMetaByTableId, IGqlMigrationContext } from "../../interfaces";
 import { createMergeResultFunction, ONE_PREFIX } from "../../helpers";
 import { getTables } from "./queryHelper";
@@ -111,9 +111,9 @@ export const schemaExtensionTables: ISchemaExtension = {
     });
 
     // Try to map other tables, which are not found by id
-    await asyncForEach(tables, async (tableMeta: ITableMeta) => {
+    for (const tableMeta of tables) {
       if (tableMeta.id != null && proceededTableIds.indexOf(tableMeta.id) >= 0) {
-        return;
+        continue;
       }
       let tableProceeded: unknown = false;
 
@@ -151,7 +151,7 @@ export const schemaExtensionTables: ISchemaExtension = {
           operationSortPosition: OPERATION_SORT_POSITION.DROP_TABLE,
         });
       }
-    });
+    }
 
     // Tables, which are not proceeded until here need to get created
     schemaTables.forEach((table: IDbTable) => {
@@ -176,7 +176,7 @@ export const schemaExtensionTables: ISchemaExtension = {
     const preloadedDataByTableExtensionIndex: {
       [index: string]: ITableExtensionData[];
     } = {};
-    await asyncForEach(tableExtensions, async (tableExtension: ITableExtension, index: number) => {
+    for (const [index, tableExtension] of tableExtensions.entries()) {
       if (tableExtension.preloadData != null) {
         preloadedDataByTableExtensionIndex[`${index}`] = await tableExtension.preloadData(
           schema,
@@ -184,11 +184,11 @@ export const schemaExtensionTables: ISchemaExtension = {
           gqlMigrationContext
         );
       }
-    });
+    }
 
     // First clean up data of deleted Tables
-    await asyncForEach(tablesToDelete, async (tableMeta: ITableMeta) => {
-      await asyncForEach(tableExtensions, async (tableExtension: ITableExtension, index: number) => {
+    for (const tableMeta of tablesToDelete) {
+      for (const [index, tableExtension] of tableExtensions.entries()) {
         if (tableExtension.cleanUpDeletedTable != null) {
           let filteredTableExtensionData: unknown[] = [];
           if (preloadedDataByTableExtensionIndex[`${index}`] != null) {
@@ -208,11 +208,11 @@ export const schemaExtensionTables: ISchemaExtension = {
           );
           mergeResult(cleanUpResult);
         }
-      });
-    });
+      }
+    }
 
     // Now lets add or alter columns/indexes/etc
-    await asyncForEach(schemaTables, async (table: IDbTable) => {
+    for (const table of schemaTables) {
       const columnHelpers: IHelpersWithColumnHelper = {
         ...helpers,
         getColumnDataByColumnId: (columnId: string): IColumnData | null => {
@@ -236,7 +236,7 @@ export const schemaExtensionTables: ISchemaExtension = {
         },
       };
 
-      await asyncForEach(tableExtensions, async (tableExtension: ITableExtension, index: number) => {
+      for (const [index, tableExtension] of tableExtensions.entries()) {
         let filteredTableExtensionData: unknown[] = [];
         if (preloadedDataByTableExtensionIndex[`${index}`] != null) {
           filteredTableExtensionData = filterTableExtensionData(
@@ -254,8 +254,8 @@ export const schemaExtensionTables: ISchemaExtension = {
           gqlMigrationContext
         );
         mergeResult(extensionResult);
-      });
-    });
+      }
+    }
 
     return result;
   },

@@ -1,13 +1,6 @@
 import { IDbSchema, IDbTable, IDbColumn } from "../../DbSchemaInterface";
-import { PoolClient, OPERATION_SORT_POSITION, asyncForEach, Ajv, IMigrationError } from "soniq";
-import {
-  IGqlMigrationResult,
-  IColumnInfo,
-  IUpdateColumns,
-  IUpdateColumn,
-  ITableMeta,
-  IGqlMigrationContext,
-} from "../../interfaces";
+import { PoolClient, OPERATION_SORT_POSITION, Ajv, IMigrationError } from "soniq";
+import { IGqlMigrationResult, IColumnInfo, IUpdateColumns, ITableMeta, IGqlMigrationContext } from "../../interfaces";
 import { getPgRegClass, createMergeResultFunction, ONE_PREFIX } from "../../helpers";
 import {
   IColumnExtensionDeleteContext,
@@ -146,10 +139,10 @@ export const tableExtenstionColumns: ITableExtension = {
       }
     });
 
-    await asyncForEach(columnsInfo, async (columnInfo: IColumnInfo) => {
+    for (const columnInfo of columnsInfo) {
       // If the id is in updateColumns, the column has already been identified
       if (columnInfo.id != null && updateColumns[columnInfo.id] != null) {
-        return;
+        continue;
       }
       let columnProceeded: unknown = false;
 
@@ -224,11 +217,11 @@ export const tableExtenstionColumns: ITableExtension = {
           operationSortPosition: OPERATION_SORT_POSITION.DROP_COLUMN,
         });
       }
-    });
+    }
 
     // All columns, which are not in updateColumns are new
-    await asyncForEach(columns, async (column: IDbColumn, columnIndex: number) => {
-      if (updateColumns[column.id] == null) {
+    for (const [columnIndex, column] of columns.entries()) {
+      if (column != null && updateColumns[column.id] == null) {
         try {
           const columnExtensionContext: IColumnExtensionContext = {
             schema,
@@ -270,10 +263,10 @@ export const tableExtenstionColumns: ITableExtension = {
           });
         }
       }
-    });
+    }
 
     // Rename/Alter existing columns that still exist in new schema
-    await asyncForEach(Object.values(updateColumns), async (updateColumn: IUpdateColumn) => {
+    for (const updateColumn of Object.values(updateColumns)) {
       try {
         const columnExtensionContext: IColumnExtensionContext = {
           schema,
@@ -358,7 +351,7 @@ export const tableExtenstionColumns: ITableExtension = {
           objectId: updateColumn.column.id,
         });
       }
-    });
+    }
 
     return result;
   },
@@ -377,7 +370,7 @@ export const tableExtenstionColumns: ITableExtension = {
     };
     const mergeResult: (newResult: IGqlMigrationResult) => void = createMergeResultFunction(result);
     // Drop all columns
-    await asyncForEach(columnsInfo, async (columnInfo: IColumnInfo) => {
+    for (const columnInfo of columnsInfo) {
       if (columnInfo.id != null) {
         if (columnInfo.type) {
           const columnExtension: IColumnExtension | null = helpers.getColumnExtensionByType(columnInfo.type);
@@ -402,7 +395,7 @@ export const tableExtenstionColumns: ITableExtension = {
           operationSortPosition: OPERATION_SORT_POSITION.DROP_COLUMN,
         });
       }
-    });
+    }
 
     return result;
   },

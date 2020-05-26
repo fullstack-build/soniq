@@ -1,4 +1,4 @@
-import { PoolClient, IModuleMigrationResult, asyncForEach, IMigrationError, ICommand, IAutoAppConfigFix } from "soniq";
+import { PoolClient, IModuleMigrationResult, IMigrationError, ICommand, IAutoAppConfigFix } from "soniq";
 import { DbSchemaValidator } from "./DbSchemaValidator";
 import * as uuidValidate from "uuid-validate";
 import { IColumnExtension } from "./columnExtensions/IColumnExtension";
@@ -168,7 +168,7 @@ export class Migration {
     };
 
     // Generate Table-Migrations
-    await asyncForEach(this._schemaExtensions, async (schemaExtension: ISchemaExtension) => {
+    for (const schemaExtension of this._schemaExtensions) {
       const extensionResult: IGqlMigrationResult = await schemaExtension.generateCommands(
         appConfig,
         pgClient,
@@ -176,13 +176,13 @@ export class Migration {
         gqlMigrationContext
       );
       mergeResult(extensionResult);
-    });
+    }
     if (result.errors.length > 0) {
       return result;
     }
 
     // Migration post-processing
-    await asyncForEach(this._postProcessingExtensions, async (postProcessingExtension: IPostProcessingExtension) => {
+    for (const postProcessingExtension of this._postProcessingExtensions) {
       // eslint-disable-next-line require-atomic-updates
       result = (await postProcessingExtension.generateCommands(
         appConfig,
@@ -191,7 +191,7 @@ export class Migration {
         gqlMigrationContext,
         result
       )) as IModuleMigrationResult;
-    });
+    }
     if (result.errors.length > 0) {
       return result;
     }

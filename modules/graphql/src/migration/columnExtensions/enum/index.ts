@@ -9,7 +9,7 @@ import {
 import { IDbMutation, IDbMutationColumn } from "../../DbSchemaInterface";
 import { getPgRegClass, getPgSelector, ONE_PREFIX } from "../../helpers";
 import { getEnum } from "./queryHelper";
-import { PoolClient, OPERATION_SORT_POSITION, asyncForEach } from "soniq";
+import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuidv4 from "uuid/v4";
 import { ICompiledExpression } from "../../ExpressionCompiler";
@@ -174,7 +174,7 @@ export const columnExtensionEnum: IColumnExtension = {
       });
     }
 
-    await asyncForEach(removedValues, async (value: string) => {
+    for (const value of removedValues) {
       const { rows } = await dbClient.query(
         `SELECT EXISTS(SELECT ${getPgSelector(getPgColumnName(context))} FROM ${getPgRegClass(
           context.table
@@ -193,7 +193,7 @@ export const columnExtensionEnum: IColumnExtension = {
           objectId: context.column.id,
         });
       }
-    });
+    }
 
     if (
       (column.properties == null || column.properties.defaultExpression == null) &&
