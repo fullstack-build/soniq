@@ -9,6 +9,7 @@ import {
 
 import { v5 as uuidv5 } from "uuid";
 import { Schema } from "./schema";
+import { IObjectTrace } from "soniq";
 
 export interface IExpression {
   gqlReturnType: string;
@@ -23,9 +24,13 @@ export interface IExpression {
 
 export class Expression {
   private _definition: IExpression;
+  private _objectTrace: Error;
+  private _id: string | null = null;
 
   public constructor(definition: IExpression) {
     this._definition = definition;
+
+    this._objectTrace = new Error(`Expression "${definition.name}"`);
   }
 
   public _build(schema: Schema): IDbExpression {
@@ -87,6 +92,7 @@ export class Expression {
     }
 
     const id: string = uuidv5(parts.join(":"), schemaId);
+    this._id = id;
     const name: string = this._definition.name || id;
 
     const expression: IDbExpression = {
@@ -107,5 +113,18 @@ export class Expression {
     schema._addDbExpression(expression);
 
     return expression;
+  }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    return objectTraces;
   }
 }

@@ -2,6 +2,7 @@ import { Table } from "./table";
 import { v5 as uuidv5 } from "uuid";
 import { Expression } from "./expression";
 import { IDbSchema, IDbExpression, IDbFunction } from "../migration/DbSchemaInterface";
+import { IObjectTrace } from "soniq";
 
 export type Identifier = string | number;
 
@@ -18,10 +19,12 @@ export class Schema {
   private _expressions: Expression[] = [];
   private _dbExpressions: IDbExpression[] = [];
   private _customFunctions: CustomFunction[] = [];
+  private _objectTrace: Error;
 
   public constructor(schemas: string[], permissionViewSchema: string = "_gql") {
     this._schemas = schemas;
     this._permissionViewSchema = permissionViewSchema;
+    this._objectTrace = new Error("Schema");
   }
 
   public addTable(identifier: Identifier, table: Table): void {
@@ -81,17 +84,60 @@ export class Schema {
 
     return dbSchema;
   }
+
+  public _buildObjectTraces(appId: string): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    this._tables.forEach(({ table, identifier }) => {
+      table._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    this._customFunctions.forEach((customFunction) => {
+      customFunction._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    this._expressions.forEach((expression) => {
+      expression._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    return objectTraces;
+  }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class CustomFunction {
   public customFunction: IDbFunction;
+  private _objectTrace: Error;
 
   public constructor(customFunction: IDbFunction) {
     this.customFunction = customFunction;
+    this._objectTrace = new Error(`Function "${customFunction.schema}"."${customFunction.name}"`);
   }
 
   public _build(): IDbFunction {
     return this.customFunction;
+  }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    objectTraces.push({
+      objectId: `Function_"${this.customFunction.schema}"."${this.customFunction.name}"`,
+      trace: this._objectTrace,
+    });
+
+    return objectTraces;
   }
 }

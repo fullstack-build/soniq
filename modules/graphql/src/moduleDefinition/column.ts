@@ -2,6 +2,7 @@ import { IDbColumn, IDbExpression } from "../migration/DbSchemaInterface";
 import { Table } from "./table";
 import { Schema } from "./schema";
 import { Expression } from "./expression";
+import { IObjectTrace } from "soniq";
 
 export class Column {
   private _id: string | null = null;
@@ -9,11 +10,13 @@ export class Column {
   private _type: string;
   private _table: Table | null = null;
   private _queryExpressions: Expression[] = [];
+  public _objectTrace: Error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public properties: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public constructor(name: string, type: string, properties?: any) {
+    this._objectTrace = new Error(`Column "${name}" of type "${type}"`);
     this._name = name;
     this._type = type;
     this.properties = properties || {};
@@ -96,6 +99,19 @@ export class Column {
   public _preBuild(): void {
     return;
   }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    return objectTraces;
+  }
 }
 
 // Generic column ===============================================
@@ -124,15 +140,18 @@ export interface IGenericColumnProperties {
 export class GenericColumn extends Column {
   public constructor(name: string, type: GenericTypes, properties?: IGenericColumnProperties) {
     super(name, type, properties || {});
+
+    this._objectTrace = new Error(`GenericColumn "${name}" of type "${type}"`);
   }
 }
 
 // ID column ===============================================
 
-// tslint:disable-next-line:max-classes-per-file
 export class IdColumn extends Column {
   public constructor() {
     super("id", "id", {});
+
+    this._objectTrace = new Error(`IdColumn`);
   }
 }
 
@@ -146,13 +165,14 @@ export interface IManyToOneColumnProperties {
   validation?: "NOT DEFERRABLE" | "INITIALLY DEFERRED" | "DEFERRABLE";
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ManyToOneColumn extends Column {
   private _getForeignTable: () => Table;
 
   public constructor(name: string, foreignTable: () => Table, properties: IManyToOneColumnProperties = {}) {
     super(name, "manyToOne", properties);
     this._getForeignTable = foreignTable;
+
+    this._objectTrace = new Error(`ManyToOneColumn "${name}"`);
   }
 
   public _preBuild(): void {
@@ -171,6 +191,8 @@ export class OneToManyColumn extends Column {
   public constructor(name: string, foreignColumn: () => ManyToOneColumn) {
     super(name, "oneToMany", {});
     this._getForeignColumn = foreignColumn;
+
+    this._objectTrace = new Error(`OneToManyColumn "${name}"`);
   }
 
   public _preBuild(): void {
@@ -194,6 +216,8 @@ export class ComputedColumn extends Column {
     if (moveSelectToQuery != null) {
       this._moveSelectToQuery = moveSelectToQuery;
     }
+
+    this._objectTrace = new Error(`ComputedColumn "${name}"`);
   }
 
   public _preBuild(): void {
@@ -233,6 +257,8 @@ export class EnumColumn extends Column {
       ...properties,
       values,
     });
+
+    this._objectTrace = new Error(`EnumColumn "${name}"`);
   }
 }
 
@@ -242,6 +268,8 @@ export class EnumColumn extends Column {
 export class CreatedAtColumn extends Column {
   public constructor() {
     super("createdAt", "createdAt", {});
+
+    this._objectTrace = new Error(`CreatedAtColumn`);
   }
 }
 
@@ -251,5 +279,7 @@ export class CreatedAtColumn extends Column {
 export class UpdatedAtColumn extends Column {
   public constructor() {
     super("updatedAt", "updatedAt", {});
+
+    this._objectTrace = new Error(`UpdatedAtColumn`);
   }
 }

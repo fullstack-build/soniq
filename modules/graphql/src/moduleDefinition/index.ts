@@ -1,4 +1,4 @@
-import { SoniqModule, IModuleConfig } from "soniq";
+import { SoniqModule, IModuleConfig, IObjectTrace } from "soniq";
 import { IDbSchema } from "../migration/DbSchemaInterface";
 import { IGraphqlAppConfigInput } from "./interfaces";
 
@@ -26,5 +26,9 @@ export class GraphQlModule extends SoniqModule {
         options: this._appConfig.options,
       },
     };
+  }
+
+  public _buildObjectTraces(appId: string): IObjectTrace[] {
+    return this._appConfig.schema._buildObjectTraces(appId);
   }
 }

@@ -11,6 +11,7 @@ import {
   IDbTableOptions,
   IDbMutationColumn,
 } from "../migration/DbSchemaInterface";
+import { IObjectTrace } from "soniq";
 
 export interface ITableColumn {
   column: Column;
@@ -27,8 +28,10 @@ export class Table {
   private _name: string;
   private _schemaName: string;
   private _options: IDbTableOptions | null;
+  private _objectTrace: Error;
 
   public constructor(name: string, schemaName: string, options?: IDbTableOptions) {
+    this._objectTrace = new Error(`Table "${schemaName}"."${name}"`);
     this._name = name;
     this._schemaName = schemaName;
     this._options = options || null;
@@ -134,6 +137,37 @@ export class Table {
 
     return table;
   }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    this._columns.forEach(({ column, identifier }) => {
+      column._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    this._mutations.forEach((mutation) => {
+      mutation._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    this._checks.forEach((check) => {
+      check._buildObjectTraces().forEach((objectTrace: IObjectTrace) => {
+        objectTraces.push(objectTrace);
+      });
+    });
+
+    return objectTraces;
+  }
 }
 
 export interface IIndexProperties {
@@ -147,8 +181,11 @@ export class Index {
   private _columns: Column[];
   private _properties: IIndexProperties;
   private _table: Table | null = null;
+  private _objectTrace: Error;
+  private _id: string | null = null;
 
   public constructor(columns: Column[], properties: IIndexProperties = {}) {
+    this._objectTrace = new Error(`Index`);
     this._columns = columns;
     this._properties = properties;
   }
@@ -186,6 +223,7 @@ export class Index {
     ];
 
     const id: string = uuidv5(parts.join(":"), tableId);
+    this._id = id;
 
     const index: IDbIndex = {
       id,
@@ -206,14 +244,30 @@ export class Index {
 
     return index;
   }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    return objectTraces;
+  }
 }
 
 // tslint:disable-next-line:max-classes-per-file
 export class Check {
   private _definition: string;
   private _table: Table | null = null;
+  private _objectTrace: Error;
+  private _id: string | null = null;
 
   public constructor(definition: string) {
+    this._objectTrace = new Error(`Check`);
     this._definition = definition;
   }
 
@@ -242,8 +296,22 @@ export class Check {
       id: uuidv5(this._definition, tableId),
       definition: this._definition,
     };
+    this._id = check.id;
 
     return check;
+  }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    return objectTraces;
   }
 }
 
@@ -264,8 +332,11 @@ export interface IMutationProperties {
 export class Mutation {
   private _properties: IMutationProperties;
   private _table: Table | null = null;
+  private _id: string | null = null;
+  public _objectTrace: Error;
 
   public constructor(properties: IMutationProperties) {
+    this._objectTrace = new Error(`Mutation`);
     this._properties = properties;
   }
 
@@ -311,12 +382,26 @@ export class Mutation {
       columns,
       expressionIds,
     };
+    this._id = mutation.id;
 
     if (this._properties.returnOnlyId != null) {
       mutation.returnOnlyId = this._properties.returnOnlyId;
     }
 
     return mutation;
+  }
+
+  public _buildObjectTraces(): IObjectTrace[] {
+    const objectTraces: IObjectTrace[] = [];
+
+    if (this._id != null) {
+      objectTraces.push({
+        objectId: this._id,
+        trace: this._objectTrace,
+      });
+    }
+
+    return objectTraces;
   }
 }
 
@@ -342,6 +427,7 @@ export class CreateMutation extends Mutation {
     }
 
     super(properties);
+    this._objectTrace = new Error(`CreateMutation "${name}"`);
   }
 }
 
@@ -367,6 +453,7 @@ export class UpdateMutation extends Mutation {
     }
 
     super(properties);
+    this._objectTrace = new Error(`UpdateMutation "${name}"`);
   }
 }
 
@@ -384,5 +471,7 @@ export class DeleteMutation extends Mutation {
       ],
       expressions: Array.isArray(expressions) ? expressions : [expressions],
     });
+
+    this._objectTrace = new Error(`DeleteMutation`);
   }
 }
