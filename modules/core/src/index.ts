@@ -9,7 +9,6 @@ import {
   IModuleAppConfig,
   IMigrationResult,
   IAppConfig,
-  IModuleConfig,
   IMigrationResultWithFixes,
   ICommand,
   OPERATION_SORT_POSITION,
@@ -19,7 +18,6 @@ import {
 
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
 import {
-  asyncForEach,
   getSchemas,
   getPgSelector,
   applyAutoAppConfigFixes,
@@ -98,7 +96,7 @@ export class Core {
       commands: [],
     };
 
-    await asyncForEach(appConfig.modules, async (moduleConfig: IModuleConfig) => {
+    for (const moduleConfig of appConfig.modules) {
       const moduleCoreFunctions: IModuleCoreFunctions | null = this._getModuleCoreFunctionsByKey(moduleConfig.key);
 
       if (moduleCoreFunctions == null) {
@@ -130,7 +128,7 @@ export class Core {
           }
         }
       }
-    });
+    }
 
     const finalResult: IMigrationResult = await this._generateCoreMigrations(version, appConfig, pgClient, result);
 
@@ -379,8 +377,8 @@ export class Core {
     try {
       await secondDbClient.query("BEGIN;");
 
-      await asyncForEach(firstGenerationResult.commands, async (command: ICommand, commandIndex: number) => {
-        await asyncForEach(command.sqls, async (sql: string, sqlIndex: number) => {
+      for (const [commandIndex, command] of firstGenerationResult.commands.entries()) {
+        for (const [sqlIndex, sql] of command.sqls.entries()) {
           try {
             await secondDbClient.query(sql);
           } catch (err) {
@@ -390,8 +388,8 @@ export class Core {
             });
             throw err;
           }
-        });
-      });
+        }
+      }
       this._logger.info("First migration run finished successfully.");
 
       // 3) try to generate the commands again to check if there are any infinite-migrations
@@ -716,11 +714,11 @@ export class Core {
 
       try {
         await pgClient.query("BEGIN;");
-        await asyncForEach(result.commands, async (command: ICommand) => {
-          await asyncForEach(command.sqls, async (sql: string) => {
+        for (const command of result.commands) {
+          for (const sql of command.sqls) {
             await pgClient.query(sql);
-          });
-        });
+          }
+        }
         await pgClient.query("COMMIT;");
         this._logger.info("Deployment successful.");
         console.log("\u001b[32;1mSUCCESSFUL DEPLOYMENT!");
