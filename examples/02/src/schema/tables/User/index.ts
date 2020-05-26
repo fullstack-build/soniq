@@ -41,4 +41,4 @@ user.addMutation(new UpdateMutation("Me", [userId, firstName, lastName], [ownerB
 
 user.addIndex(new Index([firstName, lastName], { isUniqueIndex: true }));
 
-user.addCheck(new Check(`("firstName" !~~ \'%fuck%\'::text)`));
+user.addCheck(new Check(`("firstName" NOT LIKE \'%fuck%\'::text)`));

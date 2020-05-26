@@ -10,6 +10,12 @@ import { dev } from "./app/envs/dev";
 
   logger.info("Deploy Application...");
 
+  /*app._build();
+  const traces = app._buildObjectTraces();
+  traces.forEach((trace) => {
+
+    logger.info(trace.objectId, trace.trace.message);
+  });*/
   await $core.deployApp(app, dev);
 
   logger.info("Finish");
