@@ -359,6 +359,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
           {
             sqls: [sql, constraintSql],
             operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN + 100,
+            objectId: context.column.id,
           },
         ],
       };
@@ -401,6 +402,7 @@ export const columnExtensionManyToOne: IColumnExtension = {
         result.commands.push({
           sqls: [constraintSql],
           operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+          objectId: context.column.id,
         });
       }
     } catch (error) {

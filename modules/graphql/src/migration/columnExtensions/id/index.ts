@@ -80,6 +80,7 @@ export const columnExtensionId: IColumnExtension = {
         {
           sqls,
           operationSortPosition: OPERATION_SORT_POSITION.ADD_COLUMN - 100,
+          objectId: context.column.id,
         },
       ],
     };

@@ -132,6 +132,7 @@ export const columnExtensionEnum: IColumnExtension = {
           ],
           operationSortPosition:
             OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0),
+          objectId: context.column.id,
         },
       ],
     };
@@ -202,6 +203,7 @@ export const columnExtensionEnum: IColumnExtension = {
       result.commands.push({
         sqls: [`ALTER TABLE ${getPgRegClass(table)} ALTER COLUMN "${pgColumnName}" DROP DEFAUlT;`],
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        objectId: context.column.id,
       });
     }
     if (hasEnumChanged === true) {
@@ -234,6 +236,7 @@ export const columnExtensionEnum: IColumnExtension = {
       result.commands.push({
         sqls,
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        objectId: context.column.id,
       });
     }
     if (
@@ -257,12 +260,14 @@ export const columnExtensionEnum: IColumnExtension = {
             message: `Please change the defaultExpression of enum-column "${table.schema}"."${table.name}"."${column.name}" to "${currentDefaultExpression}".`,
           },
         ],
+        objectId: context.column.id,
       });
     }
     if (currentlyNullable !== true && column.properties != null && column.properties.nullable === true) {
       result.commands.push({
         sqls: [`ALTER TABLE ${getPgRegClass(table)} ALTER COLUMN "${pgColumnName}" DROP NOT NULL;`],
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        objectId: context.column.id,
       });
     }
     if (currentlyNullable === true && (column.properties == null || column.properties.nullable !== true)) {
@@ -279,6 +284,7 @@ export const columnExtensionEnum: IColumnExtension = {
       result.commands.push({
         sqls,
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        objectId: context.column.id,
       });
     }
 

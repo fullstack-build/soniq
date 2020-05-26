@@ -162,15 +162,18 @@ export const tableExtenstionIndexes: ITableExtension = {
                       message: `Please change the condition of index "${index.id}" to "${autoFixValue}".`,
                     },
                   ],
+                  objectId: index.id,
                 });
               } else {
                 result.commands.push({
                   sqls: [dropSql],
                   operationSortPosition: OPERATION_SORT_POSITION.CREATE_SCHEMA + 100,
+                  objectId: index.id,
                 });
                 result.commands.push({
                   sqls: [createSql],
                   operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT - 100,
+                  objectId: index.id,
                 });
               }
             }
@@ -198,6 +201,7 @@ export const tableExtenstionIndexes: ITableExtension = {
         result.commands.push({
           sqls: [createSql],
           operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT - 100,
+          objectId: index.id,
         });
       }
     });

@@ -7,6 +7,7 @@ export interface ICommand {
   description?: string;
   autoAppConfigFixes?: IAutoAppConfigFix[];
   moduleKey?: string;
+  objectId?: string;
 }
 
 export interface IAutoAppConfigFix {

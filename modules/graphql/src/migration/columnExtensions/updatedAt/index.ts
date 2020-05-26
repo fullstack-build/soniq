@@ -84,6 +84,7 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
           sqls,
           operationSortPosition:
             OPERATION_SORT_POSITION.ADD_COLUMN + (context.columnIndex != null ? context.columnIndex / 100 : 0),
+          objectId: context.column.id,
         },
       ],
     };
@@ -141,6 +142,7 @@ export const columnExtensionUpdatedAt: IColumnExtension = {
       result.commands.push({
         sqls,
         operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN,
+        objectId: context.column.id,
       });
     }
 

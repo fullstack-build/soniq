@@ -99,6 +99,7 @@ export const tableExtenstionChecks: ITableExtension = {
                   message: `Please change the definition of check "${check.id}" to "${existingCheck.definition}".`,
                 },
               ],
+              objectId: check.id,
             });
           }
         }
@@ -121,6 +122,7 @@ export const tableExtenstionChecks: ITableExtension = {
             )}" CHECK ${createCheckDefinition(check.definition)};`,
           ],
           operationSortPosition: OPERATION_SORT_POSITION.ALTER_COLUMN + 100,
+          objectId: check.id,
         });
       }
     });

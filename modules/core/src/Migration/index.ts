@@ -133,6 +133,8 @@ export class Migration {
             firstGenerationResult.errors.push({
               message: `Failed to run query [${commandIndex}.${sqlIndex}]: [${sql}]`,
               error: err,
+              objectId: command.objectId,
+              command,
             });
             throw err;
           }

@@ -128,6 +128,7 @@ export const schemaExtensionFunctions: ISchemaExtension = {
               `COMMENT ON FUNCTION ${functionRegClass} IS 'ONE_${sha1(fn.definition)}_Your comment';`,
             ],
             operationSortPosition: position + 100,
+            objectId: `Function_"${fn.schema}"."${fn.name}"`,
           });
         }
       } else {
@@ -138,6 +139,7 @@ export const schemaExtensionFunctions: ISchemaExtension = {
             `COMMENT ON FUNCTION ${functionRegClass} IS 'ONE_${sha1(fn.definition)}_Your comment';`,
           ],
           operationSortPosition: position + 100,
+          objectId: `Function_"${fn.schema}"."${fn.name}"`,
         });
       }
     });
