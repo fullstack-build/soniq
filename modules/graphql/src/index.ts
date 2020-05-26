@@ -29,6 +29,7 @@ import { migrate } from "./basicMigration";
 import { createMergeResultFunction } from "./migration/helpers";
 import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
 import { TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
+import { IPropertySchema } from "./migration/interfaces";
 export {
   ApolloServer,
   AuthenticationError,
@@ -171,10 +172,7 @@ export class GraphQl {
   public addPreQueryHook(hookFunction: TPreQueryHookFunction): void {
     this._hookManager.addPreQueryHook(hookFunction);
   }
-  public getColumnExtensionPropertySchemas(): {
-    type: string;
-    schema: boolean | object;
-  }[] {
+  public getColumnExtensionPropertySchemas(): IPropertySchema[] {
     return this._migration.getColumnExtensionPropertySchemas();
   }
 }

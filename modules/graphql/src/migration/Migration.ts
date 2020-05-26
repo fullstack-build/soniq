@@ -36,9 +36,9 @@ import { columnExtensionEnum } from "./columnExtensions/enum";
 import { columnExtensionCreatedAt } from "./columnExtensions/createdAt";
 import { columnExtensionUpdatedAt } from "./columnExtensions/updatedAt";
 import { schemaExtensionFunctions } from "./schemaExtensions/functions";
-import { IResolver } from "../RuntimeInterfaces";
+import { IResolver, IGraphqlRuntimeConfig } from "../RuntimeInterfaces";
 import { columnExtensionComputed } from "./columnExtensions/computed";
-import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult, IAutoSchemaFix } from "./interfaces";
+import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult, IAutoSchemaFix, IPropertySchema } from "./interfaces";
 import { IGraphqlAppConfig, IGraphqlOptionsInput } from "../moduleDefinition/interfaces";
 import { IDbSchema, IDbTable, IDbColumn, IDbIndex, IDbCheck } from "./DbSchemaInterface";
 
@@ -121,13 +121,12 @@ export class Migration {
     const options: IGraphqlOptionsInput = appConfig.options;
     const schema: IDbSchema = appConfig.schema;
 
-    let result: IModuleMigrationResult = {
-      moduleRuntimeConfig: {},
+    let gqlResult: IGqlMigrationResult = {
       commands: [],
       errors: [],
       warnings: [],
     };
-    const mergeResult: (newResult: IGqlMigrationResult) => void = createMergeResultFunction(result);
+    const mergeResult: (newResult: IGqlMigrationResult) => void = createMergeResultFunction(gqlResult);
 
     // 1) Validate DbSchema
     const dbSchemaValidator: DbSchemaValidator = new DbSchemaValidator();
@@ -177,31 +176,39 @@ export class Migration {
       );
       mergeResult(extensionResult);
     }
-    if (result.errors.length > 0) {
-      return result;
+    if (gqlResult.errors.length > 0) {
+      return {
+        ...gqlResult,
+        moduleRuntimeConfig: {},
+      };
     }
 
     // Migration post-processing
     for (const postProcessingExtension of this._postProcessingExtensions) {
-      // eslint-disable-next-line require-atomic-updates
-      result = (await postProcessingExtension.generateCommands(
+      gqlResult = await postProcessingExtension.generateCommands(
         appConfig,
         pgClient,
         helpers,
         gqlMigrationContext,
-        result
-      )) as IModuleMigrationResult;
+        gqlResult
+      );
     }
-    if (result.errors.length > 0) {
-      return result;
+    if (gqlResult.errors.length > 0) {
+      return {
+        ...gqlResult,
+        moduleRuntimeConfig: {},
+      };
     }
+
+    const gqlSchemaResult: IGqlMigrationResult = gqlResult;
+    let moduleRuntimeConfig: IGraphqlRuntimeConfig | {} = {};
 
     // Generate Gql-Schema, Permission-Views and Metadata
     if (schema.permissionViewSchema != null) {
       const permissionGenerator: PermissionGenerator = new PermissionGenerator();
       const permissions: IPermissionGeneratorResult = await permissionGenerator.generate(schema, pgClient, helpers);
       permissions.commands.forEach((command: IGqlCommand) => {
-        result.commands.push(command);
+        gqlSchemaResult.commands.push(command);
       });
 
       let gqlTypeDefs: string = `scalar JSON\n${permissions.gqlTypeDefs}`;
@@ -227,11 +234,10 @@ export class Migration {
         resolvers.push(resolver());
       });
 
-      // eslint-disable-next-line require-atomic-updates
-      result.moduleRuntimeConfig = {
+      moduleRuntimeConfig = {
         gqlTypeDefs: print(gqlSchema),
         defaultResolverMeta: permissions.defaultResolverMeta,
-        resolvers,
+        resolvers: resolvers as IResolver[],
         options: {
           costLimit: options.costLimit != null ? options.costLimit : 2000000000,
           minSubqueryCountToCheckCostLimit:
@@ -243,8 +249,7 @@ export class Migration {
       };
     }
 
-    // eslint-disable-next-line require-atomic-updates
-    result.commands = result.commands.map(
+    const commands: ICommand[] = gqlSchemaResult.commands.map(
       (command: IGqlCommand): ICommand => {
         if (command.autoSchemaFixes != null) {
           command.autoAppConfigFixes = command.autoSchemaFixes.map(
@@ -318,11 +323,15 @@ export class Migration {
 
     // Generate other stuff like triggers etc.
 
-    return result;
+    return {
+      commands,
+      errors: gqlSchemaResult.errors,
+      warnings: gqlSchemaResult.warnings,
+      moduleRuntimeConfig,
+    };
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  public getColumnExtensionPropertySchemas() {
+  public getColumnExtensionPropertySchemas(): IPropertySchema[] {
     return Object.keys(this._columnExtensions).map((type: string) => {
       return {
         type,
