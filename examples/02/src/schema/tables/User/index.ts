@@ -10,6 +10,7 @@ import {
   Index,
   Check,
   UpdateMutation,
+  DeleteMutation,
 } from "@soniq/graphql";
 
 import { ownerById, currentUserId, anyone } from "../../expressions";
@@ -37,7 +38,7 @@ user.addColumn(8, age, anyone);
 
 user.addMutation(new CreateMutation("Me", [firstName, lastName], [anyone]));
 user.addMutation(new UpdateMutation("Me", [userId, firstName, lastName], [ownerById]));
-// user.addMutation(new DeleteMutation(userId, [ownerById]));
+user.addMutation(new DeleteMutation(userId, [ownerById]));
 
 user.addIndex(new Index([firstName, lastName], { isUniqueIndex: true }));
 

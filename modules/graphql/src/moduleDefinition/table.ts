@@ -457,7 +457,6 @@ export class UpdateMutation extends Mutation {
   }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class DeleteMutation extends Mutation {
   public constructor(idColumn: IdColumn, expressions: Expression | Expression[]) {
     super({

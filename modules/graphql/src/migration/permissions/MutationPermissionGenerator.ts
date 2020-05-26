@@ -139,7 +139,7 @@ export class MutationPermissionGenerator {
         type: mutation.type,
         authRequired: false,
         viewName,
-        returnOnlyId: mutation.returnOnlyId === true,
+        returnOnlyId: mutation.returnOnlyId === true || mutation.type === "DELETE",
       },
     };
 
@@ -149,47 +149,46 @@ export class MutationPermissionGenerator {
     };
     const selects: string[] = [];
 
-    if (mutation.type === "CREATE" || mutation.type === "UPDATE") {
-      let hasUpdateMutationIdColumn: unknown = false;
+    let hasUpdateMutationIdColumn: unknown = false;
 
-      mutation.columns.forEach((mutationColumn) => {
-        const column: IDbColumn = this._findColumnById(table, mutationColumn.columnId);
-        const columnExtension: IColumnExtension | null = helpers.getColumnExtensionByType(column.type);
-        const columnExtensionContext: IColumnExtensionContext = {
-          schema,
-          table,
-          column,
-        };
+    mutation.columns.forEach((mutationColumn) => {
+      const column: IDbColumn = this._findColumnById(table, mutationColumn.columnId);
+      const columnExtension: IColumnExtension | null = helpers.getColumnExtensionByType(column.type);
+      const columnExtensionContext: IColumnExtensionContext = {
+        schema,
+        table,
+        column,
+      };
 
-        if (column.type === "id") {
-          hasUpdateMutationIdColumn = true;
-        }
-
-        if (columnExtension == null) {
-          throw new Error(`Could not find columnExtension for type ${column.type} in columnId ${column.id}`);
-        }
-
-        const pgColumnName: string | null = columnExtension.getPgColumnName(columnExtensionContext);
-
-        const mutationFieldData: IMutationFieldData = columnExtension.getMutationFieldData(
-          columnExtensionContext,
-          LOCAL_TABLE_ALIAS,
-          mutation,
-          mutationColumn
-        );
-
-        if (mutationFieldData != null && pgColumnName != null) {
-          inputType.fields.push(`${pgColumnName}: ${mutationFieldData.fieldType}`);
-
-          selects.push(`${getPgSelector(LOCAL_TABLE_ALIAS)}.${getPgSelector(pgColumnName)}`);
-        }
-      });
-
-      if (mutation.type === "UPDATE" && hasUpdateMutationIdColumn !== true) {
-        throw new Error(`Each UPDATE mutation needs an id column. See ${mutation.name}.`);
+      if (column.type === "id") {
+        hasUpdateMutationIdColumn = true;
       }
-    } else {
-      inputType.fields.push(`id: ID!`);
+
+      if (columnExtension == null) {
+        throw new Error(`Could not find columnExtension for type ${column.type} in columnId ${column.id}`);
+      }
+
+      const pgColumnName: string | null = columnExtension.getPgColumnName(columnExtensionContext);
+
+      const mutationFieldData: IMutationFieldData = columnExtension.getMutationFieldData(
+        columnExtensionContext,
+        LOCAL_TABLE_ALIAS,
+        mutation,
+        mutationColumn
+      );
+
+      if (mutationFieldData != null && pgColumnName != null) {
+        inputType.fields.push(`${pgColumnName}: ${mutationFieldData.fieldType}`);
+
+        selects.push(`${getPgSelector(LOCAL_TABLE_ALIAS)}.${getPgSelector(pgColumnName)}`);
+      }
+    });
+
+    if (mutation.type === "UPDATE" && hasUpdateMutationIdColumn !== true) {
+      throw new Error(`Each UPDATE mutation needs an id column. See ${mutation.name}.`);
+    }
+    if (mutation.type === "DELETE" && hasUpdateMutationIdColumn !== true) {
+      throw new Error(`Each DELETE mutation needs an id column. See ${mutation.name}.`);
     }
 
     const whereExpressions: ICompiledExpression[] = mutation.expressionIds.map((expressionId) => {
@@ -220,7 +219,11 @@ export class MutationPermissionGenerator {
     }
 
     mutationData.gqlTypeDefs += `${this._generateGqlInputType(inputType)}\n`;
-    mutationData.gqlTypeDefs += `${this._generateGqlMutation(mutationName, inputType.name, table.name)}\n`;
+    mutationData.gqlTypeDefs += `${this._generateGqlMutation(
+      mutationName,
+      inputType.name,
+      mutationData.mutationViewMeta.returnOnlyId ? "ID" : table.name
+    )}\n`;
 
     mutationData.resolvers.push({
       path: `Mutation.${mutationName}`,
