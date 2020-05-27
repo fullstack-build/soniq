@@ -93,16 +93,19 @@ export const schemaExtensionTables: ISchemaExtension = {
               result.commands.push({
                 sqls: [`ALTER TABLE "${tableMeta.schema}"."${tableMeta.name}" RENAME TO "${tempTableName}";`],
                 operationSortPosition: OPERATION_SORT_POSITION.RENAME_TABLE - 1,
+                objectId: table.id,
               });
               result.commands.push({
                 sqls: [`ALTER TABLE "${tableMeta.schema}"."${tempTableName}" RENAME TO "${table.name}";`],
                 operationSortPosition: OPERATION_SORT_POSITION.RENAME_TABLE + 1,
+                objectId: table.id,
               });
             }
             if (tableMeta.schema !== table.schema) {
               result.commands.push({
                 sqls: [`ALTER TABLE "${tableMeta.schema}"."${table.name}" SET SCHEMA "${table.schema}";`],
                 operationSortPosition: OPERATION_SORT_POSITION.RENAME_TABLE + 2,
+                objectId: table.id,
               });
             }
           }
@@ -132,6 +135,7 @@ export const schemaExtensionTables: ISchemaExtension = {
             sqls: [`COMMENT ON TABLE "${table.schema}"."${table.name}" IS '${ONE_PREFIX}${table.id}';`],
             description: `Fix table id-comment of "${table.schema}"."${table.name}".`,
             operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT,
+            objectId: table.id,
           });
           result.warnings.push({
             message: `Do not manipulate the id-comment on "${table.schema}"."${table.name}". [fixed]`,
@@ -166,6 +170,7 @@ export const schemaExtensionTables: ISchemaExtension = {
         ],
         description: "Create tables",
         operationSortPosition: OPERATION_SORT_POSITION.CREATE_TABLE,
+        objectId: table.id,
       });
     });
 

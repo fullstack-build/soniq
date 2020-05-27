@@ -180,6 +180,7 @@ export const tableExtenstionColumns: ITableExtension = {
             ],
             description: `Fix column id-comment of "${table.schema}"."${table.name}"."${column.name}".`,
             operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT,
+            objectId: column.id,
           });
           result.warnings.push({
             message: `Do not manipulate the id-comment on '${table.schema}.${table.name}.${column.name}'. [fixed]`,
@@ -250,6 +251,7 @@ export const tableExtenstionColumns: ITableExtension = {
               columnExtensionContext
             )}'.`,
             operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT,
+            objectId: column.id,
           });
         } catch (err) {
           result.errors.push({
@@ -290,6 +292,7 @@ export const tableExtenstionColumns: ITableExtension = {
               }" TO "${tempColumnName}";`,
             ],
             operationSortPosition: OPERATION_SORT_POSITION.RENAME_COLUMN - 1,
+            objectId: updateColumn.column.id,
           });
           result.commands.push({
             sqls: [
@@ -298,6 +301,7 @@ export const tableExtenstionColumns: ITableExtension = {
               )} RENAME COLUMN "${tempColumnName}" TO "${columnExtension.getPgColumnName(columnExtensionContext)}";`,
             ],
             operationSortPosition: OPERATION_SORT_POSITION.RENAME_COLUMN + 1,
+            objectId: updateColumn.column.id,
           });
         }
 
@@ -330,6 +334,7 @@ export const tableExtenstionColumns: ITableExtension = {
             ],
             description: `Fix column id-comment of "${table.schema}"."${table.name}"."${updateColumn.column.name}".`,
             operationSortPosition: OPERATION_SORT_POSITION.SET_COMMENT,
+            objectId: updateColumn.column.id,
           });
         }
 
@@ -393,6 +398,7 @@ export const tableExtenstionColumns: ITableExtension = {
             `ALTER TABLE "${columnInfo.table_schema}"."${columnInfo.table_name}" DROP COLUMN "${columnInfo.column_name}";`,
           ],
           operationSortPosition: OPERATION_SORT_POSITION.DROP_COLUMN,
+          objectId: columnInfo.id,
         });
       }
     }

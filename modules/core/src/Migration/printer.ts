@@ -39,7 +39,17 @@ export function printMigrationResult(
   objectTraces: IObjectTrace[],
   logger: Logger
 ): void {
-  console.log("\n\u001b[34;1mMigration-Result:\n\n");
+  console.log("\n\u001b[34;1m DEPLOYMENT:");
+  console.log("\u001b[34;1m ____________________________________________________________________\n");
+
+  if (
+    result.errors.length < 1 &&
+    result.commands.length < 1 &&
+    result.warnings.length < 1 &&
+    result.autoAppConfigFixes.length < 1
+  ) {
+    console.log("\u001b[30;1m Nothing to do.");
+  }
 
   if (result.errors.length < 1 && result.commands.length > 0) {
     console.log(`\u001b[34;1m${result.warnings.length} COMMANDS\n`);
@@ -73,12 +83,12 @@ export function printMigrationResult(
       if (error.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === error.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
       if (error.error != null) {
-        logger.info("This error has been thrown: ", error.error);
+        logger.prettyError(error.error);
       }
       if (error.command != null) {
         logger.info("Happend while running this command: ", error.command);
@@ -95,12 +105,12 @@ export function printMigrationResult(
       if (warning.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === warning.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
       if (warning.error != null) {
-        logger.info("This error has been thrown: ", warning.error);
+        logger.prettyError(warning.error);
       }
     });
     console.log("\n");
@@ -115,32 +125,33 @@ export function printMigrationResult(
       if (autoFix.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === autoFix.objectId) {
-            logger.info("Have a look at this object: ", objectTrace.trace);
+            logger.prettyError(objectTrace.trace, undefined, undefined, undefined, 1, 1);
           }
         }
       }
     });
   }
 
-  console.log("\n\u001b[34;1m DEPLOYMENT SUMMARY:");
+  console.log("\n\n\u001b[34;1m DEPLOYMENT SUMMARY:");
   console.log("\u001b[34;1m ____________________________________________________________________\n");
   printMigrationResultSummary(result);
   console.log("");
 
   if (result.errors.length > 0) {
-    console.log(`\u001b[31;1mThe migration-generation finished with some errors.`);
-    console.log(`\u001b[31;1mYour Application cannot be deployed.`);
+    console.log(`\u001b[31;1m The migration-generation finished with some errors.`);
+    console.log(`\u001b[31;1m Your Application cannot be deployed.`);
   } else {
     if (result.warnings.length > 0) {
-      console.log(`\u001b[33;1mThe migration-generation finished with some warnings.`);
+      console.log(`\u001b[33;1m The migration-generation finished with some warnings.`);
     }
     if (result.autoAppConfigFixes != null && result.autoAppConfigFixes.length > 0) {
-      console.log(`\u001b[33;1mThere are some auto-fixes you should apply.`);
+      console.log(`\u001b[33;1m There are some auto-fixes you should apply.`);
     }
     if (result.commands.length > 0) {
-      console.log(`\n\u001b[32;1mYour app can be deployed.`);
+      console.log(`\n\u001b[32;1m Your app can be deployed.`);
     } else {
-      console.log(`\n\u001b[32;1mNothing to deploy. Everything is fine.`);
+      console.log(`\n\u001b[32;1m Nothing to deploy. Everything is fine.`);
     }
   }
+  console.log("\u001b[34;1m ____________________________________________________________________\n");
 }

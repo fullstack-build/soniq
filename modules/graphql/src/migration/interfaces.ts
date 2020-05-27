@@ -101,3 +101,8 @@ export interface ITableMetaByTableId {
 }
 
 export type IGqlMigrationContext = any;
+
+export interface IPropertySchema {
+  type: string;
+  schema: boolean | object;
+}

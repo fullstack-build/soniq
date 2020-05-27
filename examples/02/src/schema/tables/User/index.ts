@@ -16,16 +16,14 @@ import {
 import { ownerById, currentUserId, anyone } from "../../expressions";
 import { owner as postOwner } from "../Post";
 
-export const user = new Table("User", "soniq");
+const user = new Table("User", "soniq");
 
 const userId = new IdColumn();
-const firstName = new GenericColumn("firstName", "text", { nullable: true });
+const firstName = new GenericColumn("firstName", "text", { nullable: true, defaultExpression: "'Hugo'::text" });
 const lastName = new GenericColumn("lastName", "text", { nullable: true });
-export const posts = new OneToManyColumn("posts", () => postOwner);
+const posts = new OneToManyColumn("posts", () => postOwner);
 const currentUser = new ComputedColumn("currentUser", () => currentUserId);
-const gender = new EnumColumn("gender", ["male", "female", "diverse"], {
-  nullable: true,
-});
+const gender = new EnumColumn("gender", ["male", "female", "diverse"], { nullable: true });
 const age = new GenericColumn("age", "int", { defaultExpression: "0" });
 
 user.addColumn(0, userId, anyone);
@@ -46,3 +44,5 @@ user.addCheck(new Check(`("firstName" !~~ \'%fuck%\'::text)`));
 
 // TODO: @eugene This is a check which will be autoFixed
 // user.addCheck(new Check(`("firstName" NOT LIKE \'%fuck%\'::text)`));
+
+export { posts, user };
