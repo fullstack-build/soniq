@@ -18,13 +18,13 @@ export interface IGetModuleRuntimeConfigResult {
 }
 
 export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
-export type TMigrationFuntion = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
-export type TBootFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
+export type TMigrationFunction = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
+export type TBootFunction = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
 
 export interface IModuleCoreFunctions {
   key: string;
-  migrate?: TMigrationFuntion;
-  boot?: TBootFuntion;
+  migrate?: TMigrationFunction;
+  boot?: TBootFunction;
 }
 
 export * from "./interfaces";
