@@ -1,6 +1,6 @@
 import { ApolloServer } from "apollo-server-koa";
 
-import { Core, IModuleAppConfig, PoolClient, IModuleMigrationResult, Pool, Service, Inject, Logger } from "soniq";
+import { Core, IModuleAppConfig, PoolClient, IModuleMigrationResult, Pool, DI, Logger } from "soniq";
 import { Server, Koa } from "@soniq/server";
 
 import { applyApolloMiddleware } from "./koaMiddleware";
@@ -57,7 +57,7 @@ export * from "./migration/interfaces";
 export * from "./moduleDefinition";
 export * from "./moduleDefinition/interfaces";
 
-@Service()
+@DI.injectable()
 export class GraphQl {
   // DI
   private _server: Server;
@@ -68,7 +68,7 @@ export class GraphQl {
   private _hookManager: HookManager = new HookManager();
   private _logger: Logger;
 
-  public constructor(@Inject((type) => Core) core: Core, @Inject((type) => Server) server: Server) {
+  public constructor(@DI.inject(Core) core: Core, @DI.inject(Server) server: Server) {
     this._server = server;
     this._core = core;
 

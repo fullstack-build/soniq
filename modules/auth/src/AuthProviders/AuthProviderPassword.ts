@@ -1,4 +1,4 @@
-import { Service, Inject, PoolClient } from "soniq";
+import { DI, PoolClient } from "soniq";
 import { GraphQl, ReturnIdHandler, ICustomResolverObject } from "@soniq/graphql";
 import { Auth, AuthProvider } from "../index";
 import * as _ from "lodash";
@@ -19,14 +19,14 @@ extend type Mutation {
 }
 `;
 
-@Service()
+@DI.injectable()
 export class AuthProviderPassword {
   private _authProvider: AuthProvider;
 
   public constructor(
     // @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
-    @Inject((type) => GraphQl) graphQl: GraphQl,
-    @Inject((type) => Auth) auth: Auth
+    @DI.inject(GraphQl) graphQl: GraphQl,
+    @DI.inject(DI.delay(() => Auth)) auth: Auth
   ) {
     graphQl.addTypeDefsExtension(() => {
       return schema;

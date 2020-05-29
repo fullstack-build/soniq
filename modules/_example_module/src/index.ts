@@ -1,6 +1,6 @@
-import { Service } from "soniq";
+import { DI } from "soniq";
 
-@Service()
+@DI.injectable()
 export class Server {
   public constructor() {
     console.log("I am an example modules!");
