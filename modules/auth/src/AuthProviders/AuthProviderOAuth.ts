@@ -2,7 +2,7 @@
 
 /*
 
-import { Service, Inject, Logger, Core } from "soniq";
+import { DI, Logger, Core } from "soniq";
 // import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { GraphQl } from "@soniq/graphql";
 import { Auth, AuthProvider } from "../index";
@@ -50,7 +50,7 @@ const oAuthCallback = (message, origins) => {
   return template.replace("<%=data%>", JSON.stringify(data));
 };
 
-@Service()
+@DI.injectable()
 export class AuthProviderOAuth {
   private emailAuthProvider: AuthProvider;
   private oAuthAuthProviders: { [key: string]: AuthProvider } = {};
@@ -62,12 +62,12 @@ export class AuthProviderOAuth {
   private authConfig: any;
 
   constructor(
-    // @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
-    @Inject((type) => GraphQl) graphQl: GraphQl,
-    @Inject((type) => Auth) auth: Auth,
-    // @Inject((type) => ORM) orm: ORM,
-    @Inject((type) => Server) server: Server,
-    @Inject((type) => Core) core: Core,
+    // @DI.inject(SchemaBuilder) schemaBuilder: SchemaBuilder,
+    @DI.inject(GraphQl) graphQl: GraphQl,
+    @DI.inject(Auth) auth: Auth,
+    // @DI.inject(ORM) orm: ORM,
+    @DI.inject(Server) server: Server,
+    @DI.inject(Core) core: Core,
   ) {
     this.server = server;
     // this.orm = orm;

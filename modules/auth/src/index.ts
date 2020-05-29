@@ -1,7 +1,7 @@
 import * as fs from "fs";
 //@ts-ignore TODO: @eugene Koa-cors has no type-def
 import * as koaCors from "@koa/cors";
-import { Service, Inject } from "soniq";
+import { DI } from "soniq";
 import {
   Core,
   IModuleAppConfig,
@@ -53,7 +53,7 @@ export * from "./moduleDefinition";
 export * from "./AuthProviders/AuthProviderPassword";
 export { AuthProvider, IAuthFactorForProof };
 
-@Service()
+@DI.injectable()
 export class Auth {
   private _authRuntimeConfig: IAuthRuntimeConfig | null = null;
   private _cryptoFactory: CryptoFactory | null = null;
@@ -79,9 +79,9 @@ export class Auth {
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public constructor(
-    @Inject((type) => Core) core: Core,
-    @Inject((type) => Server) server: Server,
-    @Inject((type) => GraphQl) graphQl: GraphQl
+    @DI.inject(Core) core: Core,
+    @DI.inject(Server) server: Server,
+    @DI.inject(GraphQl) graphQl: GraphQl
   ) {
     this._graphQl = graphQl;
     this._core = core;
