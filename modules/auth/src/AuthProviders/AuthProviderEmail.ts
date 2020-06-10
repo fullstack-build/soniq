@@ -1,4 +1,4 @@
-import { Service, Inject } from "soniq";
+import { DI } from "soniq";
 import { GraphQl, ReturnIdHandler, ICustomResolverObject } from "@soniq/graphql";
 import { Auth, AuthProvider, IAuthFactorForProof } from "../index";
 
@@ -25,13 +25,13 @@ export interface IProofMailPayload {
   info?: string | null;
 }
 
-@Service()
+@DI.injectable()
 export class AuthProviderEmail {
   private _authProvider: AuthProvider;
   private _sendMail: ((mail: IProofMailPayload) => void) | null = null;
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public constructor(@Inject((type) => GraphQl) graphQl: GraphQl, @Inject((type) => Auth) auth: Auth) {
+  public constructor(@DI.inject(GraphQl) graphQl: GraphQl, @DI.inject(DI.delay(() => Auth)) auth: Auth) {
     graphQl.addTypeDefsExtension(() => {
       return schema;
     });

@@ -1,8 +1,8 @@
 require("dotenv").config();
 // import { Server } from "@soniq/server";
-// import { Container, Logger } from "soniq";
-import { Logger } from "soniq";
-// const $core: Core = Container.get(Core);
+import { DI, Logger, Core } from "soniq";
+//import { Logger } from "soniq";
+const $core: Core = DI.container.resolve(Core);
 // Container.get(Server);
 
 /*  tslog example START * /
@@ -101,15 +101,14 @@ log.info("I am an info log.");
 log.warn("I am a warn log with a json object:", { foo: "bar" });
 log.error("I am an error log.");
 log.fatal("I am a fatal log.");
-
 /* tslog example END */
-/*
+
+import { dev } from "../../02/src/app/envs/dev";
 $core
-  .boot()
+  .boot(dev.getPgConfig())
   .then(() => {
     // soniqLogsExample();
   })
   .catch((err) => {
     console.error(err);
   });
-*/

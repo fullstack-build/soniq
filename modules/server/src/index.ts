@@ -1,4 +1,4 @@
-import { Core, PoolClient, IModuleMigrationResult, Service, Inject, Logger, Pool } from "soniq";
+import { Core, PoolClient, IModuleMigrationResult, DI, Logger, Pool } from "soniq";
 import * as http from "http";
 // other npm dependencies
 import * as Koa from "koa";
@@ -9,7 +9,7 @@ export * from "./moduleDefinition";
 
 export { Koa };
 
-@Service()
+@DI.injectable()
 export class Server {
   private _server: http.Server;
   private _app: Koa | undefined;
@@ -22,7 +22,7 @@ export class Server {
   };
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public constructor(@Inject((type) => Core) core: Core) {
+  public constructor(@DI.inject(Core) core: Core) {
     this._core = core;
     this._logger = core.getLogger("Server");
 

@@ -1,7 +1,7 @@
 {
-  "name": "@soniq/example-modules",
+  "name": "@soniq/example_module",
   "version": "1.0.0",
-  "description": "@soniq/example-modules",
+  "description": "@soniq example module",
   "main": "index",
   "typings": "src/index",
   "engines": {
@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "eslintConfig": {
-    "extends": "../../eslintrc.js"
+    "extends": "@soniq/eslint-config"
   },
   "jest": {},
   "repository": {
@@ -31,14 +31,14 @@
   },
   "homepage": "https://soniq.js.org",
   "devDependencies": {
-    "@rushstack/eslint-config": "^0.5.7",
     "@types/node": "^13.13.4",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.3",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "@soniq/eslint-config": "~1.0.0-dev.3"
   },
   "dependencies": {
-    "soniq": "latest"
+    "soniq": "~1.0.0-dev.3"
   }
 }

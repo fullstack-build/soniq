@@ -3,8 +3,8 @@ import { AuthModule } from "@soniq/auth";
 import { GraphQlModule } from "@soniq/graphql";
 import { schema } from "../schema/schema";
 
-import {} from "./envs/dev";
-import {} from "./envs/prod";
+import "./envs/dev";
+import "./envs/prod";
 import { ServerModule } from "@soniq/server";
 
 export const app: SoniqApp = new SoniqApp("a3af9ea0-11a7-4eb0-96a0-7be79f827779");

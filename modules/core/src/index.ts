@@ -1,7 +1,7 @@
 import "reflect-metadata";
 const STARTUP_TIME: [number, number] = process.hrtime();
-// DI
-import { Service, Container, ContainerInstance, Inject, InjectMany } from "typedi";
+
+import * as DI from "tsyringe";
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
 import * as Ajv from "ajv";
 import { Logger, TLogLevelName } from "tslog";
@@ -18,13 +18,13 @@ export interface IGetModuleRuntimeConfigResult {
 }
 
 export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
-export type TMigrationFuntion = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
-export type TBootFuntion = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
+export type TMigrationFunction = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
+export type TBootFunction = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
 
 export interface IModuleCoreFunctions {
   key: string;
-  migrate?: TMigrationFuntion;
-  boot?: TBootFuntion;
+  migrate?: TMigrationFunction;
+  boot?: TBootFunction;
 }
 
 export * from "./interfaces";
@@ -40,7 +40,7 @@ export enum EBootState {
   Finished = "finished",
 }
 
-export { Service, Container, ContainerInstance, Inject, InjectMany };
+export { DI };
 export { Logger };
 
 // TODO: move somewhere else later
@@ -48,7 +48,7 @@ process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
 
-@Service()
+@DI.autoInjectable()
 export class Core {
   private readonly _className: string = this.constructor.name;
   private readonly _logger: Logger;

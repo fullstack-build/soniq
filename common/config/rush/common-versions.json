@@ -19,10 +19,10 @@
    * will recalculate all version selections.
    */
   "preferredVersions": {
-    "@rushstack/eslint-config": "^0.5.7",
+    "@typescript-eslint/typescript-estree": "^2.34.0",
     "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.1",
-    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
     "prettier": "^2.0.4"
 
     /**

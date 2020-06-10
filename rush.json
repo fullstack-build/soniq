@@ -439,6 +439,13 @@
       "shouldPublish": true,
       "versionPolicyName": "soniq"
     },
+    // example module
+    {
+      "packageName": "@soniq/example_module",
+      "projectFolder": "modules/_example_module",
+      "shouldPublish": false,
+      "versionPolicyName": "soniq"
+    },
     // examples
     {
       "packageName": "@soniq/examples_01",
