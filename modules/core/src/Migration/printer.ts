@@ -88,7 +88,7 @@ export function printMigrationResult(
         }
       }
       if (error.error != null) {
-        logger.prettyError(error.error);
+        logger.prettyError(error.error, true, false, false);
       }
       if (error.command != null) {
         logger.info("Happend while running this command: ", error.command);
