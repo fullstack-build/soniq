@@ -2,6 +2,7 @@ import "reflect-metadata";
 const STARTUP_TIME: [number, number] = process.hrtime();
 
 import * as DI from "tsyringe";
+import { customAlphabet } from "nanoid";
 import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
 import * as Ajv from "ajv";
 import { Logger, TLogLevelName } from "tslog";
@@ -62,7 +63,12 @@ export class Core {
 
   public constructor() {
     // TODO: catch all errors & exceptions
-    this._logger = this.getLogger(this._className);
+    this._logger = new Logger({
+      instanceName: customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 6)(),
+      name: this._className,
+      displayInstanceName: true,
+      printLogMessageInNewLine: true,
+    });
     this._migration = new Migration(this._logger, this);
   }
 
@@ -178,12 +184,6 @@ export class Core {
   }
 
   public getLogger(name?: string, minLevel: TLogLevelName = "silly", exposeStack: boolean = false): Logger {
-    return new Logger({
-      instanceName: "123", // TODO: Set instance-name
-      name,
-      minLevel,
-      exposeStack,
-      displayInstanceName: true,
-    });
+    return this._logger.getChildLogger({ name, minLevel, exposeStack });
   }
 }

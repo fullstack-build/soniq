@@ -1,5 +1,5 @@
 dependencies:
-  tslog: 2.0.0
+  tslog: 2.5.0
 devDependencies:
   '@types/pg': 7.14.3
 lockfileVersion: 5.1
@@ -36,14 +36,14 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
-  /tslog/2.0.0:
+  /tslog/2.5.0:
     dependencies:
       source-map-support: 0.5.19
     dev: false
     engines:
-      node: '>=8'
+      node: '>=10'
     resolution:
-      integrity: sha512-qySZKsf9X9FmSo2dYywvbpKCf6ZDd4Mdk3xK3fh3TUXkxsYtLLIfOVPMICky54kMNc3HaUbFP5/3tcCy5ITX0A==
+      integrity: sha512-K5FeBJVZ1vL/OOJjJuXPb0AHcA0ldNeoG89IdcJkxtW6i0REpS3X/ZCTC9fDDSMCXA7NciHkYbzoGl3auqrxcA==
 specifiers:
   '@types/pg': ^7.14.3
-  tslog: 2.0.0
+  tslog: ^2.5.0
