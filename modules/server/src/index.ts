@@ -77,6 +77,7 @@ export class Server {
 
     try {
       // start KOA on PORT
+      //TODO: Get Port from settings
       this._server.listen(process.env.PORT || 3030);
 
       // success log
