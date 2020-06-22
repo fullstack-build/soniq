@@ -53,7 +53,7 @@ export * from "./moduleDefinition";
 export * from "./AuthProviders/AuthProviderPassword";
 export { AuthProvider, IAuthFactorForProof };
 
-@DI.injectable()
+@DI.singleton()
 export class Auth {
   private _authRuntimeConfig: IAuthRuntimeConfig | null = null;
   private _cryptoFactory: CryptoFactory | null = null;

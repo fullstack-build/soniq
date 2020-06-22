@@ -25,7 +25,7 @@ export interface IProofMailPayload {
   info?: string | null;
 }
 
-@DI.injectable()
+@DI.singleton()
 export class AuthProviderEmail {
   private _authProvider: AuthProvider;
   private _sendMail: ((mail: IProofMailPayload) => void) | null = null;

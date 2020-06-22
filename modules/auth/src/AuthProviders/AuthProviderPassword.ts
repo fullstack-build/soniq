@@ -19,7 +19,7 @@ extend type Mutation {
 }
 `;
 
-@DI.injectable()
+@DI.singleton()
 export class AuthProviderPassword {
   private _authProvider: AuthProvider;
 

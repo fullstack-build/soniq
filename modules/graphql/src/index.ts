@@ -57,7 +57,7 @@ export * from "./migration/interfaces";
 export * from "./moduleDefinition";
 export * from "./moduleDefinition/interfaces";
 
-@DI.injectable()
+@DI.singleton()
 export class GraphQl {
   // DI
   private _server: Server;
