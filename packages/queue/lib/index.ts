@@ -6,12 +6,12 @@ import { Config } from "@fullstack-one/config";
 import { ORM } from "@fullstack-one/db";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 import { Service, Inject, Container } from "@fullstack-one/di";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 
 @Service()
 export class QueueFactory {
   private queue: PgBoss;
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
 
   constructor(
     @Inject((type) => BootLoader) bootLoader: BootLoader,

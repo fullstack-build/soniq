@@ -2,7 +2,7 @@ import { IFieldResolver } from "graphql-tools";
 
 import { ORM } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
 
 import { HookManager } from "../hooks";
@@ -19,7 +19,7 @@ const hookManager: HookManager = Container.get(HookManager);
 
 export default function getDefaultMutationResolver<TSource>(
   orm: ORM,
-  logger: ILogger,
+  logger: Logger,
   queryBuilder: QueryBuilder,
   mutationBuilder: MutationBuilder,
   costLimit: number,
@@ -36,7 +36,7 @@ export default function getDefaultMutationResolver<TSource>(
 
     await hookManager.executePreQueryHooks(queryRunner, context, context.accessToken != null, mutationBuild);
 
-    logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
+    logger.debug("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
     const result = await queryRunner.query(mutationBuild.sql, mutationBuild.values);
 
@@ -91,11 +91,11 @@ export default function getDefaultMutationResolver<TSource>(
       // Generate sql query for response-data of the mutation
       returnQueryBuild = queryBuilder.build(info, isAuthenticated, match);
 
-      logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
+      logger.debug("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
 
       if (returnQueryBuild.potentialHighCost === true) {
         const currentCost = await checkCosts(queryRunner, returnQueryBuild, costLimit);
-        logger.trace(
+        logger.debug(
           "The current query has been identified as potentially too expensive and could get denied in case the" +
             ` data set gets bigger. Costs: (current: ${currentCost}, limit: ${costLimit}, maxDepth: ${returnQueryBuild.maxDepth})`
         );

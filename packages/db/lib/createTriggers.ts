@@ -1,8 +1,8 @@
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { ORM } from ".";
 import { IModelMeta, IEntityMeta } from "./model-meta/types";
 
-export default async function createTriggers(orm: ORM, logger: ILogger) {
+export default async function createTriggers(orm: ORM, logger: Logger) {
   const modelMeta: IModelMeta = orm.getModelMeta();
   const entities: IEntityMeta[] = Object.values(modelMeta.entities);
   const triggerCreationQueries: string[] = entities.map((entity) => generateTriggerCreationQuery(entity));

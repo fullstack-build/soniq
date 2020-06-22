@@ -6,7 +6,7 @@ import { QueueFactory } from "@fullstack-one/queue";
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { EventEmitter } from "@fullstack-one/events";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
@@ -20,7 +20,7 @@ export class NotificationsEmail {
   // DI dependencies
   private readonly config: Config;
   private readonly CONFIG: any;
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
   private readonly queueFactory: QueueFactory;
   @Inject()
   private readonly eventEmitter: EventEmitter;
@@ -56,7 +56,7 @@ export class NotificationsEmail {
           this.logger.warn("testingAccount.creation.error", err);
           throw err;
         } else {
-          this.logger.trace("testingAccount.creation.success", account.user);
+          this.logger.debug("testingAccount.creation.success", account.user);
         }
 
         this.createTransport({
@@ -80,7 +80,7 @@ export class NotificationsEmail {
       const queue = await this.queueFactory.getQueue();
       queue
         .subscribe(this.queueName, this._sendMail.bind(this))
-        .then(() => this.logger.trace("subscribed.job.sendmail.success"))
+        .then(() => this.logger.debug("subscribed.job.sendmail.success"))
         .catch((err) => {
           this.logger.warn("subscribed.job.sendmail.error", err);
           throw err;
@@ -96,10 +96,10 @@ export class NotificationsEmail {
 
     try {
       const response = await this.transport.sendMail(message);
-      this.logger.trace("sendMessage.transport.sendMail.success", response);
+      this.logger.debug("sendMessage.transport.sendMail.success", response);
       // extract email url for testing
       if (this.CONFIG.testing) {
-        this.logger.trace("testingAccount.sendMail.success.url", getTestMessageUrl(response));
+        this.logger.debug("testingAccount.sendMail.success.url", getTestMessageUrl(response));
       }
 
       // send event with email success
@@ -108,7 +108,7 @@ export class NotificationsEmail {
       // mark job as done
       job
         .done()
-        .then(() => this.logger.trace("sendMessage.job.marked.completed.success", job.id))
+        .then(() => this.logger.debug("sendMessage.job.marked.completed.success", job.id))
         .catch((err) => {
           this.logger.warn("sendMessage.job.marked.completed.error", err);
           throw err;
@@ -129,7 +129,7 @@ export class NotificationsEmail {
     this.transport.use("compile", htmlToText(this.CONFIG.htmlToText));
     this.isReady = true;
     this.eventEmitter.emit("transport.ready");
-    this.logger.trace("transport.ready");
+    this.logger.debug("transport.ready");
   }
 
   public async sendMessage(
@@ -156,7 +156,7 @@ export class NotificationsEmail {
         // create sendmail job in queue
         const queue = await this.queueFactory.getQueue();
         const jobId = await queue.publish(this.queueName, message, finalJobOptions);
-        this.logger.trace("sendMessage.job.creation.success", jobId);
+        this.logger.debug("sendMessage.job.creation.success", jobId);
         return jobId;
       } catch (err) {
         this.logger.warn("sendMessage.job.creation.error", err);

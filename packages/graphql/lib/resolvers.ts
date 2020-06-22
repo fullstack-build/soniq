@@ -4,7 +4,7 @@ import { IResolvers, IResolverObject, MergeInfo, IFieldResolver } from "graphql-
 import { IOperationsObject, IBaseOperation } from "./operations";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { UserInputError } from "./GraphqlErrors";
 
 export type ICustomFieldResolver<TSource, TContext, TParams> = (
@@ -28,7 +28,7 @@ export function getResolvers(
   operations: IOperationsObject,
   resolversObject: ICustomResolverObject,
   createQueryRunner: any,
-  logger: ILogger
+  logger: Logger
 ): IResolvers {
   const queryResolvers: IResolverObject = {};
   const mutationResolvers: IResolverObject = {};
@@ -88,7 +88,7 @@ function wrapResolver<TSource, TContext, TParams>(
   };
 }
 
-async function rollbackAndReleaseTransaction(context, logger: ILogger) {
+async function rollbackAndReleaseTransaction(context, logger: Logger) {
   try {
     await context._transactionQueryRunner.rollbackTransaction();
   } catch (err) {
@@ -114,7 +114,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
   operationParams: TParams,
   operation: IBaseOperation,
   createQueryRunner: any,
-  logger: ILogger
+  logger: Logger
 ): IFieldResolver<TSource, TContext> {
   return async (obj, args, context: any, info) => {
     const returnIdHandler = new ReturnIdHandler(context, args.returnId || null);

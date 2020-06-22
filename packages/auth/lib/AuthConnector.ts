@@ -1,5 +1,5 @@
 import { PostgresQueryRunner } from "@fullstack-one/db";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
 import { AuthQueryHelper } from "./AuthQueryHelper";
@@ -19,13 +19,13 @@ import {
 import { Encoder } from "./Encoder";
 
 export class AuthConnector {
-  private logger: ILogger;
+  private logger: Logger;
   private authConfig: any;
   private cryptoFactory: CryptoFactory;
   private authQueryHelper: AuthQueryHelper;
   private encoder: Encoder = new Encoder();
 
-  constructor(authQueryHelper: AuthQueryHelper, logger: ILogger, cryptoFactory: CryptoFactory, authConfig: any) {
+  constructor(authQueryHelper: AuthQueryHelper, logger: Logger, cryptoFactory: CryptoFactory, authConfig: any) {
     this.authConfig = authConfig;
     this.logger = logger;
     this.authQueryHelper = authQueryHelper;

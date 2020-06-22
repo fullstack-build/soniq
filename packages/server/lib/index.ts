@@ -1,6 +1,6 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 
@@ -19,7 +19,7 @@ export class Server {
   private app: Koa;
 
   private loggerFactory: LoggerFactory;
-  private logger: ILogger;
+  private logger: Logger;
   private ENVIRONMENT: IEnvironment;
   private readonly bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
@@ -81,7 +81,7 @@ export class Server {
             originalUrl: ctx.originalUrl,
             origin: ctx.origin
           });
-          this.logger.trace("Koa app-level EPIPE error. BODY TRACE", {
+          this.logger.debug("Koa app-level EPIPE error. BODY TRACE", {
             bodyHidden,
             body: bodyHidden === true ? null : ctx.body
           });
@@ -93,7 +93,7 @@ export class Server {
             originalUrl: ctx.originalUrl,
             origin: ctx.origin
           });
-          this.logger.trace("Koa app-level ECONNRESET error. BODY TRACE", {
+          this.logger.debug("Koa app-level ECONNRESET error. BODY TRACE", {
             bodyHidden,
             body: bodyHidden === true ? null : ctx.body
           });
@@ -104,7 +104,7 @@ export class Server {
           originalUrl: ctx.originalUrl,
           origin: ctx.origin
         });
-        this.logger.trace("Koa app-level error. BODY TRACE", {
+        this.logger.debug("Koa app-level error. BODY TRACE", {
           bodyHidden,
           body: bodyHidden === true ? null : ctx.body
         });

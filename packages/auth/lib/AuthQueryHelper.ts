@@ -1,5 +1,5 @@
 import { IsolationLevel, ORM, PostgresQueryRunner } from "@fullstack-one/db";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 import { AuthenticationError } from "@fullstack-one/graphql";
@@ -9,7 +9,7 @@ export class AuthQueryHelper {
 
   constructor(
     private readonly orm: ORM,
-    private readonly logger: ILogger,
+    private readonly logger: Logger,
     private readonly cryptoFactory: CryptoFactory,
     private readonly signHelper: SignHelper
   ) {}

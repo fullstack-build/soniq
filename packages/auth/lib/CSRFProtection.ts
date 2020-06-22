@@ -1,12 +1,12 @@
 import { sha256 } from "./crypto";
 import { URL } from "url";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 
 export class CSRFProtection {
-  private logger: ILogger;
+  private logger: Logger;
   private authConfig;
 
-  constructor(logger: ILogger, authConfig) {
+  constructor(logger: Logger, authConfig) {
     this.logger = logger;
     this.authConfig = authConfig;
   }

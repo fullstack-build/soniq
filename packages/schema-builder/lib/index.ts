@@ -1,7 +1,7 @@
 // fullstack-one core
 import { Service, Inject, Container } from "@fullstack-one/di";
 // DI imports
-import { LoggerFactory, ILogger } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { IDbConfig, ORM } from "@fullstack-one/db";
@@ -58,7 +58,7 @@ export class SchemaBuilder {
 
   private config: Config;
   private loggerFactory: LoggerFactory;
-  private logger: ILogger;
+  private logger: Logger;
   private ENVIRONMENT: IEnvironment;
 
   constructor(
@@ -82,14 +82,14 @@ export class SchemaBuilder {
 
   private async boot(): Promise<IDbMeta> {
     try {
-      this.logger.trace("boot", "started");
+      this.logger.debug("boot", "started");
 
       this.extendSchema(this.orm.getGraphQlSDL());
 
       // load schema
       const gQlSdlPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.schemaPattern;
       this.gQlSdl = await AHelper.loadFilesByGlobPattern(gQlSdlPattern);
-      this.logger.trace("boot", "GraphQl schema loaded");
+      this.logger.debug("boot", "GraphQl schema loaded");
 
       // check if any files were loaded
       if (this.gQlSdl.length === 0) {
@@ -100,15 +100,15 @@ export class SchemaBuilder {
       // Combine all Schemas to a big one and add extensions from other modules
       const gQlSdlCombined = this.gQlSdl.concat(this.gqlSdlExtensions.slice()).join("\n");
       this.gQlAst = AGraphQlHelper.parseGraphQlSchema(gQlSdlCombined);
-      this.logger.trace("boot", "GraphQl schema parsed");
+      this.logger.debug("boot", "GraphQl schema parsed");
 
       this.dbMeta = parseGQlAstToDbMeta(this.gQlAst);
-      this.logger.trace("boot", "GraphQl AST parsed");
+      this.logger.debug("boot", "GraphQl AST parsed");
 
       const permissions = await this.loadPermissions();
 
       const dbConfig: IDbConfig = this.config.getConfig("Db");
-      this.logger.trace("boot", "Config loaded");
+      this.logger.debug("boot", "Config loaded");
 
       const config: IConfig = {
         schemaName: "_graphql",
@@ -125,19 +125,19 @@ export class SchemaBuilder {
       const extensions = this.extensions;
 
       const data = parsePermissions(permissions, context, extensions, config);
-      this.logger.trace("boot", "Permissions parsed");
+      this.logger.debug("boot", "Permissions parsed");
 
       //  Reverse to get the generated queries/mutations at the beginning
       (data.gqlDocument.definitions as DefinitionNode[]).reverse();
 
       this.resolverMeta = data.meta;
       this.gqlRuntimeDocument = data.gqlDocument;
-      this.logger.trace("boot", "Permission SQL statements set");
+      this.logger.debug("boot", "Permission SQL statements set");
 
       if (this.schemaBuilderConfig.createGraphQlViews === true) {
-        this.logger.trace("boot", "Create GraphQL views start");
+        this.logger.debug("boot", "Create GraphQL views start");
         await createGraphQLViews(this.orm, this.logger, data.sql);
-        this.logger.trace("boot", "Create GraphQL views end");
+        this.logger.debug("boot", "Create GraphQL views end");
       }
 
       return this.dbMeta;
@@ -150,7 +150,7 @@ export class SchemaBuilder {
   private async loadPermissions(): Promise<IPermission[]> {
     const permissionsPattern = this.ENVIRONMENT.path + this.schemaBuilderConfig.permissionsPattern;
     const permissionsArray: IPermission[] = await AHelper.requireFilesByGlobPattern(permissionsPattern);
-    this.logger.trace("boot", "Permissions loaded");
+    this.logger.debug("boot", "Permissions loaded");
     const decoratorPermissions = getDecoratorPermissions();
     return [].concat.apply([], permissionsArray).concat(decoratorPermissions);
   }

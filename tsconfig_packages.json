@@ -5,6 +5,7 @@
     "target": "es6",
     "module": "commonjs",
     "types": ["node"],
+    skipLibCheck: true,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

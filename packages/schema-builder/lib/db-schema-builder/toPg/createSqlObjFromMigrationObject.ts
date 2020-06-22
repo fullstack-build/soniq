@@ -2,7 +2,7 @@ import * as _ from "lodash";
 
 import * as helper from "../helper";
 import { IMigrationSqlObj, IAction } from "../IMigrationSqlObj";
-import { LoggerFactory, ILogger } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 import { IDbMeta, IDbRelation } from "../IDbMeta";
 import { MigrationObject } from "../migrationObject";
 
@@ -757,14 +757,10 @@ export class SqlObjFromMigrationObject {
         _createSqlRelation.call(this, fullRelationFromNodeOneSide, true);
         */
         // TO: find one side and copy and add "add" action
-        const fullRelationToNodeOneSide = {
-          ...Object.values(this.toDbMeta.relations[node.name]).find((relation: any) => {
+        let fullRelationToNodeOneSide: any = Object.values(this.toDbMeta.relations[node.name]).find((relation: any) => {
             return relation.type === "ONE";
-          }),
-          [this.ACTION_KEY]: {
-            add: true
-          }
-        };
+          });
+        fullRelationToNodeOneSide.ACTION_KEY = { add: true };
         // recreate new FK, keep column
         _createSqlRelation.call(this, this.fullRelationToNodeOneSide, true);
       }

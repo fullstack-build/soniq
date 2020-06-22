@@ -1,6 +1,6 @@
 import { isArray } from "util";
 import { ORM, IModelMeta, PostgresQueryRunner } from "@fullstack-one/db";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 
 interface IFileColumn {
   schemaName: string;
@@ -14,7 +14,7 @@ interface ISchemaTable {
   tableName: string;
 }
 
-export async function insertFileColumnsAndCreateTrigger(orm: ORM, logger: ILogger): Promise<void> {
+export async function insertFileColumnsAndCreateTrigger(orm: ORM, logger: Logger): Promise<void> {
   const fileColumnsTableName = `_meta.FileColumns`;
 
   const queryRunner = orm.createQueryRunner();

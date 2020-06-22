@@ -10,6 +10,7 @@
     "experimentalDecorators": true,
     "sourceMap": false,
     "declaration": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
     "strict": false,
     "suppressImplicitAnyIndexErrors": true,

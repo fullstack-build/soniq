@@ -3,7 +3,7 @@ import * as typeorm from "typeorm";
 import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 import { Service, Inject } from "@fullstack-one/di";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { IEnvironment, Config } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
@@ -30,7 +30,7 @@ PgTypes.setTypeParser(1082, (str) => str);
 
 @Service()
 export class ORM {
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
   private readonly config: IDbConfig;
   private readonly environment: IEnvironment;
   private readonly applicationNamePrefix: string;
@@ -138,7 +138,7 @@ export class ORM {
   }
 
   private async end(): Promise<void> {
-    this.logger.trace("Postgres ORM pool ending initiated");
+    this.logger.debug("Postgres ORM pool ending initiated");
 
     this.eventEmitter.emit("db.orm.pool.end.start", this.applicationName);
     await this.clientManager.stop();
@@ -146,7 +146,7 @@ export class ORM {
     try {
       await typeorm.getConnection().close();
 
-      this.logger.trace("Postgres ORM pool ended successfully");
+      this.logger.debug("Postgres ORM pool ended successfully");
       this.eventEmitter.emit("db.orm.pool.end.success", this.applicationName);
     } catch (err) {
       this.logger.warn("Postgres ORM pool ended with an error", err);

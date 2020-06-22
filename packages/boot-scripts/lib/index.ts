@@ -1,6 +1,6 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
 import { IEnvironment } from "@fullstack-one/config";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 
 import * as fastGlob from "fast-glob";
@@ -8,7 +8,7 @@ import * as fastGlob from "fast-glob";
 @Service()
 export class BootScripts {
   private readonly ENVIRONMENT: IEnvironment;
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
 
   constructor(@Inject((type) => LoggerFactory) loggerFactory, @Inject((tpye) => BootLoader) bootLoader) {
     this.logger = loggerFactory.create(this.constructor.name);
@@ -35,7 +35,7 @@ export class BootScripts {
       const bootScript = require(file);
       try {
         bootScript.default != null ? await bootScript.default(this) : await bootScript(this);
-        this.logger.trace("boot script successful", file);
+        this.logger.debug("boot script successful", file);
       } catch (err) {
         this.logger.warn("boot script error", file, err);
       }

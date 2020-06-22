@@ -2,6 +2,8 @@
 soniq is a battery included Node.js GraphQL framework created on top of PostgreSQL written in TypeScript, with focus on high performance, flexibility and security.
 > PostgreSQL, Node.js, TypeScript, GraphQL, DI
 
+**min. Node.js Version: 12.17** 
+AsyncLocalStorage: https://nodejs.org/docs/latest-v12.x/api/async_hooks.html#async_hooks_class_asynclocalstorage
 
 ## Features
   * Dependency Injection

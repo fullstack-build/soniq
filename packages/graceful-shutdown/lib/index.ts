@@ -1,6 +1,6 @@
 import { Service, Inject } from "@fullstack-one/di";
 import { EventEmitter } from "@fullstack-one/events";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { Config } from "@fullstack-one/config";
 
@@ -18,7 +18,7 @@ interface IShutdownItem {
 @Service()
 export class GracefulShutdown {
   private bootLoader: BootLoader;
-  private logger: ILogger;
+  private logger: Logger;
   private eventEmitter: EventEmitter;
   private readonly config: IGracefulShutdownConfig;
 

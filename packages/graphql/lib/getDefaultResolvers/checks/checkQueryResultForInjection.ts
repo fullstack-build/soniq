@@ -1,7 +1,7 @@
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { UserInputError } from "../../GraphqlErrors";
 
-export default function checkQueryResultForInjection(result: any[], logger: ILogger): void {
+export default function checkQueryResultForInjection(result: any[], logger: Logger): void {
   if (result == null) {
     logger.error("InjectionProtector:", "Successful SQL-Injection Attack. To many queries in result. Request denied.");
     throw new UserInputError("InjectionProtector: To many queries.");

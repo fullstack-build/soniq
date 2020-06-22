@@ -9,7 +9,7 @@ import * as KoaRouter from "koa-router";
 import * as koaBody from "koa-bodyparser";
 import * as koaSession from "koa-session";
 import * as passport from "koa-passport";
-import { LoggerFactory, ILogger } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 import { ORM } from "@fullstack-one/db";
 
 const template = `
@@ -55,7 +55,7 @@ export class AuthProviderOAuth {
   private oAuthAuthProviders: { [key: string]: AuthProvider } = {};
 
   private server: Server;
-  private logger: ILogger;
+  private logger: Logger;
   private orm: ORM;
 
   private authConfig;

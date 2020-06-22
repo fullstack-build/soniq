@@ -1,9 +1,9 @@
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { IFieldResolver } from "graphql-tools";
 import { IDefaultMutationResolverContext } from ".";
 import { ORM } from "@fullstack-one/db";
 
-export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger): IFieldResolver<TSource, IDefaultMutationResolverContext> {
+export function getBeginTransactionResolver<TSource>(orm: ORM, logger: Logger): IFieldResolver<TSource, IDefaultMutationResolverContext> {
   return async (obj, args, context: any, info) => {
     if (context._transactionQueryRunner != null) {
       throw new Error("You cannot begin a second transaction within another.");
@@ -42,7 +42,7 @@ export function getBeginTransactionResolver<TSource>(orm: ORM, logger: ILogger):
   };
 }
 
-export function getCommitTransactionResolver<TSource>(orm: ORM, logger: ILogger): IFieldResolver<TSource, IDefaultMutationResolverContext> {
+export function getCommitTransactionResolver<TSource>(orm: ORM, logger: Logger): IFieldResolver<TSource, IDefaultMutationResolverContext> {
   return async (obj, args, context: any, info) => {
     if (context._transactionRunning !== true) {
       throw new Error("You cannot commit a not existing transaction.");

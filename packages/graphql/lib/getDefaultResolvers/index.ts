@@ -1,7 +1,7 @@
 import { IFieldResolver } from "graphql-tools";
 
 import { IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { ORM } from "@fullstack-one/db";
 
 import { ICustomResolverObject, ICustomFieldResolver } from "../resolvers";
@@ -17,7 +17,7 @@ export default function getDefaultResolvers(
   resolverMeta: IResolverMeta,
   dbMeta: IDbMeta,
   orm: ORM,
-  logger: ILogger,
+  logger: Logger,
   costLimit: number,
   minQueryDepthToCheckCostLimit: number
 ): ICustomResolverObject<any, any, any> {

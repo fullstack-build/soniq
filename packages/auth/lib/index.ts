@@ -6,7 +6,7 @@ import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
 import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 
 import migrations from "./migrations";
 import { CSRFProtection } from "./CSRFProtection";
@@ -39,7 +39,7 @@ export class Auth {
   private orm: ORM;
 
   // DI
-  private logger: ILogger;
+  private logger: Logger;
   private loggerFactory: LoggerFactory;
   private userRegistrationCallback: (userAuthentication: IUserAuthentication) => void;
 
@@ -111,7 +111,7 @@ export class Auth {
           try {
             await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
           } catch (err) {
-            this.logger.trace("authenticateTransaction.failed", err);
+            this.logger.debug("authenticateTransaction.failed", err);
             this.deleteAccessTokenCookie(context.ctx);
             throw err;
           }
@@ -129,7 +129,7 @@ export class Auth {
               await this.authQueryHelper.authenticateTransaction(queryRunner, context.accessToken);
               context._transactionIsAuthenticated = true;
             } catch (err) {
-              this.logger.trace("authenticateTransaction.failed", err);
+              this.logger.debug("authenticateTransaction.failed", err);
               this.deleteAccessTokenCookie(context.ctx);
               throw err;
             }
@@ -143,7 +143,7 @@ export class Auth {
             await this.authQueryHelper.unauthenticateTransaction(queryRunner);
             context._transactionIsAuthenticated = false;
           } catch (err) {
-            this.logger.trace("unauthenticateTransaction.failed", err);
+            this.logger.debug("unauthenticateTransaction.failed", err);
             throw err;
           }
         }

@@ -3,7 +3,7 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
 import { GraphQl, UserInputError } from "@fullstack-one/graphql";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { Auth, AuthProvider } from "@fullstack-one/auth";
 import { FbHelper } from "./fbHelper";
 
@@ -21,7 +21,7 @@ export class AuthFbToken {
 
   // DI
   private loggerFactory: LoggerFactory;
-  private logger: ILogger;
+  private logger: Logger;
   private auth: Auth;
   private config: Config;
   private fbHelper: FbHelper;

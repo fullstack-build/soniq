@@ -6,7 +6,7 @@ import { Config } from "@fullstack-one/config";
 import { ORM } from "@fullstack-one/db";
 import { Service, Inject } from "@fullstack-one/di";
 import { GraphQl, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory } from "@fullstack-one/logger";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { DefaultVerifier } from "./DefaultVerifier";
 import { insertFileColumnsAndCreateTrigger } from "./fileColumnsAndTrigger";
@@ -27,7 +27,7 @@ const schema = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 export class FileStorage {
   private client: Minio.Client;
   private fileStorageConfig: IFileStorageConfig;
-  private logger: ILogger;
+  private logger: Logger;
   private verifierClasses: { [type: string]: new (client: Minio.Client, bucket: string) => any } = {};
   private verifierObjects: { [type: string]: IVerifier } = {};
 

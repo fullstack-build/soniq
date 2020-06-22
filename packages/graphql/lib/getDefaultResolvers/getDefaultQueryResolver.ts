@@ -2,7 +2,7 @@ import { IFieldResolver } from "graphql-tools";
 
 import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Container } from "@fullstack-one/di";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 
 import QueryBuilder, { IQueryBuildOject } from "./QueryBuilder";
 import checkCosts from "./checks/checkCosts";
@@ -11,7 +11,7 @@ import { HookManager } from "../hooks";
 
 const hookManager: HookManager = Container.get(HookManager);
 
-export default function getDefaultQueryResolver(orm: ORM, logger: ILogger, queryBuilder: QueryBuilder, costLimit: number): IFieldResolver<any, any> {
+export default function getDefaultQueryResolver(orm: ORM, logger: Logger, queryBuilder: QueryBuilder, costLimit: number): IFieldResolver<any, any> {
   return async (obj, args, context, info) => {
     const isAuthenticated = context.accessToken != null;
 
@@ -27,7 +27,7 @@ export default function getDefaultQueryResolver(orm: ORM, logger: ILogger, query
 
       await hookManager.executePreQueryHooks(queryRunner, context, queryBuild.authRequired, queryBuild);
 
-      logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
+      logger.debug("queryResolver.run", queryBuild.sql, queryBuild.values);
 
       if (queryBuild.potentialHighCost === true) {
         const currentCost = await checkCosts(queryRunner, queryBuild, costLimit);

@@ -1,20 +1,20 @@
 import { ORM } from "@fullstack-one/db";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 
-export default async function createGraphQLViews(orm: ORM, logger: ILogger, graphqlViewSqlStatements: string[]): Promise<void> {
+export default async function createGraphQLViews(orm: ORM, logger: Logger, graphqlViewSqlStatements: string[]): Promise<void> {
   const queryRunner = orm.createQueryRunner();
 
   try {
-    logger.trace("migration.begin");
+    logger.debug("migration.begin");
     await queryRunner.connect();
     await queryRunner.query("BEGIN");
 
     for (const statement of Object.values(graphqlViewSqlStatements)) {
-      logger.trace("migration.view.sql.statement", statement);
+      logger.debug("migration.view.sql.statement", statement);
       await queryRunner.query(statement);
     }
 
-    logger.trace("migration.commit");
+    logger.debug("migration.commit");
     await queryRunner.query("COMMIT");
   } catch (err) {
     logger.warn("migration.rollback");

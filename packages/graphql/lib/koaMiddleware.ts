@@ -3,10 +3,10 @@ import { ApolloServer, gql, Config, ApolloError, UserInputError, AuthenticationE
 import * as _ from "lodash";
 
 import IGraphQlConfig from "./IGraphQlConfig";
-import { ILogger } from "@fullstack-one/logger";
+import { Logger } from "@fullstack-one/logger";
 import { Koa } from "@fullstack-one/server";
 
-export function applyApolloMiddleware(app: Koa, schema: GraphQLSchema, config: IGraphQlConfig, logger: ILogger) {
+export function applyApolloMiddleware(app: Koa, schema: GraphQLSchema, config: IGraphQlConfig, logger: Logger) {
   const server = createApolloServer(schema, config, logger);
   const path = config.endpoint;
 
@@ -16,7 +16,7 @@ export function applyApolloMiddleware(app: Koa, schema: GraphQLSchema, config: I
   server.applyMiddleware({ app, path });
 }
 
-function createApolloServer(schema: GraphQLSchema, { graphiQlEndpointActive }: IGraphQlConfig, logger: ILogger): ApolloServer {
+function createApolloServer(schema: GraphQLSchema, { graphiQlEndpointActive }: IGraphQlConfig, logger: Logger): ApolloServer {
   const koaGraphQlConfig = getKoaGraphQLOptionsFunction(schema, logger);
 
   koaGraphQlConfig.playground = graphiQlEndpointActive === true;
@@ -75,7 +75,7 @@ function enforceOriginMatch(path) {
   };
 }
 
-function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: ILogger): Config {
+function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: Logger): Config {
   return {
     schema,
     context: ({ ctx }) => {
@@ -91,7 +91,7 @@ function getKoaGraphQLOptionsFunction(schema: GraphQLSchema, logger: ILogger): C
   };
 }
 
-function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => GraphQLFormattedError {
+function getFormatErrorFunction(logger: Logger): (error: GraphQLError) => GraphQLFormattedError {
   return (error: any) => {
     const errorCode = _.get(error, "extensions.code");
     // If any Error has a exposeDetails flag just return it to the user
@@ -99,7 +99,7 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
       (errorCode === "BAD_USER_INPUT" || errorCode === "UNAUTHENTICATED" || errorCode === "FORBIDDEN") &&
       (_.get(error, "extensions.exposeDetails") === true || _.get(error, "extensions.exception.exposeDetails") === true)
     ) {
-      logger.trace(error);
+      logger.debug(error);
       // Always hide the stacktrace. There is no reason to send it.
       _.set(error, "extensions.exception.stacktrace", null);
 
@@ -121,7 +121,7 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
 
     // tslint:disable-next-line:variable-name
     const handleGenericError = (ErrorClass: any, message: any) => {
-      logger.trace(error);
+      logger.debug(error);
 
       if (_.get(error, "extensions.hideDetails") === true || _.get(error, "extensions.exception.hideDetails") === true) {
         return new ErrorClass(message);
@@ -159,15 +159,15 @@ function getFormatErrorFunction(logger: ILogger): (error: GraphQLError) => Graph
 
     // Try to map other errors to Apollo predefined errors. Useful when writing pg-functions which cannot return a specific Error Object
     if (error.message.indexOf("AUTH.THROW.USER_INPUT_ERROR") >= 0) {
-      logger.trace(error);
+      logger.info(error);
       return new UserInputError("Bad user input.");
     }
     if (error.message.indexOf("AUTH.THROW.AUTHENTICATION_ERROR") >= 0) {
-      logger.trace(error);
+      logger.info(error);
       return new AuthenticationError("Authentication required.");
     }
     if (error.message.indexOf("AUTH.THROW.FORBIDDEN_ERROR") >= 0) {
-      logger.trace(error);
+      logger.info(error);
       return new ForbiddenError("Access forbidden.");
     }
 

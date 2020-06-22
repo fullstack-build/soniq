@@ -6,7 +6,7 @@ import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
 
 import { Service, Inject } from "@fullstack-one/di";
-import { LoggerFactory, ILogger } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 import { Config, IEnvironment } from "@fullstack-one/config";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { SchemaBuilder, IDbMeta, IResolverMeta } from "@fullstack-one/schema-builder";
@@ -35,7 +35,7 @@ export class GraphQl {
 
   // DI
   private loggerFactory: LoggerFactory;
-  private logger: ILogger;
+  private logger: Logger;
   private ENVIRONMENT: IEnvironment;
   private schemaBuilder: SchemaBuilder;
   private server: Server;

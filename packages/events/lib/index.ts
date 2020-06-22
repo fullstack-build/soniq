@@ -2,14 +2,14 @@ import { EventEmitter2 } from "eventemitter2";
 import { Client as PgClient, Notification, ClientConfig } from "pg";
 import { Container, Service, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-import { LoggerFactory, ILogger } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { IEventEmitterConfig, IEvent, TEventListener } from "./types";
 
 @Service()
 export class EventEmitter {
   private readonly config: IEventEmitterConfig;
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
   private readonly eventEmitter: EventEmitter2;
   private readonly pgClient: PgClient;
 

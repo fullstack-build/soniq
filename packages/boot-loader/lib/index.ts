@@ -1,5 +1,5 @@
 import { Service, Inject } from "@fullstack-one/di";
-import { ILogger, LoggerFactory } from "@fullstack-one/logger";
+import { LoggerFactory, Logger } from "@fullstack-one/logger";
 
 type TBootFuntion = (bootLoader?: BootLoader) => void | Promise<void>;
 
@@ -24,7 +24,7 @@ export class BootLoader {
   private bootFunctionObjects: IBootFunctionObject[] = [];
   private afterBootFunctionObjects: IAfterBootFunctionObject[] = [];
 
-  private readonly logger: ILogger;
+  private readonly logger: Logger;
 
   constructor(@Inject((type) => LoggerFactory) loggerFactory: LoggerFactory) {
     this.logger = loggerFactory.create(this.constructor.name);
@@ -43,12 +43,12 @@ export class BootLoader {
   }
 
   public addBootFunction(name: string, fn: TBootFuntion): void {
-    this.logger.trace("addBootFunction", name);
+    this.logger.debug("addBootFunction", name);
     this.bootFunctionObjects.push({ name, fn });
   }
 
   public onBootReady(name: string, fn: TBootFuntion): void | Promise<void> {
-    this.logger.trace("onBootReady", name);
+    this.logger.debug("onBootReady", name);
     if (this.state === EBootState.Finished) {
       return fn();
     }
@@ -65,15 +65,15 @@ export class BootLoader {
     this.state = EBootState.Booting;
     try {
       for (const fnObj of this.bootFunctionObjects) {
-        this.logger.trace("boot.bootFunctions.start", fnObj.name);
+        this.logger.debug("boot.bootFunctions.start", fnObj.name);
         await fnObj.fn(this);
-        this.logger.trace("boot.bootFunctions.end", fnObj.name);
+        this.logger.debug("boot.bootFunctions.end", fnObj.name);
       }
       this.state = EBootState.Finished;
       for (const fnObj of this.afterBootFunctionObjects) {
-        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+        this.logger.debug("boot.afterBootFunctions.start", fnObj.name);
         fnObj.fn(this);
-        this.logger.trace("boot.afterBootFunctions.start", fnObj.name);
+        this.logger.debug("boot.afterBootFunctions.start", fnObj.name);
       }
     } catch (err) {
       this.logger.error(`BootLoader.boot.error.caught: ${err}\n`);
