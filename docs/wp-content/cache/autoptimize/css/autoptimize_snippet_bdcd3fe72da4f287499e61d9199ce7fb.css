@@ -1,9 +1,0 @@
-#wpadminbar .hardypress-deploy-button-wrapper:hover {background-color: transparent !important;}
-#wpadminbar .hardypress-deploy-button {padding: 2px;padding-left: 5px;padding-right: 5px;float: left;line-height: 20px;border: 1px;margin-top: 4px;background-color: #d54e21 !important;font-weight: 700;color: #fff !important;cursor: pointer;}
-#wpadminbar .hardypress-deploy-button.is-disabled {background-color: #eee;font-weight: 700;color: #444;cursor: wait;}
-.hardypress-restore-pane {position: fixed;top: 0;left: 0;right: 0;bottom: 0;background-color: rgba(0,0,0,.8);z-index: 1000000;}
-.hardypress-restore-pane__inner {position: absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);color: #fff;text-align: center;}
-.hardypress-restore-pane__title {font-size: 30px;margin-bottom: 20px;}
-.hardypress-restore-pane__description {font-size: 18px;margin-bottom: 20px;}
-.hardypress-restore-pane__button {padding: 10px 15px;border-width: 0;background-color: #d54e21;font-weight: 700;font-size: 20px;color: #fff;cursor: pointer;}
-.hardypress-restore-pane__button.is-disabled {background-color: #eee;font-weight: 700;color: #444;cursor: wait;}

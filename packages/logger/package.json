@@ -20,7 +20,6 @@
   "dependencies": {
     "@fullstack-one/config": "^0.6.23",
     "@fullstack-one/di": "^0.6.23",
-    "debug-logger": "^0.4.1",
-    "tracer": "^0.9.8"
+    "tslog": "^2.5.0"
   }
 }

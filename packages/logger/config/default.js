@@ -1,3 +1,3 @@
 module.exports = {
-  minLevel: "trace"
+  minLevel: "silly"
 };
