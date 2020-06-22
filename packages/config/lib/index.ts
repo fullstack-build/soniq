@@ -7,6 +7,7 @@ import { DefaultConfigNotFoundError } from "./errors";
 import ConfigMergeHelper from "./helpers/ConfigMergeHelper";
 import EnvironmentBuilder from "./helpers/EnvironmentBuilder";
 import { IEnvironment } from "./IEnvironment";
+import {AsyncLocalStorage} from "async_hooks";
 
 export { IEnvironment };
 

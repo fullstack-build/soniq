@@ -4,7 +4,7 @@
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
-    "node": ">=10",
+    "node": ">=12.17",
     "npm": ">=6"
   },
   "main": "index.ts",
@@ -33,11 +33,11 @@
   "devDependencies": {
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.0.57",
-    "ts-node": "^4.1.0",
-    "ts-node-dev": "^1.0.0-pre.26",
+    "ts-node": "^8.10.2",
+    "ts-node-dev": "^1.0.0-pre.49",
     "tslint": "^5.8.0",
     "tslint-config-airbnb": "^5.4.2",
-    "typescript": "^3.1.1"
+    "typescript": "^3.9.5"
   },
   "dependencies": {
     "@fullstack-one/auth": "^0.6.23",

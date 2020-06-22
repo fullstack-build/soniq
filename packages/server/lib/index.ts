@@ -5,10 +5,16 @@ import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 
 import * as http from "http";
+import { AsyncLocalStorage } from "async_hooks";
+
+import { customAlphabet } from "nanoid";
 // other npm dependencies
 import * as Koa from "koa";
 import * as compress from "koa-compress";
 import * as bodyParser from "koa-bodyparser";
+
+const asyncLocalStorage: AsyncLocalStorage<{ "requestId": string }> = new AsyncLocalStorage();
+export { asyncLocalStorage };
 
 export { Koa };
 
@@ -23,6 +29,7 @@ export class Server {
   private ENVIRONMENT: IEnvironment;
   private readonly bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
+
 
   constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
@@ -67,6 +74,16 @@ export class Server {
   private bootKoa(): void {
     try {
       this.app = new Koa();
+
+      /** START AsyncLocalStorage requestId middleware **/
+      this.app.use(async (ctx: Koa.Context, next: Koa.Next) => {
+        const requestId: string = ctx.request.headers['x-request-id'] || customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 6)();
+
+        await asyncLocalStorage.run({ requestId },  async () => {
+          return next();
+        })
+      });
+      /** END AsyncLocalStorage requestId middleware **/
 
       this.app.use(bodyParser());
       // Handle errors like ECONNRESET

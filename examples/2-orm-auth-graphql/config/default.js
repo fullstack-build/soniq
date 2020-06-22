@@ -1,13 +1,13 @@
 module.exports = {
   Auth: {
     secrets: {
-      jwt: process.env.AUTH_JWT_SECRET,
+      jwt:      "remove me later",
       admin: process.env.AUTH_ADMIN_SECRET,
       provider: process.env.AUTH_PROVIDERS_SECRET,
       cookie: process.env.AUTH_COOKIE_SECRET,
-      jwtRefreshToken: process.env.AUTH_JWT_REFRESH_TOKEN_SECRET,
-      privacyAgreementAcceptanceToken: process.env.AUTH_PRIVACY_TOKEN_SECRET,
-      authToken: process.env.AUTH_AUTH_TOKEN_SECRET,
+      jwtRefreshToken:   "remove me later",
+      privacyAgreementAcceptanceToken:   "remove me later",
+      authToken: "remove me later",
       authProviderHashSignature: "test1234",
       encryptionKey: "qcJVt6ASy9Ew2nRV5ZbhZEzAahn8fwjL"
     },

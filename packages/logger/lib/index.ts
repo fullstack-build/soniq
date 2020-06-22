@@ -3,6 +3,7 @@ export { Logger };
 
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
+import { asyncLocalStorage } from "@fullstack-one/server";
 
 
 @Service()
@@ -16,7 +17,11 @@ export class LoggerFactory {
     this.logger = new Logger({
       instanceName: env.nodeId,
       displayInstanceName: true,
-      printLogMessageInNewLine: true });
+      printLogMessageInNewLine: true,
+      requestId: (): string => {
+        return asyncLocalStorage?.getStore()?.requestId as string;
+      }
+    });
   }
 
   public create(name: string): Logger {

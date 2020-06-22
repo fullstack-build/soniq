@@ -19,7 +19,7 @@
     "lerna-bootstrap": "lerna bootstrap",
     "lerna-publish": "npm run clean:dist && npm run build && npm run lerna-publish-now",
     "lerna-publish-now": "lerna publish",
-    "build": "lerna run build",
+    "build": "node -v & lerna run build",
     "clean:dist": "lerna exec -- rm -rf ./dist",
     "clean:modules": "lerna clean",
     "reinstall": "npm run clean:modules && npm run clean:dist && npm run lerna-bootstrap && npm run build"
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@types/node": "^14.0.13",
     "git-hooks": "^1.1.10",
-    "lerna": "^3.20.2",
+    "lerna": "^3.22.1",
     "nyc": "^14.1.1",
     "prettier": "^1.18.2",
     "source-map-support": "^0.5.12",
@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "ava": "^2.4.0",
-    "ts-node": "^3.3.0",
+    "ts-node": "^8.10.2",
     "tsutils": "^2.28.0",
     "typescript": "^3.9.5"
   },

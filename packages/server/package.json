@@ -25,7 +25,11 @@
     "@fullstack-one/logger": "^0.6.23",
     "koa": "^2.5.2",
     "koa-bodyparser": "^4.2.1",
-    "koa-compress": "^3.0.0"
+    "koa-compress": "^3.0.0",
+    "nanoid": "^3.1.10"
   },
-  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad",
+  "devDependencies": {
+    "@types/nanoid": "^2.1.0"
+  }
 }
