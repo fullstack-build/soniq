@@ -7,10 +7,16 @@ import * as Ajv from "ajv";
 import { Logger, TLogLevelName } from "tslog";
 
 import { IModuleRuntimeConfig, IModuleAppConfig } from "./interfaces";
-import { getLatestMigrationVersion, ICoreMigration } from "./helpers";
+import {
+  getLatestMigrationVersion,
+  ICoreMigration,
+  getLatestMigrationVersionPoll,
+  ICoreMigrationPoll,
+} from "./helpers";
 import { Migration } from "./Migration";
 import { SoniqApp, SoniqEnvironment } from "./Application";
 import { IModuleMigrationResult } from "./Migration/interfaces";
+import { EventEmitter } from "events";
 
 export interface IGetModuleRuntimeConfigResult {
   runtimeConfig: IModuleRuntimeConfig;
@@ -20,11 +26,23 @@ export interface IGetModuleRuntimeConfigResult {
 export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
 export type TMigrationFunction = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
 export type TBootFunction = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
+export type TCreateExtensionConnectorFunction = () => ExtensionConnector;
+
+export interface IExtensionConnector {
+  detach: () => void;
+}
+
+export class ExtensionConnector {
+  public detach(): void {
+    return;
+  }
+}
 
 export interface IModuleCoreFunctions {
   key: string;
   migrate?: TMigrationFunction;
   boot?: TBootFunction;
+  createExtensionConnector?: TCreateExtensionConnectorFunction;
 }
 
 export * from "./interfaces";
@@ -32,6 +50,7 @@ export * from "./Migration/interfaces";
 export * from "./Migration/constants";
 export * from "./Migration/helpers";
 export * from "./Application";
+export * from "./Extensions";
 export { Pool, PoolClient, PoolConfig, QueryResult, Ajv };
 
 export enum EBootState {
@@ -48,7 +67,7 @@ process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
 
-@DI.autoInjectable()
+@DI.singleton()
 export class Core {
   private readonly _className: string = this.constructor.name;
   private readonly _logger: Logger;
@@ -60,10 +79,13 @@ export class Core {
   private _runTimePgPool: Pool | undefined;
   private _migration: Migration;
 
+  private _eventEmitter: EventEmitter;
+
   public constructor() {
     // TODO: catch all errors & exceptions
     this._logger = this.getLogger(this._className);
     this._migration = new Migration(this._logger, this);
+    this._eventEmitter = new EventEmitter();
   }
 
   public _getModuleCoreFunctionsByKey(key: string): IModuleCoreFunctions | null {
@@ -88,7 +110,6 @@ export class Core {
       const pgClient: PoolClient = await this._runTimePgPool.connect();
       try {
         const latestMigration: ICoreMigration = await getLatestMigrationVersion(pgClient);
-        await pgClient.release();
 
         if (latestMigration == null) {
           throw new Error("This database has no runtimeConfig.");
@@ -100,6 +121,8 @@ export class Core {
       } catch (err) {
         this._logger.error(`core.boot.error.caught: ${err}\n`);
         throw err;
+      } finally {
+        await pgClient.release();
       }
     };
   }
@@ -135,6 +158,8 @@ export class Core {
     this._runTimePgPool = new Pool(pgPoolConfig);
     this._state = EBootState.Booting;
 
+    this._startConfigPoller(null).catch(() => {});
+
     try {
       for (const moduleObject of this._modules) {
         if (moduleObject.boot != null) {
@@ -162,6 +187,43 @@ export class Core {
     this._drawCliArt();
   }
 
+  private async _startConfigPoller(lastMigration: ICoreMigrationPoll | null): Promise<void> {
+    if (this._runTimePgPool == null) {
+      throw new Error("Cannot call getModuleRuntimeConfigGetter when the Pool is not started");
+    }
+
+    const pgClient: PoolClient = await this._runTimePgPool.connect();
+    try {
+      const latestMigration: ICoreMigrationPoll = await getLatestMigrationVersionPoll(pgClient);
+
+      if (latestMigration == null) {
+        throw new Error("This database has no runtimeConfig.");
+      }
+
+      if (lastMigration != null) {
+        if (
+          lastMigration.version !== latestMigration.version ||
+          lastMigration.id !== latestMigration.id ||
+          lastMigration.createdAt.toString() !== latestMigration.createdAt.toString()
+        ) {
+          // Update
+          this._logger.info("New runtimeConfig version detected. Trigger update");
+          this._eventEmitter.emit("runtimeConfigUpdate");
+        }
+      }
+      setTimeout(() => {
+        this._startConfigPoller(latestMigration).catch(() => {});
+      }, 3000);
+    } catch (err) {
+      this._logger.error(`Config-Poller Error:`, err);
+      setTimeout(() => {
+        this._startConfigPoller(null).catch(() => {});
+      }, 3000);
+    } finally {
+      await pgClient.release();
+    }
+  }
+
   private _drawCliArt(): void {
     process.stdout.write(
       `     
@@ -185,5 +247,9 @@ export class Core {
       exposeStack,
       displayInstanceName: true,
     });
+  }
+
+  public getEventEmitter(): EventEmitter {
+    return this._eventEmitter;
   }
 }

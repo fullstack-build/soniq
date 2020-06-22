@@ -54,6 +54,8 @@
     "soniq": "1.0.0-dev.3",
     "@soniq/server": "1.0.0-dev.3",
     "@soniq/graphql": "1.0.0-dev.3",
-    "@soniq/auth": "1.0.0-dev.3"
+    "@soniq/auth": "1.0.0-dev.3",
+    "lodash": "~4.17.15",
+    "moment": "~2.27.0"
   }
 }

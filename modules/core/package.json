@@ -44,6 +44,7 @@
     "pg": "~8.0.3",
     "reflect-metadata": "~0.1.13",
     "tslog": "~2.1.0",
-    "tsyringe": "~4.3.0"
+    "tsyringe": "~4.3.0",
+    "@zeit/ncc": "~0.22.3"
   }
 }

@@ -1,7 +1,7 @@
-import { SoniqApp } from "soniq";
+import { SoniqApp, ExtensionsModule } from "soniq";
 import { AuthModule } from "@soniq/auth";
 import { GraphQlModule } from "@soniq/graphql";
-import { schema } from "../schema/schema";
+import { schema } from "./schema";
 
 import "./envs/dev";
 import "./envs/prod";
@@ -29,6 +29,18 @@ const graphqlModule: GraphQlModule = new GraphQlModule({
 
 const serverModule: ServerModule = new ServerModule({});
 
+const extensionsModule: ExtensionsModule = new ExtensionsModule([
+  {
+    name: "example",
+    mainPath: require.resolve("./extensions/example"),
+  },
+  {
+    name: "example2",
+    mainPath: require.resolve("./extensions/example2"),
+  },
+]);
+
 app.addModule(authModule);
 app.addModule(graphqlModule);
 app.addModule(serverModule);
+app.addModule(extensionsModule);

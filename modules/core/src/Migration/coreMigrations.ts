@@ -75,9 +75,9 @@ export async function generateCoreMigrations(
     ) {
       migrationResult.commands.push({
         sqls: [
-          `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $OneJsonToken$${JSON.stringify(
+          `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $SoniqJsonToken$${JSON.stringify(
             appConfig
-          )}$OneJsonToken$, $OneJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$OneJsonToken$);`,
+          )}$SoniqJsonToken$, $SoniqJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$SoniqJsonToken$);`,
         ],
         operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA,
       });
