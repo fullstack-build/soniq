@@ -1,0 +1,23 @@
+import { Core } from "@fullstack-one/core";
+import { GraphQl } from "@fullstack-one/graphql";
+import { Auth, AuthProviderEmail, AuthProviderPassword } from "@fullstack-one/auth";
+import { Server } from "@fullstack-one/server";
+import { IAppConfig } from "@fullstack-one/core/lib/interfaces";
+import { FileStorage } from "@fullstack-one/file-storage";
+import { exampleSchema } from "./example";
+export { exampleSchema };
+export declare const $auth: Auth;
+export declare const $core: Core;
+export declare const $gql: GraphQl;
+export declare const $server: Server;
+export declare const $authProviderEmail: AuthProviderEmail;
+export declare const $authProviderPassword: AuthProviderPassword;
+export declare const $fileStorage: FileStorage;
+export declare const appConfig: IAppConfig;
+export declare const pgConfig: {
+    user: string;
+    host: string;
+    database: string;
+    password: string;
+    port: number;
+};

@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const graphql_1 = require("@fullstack-one/graphql");
+const expressions_1 = require("../../expressions");
+const User_1 = require("../User");
+exports.post = new graphql_1.Table("Post", "soniq");
+exports.postId = new graphql_1.IdColumn();
+exports.title = new graphql_1.GenericColumn("title", "text");
+exports.content = new graphql_1.GenericColumn("content", "text");
+exports.owner = new graphql_1.ManyToOneColumn("owner", () => User_1.user);
+exports.post.addColumn(0, exports.postId, expressions_1.anyone);
+exports.post.addColumn(1, exports.title, expressions_1.anyone);
+exports.post.addColumn(2, exports.content, expressions_1.anyone);
+exports.post.addColumn(3, exports.owner, expressions_1.anyone);

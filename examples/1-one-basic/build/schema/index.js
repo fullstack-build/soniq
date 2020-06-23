@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const graphql_1 = require("@fullstack-one/graphql");
+const schema = new graphql_1.Schema(["soniq"]);
+const User_1 = require("./tables/User");
+const Post_1 = require("./tables/Post");
+schema.addTable(0, User_1.user);
+schema.addTable(1, Post_1.post);
+const res = schema._build("a3af9ea0-11a7-4eb0-96a0-7be79f827779");
+exports.default = res;

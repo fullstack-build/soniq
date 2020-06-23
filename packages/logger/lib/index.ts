@@ -3,7 +3,10 @@ export { Logger };
 
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-import { asyncLocalStorage } from "@fullstack-one/server";
+import { AsyncLocalStorage } from "async_hooks";
+
+const asyncLocalStorage: AsyncLocalStorage<{ "requestId": string }> = new AsyncLocalStorage();
+export { asyncLocalStorage };
 
 
 @Service()
@@ -30,3 +33,4 @@ export class LoggerFactory {
 
 
 }
+

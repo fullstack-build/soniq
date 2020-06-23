@@ -1,20 +1,16 @@
 import { Service, Container, Inject } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
-import { Logger, LoggerFactory } from "@fullstack-one/logger";
+import { Logger, LoggerFactory, asyncLocalStorage } from "@fullstack-one/logger";
 import { BootLoader } from "@fullstack-one/boot-loader";
 import { GracefulShutdown } from "@fullstack-one/graceful-shutdown";
 
 import * as http from "http";
-import { AsyncLocalStorage } from "async_hooks";
 
 import { customAlphabet } from "nanoid";
 // other npm dependencies
 import * as Koa from "koa";
 import * as compress from "koa-compress";
 import * as bodyParser from "koa-bodyparser";
-
-const asyncLocalStorage: AsyncLocalStorage<{ "requestId": string }> = new AsyncLocalStorage();
-export { asyncLocalStorage };
 
 export { Koa };
 
