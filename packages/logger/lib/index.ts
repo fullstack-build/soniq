@@ -12,7 +12,7 @@ export { asyncLocalStorage };
 @Service()
 export class LoggerFactory {
   private readonly config: any;
-  private logger: Logger;
+  public readonly logger: Logger;
 
   constructor(@Inject((type) => Config) config: Config) {
     this.config = config.registerConfig("Logger", `${__dirname}/../config`);
@@ -30,11 +30,6 @@ export class LoggerFactory {
   public create(name: string, settings: ISettingsParam = {}): Logger {
     return this.logger.getChildLogger({...settings, name});
   }
-
-  public setSettings(settings: ISettingsParam) {
-    this.logger.setSettings(settings);
-  }
-
 
 }
 

@@ -757,9 +757,9 @@ export class SqlObjFromMigrationObject {
         _createSqlRelation.call(this, fullRelationFromNodeOneSide, true);
         */
         // TO: find one side and copy and add "add" action
-        let fullRelationToNodeOneSide: any = Object.values(this.toDbMeta.relations[node.name]).find((relation: any) => {
-            return relation.type === "ONE";
-          });
+        const fullRelationToNodeOneSide: any = Object.values(this.toDbMeta.relations[node.name]).find((relation: any) => {
+          return relation.type === "ONE";
+        });
         fullRelationToNodeOneSide.ACTION_KEY = { add: true };
         // recreate new FK, keep column
         _createSqlRelation.call(this, this.fullRelationToNodeOneSide, true);

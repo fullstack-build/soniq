@@ -26,7 +26,6 @@ export class Server {
   private readonly bootLoader: BootLoader;
   // private eventEmitter: EventEmitter;
 
-
   constructor(
     // @Inject(type => EventEmitter) eventEmitter?,
     @Inject((type) => LoggerFactory) loggerFactory: LoggerFactory,
@@ -73,11 +72,11 @@ export class Server {
 
       /** START AsyncLocalStorage requestId middleware **/
       this.app.use(async (ctx: Koa.Context, next: Koa.Next) => {
-        const requestId: string = ctx.request.headers['x-request-id'] || customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 6)();
+        const requestId: string = ctx.request.headers["x-request-id"] || customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 6)();
 
-        await asyncLocalStorage.run({ requestId },  async () => {
+        await asyncLocalStorage.run({ requestId }, async () => {
           return next();
-        })
+        });
       });
       /** END AsyncLocalStorage requestId middleware **/
 
