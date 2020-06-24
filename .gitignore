@@ -95,3 +95,4 @@ fabric.properties
 
 .ts-node
 .ts-node*
+/packages/graphql/.cache/
