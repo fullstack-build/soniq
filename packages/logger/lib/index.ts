@@ -1,4 +1,4 @@
-import { Logger } from "tslog";
+import {ISettingsParam, Logger} from "tslog";
 export { Logger };
 
 import { Service, Inject, Container } from "@fullstack-one/di";
@@ -27,8 +27,12 @@ export class LoggerFactory {
     });
   }
 
-  public create(name: string): Logger {
-    return this.logger.getChildLogger({ name });
+  public create(name: string, settings: ISettingsParam = {}): Logger {
+    return this.logger.getChildLogger({...settings, name});
+  }
+
+  public setSettings(settings: ISettingsParam) {
+    this.logger.setSettings(settings);
   }
 
 
