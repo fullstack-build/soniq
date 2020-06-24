@@ -1,5 +1,5 @@
 import {ISettingsParam, Logger} from "tslog";
-export { Logger };
+export * as TSLog from "tslog";
 
 import { Service, Inject, Container } from "@fullstack-one/di";
 import { Config, IEnvironment } from "@fullstack-one/config";
