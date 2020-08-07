@@ -34,9 +34,7 @@ export class FilterBuilder {
   private _generateOperatorFilter(operatorName: string, columnName: string, value: unknown): string {
     const operator: IOperator = this._operatorsBuilder.getOperatorByName(operatorName);
     if (operator == null) {
-      throw new UserInputError(`Operator '${operatorName}' not found.`, {
-        exposeDetails: true,
-      });
+      throw new UserInputError(`Operator '${operatorName}' not found.`);
     }
 
     const context: IOperatorContext = {

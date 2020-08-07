@@ -1,11 +1,12 @@
 import { GraphQLResolveInfo } from "graphql";
-import { IParsedResolveInfo, parseResolveInfo } from "../types";
-import { IMutationBuildObject, IMutationInputObject } from "./types";
+import { parseResolveInfo } from "../types";
+import { IMutationBuildObject } from "./types";
 import resolveCreateMutation from "./resolveCreateMutation";
 import resolveUpdateMutation from "./resolveUpdateMutation";
 import resolveDeleteMutation from "./resolveDeleteMutation";
 import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
 import { IDefaultResolverMeta, IMutationViewMeta } from "../../RuntimeInterfaces";
+import { ResolveTree } from "graphql-parse-resolve-info";
 
 export * from "./types";
 
@@ -17,7 +18,7 @@ export default class MutationBuilder {
   }
 
   public build(info: GraphQLResolveInfo, returnIdHandler: ReturnIdHandler): IMutationBuildObject {
-    const query: IParsedResolveInfo<IMutationInputObject> = parseResolveInfo(info);
+    const query: ResolveTree = parseResolveInfo(info);
 
     const mutation: IMutationViewMeta = this._defaultResolverMeta.mutation[query.name];
 

@@ -33,7 +33,7 @@ export default function getDefaultMutationResolver(
 
         await hookManager.executePreQueryHooks(pgClient, context, isAuthenticated, mutationBuild, useContextPgClient);
 
-        logger.trace("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
+        logger.info("mutationResolver.run", mutationBuild.sql, mutationBuild.values);
 
         const result: QueryResult = await pgClient.query(mutationBuild.sql, mutationBuild.values);
 
@@ -42,10 +42,7 @@ export default function getDefaultMutationResolver(
 
         if (isUpdateOrDeleteMutation && result.rowCount < 1) {
           throw new UserInputError(
-            "No rows affected by this mutation. Either the entity does not exist or you are not permitted.",
-            {
-              exposeDetails: true,
-            }
+            "No rows affected by this mutation. Either the entity does not exist or you are not permitted."
           );
         }
 
@@ -63,10 +60,7 @@ export default function getDefaultMutationResolver(
           );
           if (idResult.rows[0] == null || idResult.rows[0].id == null) {
             throw new UserInputError(
-              "No rows affected by this mutation. Either the entity does not exist or you are not permitted.",
-              {
-                exposeDetails: true,
-              }
+              "No rows affected by this mutation. Either the entity does not exist or you are not permitted."
             );
           }
 
@@ -90,7 +84,7 @@ export default function getDefaultMutationResolver(
           // Generate sql query for response-data of the mutation
           returnQueryBuild = queryBuilder.build(info, isAuthenticated, useRootViews, match);
 
-          logger.trace("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
+          logger.info("mutationResolver.returnQuery.run", returnQueryBuild.sql, returnQueryBuild.values);
 
           await checkCosts(pgClient, returnQueryBuild, queryBuilder.getCostLimit());
 
@@ -103,8 +97,7 @@ export default function getDefaultMutationResolver(
           if (resultData.length < 1) {
             throw new UserInputError(
               "The return-query of this mutation has no entries. Perhaps you are not permitted to access the results." +
-                " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions.",
-              { exposeDetails: true }
+                " You can set 'returnOnlyId' on the permission-view to be able to run this mutation without changing read-permissions."
             );
           }
 

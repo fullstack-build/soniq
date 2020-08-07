@@ -52,7 +52,13 @@ export class AuthProvider {
     const sodiumConfig: ISodiumConfig = createConfig(this.getAuthRuntimeConfig().sodium);
     const passwordData: IPasswordData = await newHash(randomPassword, sodiumConfig);
 
-    const randomTime: string = DateTime.fromMillis(Math.round(Date.now() * Math.random()), { zone: "utc" }).toISO();
+    const randomTime: string | null = DateTime.fromMillis(Math.round(Date.now() * Math.random()), {
+      zone: "utc",
+    }).toISO();
+
+    if (randomTime == null) {
+      throw new Error("Failed to create Random Time.");
+    }
 
     // Create a fake auth-factor
     const authFactor: IAuthFactorForProof = {

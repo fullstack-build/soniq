@@ -1,11 +1,11 @@
 {
-  "name": "soniq",
+  "name": "@soniq/graphql-playground",
   "version": "1.0.0-dev.3",
-  "description": "A PostgreSQL centric GraphQL Framework",
+  "description": "@soniq graphql-playground module",
   "main": "index",
   "typings": "src/index",
   "engines": {
-    "node": ">=14"
+    "node": ">=12"
   },
   "scripts": {
     "build": "tsc",
@@ -31,22 +31,17 @@
   },
   "homepage": "https://soniq.js.org",
   "devDependencies": {
-    "@types/lodash": "~4.14.150",
     "@types/node": "^13.13.4",
-    "@types/pg": "^7.14.3",
     "eslint": "^6.8.0",
-    "prettier": "^2.0.5"
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5",
+    "@soniq/eslint-config": "~1.0.0-dev.3"
   },
   "dependencies": {
-    "@soniq/eslint-config": "~1.0.0-dev.3",
-    "ajv": "~6.12.2",
-    "lodash": "~4.17.15",
-    "pg": "~8.0.3",
-    "reflect-metadata": "~0.1.13",
-    "@zeit/ncc": "~0.22.3",
-    "tslog": "^2.5.0",
-    "tsyringe": "~4.3.0",
-    "nanoid": "~3.1.10",
-    "vm2": "~3.9.2"
+    "soniq": "~1.0.0-dev.3",
+    "@soniq/server": "~1.0.0-dev.3",
+    "graphql-playground-middleware-koa": "~1.6.17",
+    "graphql-playground-html": "~1.6.25"
   }
 }

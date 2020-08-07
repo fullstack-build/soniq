@@ -36,9 +36,7 @@ export class ClausesBuilder {
       const order: string | undefined = splitted.pop();
       const fieldName: string = splitted.join("_");
       if (order !== "ASC" && order !== "DESC") {
-        throw new UserInputError(`OrderBy has an invalid value '${option}'.`, {
-          exposeDetails: true,
-        });
+        throw new UserInputError(`OrderBy has an invalid value '${option}'.`);
       }
       return `${this._getColumn(fieldName)} ${order}`;
     });

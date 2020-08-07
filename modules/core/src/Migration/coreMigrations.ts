@@ -6,7 +6,7 @@ import { OPERATION_SORT_POSITION } from "./constants";
 import { ICoreMigration, getLatestMigrationVersion } from "../helpers";
 
 export async function generateCoreMigrations(
-  version: string,
+  version: number,
   appConfig: IAppConfig,
   pgClient: PoolClient,
   migrationResult: IAppMigrationResult
@@ -49,7 +49,7 @@ export async function generateCoreMigrations(
         `
           CREATE TABLE "_core"."Migrations" (
             "id" uuid DEFAULT uuid_generate_v4(),
-            "version" text NOT NULL,
+            "version" integer NOT NULL,
             "appConfig" json NOT NULL,
             "runtimeConfig" json NOT NULL,
             "createdAt" timestamp without time zone NOT NULL DEFAULT timezone('UTC'::text, now()),
@@ -62,17 +62,28 @@ export async function generateCoreMigrations(
     });
   }
 
-  if (migrationResult.commands.length > 0 && migrationResult.errors.length === 0) {
+  if (migrationResult.errors.length === 0) {
     let latestMigration: ICoreMigration | null = null;
 
     if (currentTableNames.indexOf("Migrations") >= 0) {
       latestMigration = await getLatestMigrationVersion(pgClient);
     }
     // .replace(new RegExp("'", "g"), "\\'")
+
     if (
       latestMigration == null ||
-      JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig)
+      JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig) ||
+      migrationResult.commands.length > 0
     ) {
+      console.log(
+        "REDO",
+        latestMigration == null,
+        latestMigration != null &&
+          JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig),
+        migrationResult.commands.length > 0
+      );
+      // console.log("A", JSON.stringify(latestMigration?.runtimeConfig));
+      // console.log("B", JSON.stringify(migrationResult.runtimeConfig));
       migrationResult.commands.push({
         sqls: [
           `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $SoniqJsonToken$${JSON.stringify(

@@ -1,6 +1,7 @@
 import { SoniqApp, ExtensionsModule } from "soniq";
 import { AuthModule } from "@soniq/auth";
 import { GraphQlModule } from "@soniq/graphql";
+import { GraphqlPlaygroundModule } from "@soniq/graphql-playground";
 import { schema } from "./schema";
 
 import "./envs/dev";
@@ -22,8 +23,8 @@ const authModule: AuthModule = new AuthModule({
 const graphqlModule: GraphQlModule = new GraphQlModule({
   schema,
   options: {
-    playgroundActive: true,
     introspectionActive: true,
+    dangerouslyExposeErrorDetails: true,
   },
 });
 
@@ -34,13 +35,16 @@ const extensionsModule: ExtensionsModule = new ExtensionsModule([
     name: "example",
     mainPath: require.resolve("./extensions/example"),
   },
-  {
-    name: "example2",
+  /*{
+    name: "example3",
     mainPath: require.resolve("./extensions/example2"),
-  },
+  },*/
 ]);
+
+const playgroundModule: GraphqlPlaygroundModule = new GraphqlPlaygroundModule({});
 
 app.addModule(authModule);
 app.addModule(graphqlModule);
 app.addModule(serverModule);
 app.addModule(extensionsModule);
+app.addModule(playgroundModule);

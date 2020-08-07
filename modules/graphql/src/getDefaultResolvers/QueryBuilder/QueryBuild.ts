@@ -1,9 +1,10 @@
 import { UserInputError } from "../../GraphqlErrors";
-import { IParsedResolveInfo, IMatch } from "../types";
+import { IMatch } from "../types";
 import { ClausesBuilder } from "./ClausesBuilder";
-import { IQueryBuildObject, IQueryClauseObject } from "./types";
+import { IQueryBuildObject } from "./types";
 import { IDefaultResolverMeta, IQueryViewMeta, IQueryFieldMeta } from "../../RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
+import { ResolveTree } from "graphql-parse-resolve-info";
 
 export default class QueryBuild {
   private readonly _defaultResolverMeta: IDefaultResolverMeta;
@@ -21,7 +22,7 @@ export default class QueryBuild {
     defaultResolverMeta: IDefaultResolverMeta,
     isAuthenticated: boolean,
     useRootViews: boolean,
-    query: IParsedResolveInfo<IQueryClauseObject>,
+    query: ResolveTree,
     match: IMatch | null = null
   ) {
     this._operatorsBuilder = operatorsBuilder;
@@ -32,32 +33,30 @@ export default class QueryBuild {
     this._queryName = query.name;
   }
 
-  private _jsonAgg(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch | null): string {
+  private _jsonAgg(query: ResolveTree, match: IMatch | null): string {
     const localName: string = this._getLocalAliasName();
     const tableSql: string = this._resolveTable(query, match);
     const sql: string = `(SELECT COALESCE(json_agg(row_to_json("${localName}")), '[]'::json) FROM (${tableSql}) "${localName}") "${query.name}"`;
     return sql;
   }
 
-  private _rowToJson(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch): string {
+  private _rowToJson(query: ResolveTree, match: IMatch): string {
     const localTableName: string = this._getLocalAliasName();
     const tableSql: string = this._resolveTable(query, match);
     return `(SELECT row_to_json("${localTableName}") FROM (${tableSql}) "${localTableName}") "${query.name}"`;
   }
 
-  private _resolveTable(query: IParsedResolveInfo<IQueryClauseObject>, match: IMatch | null): string {
+  private _resolveTable(query: ResolveTree, match: IMatch | null): string {
     const gqlTypeName: string = Object.keys(query.fieldsByTypeName)[0];
     const queryViewMeta: IQueryViewMeta = this._defaultResolverMeta.query[gqlTypeName];
 
     // First iteration always starts with jsonAgg and thus is an aggregation
     const isQueryRootLevel: boolean = this._currentIndex < 2 && match == null;
     if (isQueryRootLevel === true && queryViewMeta.disallowGenericRootLevelAggregation === true) {
-      throw new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`, {
-        exposeDetails: true,
-      });
+      throw new UserInputError(`The type '${gqlTypeName}' cannot be accessed by a root level aggregation.`);
     }
     const fields: {
-      [fieldName: string]: IParsedResolveInfo<IQueryClauseObject>;
+      [fieldName: string]: ResolveTree;
     } = query.fieldsByTypeName[gqlTypeName];
 
     const localName: string = this._getLocalAliasName();
@@ -67,7 +66,7 @@ export default class QueryBuild {
 
     Object.values(fields).forEach((field) => {
       if (queryViewMeta.fields[field.name] == null) {
-        throw new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`, { exposeDetails: true });
+        throw new UserInputError(`The field '${gqlTypeName}.${field.name}' is not available.`);
       }
       const fieldMeta: IQueryFieldMeta = queryViewMeta.fields[field.name];
       if (fieldMeta.authRequired) {
@@ -120,7 +119,7 @@ export default class QueryBuild {
   }
 
   private _resolveRelation(
-    query: IParsedResolveInfo<IQueryClauseObject>,
+    query: ResolveTree,
     fieldMeta: IQueryFieldMeta,
     localName: string,
     matchIdExpression: string
@@ -164,9 +163,7 @@ export default class QueryBuild {
 
   private _getColumnExpressionTemplate(fieldMeta: IQueryFieldMeta, localName: string): string {
     if (fieldMeta.rootOnlyColumn === true && this._useRootViews !== true) {
-      throw new UserInputError(`The field '${fieldMeta.fieldName}' is only accessible with root privileges.`, {
-        exposeDetails: true,
-      });
+      throw new UserInputError(`The field '${fieldMeta.fieldName}' is only accessible with root privileges.`);
     }
     if (fieldMeta.columnSelectExpressionTemplate == null) {
       throw new Error("columnSelectExpressionTemplate is missing in fieldMeta");

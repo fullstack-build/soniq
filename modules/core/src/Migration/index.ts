@@ -12,12 +12,13 @@ import {
 } from "./interfaces";
 
 import { Pool, PoolClient, PoolConfig } from "pg";
-import { applyAutoAppConfigFixes, buildMigrationResult } from "./helpers";
+import { applyAutoAppConfigFixes, buildMigrationResult, getTables } from "./helpers";
 
 import { SoniqApp, SoniqEnvironment, SoniqAppConfigOverwrite } from "../Application";
 import { Logger, Core, IModuleCoreFunctions } from "..";
 import { generateCoreMigrations } from "./coreMigrations";
 import { printMigrationResult } from "./printer";
+import { getLatestMigrationVersion, ICoreMigration } from "../helpers";
 
 export class Migration {
   private _logger: Logger;
@@ -43,12 +44,33 @@ export class Migration {
     env.getAppConfigOverwrites().forEach((appConfigOverwrite: SoniqAppConfigOverwrite) => {
       appConfig = appConfigOverwrite._build(JSON.parse(JSON.stringify(appConfig)));
     });
+    let nextVersion: number = 0;
+    const pgPool: Pool = new Pool(env.getPgConfig());
 
-    return this.generateMigrationWithAppConfigAndPool("v" + Math.random().toString(), appConfig, env.getPgConfig());
+    try {
+      const pgClient: PoolClient = await pgPool.connect();
+      const currentTableNames: string[] = await getTables(pgClient, ["_core"]);
+
+      if (currentTableNames.indexOf("Migrations") >= 0) {
+        const lastMigration: ICoreMigration | null = await getLatestMigrationVersion(pgClient);
+
+        if (lastMigration != null) {
+          nextVersion = lastMigration.version + 1;
+        }
+      }
+      pgClient.release();
+    } catch (e) {
+      console.log("Error", e);
+      throw e;
+    } finally {
+      await pgPool.end();
+    }
+
+    return this.generateMigrationWithAppConfigAndPool(nextVersion, appConfig, env.getPgConfig());
   }
 
   public async generateMigrationWithAppConfigAndPool(
-    version: string,
+    version: number,
     appConfig: IAppConfig,
     pgPoolConfig: PoolConfig
   ): Promise<IMigrationResultWithFixes> {
@@ -73,7 +95,7 @@ export class Migration {
   }
 
   public async generateMigrationWithPgPool(
-    version: string,
+    version: number,
     appConfig: IAppConfig,
     pgPool: Pool,
     throwErrorOnInfiniteMigration: boolean = false
@@ -321,7 +343,7 @@ export class Migration {
   }
 
   private async _generateModuleMigrations(
-    version: string,
+    version: number,
     appConfig: IAppConfig,
     pgClient: PoolClient
   ): Promise<IMigrationResult> {

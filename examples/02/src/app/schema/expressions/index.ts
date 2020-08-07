@@ -1,7 +1,7 @@
 import { Expression } from "@soniq/graphql";
 
 export const currentUserId: Expression = new Expression({
-  gqlReturnType: "Boolean",
+  gqlReturnType: "String",
   authRequired: true,
   generateSql: (getExpression, getColumn) => {
     return `_auth.current_user_id()`;

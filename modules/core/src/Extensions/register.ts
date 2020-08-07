@@ -1,8 +1,19 @@
 import { TRegisterFunction } from "./interfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let soniqExtensionContext: any;
+let soniqExtensionRegisterFunction: TRegisterFunction | null = null;
 
 export function registerExtension(register: TRegisterFunction): void {
-  soniqExtensionContext.registerNewExtension = register;
+  if (soniqExtensionRegisterFunction == null) {
+    soniqExtensionRegisterFunction = register;
+  } else {
+    throw new Error("The extension-register-function cannot be set twice.");
+  }
+}
+
+export function prepareRegister(): void {
+  soniqExtensionRegisterFunction = null;
+}
+
+export function getExtensionRegisterFunction(): TRegisterFunction | null {
+  return soniqExtensionRegisterFunction;
 }

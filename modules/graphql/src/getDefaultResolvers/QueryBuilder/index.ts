@@ -1,11 +1,12 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { IParsedResolveInfo, parseResolveInfo, IMatch } from "../types";
-import { IQueryBuildObject, IQueryClauseObject } from "./types";
+import { parseResolveInfo, IMatch } from "../types";
+import { IQueryBuildObject } from "./types";
 import QueryBuild from "./QueryBuild";
 import { IDefaultResolverMeta } from "../../RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
 import { IGraphqlOptions } from "../../moduleDefinition/interfaces";
+import { ResolveTree } from "graphql-parse-resolve-info";
 
 export * from "./types";
 
@@ -30,7 +31,7 @@ export default class QueryBuilder {
     useRootViews: boolean = false,
     match: IMatch | null = null
   ): IQueryBuildObject {
-    const query: IParsedResolveInfo<IQueryClauseObject> = parseResolveInfo(info);
+    const query: ResolveTree = parseResolveInfo(info);
 
     const selectQueryBuild: QueryBuild = new QueryBuild(
       this._operatorsBuilder,

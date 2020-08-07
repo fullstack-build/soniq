@@ -29,9 +29,7 @@ const is: IOperator = {
   getSql: (context) => {
     const { fieldPgSelector, value } = context;
     if (operators[value] == null) {
-      throw new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`, {
-        exposeDetails: true,
-      });
+      throw new UserInputError(`Operator '${value}' not found for generating where clause 'in'.`);
     }
     return `${fieldPgSelector} ${operators[value]}`;
   },

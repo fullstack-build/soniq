@@ -81,9 +81,8 @@ export default async function checkCosts(
 
   if (currentCost > costLimit) {
     throw new UserInputError(
-      "This query seems to be to exprensive. Please set some limits. " +
-        `Costs: (current: ${currentCost}, limit: ${costLimit})`,
-      { exposeDetails: true }
+      "This query seems to be to expensive. Please set some limits. " +
+        `Costs: (current: ${currentCost}, limit: ${costLimit})`
     );
   }
 

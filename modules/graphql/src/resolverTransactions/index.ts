@@ -2,7 +2,7 @@
 /* eslint-disable require-atomic-updates */
 import * as graphQLJSON from "graphql-type-json";
 import { GraphQLResolveInfo } from "graphql";
-import { MergeInfo, IFieldResolver, IResolvers } from "graphql-tools";
+import { IFieldResolver, IResolvers } from "@graphql-tools/utils";
 import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
 import { Logger } from "soniq";
@@ -16,9 +16,7 @@ export type ICustomFieldResolver<TSource, TContext> = (
     [argument: string]: any;
   },
   context: TContext,
-  info: GraphQLResolveInfo & {
-    mergeInfo: MergeInfo;
-  },
+  info: GraphQLResolveInfo,
   returnIdHandler: ReturnIdHandler
 ) => any;
 
@@ -33,7 +31,7 @@ export interface ICustomResolverObject {
   [key: string]: ICustomResolverCreator;
 }
 
-function wrapResolver<TSource, TContext>(
+function wrapFieldResolver<TSource, TContext>(
   resolverMeta: ICustomResolverMeta,
   resolver: IResolver
 ): IFieldResolver<TSource, TContext> {
@@ -77,13 +75,11 @@ function wrapMutationResolver<TSource, TContext, TParams>(
 
     if (context._transactionRunning === true) {
       if (context._transactionPgClient == null) {
-        throw new UserInputError("This transaction has already been rolled back.", { exposeDetails: true });
+        throw new UserInputError("This transaction has already been rolled back.");
       }
       if (resolverMeta.usesPgClientFromContext !== true) {
         await rollbackAndReleaseTransaction(context, logger);
-        throw new UserInputError("This mutation cannot be used inside a transaction. => ROLLBACK", {
-          exposeDetails: true,
-        });
+        throw new UserInputError("This mutation cannot be used inside a transaction. => ROLLBACK");
       }
 
       try {
@@ -189,7 +185,6 @@ export function getResolvers(
   logger: Logger
 ): IResolvers {
   const resolvers: IResolvers = {
-    //@ts-ignore TODO: @eugene WTF?
     JSON: graphQLJSON,
     Query: {},
     Mutation: {},
@@ -229,7 +224,7 @@ export function getResolvers(
         break;
       // For any Type and Query
       default:
-        resolvers[firstPath][secondPath] = wrapResolver(resolverMeta, resolver);
+        resolvers[firstPath][secondPath] = wrapFieldResolver(resolverMeta, resolver);
         break;
     }
   });

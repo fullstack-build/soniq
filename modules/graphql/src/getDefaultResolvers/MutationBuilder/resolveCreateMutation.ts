@@ -1,21 +1,26 @@
-import { IParsedResolveInfo } from "../types";
-import { IMutationBuildObject, IMutationInputObject } from "./types";
+import { IMutationBuildObject } from "./types";
 import parseValue from "./parseValue";
 import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
 import { IMutationViewMeta, IDefaultResolverMeta } from "../../RuntimeInterfaces";
+import { ResolveTree } from "graphql-parse-resolve-info";
 
 export default function resolveCreateMutation(
   defaultResolverMeta: IDefaultResolverMeta,
-  query: IParsedResolveInfo<IMutationInputObject>,
+  query: ResolveTree,
   mutation: IMutationViewMeta,
   returnIdHandler: ReturnIdHandler
 ): IMutationBuildObject {
-  const fieldNames: string = Object.keys(query.args.input)
+  if (query.args.input == null) {
+    throw new Error("Invalid input.");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const input: any = query.args.input;
+  const fieldNames: string = Object.keys(input)
     .map((name) => `"${name}"`)
     .join(", ");
 
   const values: string[] = [];
-  const valuesString: string = Object.values(query.args.input)
+  const valuesString: string = Object.values(input)
     .map((value, index) => {
       const finalValue: string | null = parseValue(value, returnIdHandler);
 
@@ -30,6 +35,6 @@ export default function resolveCreateMutation(
     sql: `INSERT INTO "${defaultResolverMeta.viewsSchemaName}"."${mutation.viewName}" (${fieldNames}) VALUES (${valuesString});`,
     values,
     mutation,
-    id: returnIdHandler.getReturnId(query.args.input.id || null),
+    id: returnIdHandler.getReturnId(input.id || null),
   };
 }

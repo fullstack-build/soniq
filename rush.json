@@ -427,6 +427,12 @@
       "versionPolicyName": "soniq"
     },
     {
+      "packageName": "@soniq/graphql-playground",
+      "projectFolder": "modules/graphql-playground",
+      "shouldPublish": true,
+      "versionPolicyName": "soniq"
+    },
+    {
       "packageName": "@soniq/auth",
       "projectFolder": "modules/auth",
       "shouldPublish": true,

@@ -1,14 +1,7 @@
-import { Logger, TCreateModuleExtensionConnectorFunction } from "soniq";
+import { Logger, TCreateModuleExtensionConnectorFunction, registerExtension } from "soniq";
 import { Koa, ServerExtensionConnector } from "@soniq/server";
-/*
-// @ts-ignore
-import * as lodash from "lodash";
-import * as moment from "moment";*/
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let soniqExtensionContext: any;
-
-soniqExtensionContext.registerNewExtension = () => {
+registerExtension(() => {
   return {
     attach: (logger: Logger, createModuleExtensionConnector: TCreateModuleExtensionConnectorFunction) => {
       logger.info("Attaching example extension.");
@@ -20,8 +13,8 @@ soniqExtensionContext.registerNewExtension = () => {
       //const foobar = lodash.get(serverConnector, "addKoaMiddleware");
 
       serverConnector.addKoaMiddleware((ctx: Koa.Context, next: Koa.Next) => {
-        if (ctx.path.startsWith("/extensionDemo5")) {
-          ctx.body = "Hallo Test 1\n"; //+ moment().format('LLLL') + "\n" + moment().format('LTS');
+        if (ctx.path.startsWith("/extensionDemo6")) {
+          ctx.body = "Hallo Test 12 XX\n"; //+ moment().format('LLLL') + "\n" + moment().format('LTS');
         } else {
           return next();
         }
@@ -31,4 +24,4 @@ soniqExtensionContext.registerNewExtension = () => {
       logger.info("Detaching example extension.");
     },
   };
-};
+});

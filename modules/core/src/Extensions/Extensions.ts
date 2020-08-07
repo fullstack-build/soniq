@@ -12,12 +12,15 @@ import { IModuleMigrationResult } from "../Migration/interfaces";
 
 // @ts-ignore TODO: This module has no definition
 import * as ncc from "@zeit/ncc";
-import { IExtensionsAppConfig, IExtension, TDetachFunction, ISoniqExtensionContext } from "./interfaces";
+import { IExtensionsAppConfig, IExtension, TDetachFunction, TRegisterFunction } from "./interfaces";
 
 import * as crypto from "crypto";
 import { getTables } from "../Migration/helpers";
 import { OPERATION_SORT_POSITION } from "../Migration/constants";
 import { ICurrentExtension, getCurrentExtensions, getRuntimeExtensions, IRuntimeExtension } from "./helpers";
+import { NodeVM } from "vm2";
+import * as soniq from "../";
+import { prepareRegister, getExtensionRegisterFunction } from "./register";
 
 const extensionBuildCache: { [key: string]: string } = {};
 
@@ -129,6 +132,7 @@ export class Extensions {
 
         if (currentExtensionsByName[extension.name] != null) {
           if (currentExtensionsByName[extension.name].codeHash !== codeHash) {
+            currentExtensionsByName[extension.name].codeHash = codeHash;
             migrationResult.commands.push({
               sqls: [
                 `UPDATE _core."Extensions" SET code=$SoniqDataToken$${code}$SoniqDataToken$, "codeHash"=$SoniqDataToken$${codeHash}$SoniqDataToken$ WHERE name = $SoniqDataToken$${extension.name}$SoniqDataToken$`,
@@ -137,6 +141,10 @@ export class Extensions {
             });
           }
         } else {
+          currentExtensionsByName[extension.name] = {
+            name: extension.name,
+            codeHash,
+          };
           migrationResult.commands.push({
             sqls: [
               `INSERT INTO _core."Extensions"(name, code, "codeHash") VALUES('${extension.name}', $SoniqDataToken$${code}$SoniqDataToken$, $SoniqDataToken$${codeHash}$SoniqDataToken$);`,
@@ -155,7 +163,19 @@ export class Extensions {
       }
     }
 
-    migrationResult.moduleRuntimeConfig.extensions = currentExtensionsByName;
+    /* migrationResult.moduleRuntimeConfig.extensions = Object.values(currentExtensionsByName).sort(
+      (a: ICurrentExtension, b: ICurrentExtension) => {
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name > b.name) {
+          return -1;
+        }
+        return 0;
+      }
+    ); */
+
+    // console.log("EXT RES:", migrationResult.moduleRuntimeConfig.extensions);
 
     return migrationResult;
   }
@@ -214,20 +234,27 @@ export class Extensions {
   private async _attachExtension(extension: IRuntimeExtension): Promise<void> {
     this._logger.info(`Loading extension "${extension.name}" with hash "${extension.codeHash}"...`);
     try {
-      const soniqExtensionContext: ISoniqExtensionContext = {
-        registerNewExtension: null,
-      };
-      // eslint-disable-next-line no-eval
-      eval(extension.code);
+      const vm: NodeVM = new NodeVM({
+        timeout: 1000,
+        require: {
+          external: true,
+          mock: {
+            soniq,
+          },
+        },
+      });
 
-      if (soniqExtensionContext.registerNewExtension == null) {
+      prepareRegister();
+      vm.run(extension.code);
+      const registerNewExtension: TRegisterFunction | null = getExtensionRegisterFunction();
+
+      if (registerNewExtension == null) {
         throw new Error(`The code of extension "${extension.name}" has not set a register function.`);
       }
 
       this._logger.info(`Register extension "${extension.name}" with hash "${extension.codeHash}"...`);
 
-      // @ts-ignore
-      const runtimeExtension: IExtension = soniqExtensionContext.registerNewExtension();
+      const runtimeExtension: IExtension = registerNewExtension();
 
       this._logger.info(`Attach extension "${extension.name}" with hash "${extension.codeHash}"...`);
 

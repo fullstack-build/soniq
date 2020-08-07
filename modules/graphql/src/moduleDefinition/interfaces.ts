@@ -5,16 +5,16 @@ export interface IGraphqlOptions {
   endpointPath: string;
   costLimit: number;
   minSubqueryCountToCheckCostLimit: number;
-  playgroundActive: boolean;
   introspectionActive: boolean;
+  dangerouslyExposeErrorDetails: boolean;
 }
 
 export interface IGraphqlOptionsInput {
   endpointPath?: string;
   costLimit?: number;
   minSubqueryCountToCheckCostLimit?: number;
-  playgroundActive?: boolean;
   introspectionActive?: boolean;
+  dangerouslyExposeErrorDetails?: boolean;
 }
 
 export interface IGraphqlAppConfig {

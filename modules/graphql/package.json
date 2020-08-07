@@ -38,28 +38,30 @@
     "prettier": "^2.0.5",
     "@soniq/eslint-config": "1.0.0-dev.3",
     "@types/graphql-type-json": "~0.3.2",
-    "@types/koa-compose": "~3.2.5"
+    "@types/koa-compose": "~3.2.5",
+    "@types/http-errors": "~1.8.0",
+    "@types/koa-bodyparser": "~4.3.0",
+    "@types/koa-json": "~2.0.18"
   },
   "dependencies": {
     "soniq": "1.0.0-dev.3",
     "@soniq/server": "1.0.0-dev.3",
-    "@types/graphql": "0.13.4",
     "@types/koa-mount": "^3.0.1",
     "@types/lodash": "^4.14.136",
     "ajv": "^6.11.0",
-    "apollo-cache-inmemory": "1.6.2",
-    "apollo-client": "2.6.3",
-    "apollo-link-schema": "1.2.3",
-    "apollo-server-koa": "2.4.8",
-    "graphql": "0.13.2",
-    "graphql-parse-resolve-info": "0.1.0-alpha.18",
-    "graphql-tools": "3.0.0",
+    "graphql": "^14.7.0",
+    "graphql-parse-resolve-info": "~4.7.0",
     "graphql-type-json": "0.1.4",
     "lodash": "^4.17.15",
     "uuid": "^7.0.3",
     "uuid-validate": "0.0.3",
-    "apollo-server-env": "~2.4.3",
     "koa-compose": "~4.1.0",
-    "apollo-server-core": "~2.13.1"
+    "koa-graphql": "~0.8.0",
+    "koa-mount": "~4.0.0",
+    "@graphql-tools/schema": "~6.0.10",
+    "http-errors": "~1.8.0",
+    "koa-bodyparser": "~4.3.0",
+    "koa-json": "~2.0.2",
+    "@graphql-tools/utils": "~6.0.15"
   }
 }

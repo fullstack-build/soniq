@@ -1,5 +1,5 @@
 export interface IEnvironment {
-  readonly frameworkVersion: string;
+  readonly frameworkVersion: number;
   readonly NODE_ENV: string;
   readonly name: string | undefined;
   readonly path: string;

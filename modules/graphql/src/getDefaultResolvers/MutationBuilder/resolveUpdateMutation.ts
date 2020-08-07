@@ -1,21 +1,29 @@
-import { IParsedResolveInfo } from "../types";
-import { IMutationBuildObject, IMutationInputObject } from "./types";
+import { IMutationBuildObject } from "./types";
 import parseValue from "./parseValue";
 import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
 import { IDefaultResolverMeta, IMutationViewMeta } from "../../RuntimeInterfaces";
+import { ResolveTree } from "graphql-parse-resolve-info";
 
 export default function resolveUpdateMutation(
   defaultResolverMeta: IDefaultResolverMeta,
-  query: IParsedResolveInfo<IMutationInputObject>,
+  query: ResolveTree,
   mutation: IMutationViewMeta,
   returnIdHandler: ReturnIdHandler
 ): IMutationBuildObject {
+  if (query.args.input == null) {
+    throw new Error("Invalid input.");
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const input: any = query.args.input;
+  if (input.id == null) {
+    throw new Error("Invalid input. Missing id.");
+  }
   const values: string[] = [];
 
-  const fieldAssignments: string = Object.keys(query.args.input)
+  const fieldAssignments: string = Object.keys(input)
     .filter((fieldName) => fieldName !== "id")
     .map((fieldName, index) => {
-      const value: unknown = query.args.input[fieldName];
+      const value: unknown = input[fieldName];
       const finalValue: string | null = parseValue(value, returnIdHandler);
 
       if (finalValue != null) {
@@ -25,7 +33,7 @@ export default function resolveUpdateMutation(
     })
     .join(", ");
 
-  const entityId: string = returnIdHandler.getReturnId(query.args.input.id);
+  const entityId: string = returnIdHandler.getReturnId(input.id);
   values.push(entityId);
 
   return {

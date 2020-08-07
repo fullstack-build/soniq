@@ -5,7 +5,7 @@ const LATEST_MIGRATION_VERSION: string = `SELECT id, version, "runtimeConfig", "
 
 export interface ICoreMigration {
   id: string;
-  version: string;
+  version: number;
   runtimeConfig: any;
   createdAt: string;
 }
@@ -20,7 +20,7 @@ const LATEST_MIGRATION_VERSION_POLL: string = `SELECT id, version, "createdAt" F
 
 export interface ICoreMigrationPoll {
   id: string;
-  version: string;
+  version: number;
   createdAt: string;
 }
 

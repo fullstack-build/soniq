@@ -6,7 +6,7 @@ export default class EnvironmentBuilder {
   public static readonly nodeIdLength: number = 6;
 
   public static buildEnvironment(NODE_ENV: string, namespace: string): IEnvironment {
-    const frameworkVersion: string = require("../../../package.json").version;
+    const frameworkVersion: number = require("../../../package.json").version;
     const applicationRootPath: string = path.dirname(require.main?.filename ?? "");
     const { applicationName, applicationVersion } = this._getApplicationNameAndVersion(applicationRootPath);
     const nodeId: string = this._generateNodeId(EnvironmentBuilder.nodeIdLength);
@@ -26,7 +26,7 @@ export default class EnvironmentBuilder {
     applicationRootPath: string
   ): {
     applicationName: string | undefined;
-    applicationVersion: string | undefined;
+    applicationVersion: number | undefined;
   } {
     return {
       applicationName: process.env.npm_package_name,

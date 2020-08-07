@@ -242,9 +242,9 @@ export class Migration {
           costLimit: options.costLimit != null ? options.costLimit : 2000000000,
           minSubqueryCountToCheckCostLimit:
             options.minSubqueryCountToCheckCostLimit != null ? options.minSubqueryCountToCheckCostLimit : 3,
-          playgroundActive: options.playgroundActive === true,
           introspectionActive: options.introspectionActive === true,
           endpointPath: options.endpointPath || "/graphql",
+          dangerouslyExposeErrorDetails: options.dangerouslyExposeErrorDetails === true,
         },
       };
     }

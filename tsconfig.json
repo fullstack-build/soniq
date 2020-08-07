@@ -28,5 +28,5 @@
     "examples/**/src/*.ts",
     "examples/**/src/**/*.ts"
   ],
-  "exclude": ["node_modules","**/node_modules", "**/dist", "**/test", "*.test.ts"]
+  "exclude": ["node_modules","**/node_modules", "**/dist", "**/test", "*.test.ts", "**/common/temp"]
 }

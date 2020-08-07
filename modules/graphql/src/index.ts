@@ -1,9 +1,7 @@
-import { ApolloServer } from "apollo-server-koa";
-
 import { Core, IModuleAppConfig, PoolClient, IModuleMigrationResult, Pool, DI, Logger } from "soniq";
 import { Server, Koa } from "@soniq/server";
 
-import { applyApolloMiddleware } from "./koaMiddleware";
+import { applyMiddleware } from "./gqlHttpEndpoint";
 import {
   ICustomFieldResolver,
   ICustomResolverObject,
@@ -19,7 +17,7 @@ import {
   getCommitTransactionResolver,
 } from "./resolverTransactions/getTransactionMutationResolvers";
 import { getTransactionMutationTypeDefs } from "./resolverTransactions/getTransactionMutationTypeDefs";
-import { AuthenticationError, ForbiddenError, UserInputError, ApolloError } from "./GraphqlErrors";
+import { AuthenticationError, ForbiddenError, UserInputError, InternalServerError } from "./GraphqlErrors";
 import { Migration, ITypeDefsExtension, IResolverExtension } from "./migration/Migration";
 import { IColumnExtension } from "./migration/columnExtensions/IColumnExtension";
 import { ISchemaExtension } from "./migration/schemaExtensions/ISchemaExtension";
@@ -31,11 +29,10 @@ import { IPostProcessingExtension } from "./migration/postProcessingExtensions/I
 import { TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
 import { IPropertySchema } from "./migration/interfaces";
 export {
-  ApolloServer,
   AuthenticationError,
   ForbiddenError,
   UserInputError,
-  ApolloError,
+  InternalServerError,
   ReturnIdHandler,
   RevertibleResult,
   ICustomResolverObject,
@@ -129,7 +126,7 @@ export class GraphQl {
 
     const app: Koa = this._server.getApp();
 
-    return applyApolloMiddleware(
+    return applyMiddleware(
       app,
       getRuntimeConfig,
       pgPool,

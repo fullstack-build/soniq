@@ -53,7 +53,7 @@ export default function getDefaultQueryResolver(
             useContextPgClient
           );
 
-          logger.trace("queryResolver.run", queryBuild.sql, queryBuild.values);
+          logger.info("queryResolver.run", queryBuild.sql, queryBuild.values);
 
           await checkCosts(pgClient, queryBuild, queryBuilder.getCostLimit());
 

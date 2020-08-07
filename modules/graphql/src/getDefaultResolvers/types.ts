@@ -1,22 +1,16 @@
 import { GraphQLResolveInfo } from "graphql";
-//@ts-ignore TODO: @eugene This package has no types.
-import { parseResolveInfo as graphQlParseResolveInfo } from "graphql-parse-resolve-info";
+import { parseResolveInfo as graphQlParseResolveInfo, ResolveTree, FieldsByTypeName } from "graphql-parse-resolve-info";
 
 export * from "./MutationBuilder/types";
 export * from "./QueryBuilder/types";
-export function parseResolveInfo<TArgs>(info: GraphQLResolveInfo): IParsedResolveInfo<TArgs> {
-  return graphQlParseResolveInfo(info);
-}
+export function parseResolveInfo<TArgs>(info: GraphQLResolveInfo): ResolveTree {
+  const result: ResolveTree | FieldsByTypeName | null | void = graphQlParseResolveInfo(info);
 
-export interface IParsedResolveInfo<TArgs> {
-  name: string;
-  alias: string;
-  args: TArgs;
-  fieldsByTypeName: {
-    [typeName: string]: {
-      [fieldName: string]: IParsedResolveInfo<TArgs>;
-    };
-  };
+  if (result != null && result.name != null) {
+    return result as ResolveTree;
+  } else {
+    throw new Error("Invalid query.");
+  }
 }
 
 export interface IDefaultMutationResolverContext {
