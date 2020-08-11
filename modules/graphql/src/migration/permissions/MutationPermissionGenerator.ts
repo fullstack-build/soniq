@@ -87,7 +87,7 @@ export class MutationPermissionGenerator {
     const mutationsMeta: IMutationsMeta = {
       views: [],
       gqlTypeDefs: "",
-      resolvers: [],
+      resolverMappings: [],
       mutationViewMetas: [],
     };
 
@@ -105,8 +105,8 @@ export class MutationPermissionGenerator {
       result.views.forEach((view) => {
         mutationsMeta.views.push(view);
       });
-      result.resolvers.forEach((resolver) => {
-        mutationsMeta.resolvers.push(resolver);
+      result.resolverMappings.forEach((resolverMapping) => {
+        mutationsMeta.resolverMappings.push(resolverMapping);
       });
 
       mutationsMeta.mutationViewMetas.push(result.mutationViewMeta);
@@ -133,7 +133,7 @@ export class MutationPermissionGenerator {
     const mutationData: IMutationPermissionGeneratorResult = {
       views: [],
       gqlTypeDefs: "",
-      resolvers: [],
+      resolverMappings: [],
       mutationViewMeta: {
         name: mutationName,
         type: mutation.type,
@@ -225,7 +225,7 @@ export class MutationPermissionGenerator {
       mutationData.mutationViewMeta.returnOnlyId ? "ID" : table.name
     )}\n`;
 
-    mutationData.resolvers.push({
+    mutationData.resolverMappings.push({
       path: `Mutation.${mutationName}`,
       key: "@fullstack-one/graphql/mutationResolver",
       config: {},

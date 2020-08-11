@@ -46,7 +46,7 @@ export class AuthProviderPassword {
           };
         };
       })
-      .forEach(graphQl.addResolverExtension.bind(graphQl));
+      .forEach(graphQl.addResolverMappingExtension.bind(graphQl));
 
     this._authProvider = auth.createAuthProvider("password");
   }

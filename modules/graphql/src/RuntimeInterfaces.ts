@@ -2,12 +2,12 @@ import { IGraphqlOptions } from "./moduleDefinition/interfaces";
 
 export interface IGraphqlRuntimeConfig {
   gqlTypeDefs: string;
-  resolvers: IResolver[];
+  resolverMappings: IResolverMapping[];
   defaultResolverMeta: IDefaultResolverMeta;
   options: IGraphqlOptions;
 }
 
-export interface IResolver {
+export interface IResolverMapping {
   path: string; // e.g. Query.users, Mutation.createUser, User.stripeAccount
   key: string; // e.g. one/auth/createUserAuthentication
   config: {
@@ -64,14 +64,14 @@ export interface IMutationViewMeta {
 export interface IQueryPermissionGeneratorResult {
   views: IPgView[];
   gqlTypeDefs: string;
-  resolvers: IResolver[];
+  resolverMappings: IResolverMapping[];
   queryViewMeta: IQueryViewMeta;
 }
 
 export interface IMutationPermissionGeneratorResult {
   views: IPgView[];
   gqlTypeDefs: string;
-  resolvers: IResolver[];
+  resolverMappings: IResolverMapping[];
   mutationViewMeta: IMutationViewMeta;
 }
 
@@ -83,7 +83,7 @@ export interface IPgView {
 export interface IMutationsMeta {
   views: IPgView[];
   gqlTypeDefs: string;
-  resolvers: IResolver[];
+  resolverMappings: IResolverMapping[];
   mutationViewMetas: IMutationViewMeta[];
 }
 

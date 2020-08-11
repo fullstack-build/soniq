@@ -7,7 +7,7 @@ import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
 import { Logger } from "soniq";
 import { UserInputError } from "../GraphqlErrors";
-import { IResolver } from "../RuntimeInterfaces";
+import { IResolverMapping } from "../RuntimeInterfaces";
 import { Pool } from "soniq";
 
 export type ICustomFieldResolver<TSource, TContext> = (
@@ -25,7 +25,7 @@ export interface ICustomResolverMeta {
   usesPgClientFromContext: boolean;
 }
 
-export type ICustomResolverCreator = (resolver: IResolver) => ICustomResolverMeta;
+export type ICustomResolverCreator = (resolver: IResolverMapping) => ICustomResolverMeta;
 
 export interface ICustomResolverObject {
   [key: string]: ICustomResolverCreator;
@@ -33,7 +33,7 @@ export interface ICustomResolverObject {
 
 function wrapFieldResolver<TSource, TContext>(
   resolverMeta: ICustomResolverMeta,
-  resolver: IResolver
+  resolverMapping: IResolverMapping
 ): IFieldResolver<TSource, TContext> {
   return (obj, args, context: any, info) => {
     context._isRequestGqlQuery = true;
@@ -66,7 +66,7 @@ async function rollbackAndReleaseTransaction(context: any, logger: Logger): Prom
 
 function wrapMutationResolver<TSource, TContext, TParams>(
   resolverMeta: ICustomResolverMeta,
-  resolver: IResolver,
+  resolverMapping: IResolverMapping,
   pgPool: Pool,
   logger: Logger
 ): IFieldResolver<TSource, TContext> {
@@ -88,14 +88,14 @@ function wrapMutationResolver<TSource, TContext, TParams>(
         if (result instanceof RevertibleResult) {
           context._transactionRollbackFunctions.push({
             rollbackFunction: result.getRollbackFunction(),
-            resolverKey: resolver.key,
+            resolverKey: resolverMapping.key,
           });
 
           const onCommitedHandler: (() => Promise<void>) | null = result.getOnCommitedHandler();
           if (onCommitedHandler != null) {
             context._transactionOnCommitedHandlers.push({
               onCommitedHandler,
-              resolverKey: resolver.key,
+              resolverKey: resolverMapping.key,
             });
           }
 
@@ -146,7 +146,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
             await onCommitedHandler();
           }
         } catch (e) {
-          logger.error(`Failed to call onCommitedHandler of resolver '${resolver.key}'.`, e);
+          logger.error(`Failed to call onCommitedHandler of resolver '${resolverMapping.key}'.`, e);
         }
 
         return finalResult;
@@ -161,7 +161,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
             await rollbackFunction();
           }
         } catch (e) {
-          logger.error(`Failed to rollback RevertibleResult of resolver '${resolver.key}'.`, e);
+          logger.error(`Failed to rollback RevertibleResult of resolver '${resolverMapping.key}'.`, e);
         }
         throw err;
       } finally {
@@ -179,7 +179,7 @@ function wrapMutationResolver<TSource, TContext, TParams>(
 }
 
 export function getResolvers(
-  appResolvers: IResolver[],
+  resolverMappings: IResolverMapping[],
   resolversObject: ICustomResolverObject,
   pgPool: Pool,
   logger: Logger
@@ -190,28 +190,28 @@ export function getResolvers(
     Mutation: {},
   };
 
-  appResolvers.forEach((resolver) => {
-    if (resolversObject[resolver.key] == null) {
+  resolverMappings.forEach((resolverMapping) => {
+    if (resolversObject[resolverMapping.key] == null) {
       return logger.error(
-        `The resolver "${resolver.key}" is not defined. You used it in custom resolver "${resolver.path}".`
+        `The resolver "${resolverMapping.key}" is not defined. You used it in custom resolver "${resolverMapping.path}".`
       );
     }
     let resolverMeta: ICustomResolverMeta;
     try {
-      resolverMeta = resolversObject[resolver.key](resolver);
+      resolverMeta = resolversObject[resolverMapping.key](resolverMapping);
     } catch (err) {
-      return logger.error(`The resolver "${resolver.key}" failed to initialize.`, err);
+      return logger.error(`The resolver "${resolverMapping.key}" failed to initialize.`, err);
     }
-    const splittedPath: string[] = resolver.path.split(".");
+    const splittedPath: string[] = resolverMapping.path.split(".");
     if (splittedPath.length !== 2) {
-      return logger.error(`The resolver "${resolver.key}" must have 2 levels in path.`);
+      return logger.error(`The resolver "${resolverMapping.key}" must have 2 levels in path.`);
     }
 
     const firstPath: string = splittedPath[0];
     const secondPath: string = splittedPath[1];
 
     if (resolverMeta.usesPgClientFromContext === true && firstPath !== "Mutation") {
-      return logger.error(`The resolver "${resolver.key}" can only be used for mutations.`);
+      return logger.error(`The resolver "${resolverMapping.key}" can only be used for mutations.`);
     }
 
     if (resolvers[firstPath] == null) {
@@ -220,11 +220,11 @@ export function getResolvers(
 
     switch (firstPath) {
       case "Mutation":
-        resolvers[firstPath][secondPath] = wrapMutationResolver(resolverMeta, resolver, pgPool, logger);
+        resolvers[firstPath][secondPath] = wrapMutationResolver(resolverMeta, resolverMapping, pgPool, logger);
         break;
       // For any Type and Query
       default:
-        resolvers[firstPath][secondPath] = wrapFieldResolver(resolverMeta, resolver);
+        resolvers[firstPath][secondPath] = wrapFieldResolver(resolverMeta, resolverMapping);
         break;
     }
   });

@@ -18,7 +18,7 @@ import {
 } from "./resolverTransactions/getTransactionMutationResolvers";
 import { getTransactionMutationTypeDefs } from "./resolverTransactions/getTransactionMutationTypeDefs";
 import { AuthenticationError, ForbiddenError, UserInputError, InternalServerError } from "./GraphqlErrors";
-import { Migration, ITypeDefsExtension, IResolverExtension } from "./migration/Migration";
+import { Migration, ITypeDefsExtension, IResolverMappingExtension } from "./migration/Migration";
 import { IColumnExtension } from "./migration/columnExtensions/IColumnExtension";
 import { ISchemaExtension } from "./migration/schemaExtensions/ISchemaExtension";
 import { ITableExtension } from "./migration/tableExtensions/ITableExtension";
@@ -28,6 +28,8 @@ import { createMergeResultFunction } from "./migration/helpers";
 import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
 import { TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
 import { IPropertySchema } from "./migration/interfaces";
+import { IRuntimeExtension, IGetRuntimeExtensionsResult } from "./interfaces";
+import { GraphqlExtensionConnector } from "./ExtensionConnector";
 export {
   AuthenticationError,
   ForbiddenError,
@@ -53,12 +55,29 @@ export * from "./migration/interfaces";
 
 export * from "./moduleDefinition";
 export * from "./moduleDefinition/interfaces";
+export * from "./interfaces";
+export * from "./ExtensionConnector";
+
+export interface IExtensionResolversObject {
+  [key: string]: ICustomResolverObject;
+}
+export interface IExtensionSchemaExtension {
+  [key: string]: string;
+}
+export interface IRuntimeExtensions {
+  [key: string]: IRuntimeExtension;
+}
 
 @DI.singleton()
 export class GraphQl {
   // DI
   private _server: Server;
   private _resolvers: ICustomResolverObject = {};
+  private _extensionResolvers: IExtensionResolversObject = {};
+  private _extensionSchemaExtensions: IExtensionSchemaExtension = {};
+  private _runtimeExtensions: IRuntimeExtensions = {};
+  private _runtimeExtensionVersion: number = 0;
+  private _runtimeExtensionVersionByKey: { [key: string]: number } = {};
   private _core: Core;
   private _migration: Migration = new Migration();
   private _operatorsBuilder: OperatorsBuilder = new OperatorsBuilder();
@@ -75,12 +94,13 @@ export class GraphQl {
       key: this.constructor.name,
       migrate: this._migrate.bind(this),
       boot: this._boot.bind(this),
+      createExtensionConnector: this._createExtensionConnector.bind(this),
     });
 
     this.addTypeDefsExtension(() => getTransactionMutationTypeDefs());
     this.addTypeDefsExtension(() => this._operatorsBuilder.buildTypeDefs());
 
-    this.addResolverExtension(() => {
+    this.addResolverMappingExtension(() => {
       return {
         path: "Mutation.beginTransaction",
         key: "@fullstack-one/graphql/Mutation/beginTransaction",
@@ -88,7 +108,7 @@ export class GraphQl {
       };
     });
 
-    this.addResolverExtension(() => {
+    this.addResolverMappingExtension(() => {
       return {
         path: "Mutation.commitTransaction",
         key: "@fullstack-one/graphql/Mutation/commitTransaction",
@@ -96,6 +116,11 @@ export class GraphQl {
       };
     });
   }
+
+  private _createExtensionConnector(): GraphqlExtensionConnector {
+    return new GraphqlExtensionConnector(this);
+  }
+
   private async _migrate(appConfig: IModuleAppConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
     const result: IModuleMigrationResult = {
       moduleRuntimeConfig: {},
@@ -129,6 +154,7 @@ export class GraphQl {
     return applyMiddleware(
       app,
       getRuntimeConfig,
+      this.getRuntimeExtensions.bind(this),
       pgPool,
       this._resolvers,
       this._logger,
@@ -157,8 +183,8 @@ export class GraphQl {
   public addTypeDefsExtension(typeDefs: ITypeDefsExtension): void {
     this._migration.addTypeDefsExtension(typeDefs);
   }
-  public addResolverExtension(resolverExtension: IResolverExtension): void {
-    this._migration.addResolverExtension(resolverExtension);
+  public addResolverMappingExtension(resolverMappingExtension: IResolverMappingExtension): void {
+    this._migration.addResolverMappingExtension(resolverMappingExtension);
   }
   public getMigration(): Migration {
     return this._migration;
@@ -171,5 +197,32 @@ export class GraphQl {
   }
   public getColumnExtensionPropertySchemas(): IPropertySchema[] {
     return this._migration.getColumnExtensionPropertySchemas();
+  }
+
+  public addRuntimeExtension(runtimeExtension: IRuntimeExtension): string {
+    const key: string = `RUNTIME_EXTENSION_${Date.now()}_${Math.random()}`;
+
+    this._runtimeExtensionVersion++;
+    this._runtimeExtensions[key] = runtimeExtension;
+
+    return key;
+  }
+
+  public removeRuntimeExtension(key: string): void {
+    delete this._runtimeExtensions[key];
+  }
+
+  public getRuntimeExtensions(updateKey: string = "DEFAULT"): IGetRuntimeExtensionsResult {
+    if (this._runtimeExtensionVersionByKey[updateKey] == null) {
+      this._runtimeExtensionVersionByKey[updateKey] = 0;
+    }
+
+    const hasBeenUpdated: boolean = this._runtimeExtensionVersionByKey[updateKey] !== this._runtimeExtensionVersion;
+    this._runtimeExtensionVersionByKey[updateKey] = this._runtimeExtensionVersion;
+
+    return {
+      hasBeenUpdated,
+      runtimeExtensions: Object.values(this._runtimeExtensions),
+    };
   }
 }

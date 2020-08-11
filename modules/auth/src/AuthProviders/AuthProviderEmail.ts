@@ -50,7 +50,7 @@ export class AuthProviderEmail {
           };
         };
       })
-      .forEach(graphQl.addResolverExtension.bind(graphQl));
+      .forEach(graphQl.addResolverMappingExtension.bind(graphQl));
 
     this._authProvider = auth.createAuthProvider("email", 60 * 60 * 24);
   }

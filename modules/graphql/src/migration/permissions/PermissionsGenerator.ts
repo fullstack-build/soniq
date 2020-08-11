@@ -7,9 +7,9 @@ import { MutationPermissionGenerator } from "./MutationPermissionGenerator";
 import {
   IDefaultResolverMeta,
   IPgView,
-  IResolver,
   IQueryPermissionGeneratorResult,
   IMutationsMeta,
+  IResolverMapping,
 } from "../../RuntimeInterfaces";
 import { IGqlCommand } from "../interfaces";
 import { getPgSelector } from "../helpers";
@@ -87,7 +87,7 @@ export class PermissionGenerator {
     let gqlTypeDefs: string = "";
     const commands: IGqlCommand[] = [];
     const views: IPgView[] = [];
-    const resolvers: IResolver[] = [];
+    const resolverMappings: IResolverMapping[] = [];
     const defaultResolverMeta: IDefaultResolverMeta = {
       viewsSchemaName: schema.permissionViewSchema || "_gql",
       query: {},
@@ -123,8 +123,8 @@ export class PermissionGenerator {
         queryPermissions.views.forEach((view) => {
           views.push(view);
         });
-        queryPermissions.resolvers.forEach((resolver) => {
-          resolvers.push(resolver);
+        queryPermissions.resolverMappings.forEach((resolverMapping) => {
+          resolverMappings.push(resolverMapping);
         });
         gqlTypeDefs += `${queryPermissions.gqlTypeDefs}\n`;
 
@@ -152,8 +152,8 @@ export class PermissionGenerator {
         mutationsMeta.views.forEach((view) => {
           views.push(view);
         });
-        mutationsMeta.resolvers.forEach((resolver) => {
-          resolvers.push(resolver);
+        mutationsMeta.resolverMappings.forEach((resolverMapping) => {
+          resolverMappings.push(resolverMapping);
         });
         gqlTypeDefs += `${mutationsMeta.gqlTypeDefs}\n`;
 
@@ -221,7 +221,7 @@ export class PermissionGenerator {
     const result: IPermissionGeneratorResult = {
       defaultResolverMeta,
       gqlTypeDefs,
-      resolvers,
+      resolverMappings,
       commands,
     };
 
@@ -232,7 +232,7 @@ export class PermissionGenerator {
 export interface IPermissionGeneratorResult {
   defaultResolverMeta: IDefaultResolverMeta;
   gqlTypeDefs: string;
-  resolvers: IResolver[];
+  resolverMappings: IResolverMapping[];
   commands: IGqlCommand[];
 }
 

@@ -26,7 +26,7 @@ export default class EnvironmentBuilder {
     applicationRootPath: string
   ): {
     applicationName: string | undefined;
-    applicationVersion: number | undefined;
+    applicationVersion: string | undefined;
   } {
     return {
       applicationName: process.env.npm_package_name,

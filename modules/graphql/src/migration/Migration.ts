@@ -36,14 +36,14 @@ import { columnExtensionEnum } from "./columnExtensions/enum";
 import { columnExtensionCreatedAt } from "./columnExtensions/createdAt";
 import { columnExtensionUpdatedAt } from "./columnExtensions/updatedAt";
 import { schemaExtensionFunctions } from "./schemaExtensions/functions";
-import { IResolver, IGraphqlRuntimeConfig } from "../RuntimeInterfaces";
+import { IResolverMapping, IGraphqlRuntimeConfig } from "../RuntimeInterfaces";
 import { columnExtensionComputed } from "./columnExtensions/computed";
 import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult, IAutoSchemaFix, IPropertySchema } from "./interfaces";
 import { IGraphqlAppConfig, IGraphqlOptionsInput } from "../moduleDefinition/interfaces";
 import { IDbSchema, IDbTable, IDbColumn, IDbIndex, IDbCheck } from "./DbSchemaInterface";
 
 export type ITypeDefsExtension = () => string;
-export type IResolverExtension = () => IResolver;
+export type IResolverMappingExtension = () => IResolverMapping;
 
 export class Migration {
   private _columnExtensions: {
@@ -53,7 +53,7 @@ export class Migration {
   private _tableExtensions: ITableExtension[] = [];
   private _postProcessingExtensions: IPostProcessingExtension[] = [];
   private _typeDefsExtensions: ITypeDefsExtension[] = [];
-  private _resolverExtensions: IResolverExtension[] = [];
+  private _resolverMappingExtensions: IResolverMappingExtension[] = [];
 
   public constructor() {
     // Add default migration extensions
@@ -109,8 +109,8 @@ export class Migration {
     this._typeDefsExtensions.push(typeDefsExtension);
   }
 
-  public addResolverExtension(resolverExtension: IResolverExtension): void {
-    this._resolverExtensions.push(resolverExtension);
+  public addResolverMappingExtension(resolverMappingExtension: IResolverMappingExtension): void {
+    this._resolverMappingExtensions.push(resolverMappingExtension);
   }
 
   public async generateSchemaMigrationCommands(
@@ -224,20 +224,20 @@ export class Migration {
 
       const gqlSchema: DocumentNode = parse(gqlTypeDefs);
 
-      const resolvers: unknown[] = [];
+      const resolverMappings: IResolverMapping[] = [];
 
-      permissions.resolvers.forEach((resolver: IResolver) => {
-        resolvers.push(resolver);
+      permissions.resolverMappings.forEach((resolverMapping: IResolverMapping) => {
+        resolverMappings.push(resolverMapping);
       });
 
-      this._resolverExtensions.forEach((resolver: IResolverExtension) => {
-        resolvers.push(resolver());
+      this._resolverMappingExtensions.forEach((resolverMappingExtension: IResolverMappingExtension) => {
+        resolverMappings.push(resolverMappingExtension());
       });
 
       moduleRuntimeConfig = {
         gqlTypeDefs: print(gqlSchema),
         defaultResolverMeta: permissions.defaultResolverMeta,
-        resolvers: resolvers as IResolver[],
+        resolverMappings: resolverMappings,
         options: {
           costLimit: options.costLimit != null ? options.costLimit : 2000000000,
           minSubqueryCountToCheckCostLimit:

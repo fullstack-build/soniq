@@ -3,15 +3,16 @@ import { GraphQLSchema } from "graphql";
 import { Logger } from "soniq";
 import { Koa } from "@soniq/server";
 import { Pool } from "soniq";
-import { IGraphqlRuntimeConfig, TGetGraphqlModuleRuntimeConfig } from "../RuntimeInterfaces";
+import { IGraphqlRuntimeConfig, TGetGraphqlModuleRuntimeConfig, IResolverMapping } from "../RuntimeInterfaces";
 import getDefaultResolvers from "../getDefaultResolvers";
-import { getResolvers, ICustomResolverObject, ICustomResolverCreator } from "../resolverTransactions";
+import { getResolvers, ICustomResolverObject } from "../resolverTransactions";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { HookManager } from "../hooks";
 import { OperatorsBuilder } from "../logicalOperators";
 import { IResolvers } from "@graphql-tools/utils";
 
 import { createMiddleware } from "./createMiddleware";
+import { IRuntimeExtension, TGetRuntimeExtensions, IGetRuntimeExtensionsResult } from "../interfaces";
 
 async function makeSchema(
   runtimeConfig: IGraphqlRuntimeConfig,
@@ -19,7 +20,8 @@ async function makeSchema(
   pgPool: Pool,
   hookManager: HookManager,
   logger: Logger,
-  operatorsBuilder: OperatorsBuilder
+  operatorsBuilder: OperatorsBuilder,
+  runtimeExtensions: IRuntimeExtension[]
 ): Promise<GraphQLSchema> {
   const defaultResolvers: ICustomResolverObject = getDefaultResolvers(
     operatorsBuilder,
@@ -30,13 +32,34 @@ async function makeSchema(
     runtimeConfig.options
   );
 
-  const runtimeResolvers: {
-    [x: string]: ICustomResolverCreator;
-  } = { ...defaultResolvers, ...diResolvers };
+  let typeDefs: string = runtimeConfig.gqlTypeDefs;
 
-  const resolvers: IResolvers = getResolvers(runtimeConfig.resolvers, runtimeResolvers, pgPool, logger);
+  let runtimeResolvers: ICustomResolverObject = { ...defaultResolvers, ...diResolvers };
+
+  const resolverMappings: IResolverMapping[] = runtimeConfig.resolverMappings;
+
+  runtimeExtensions.forEach((runtimeExtension: IRuntimeExtension) => {
+    if (runtimeExtension.resolverMappings != null) {
+      runtimeExtension.resolverMappings.forEach((resolverMapping: IResolverMapping) => {
+        resolverMappings.push(resolverMapping);
+      });
+    }
+    if (runtimeExtension.resolverObject != null) {
+      runtimeResolvers = {
+        ...runtimeResolvers,
+        ...runtimeExtension.resolverObject,
+      };
+    }
+    if (runtimeExtension.schemaExtensions != null) {
+      runtimeExtension.schemaExtensions.forEach((schemaExtension: string) => {
+        typeDefs += `\n${schemaExtension}`;
+      });
+    }
+  });
+
+  const resolvers: IResolvers = getResolvers(resolverMappings, runtimeResolvers, pgPool, logger);
   return makeExecutableSchema({
-    typeDefs: runtimeConfig.gqlTypeDefs,
+    typeDefs,
     resolvers,
   });
 }
@@ -44,6 +67,7 @@ async function makeSchema(
 export async function applyMiddleware(
   app: Koa,
   getRuntimeConfig: TGetGraphqlModuleRuntimeConfig,
+  getRuntimeExtensions: TGetRuntimeExtensions,
   pgPool: Pool,
   diResolvers: ICustomResolverObject,
   logger: Logger,
@@ -54,19 +78,21 @@ export async function applyMiddleware(
 
   app.use(async (ctx: Koa.Context, next: Koa.Next) => {
     const { runtimeConfig, hasBeenUpdated } = await getRuntimeConfig("GQL_ENDPOINT"); // IRuntimeConfigGql
+    const runtimeExtensionsResult: IGetRuntimeExtensionsResult = getRuntimeExtensions("GQL_ENDPOINT");
 
     if (ctx.request.path !== (runtimeConfig.options.endpointPath || "/graphql")) {
       return next();
     }
 
-    if (gqlMiddleware == null || hasBeenUpdated === true) {
+    if (gqlMiddleware == null || hasBeenUpdated === true || runtimeExtensionsResult.hasBeenUpdated === true) {
       const schema: GraphQLSchema = await makeSchema(
         runtimeConfig,
         diResolvers,
         pgPool,
         hookManager,
         logger,
-        operatorsBuilder
+        operatorsBuilder,
+        runtimeExtensionsResult.runtimeExtensions
       );
 
       // eslint-disable-next-line require-atomic-updates

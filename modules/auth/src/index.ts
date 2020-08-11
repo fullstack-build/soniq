@@ -119,7 +119,7 @@ export class Auth {
           };
         };
       })
-      .forEach(graphQl.addResolverExtension.bind(graphQl));
+      .forEach(graphQl.addResolverMappingExtension.bind(graphQl));
 
     // graphQl.addResolvers(this.getResolvers());
 

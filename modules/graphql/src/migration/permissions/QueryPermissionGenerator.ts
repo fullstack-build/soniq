@@ -144,7 +144,7 @@ export class QueryPermissionGenerator {
     const result: IQueryPermissionGeneratorResult = {
       views: [],
       gqlTypeDefs: "",
-      resolvers: [],
+      resolverMappings: [],
       queryViewMeta: {
         name: table.name,
         publicViewName: `${table.name}_Read_Public`,
@@ -220,9 +220,9 @@ export class QueryPermissionGenerator {
           orderByEnum.options.push(`${queryFieldData.viewColumnName}_DESC`);
         }
 
-        if (queryFieldData.resolvers != null && Array.isArray(queryFieldData.resolvers)) {
-          queryFieldData.resolvers.forEach((resolver) => {
-            result.resolvers.push(resolver);
+        if (queryFieldData.resolverMappings != null && Array.isArray(queryFieldData.resolverMappings)) {
+          queryFieldData.resolverMappings.forEach((resolverMapping) => {
+            result.resolverMappings.push(resolverMapping);
           });
         }
 
@@ -392,7 +392,7 @@ export class QueryPermissionGenerator {
       result.gqlTypeDefs += `${this._generateGqlQuery(queryName, filterType.name, orderByEnum.name, tableType.name)}\n`;
     }
 
-    result.resolvers.push({
+    result.resolverMappings.push({
       path: `Query.${queryName}`,
       key: "@fullstack-one/graphql/queryResolver",
       config: {},
