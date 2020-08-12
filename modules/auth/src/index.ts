@@ -40,6 +40,7 @@ import { CryptoFactory } from "./CryptoFactory";
 import { SignHelper } from "./SignHelper";
 import * as _ from "lodash";
 import { migrate } from "./migration";
+import { AuthExtensionConnector } from "./ExtensionConnector";
 
 const schema: string = fs.readFileSync(require.resolve("../schema.gql"), "utf-8");
 
@@ -47,6 +48,7 @@ export * from "./SignHelper";
 export * from "./interfaces";
 export * from "./AuthProviders/AuthProviderEmail";
 export * from "./moduleDefinition";
+export * from "./ExtensionConnector";
 
 // TODO: @dustin Migrate oAuth to mig3
 // export * from "./AuthProviders/AuthProviderOAuth";
@@ -92,6 +94,7 @@ export class Auth {
       key: this.constructor.name,
       migrate: this._migrate.bind(this),
       boot: this._boot.bind(this),
+      createExtensionConnector: this._createExtensionConnector.bind(this),
     });
     // this.orm = orm;
 
@@ -125,6 +128,11 @@ export class Auth {
 
     this._addMiddleware(server);
   }
+
+  private _createExtensionConnector(): AuthExtensionConnector {
+    return new AuthExtensionConnector(this);
+  }
+
   private async _migrate(appConfig: IModuleAppConfig, pgClient: PoolClient): Promise<IModuleMigrationResult> {
     const authFactorProviders: string = this._authProviders
       .map((authProvider) => {
@@ -223,7 +231,9 @@ export class Auth {
           await this.getAuthQueryHelper().authenticateTransaction(pgClient, context.accessToken);
         } catch (err) {
           this._logger.trace("authenticateTransaction.failed", err);
-          await this._deleteAccessTokenCookie(context.ctx);
+          if (context.ctx != null) {
+            await this._deleteAccessTokenCookie(context.ctx);
+          }
           throw err;
         }
       }
@@ -242,7 +252,9 @@ export class Auth {
               context._transactionIsAuthenticated = true;
             } catch (err) {
               this._logger.trace("authenticateTransaction.failed", err);
-              await this._deleteAccessTokenCookie(context.ctx);
+              if (context.ctx != null) {
+                await this._deleteAccessTokenCookie(context.ctx);
+              }
               throw err;
             }
           }
@@ -382,7 +394,9 @@ export class Auth {
           resolver: async (obj, args, context, info) => {
             return this._callAndHideErrorDetails(async () => {
               const pgClient: PoolClient = context._transactionPgClient;
-              await this._deleteAccessTokenCookie(context.ctx);
+              if (context.ctx != null) {
+                await this._deleteAccessTokenCookie(context.ctx);
+              }
               await this.getAuthConnector().invalidateAccessToken(pgClient, context.accessToken);
               return true;
             });
@@ -395,7 +409,9 @@ export class Auth {
           resolver: async (obj, args, context, info) => {
             return this._callAndHideErrorDetails(async () => {
               const pgClient: PoolClient = context._transactionPgClient;
-              await this._deleteAccessTokenCookie(context.ctx);
+              if (context.ctx != null) {
+                await this._deleteAccessTokenCookie(context.ctx);
+              }
               await this.getAuthConnector().invalidateAllAccessTokens(pgClient, context.accessToken);
               return true;
             });
@@ -442,7 +458,9 @@ export class Auth {
                 const tokenMeta: ITokenMeta = await this.getAuthConnector().getTokenMeta(pgClient, context.accessToken);
                 return tokenMeta;
               } catch (err) {
-                await this._deleteAccessTokenCookie(context.ctx);
+                if (context.ctx != null) {
+                  await this._deleteAccessTokenCookie(context.ctx);
+                }
                 throw err;
               }
             });

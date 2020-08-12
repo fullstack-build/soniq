@@ -172,6 +172,10 @@ function wrapMutationResolver<TSource, TContext, TParams>(
         }
         context._transactionPgClient = null;
       }
+    } else {
+      if (context.pgClient != null) {
+        throw new UserInputError("This mutation cannot use a custom pgClient");
+      }
     }
 
     return resolverMeta.resolver(obj, args, context, info, returnIdHandler);

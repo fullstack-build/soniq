@@ -39,6 +39,22 @@ export class ExtensionConnector {
   }
 }
 
+export class CoreExtensionConnector extends ExtensionConnector {
+  private _core: Core;
+  private _runtimeExtensionKeys: string[] = [];
+
+  public constructor(core: Core) {
+    super();
+    this._core = core;
+  }
+
+  public getPgPool(): Pool {
+    return this._core.getRuntimePgPool();
+  }
+
+  public detach(): void {}
+}
+
 export interface IModuleCoreFunctions {
   key: string;
   migrate?: TMigrationFunction;
@@ -63,9 +79,24 @@ export enum EBootState {
 export { DI };
 export { Logger };
 
+const rootLogger: Logger = new Logger();
+
 // TODO: move somewhere else later
 process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:", reason);
+  try {
+    rootLogger.fatal("UNHANDLED REJECTION:", reason);
+  } catch (e) {
+    console.error("UNHANDLED REJECTION:", reason);
+  }
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Asynchronous error caught.", err);
+  try {
+    rootLogger.fatal("UNCAUGHT EXCEPTION:", err);
+  } catch (e) {
+    console.error("UNCAUGHT EXCEPTION:", err);
+  }
 });
 
 @DI.singleton()
@@ -91,6 +122,15 @@ export class Core {
     });
     this._migration = new Migration(this._logger, this);
     this._eventEmitter = new EventEmitter();
+
+    this.addCoreFunctions({
+      key: this.constructor.name,
+      createExtensionConnector: this._createExtensionConnector.bind(this),
+    });
+  }
+
+  private _createExtensionConnector(): CoreExtensionConnector {
+    return new CoreExtensionConnector(this);
   }
 
   public _getModuleCoreFunctionsByKey(key: string): IModuleCoreFunctions | null {
@@ -250,5 +290,12 @@ export class Core {
 
   public getEventEmitter(): EventEmitter {
     return this._eventEmitter;
+  }
+
+  public getRuntimePgPool(): Pool {
+    if (this._runTimePgPool == null) {
+      throw new Error("You cannot get a pool before boot is finished.");
+    }
+    return this._runTimePgPool;
   }
 }

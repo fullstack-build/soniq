@@ -8,6 +8,9 @@ export function getBeginTransactionResolver(pgPool: Pool, logger: Logger): ICust
     return {
       usesPgClientFromContext: false,
       resolver: async (obj, args, context, info, revertibleResult) => {
+        if (context.pgClient != null) {
+          throw new Error("You cannot begin a transaction while using a custom pgClient.");
+        }
         if (context._transactionPgClient != null) {
           throw new Error("You cannot begin a second transaction within another.");
         }
@@ -51,6 +54,9 @@ export function getCommitTransactionResolver(pgPool: Pool, logger: Logger): ICus
     return {
       usesPgClientFromContext: true,
       resolver: async (obj, args, context, info) => {
+        if (context.pgClient != null) {
+          throw new Error("You cannot commit a transaction while using a custom pgClient.");
+        }
         if (context._transactionRunning !== true) {
           throw new Error("You cannot commit a not existing transaction.");
         }

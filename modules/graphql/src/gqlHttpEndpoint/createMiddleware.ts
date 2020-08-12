@@ -7,8 +7,6 @@ import {
   validate,
   GraphQLSchema,
   ValidationRule,
-  formatError,
-  GraphQLError,
   getOperationAST,
   OperationDefinitionNode,
   ExecutionResult,
@@ -21,12 +19,16 @@ import * as koaBodyParser from "koa-bodyparser";
 import * as koaJson from "koa-json";
 import * as compose from "koa-compose";
 import { NoIntrospection } from "./noIntrospectionValidationRule";
-import { AuthenticationError, ForbiddenError, UserInputError, InternalServerError } from "../GraphqlErrors";
 import { Maybe } from "@graphql-tools/utils";
-import * as _ from "lodash";
 import { Logger } from "soniq";
+import { formatErrors } from "../runtime/formatErrors";
 
-export function createGqlMiddleware(schema: GraphQLSchema, disableIntrospection: boolean): Koa.Middleware {
+export function createGqlMiddleware(
+  schema: GraphQLSchema,
+  disableIntrospection: boolean,
+  dangerouslyExposeErrorDetails: boolean,
+  logger: Logger
+): Koa.Middleware {
   return async (ctx: Koa.Context, next: Koa.Next) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const req: any = ctx.request as any;
@@ -107,7 +109,7 @@ export function createGqlMiddleware(schema: GraphQLSchema, disableIntrospection:
       operationName: req.body.operationName,
     });
 
-    ctx.body = gqlExecutionResult;
+    ctx.body = formatErrors(gqlExecutionResult, dangerouslyExposeErrorDetails, logger);
 
     // Set the content-type.
     ctx.response.type = "application/graphql+json";
@@ -131,67 +133,6 @@ function setCacheHeaders(): Koa.Middleware {
     }
 
     ctx.set("Cache-Control", cacheHeader);
-  };
-}
-
-function formatGqlErrors(dangerouslyExposeErrorDetails: boolean, logger: Logger): Koa.Middleware {
-  return async (ctx: Koa.Context, next: Koa.Next) => {
-    await next();
-
-    if (ctx.body.errors != null) {
-      ctx.body.errors = ctx.body.errors.map((err: GraphQLError) => {
-        if (_.get(err, "extensions.hideDetails") === true) {
-          if (dangerouslyExposeErrorDetails !== true) {
-            return formatError(new InternalServerError());
-          }
-        }
-        const hideDetails: boolean = _.get(err, "extensions.hideDetails") === true;
-
-        if (err.message.startsWith("AUTH.THROW.AUTHENTICATION_ERROR")) {
-          if (err.message.startsWith("AUTH.THROW.AUTHENTICATION_ERROR: ")) {
-            err.message = err.message.substr("AUTH.THROW.AUTHENTICATION_ERROR: ".length);
-          } else {
-            err.message = "Authentication required";
-          }
-          const formattedError: AuthenticationError = new AuthenticationError(err.message, hideDetails);
-          formattedError.path = err.path;
-          formattedError.locations = err.locations;
-          return formatError(formattedError);
-        }
-        if (err.message.startsWith("AUTH.THROW.FORBIDDEN_ERROR")) {
-          if (err.message.startsWith("AUTH.THROW.FORBIDDEN_ERROR: ")) {
-            err.message = err.message.substr("AUTH.THROW.FORBIDDEN_ERROR: ".length);
-          } else {
-            err.message = "Access denied";
-          }
-          const formattedError: ForbiddenError = new ForbiddenError(err.message, hideDetails);
-          formattedError.path = err.path;
-          formattedError.locations = err.locations;
-          return formatError(formattedError);
-        }
-        if (err.message.startsWith("AUTH.THROW.USER_INPUT_ERROR")) {
-          if (err.message.startsWith("AUTH.THROW.USER_INPUT_ERROR: ")) {
-            err.message = err.message.substr("AUTH.THROW.USER_INPUT_ERROR: ".length);
-          } else {
-            err.message = "Bad user input";
-          }
-          const formattedError: UserInputError = new UserInputError(err.message, hideDetails);
-          formattedError.path = err.path;
-          formattedError.locations = err.locations;
-          return formatError(formattedError);
-        }
-
-        const code: string | null = _.get(err, "extensions.code");
-        const validCodes: string[] = ["INTERNAL_SERVER_ERROR", "BAD_USER_INPUT", "FORBIDDEN", "UNAUTHENTICATED"];
-
-        if (code != null && validCodes.indexOf(code) >= 0) {
-          return formatError(err);
-        } else {
-          logger.error("Unkown error occured", err);
-          return formatError(new InternalServerError());
-        }
-      });
-    }
   };
 }
 
@@ -236,8 +177,7 @@ export function createMiddleware(
   middlewares.push(enforceOriginMatch());
   middlewares.push(koaJson());
   middlewares.push(koaBodyParser());
-  middlewares.push(formatGqlErrors(dangerouslyExposeErrorDetails, logger));
-  middlewares.push(createGqlMiddleware(schema, disableIntrospection));
+  middlewares.push(createGqlMiddleware(schema, disableIntrospection, dangerouslyExposeErrorDetails, logger));
 
   return compose(middlewares);
 }

@@ -1,6 +1,7 @@
 import { ExtensionConnector } from "soniq";
 import { GraphQl } from ".";
 import { IRuntimeExtension } from "./interfaces";
+import { GraphQlClient } from "./runtime/client";
 
 export class GraphqlExtensionConnector extends ExtensionConnector {
   private _graphQl: GraphQl;
@@ -13,6 +14,10 @@ export class GraphqlExtensionConnector extends ExtensionConnector {
 
   public addRuntimeExtension(runtimeExtension: IRuntimeExtension): void {
     this._runtimeExtensionKeys.push(this._graphQl.addRuntimeExtension(runtimeExtension));
+  }
+
+  public getGraphQlClient(): GraphQlClient {
+    return this._graphQl.getClient();
   }
 
   public detach(): void {

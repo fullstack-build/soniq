@@ -4,7 +4,7 @@ import { CryptoFactory } from "./CryptoFactory";
 import * as uuid from "uuid";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { DateTime } from "luxon";
-import { UserInputError } from "@soniq/graphql";
+import { UserInputError, AuthenticationError } from "@soniq/graphql";
 import {
   IAuthFactorProof,
   IAuthFactorCreation,
@@ -305,6 +305,9 @@ export class AuthConnector {
   }
 
   public async getTokenMeta(pgClient: PoolClient, accessToken: string): Promise<ITokenMeta> {
+    if (accessToken == null || accessToken.length < 1) {
+      throw new AuthenticationError("AccessToken is required.");
+    }
     const values: unknown[] = [this._cryptoFactory.decrypt(accessToken)];
     const queryResult: QueryResult = await this._authQueryHelper.adminQueryWithPgClient(
       pgClient,
@@ -348,6 +351,12 @@ export class AuthConnector {
     clientIdentifier: string,
     refreshToken: string
   ): Promise<ILoginData> {
+    if (accessToken == null || accessToken.length < 1) {
+      throw new AuthenticationError("AccessToken is required.");
+    }
+    if (refreshToken == null || refreshToken.length < 1) {
+      throw new AuthenticationError("RefreshToken is required.");
+    }
     const values: unknown[] = [
       this._cryptoFactory.decrypt(accessToken),
       clientIdentifier,

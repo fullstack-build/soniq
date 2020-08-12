@@ -1,5 +1,6 @@
 import { ICustomResolverObject } from ".";
-import { IResolverMapping } from "./RuntimeInterfaces";
+import { IResolverMapping, IGraphqlRuntimeConfig } from "./RuntimeInterfaces";
+import { GraphQLSchema } from "graphql";
 
 export interface IRuntimeExtension {
   resolverObject?: ICustomResolverObject;
@@ -13,3 +14,11 @@ export interface IGetRuntimeExtensionsResult {
 }
 
 export type TGetRuntimeExtensions = (updateKey?: string) => IGetRuntimeExtensionsResult;
+
+export interface IGetSchemaResult {
+  schema: GraphQLSchema;
+  runtimeConfig: IGraphqlRuntimeConfig;
+  hasBeenUpdated: boolean;
+}
+
+export type TGetSchema = (updateKey: string) => Promise<IGetSchemaResult>;

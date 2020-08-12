@@ -28,8 +28,11 @@ import { createMergeResultFunction } from "./migration/helpers";
 import { IPostProcessingExtension } from "./migration/postProcessingExtensions/IPostProcessingExtension";
 import { TGetGraphqlModuleRuntimeConfig } from "./RuntimeInterfaces";
 import { IPropertySchema } from "./migration/interfaces";
-import { IRuntimeExtension, IGetRuntimeExtensionsResult } from "./interfaces";
+import { IRuntimeExtension, IGetRuntimeExtensionsResult, IGetSchemaResult } from "./interfaces";
 import { GraphqlExtensionConnector } from "./ExtensionConnector";
+import { makeSchema } from "./runtime/schema";
+import { GraphQLSchema } from "graphql";
+import { GraphQlClient } from "./runtime/client";
 export {
   AuthenticationError,
   ForbiddenError,
@@ -57,6 +60,8 @@ export * from "./moduleDefinition";
 export * from "./moduleDefinition/interfaces";
 export * from "./interfaces";
 export * from "./ExtensionConnector";
+export * from "./runtime/client";
+export * from "graphql";
 
 export interface IExtensionResolversObject {
   [key: string]: ICustomResolverObject;
@@ -78,6 +83,12 @@ export class GraphQl {
   private _runtimeExtensions: IRuntimeExtensions = {};
   private _runtimeExtensionVersion: number = 0;
   private _runtimeExtensionVersionByKey: { [key: string]: number } = {};
+  private _getRuntimeConifg: TGetGraphqlModuleRuntimeConfig | null = null;
+  private _pgPool: Pool | null = null;
+  private _schema: GraphQLSchema | null = null;
+  private _schemaVersion: number = 0;
+  private _schemaVersionByKey: { [key: string]: number } = {};
+  private _getSchemaPromises: Promise<GraphQLSchema>[] | null = null;
   private _core: Core;
   private _migration: Migration = new Migration();
   private _operatorsBuilder: OperatorsBuilder = new OperatorsBuilder();
@@ -144,6 +155,8 @@ export class GraphQl {
     return result;
   }
   private async _boot(getRuntimeConfig: TGetGraphqlModuleRuntimeConfig, pgPool: Pool): Promise<void> {
+    this._getRuntimeConifg = getRuntimeConfig;
+    this._pgPool = pgPool;
     this.addResolvers({
       "@fullstack-one/graphql/Mutation/beginTransaction": getBeginTransactionResolver(pgPool, this._logger),
       "@fullstack-one/graphql/Mutation/commitTransaction": getCommitTransactionResolver(pgPool, this._logger),
@@ -151,16 +164,7 @@ export class GraphQl {
 
     const app: Koa = this._server.getApp();
 
-    return applyMiddleware(
-      app,
-      getRuntimeConfig,
-      this.getRuntimeExtensions.bind(this),
-      pgPool,
-      this._resolvers,
-      this._logger,
-      this._hookManager,
-      this._operatorsBuilder
-    );
+    return applyMiddleware(app, this.getSchema.bind(this), this._logger);
   }
   /* =====================================================================
       EXTERNAL EXTENSIONS
@@ -224,5 +228,45 @@ export class GraphQl {
       hasBeenUpdated,
       runtimeExtensions: Object.values(this._runtimeExtensions),
     };
+  }
+
+  public async getSchema(updateKey: string): Promise<IGetSchemaResult> {
+    if (this._getRuntimeConifg == null || this._pgPool == null) {
+      throw new Error("Cannot get schema before boot is finished.");
+    }
+    if (this._schemaVersionByKey[updateKey] == null) {
+      this._schemaVersionByKey[updateKey] = 0;
+    }
+    const { runtimeConfig, hasBeenUpdated } = await this._getRuntimeConifg("GQL_ENDPOINT");
+    const runtimeExtensionsResult: IGetRuntimeExtensionsResult = this.getRuntimeExtensions("GQL_ENDPOINT");
+
+    if (this._schema == null || hasBeenUpdated === true || runtimeExtensionsResult.hasBeenUpdated === true) {
+      this._schema = await makeSchema(
+        runtimeConfig,
+        this._resolvers,
+        this._pgPool,
+        this._hookManager,
+        this._logger,
+        this._operatorsBuilder,
+        runtimeExtensionsResult.runtimeExtensions
+      );
+      this._schemaVersion++;
+    }
+    const schemaHasBeenUpdated: boolean = this._schemaVersionByKey[updateKey] !== this._schemaVersion;
+    this._schemaVersionByKey[updateKey] = this._schemaVersion;
+
+    return {
+      schema: this._schema,
+      runtimeConfig,
+      hasBeenUpdated: schemaHasBeenUpdated,
+    };
+  }
+
+  public getLogger(): Logger {
+    return this._logger;
+  }
+
+  public getClient(): GraphQlClient {
+    return new GraphQlClient(this);
   }
 }

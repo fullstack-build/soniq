@@ -244,6 +244,10 @@ export class Extensions {
         },
       });
 
+      vm.addListener("error", (err) => {
+        console.log("DEMO", err);
+      });
+
       prepareRegister();
       vm.run(extension.code);
       const registerNewExtension: TRegisterFunction | null = getExtensionRegisterFunction();

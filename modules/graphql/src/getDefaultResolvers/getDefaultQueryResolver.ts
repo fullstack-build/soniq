@@ -9,7 +9,7 @@ import { ICustomResolverCreator } from "../resolverTransactions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setAuthRequiredInKoaStateForCacheHeaders(context: any, authRequired: boolean): void {
-  if (context.accessToken != null && authRequired) {
+  if (context.accessToken != null && authRequired && context.ctx != null && context.ctx.state != null) {
     context.ctx.state.authRequired = true;
   }
 }

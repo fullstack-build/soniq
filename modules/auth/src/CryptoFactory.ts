@@ -26,6 +26,9 @@ export class CryptoFactory {
   }
 
   public decrypt(encodedText: string): string {
+    if (encodedText == null || encodedText.length < 1) {
+      throw new Error("Encoded token cannot be null");
+    }
     const text: string = this._encoder.stringToHex(encodedText);
 
     const iv: Buffer = Buffer.from(text.substr(0, IV_LENGTH * 2), "hex");
