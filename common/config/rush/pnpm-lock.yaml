@@ -44,6 +44,7 @@ dependencies:
   graphql-playground-middleware-koa: 1.6.17_koa@2.11.0
   graphql-type-json: 0.1.4_graphql@14.7.0
   http-errors: 1.8.0
+  isobject: 4.0.0
   jsonwebtoken: 8.5.1
   koa: 2.11.0
   koa-bodyparser: 4.3.0
@@ -1563,6 +1564,12 @@ packages:
     dev: false
     resolution:
       integrity: sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=
+  /isobject/4.0.0:
+    dev: false
+    engines:
+      node: '>=0.10.0'
+    resolution:
+      integrity: sha512-S/2fF5wH8SJA/kmwr6HYhK/RI/OkhD84k8ntalo0iJjZikgq1XFvR5M8NPT1x5F7fBwCG3qHfnzeP/Vh/ZxCUA==
   /isstream/0.1.2:
     dev: false
     resolution:
@@ -2913,6 +2920,7 @@ packages:
       graphql-parse-resolve-info: 4.7.0_graphql@14.7.0
       graphql-type-json: 0.1.4_graphql@14.7.0
       http-errors: 1.8.0
+      isobject: 4.0.0
       koa-bodyparser: 4.3.0
       koa-compose: 4.1.0
       koa-graphql: 0.8.0_graphql@14.7.0
@@ -2925,7 +2933,7 @@ packages:
     dev: false
     name: '@rush-temp/graphql'
     resolution:
-      integrity: sha512-8RBiG3tPoJV8jmmtSCyoOS9GklNgCGqIqmePPEaGs/kUw+Gft0aL86jiWpMNE41KZp76cCr4fFTHZn0R3nt6rw==
+      integrity: sha512-DHgg+mICyCtijRGI+UeI6dfyzCg/q7iWxrK7bGZEb7l99iNu07dK8mDp3zoWqDTAUAcba5CC/BRnWQF4pRkuyQ==
       tarball: 'file:projects/graphql.tgz'
     version: 0.0.0
   'file:projects/server.tgz':
@@ -3014,6 +3022,7 @@ specifiers:
   graphql-playground-middleware-koa: ~1.6.17
   graphql-type-json: 0.1.4
   http-errors: ~1.8.0
+  isobject: ~4.0.0
   jsonwebtoken: ^8.5.1
   koa: ~2.11.0
   koa-bodyparser: ~4.3.0
