@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { IAuthApplicationConfig } from "../interfaces";
 
 export const defaultConfig: IAuthApplicationConfig = {

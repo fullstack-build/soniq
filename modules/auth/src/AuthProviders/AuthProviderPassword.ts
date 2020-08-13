@@ -63,7 +63,7 @@ export class AuthProviderPassword {
     return result.authFactorProofToken;
   }
 
-  private async _callAndHideErrorDetails(callback: Function): Promise<unknown> {
+  private async _callAndHideErrorDetails(callback: (...args: unknown[]) => void): Promise<unknown> {
     try {
       return await callback();
     } catch (error) {

@@ -72,10 +72,8 @@ export class Auth {
   private _pgPool: Pool | null = null;
   public authConnector: AuthConnector | null = null;
 
-  // eslint-disable-next-line @typescript-eslint/member-naming
-  private userRegistrationCallback: ((userAuthentication: IUserAuthentication) => void) | null = null;
-  // eslint-disable-next-line @typescript-eslint/member-naming
-  private getRuntimeConfig: TGetAuthModuleRuntimeConfig = (updateKey?: string) => {
+  private _userRegistrationCallback: ((userAuthentication: IUserAuthentication) => void) | null = null;
+  private _getRuntimeConfig: TGetAuthModuleRuntimeConfig = (updateKey?: string) => {
     throw new Error(`Cannot get RuntimeConfig while booting hasn't finished.`);
   };
 
@@ -143,9 +141,9 @@ export class Auth {
     return migrate(this._graphQl, appConfig, pgClient, authFactorProviders);
   }
   private async _boot(getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool): Promise<void> {
-    this.getRuntimeConfig = getRuntimeConfig;
+    this._getRuntimeConfig = getRuntimeConfig;
     this._pgPool = pgPool;
-    const { runtimeConfig } = await this.getRuntimeConfig();
+    const { runtimeConfig } = await this._getRuntimeConfig();
 
     this._updateHelpers(runtimeConfig);
   }
@@ -167,7 +165,7 @@ export class Auth {
 
     // Prevent CSRF
     app.use(async (ctx: Koa.Context, next: Koa.Next) => {
-      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("CSRF");
+      const { runtimeConfig, hasBeenUpdated } = await this._getRuntimeConfig("CSRF");
 
       if (hasBeenUpdated) {
         this._updateHelpers(runtimeConfig);
@@ -185,7 +183,7 @@ export class Auth {
 
     // Allow CORS requests
     app.use(async (ctx: Koa.Context, next: Koa.Next) => {
-      const { runtimeConfig } = await this.getRuntimeConfig();
+      const { runtimeConfig } = await this._getRuntimeConfig();
 
       // TODO: There is no typedef in koa-Cors
       // eslint-disable-next-line @typescript-eslint/typedef
@@ -201,7 +199,7 @@ export class Auth {
 
     // Parse AccessToken
     app.use(async (ctx: Koa.Context, next: Koa.Next) => {
-      const { runtimeConfig, hasBeenUpdated } = await this.getRuntimeConfig("ACCESS_TOKEN");
+      const { runtimeConfig, hasBeenUpdated } = await this._getRuntimeConfig("ACCESS_TOKEN");
 
       if (hasBeenUpdated || this._accessTokenParser == null) {
         this._accessTokenParser = new AccessTokenParser(runtimeConfig);
@@ -277,7 +275,7 @@ export class Auth {
   }
 
   private async _setAccessTokenCookie(ctx: Koa.Context, loginData: ILoginData): Promise<void> {
-    const { runtimeConfig } = await this.getRuntimeConfig();
+    const { runtimeConfig } = await this._getRuntimeConfig();
 
     // TODO: There is no type for that
     // eslint-disable-next-line @typescript-eslint/typedef
@@ -291,14 +289,14 @@ export class Auth {
   }
 
   private async _deleteAccessTokenCookie(ctx: Koa.Context): Promise<void> {
-    const { runtimeConfig } = await this.getRuntimeConfig();
+    const { runtimeConfig } = await this._getRuntimeConfig();
     //@ts-ignore TODO: @eugene This is correct
     ctx.cookies.set(runtimeConfig.cookie.name, null);
     //@ts-ignore TODO: @eugene This is correct
     ctx.cookies.set(`${runtimeConfig.cookie.name}.sig`, null);
   }
 
-  private async _callAndHideErrorDetails(callback: Function): Promise<unknown> {
+  private async _callAndHideErrorDetails(callback: (...args: unknown[]) => void): Promise<unknown> {
     try {
       return await callback();
     } catch (error) {
@@ -494,8 +492,8 @@ export class Auth {
                       pgClientInternal,
                       userAuthenticationId
                     );
-                    if (this.userRegistrationCallback) {
-                      this.userRegistrationCallback(userAuthentication);
+                    if (this._userRegistrationCallback) {
+                      this._userRegistrationCallback(userAuthentication);
                     }
                   });
                 }
@@ -523,10 +521,10 @@ export class Auth {
   }
 
   public registerUserRegistrationCallback(callback: (userAuthentication: IUserAuthentication) => void): void {
-    if (this.userRegistrationCallback != null) {
+    if (this._userRegistrationCallback != null) {
       throw new Error("Auth 'registerUserRegistrationCallback' can only be called once.");
     }
-    this.userRegistrationCallback = callback;
+    this._userRegistrationCallback = callback;
   }
 
   public createAuthProvider(

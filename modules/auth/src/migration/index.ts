@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { generateAuthSchema } from "./basic";
 import { GraphQl, IDbSchema, IGraphqlAppConfig } from "@soniq/graphql";
 import { PoolClient, OPERATION_SORT_POSITION, IModuleMigrationResult, IMigrationError } from "soniq";

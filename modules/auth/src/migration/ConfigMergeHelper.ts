@@ -1,13 +1,17 @@
-/* eslint-disable @typescript-eslint/camelcase */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import * as _ from "lodash";
 import { defaultConfig } from "./defaultConfig";
 import { IMigrationError } from "soniq";
+import { IAuthApplicationConfig } from "../interfaces";
 
 export class ConfigMergeHelper {
-  public static merge(appConfig: any, envConfig: any): any {
-    const runtimeConfig: any = _.defaultsDeep(
+  public static merge(
+    appConfig: unknown,
+    envConfig: unknown
+  ): {
+    runtimeConfig: IAuthApplicationConfig;
+    errors: IMigrationError[];
+  } {
+    const runtimeConfig: IAuthApplicationConfig = _.defaultsDeep(
       JSON.parse(JSON.stringify(envConfig)),
       JSON.parse(JSON.stringify(appConfig)),
       JSON.parse(JSON.stringify(defaultConfig))
@@ -26,7 +30,7 @@ export class ConfigMergeHelper {
 
   public static checkForMissingConfigProperties(config: object): IMigrationError[] {
     const errors: IMigrationError[] = [];
-    this._deepForEach(config, (key: string, val: any, nestedPath: string) => {
+    this._deepForEach(config, (key: string, val: unknown, nestedPath: string) => {
       if (val == null) {
         errors.push({
           message: `Missing auth config path '${nestedPath}'.`,
@@ -42,10 +46,10 @@ export class ConfigMergeHelper {
 
   private static _deepForEach(
     obj: object,
-    callback: (key: string, val: any, nestedPath: string) => void,
+    callback: (key: string, val: unknown, nestedPath: string) => void,
     nestedPath: string = ""
-  ): any {
-    Object.entries(obj).map((entry: any) => {
+  ): void {
+    Object.entries(obj).map((entry: [string, unknown]) => {
       const newPath: string = `${nestedPath}${entry[0]}.`;
       return typeof entry[1] === "object" && entry[1] != null
         ? this._deepForEach(entry[1], callback, newPath)
