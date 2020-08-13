@@ -25,5 +25,5 @@ export interface IExtensionDefinition {
 }
 
 export interface ISoniqExtensionContext {
-  registerNewExtension: Function | null;
+  registerNewExtension: () => void | null;
 }

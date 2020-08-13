@@ -5,7 +5,7 @@ import { IEnvironment } from "../IEnvironment";
 export default class EnvironmentBuilder {
   public static readonly nodeIdLength: number = 6;
 
-  public static buildEnvironment(NODE_ENV: string, namespace: string): IEnvironment {
+  public static buildEnvironment(nodeEnv: string, namespace: string): IEnvironment {
     const frameworkVersion: number = require("../../../package.json").version;
     const applicationRootPath: string = path.dirname(require.main?.filename ?? "");
     const { applicationName, applicationVersion } = this._getApplicationNameAndVersion(applicationRootPath);
@@ -13,7 +13,7 @@ export default class EnvironmentBuilder {
 
     return {
       frameworkVersion,
-      NODE_ENV,
+      NODE_ENV: nodeEnv,
       name: applicationName,
       path: applicationRootPath,
       version: applicationVersion,
