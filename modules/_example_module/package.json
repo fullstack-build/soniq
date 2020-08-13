@@ -37,6 +37,6 @@
     "prettier": "~2.0.5"
   },
   "dependencies": {
-    "soniq": "~1.0.0-dev.3"
+    "soniq": "1.0.0-dev.3"
   }
 }

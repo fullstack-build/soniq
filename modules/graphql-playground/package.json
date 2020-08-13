@@ -37,8 +37,8 @@
     "prettier": "~2.0.5"
   },
   "dependencies": {
-    "soniq": "~1.0.0-dev.3",
-    "@soniq/server": "~1.0.0-dev.3",
+    "soniq": "1.0.0-dev.3",
+    "@soniq/server": "1.0.0-dev.3",
     "graphql-playground-middleware-koa": "~1.6.17",
     "graphql-playground-html": "~1.6.25"
   }
