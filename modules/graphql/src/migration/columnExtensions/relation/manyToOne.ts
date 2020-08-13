@@ -13,8 +13,7 @@ import { getPgRegClass, findTableById, findColumnByType, getPgSelector } from ".
 import { getDefaultAndNotNullChange } from "../generic/factory";
 import { getRelations, IRelation } from "./queryHelper";
 import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuidv4 from "uuid/v4";
+import { v4 as uuidv4 } from "uuid";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 
 export interface IFixedGenericTypes {

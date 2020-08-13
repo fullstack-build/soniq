@@ -10,8 +10,7 @@ import { IDbMutation, IDbMutationColumn } from "../../DbSchemaInterface";
 import { getPgRegClass, getPgSelector, ONE_PREFIX } from "../../helpers";
 import { getEnum } from "./queryHelper";
 import { PoolClient, OPERATION_SORT_POSITION } from "soniq";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuidv4 from "uuid/v4";
+import { v4 as uuidv4 } from "uuid";
 import { ICompiledExpression } from "../../ExpressionCompiler";
 
 export const ONE_ENUM_PREFIX: string = `${ONE_PREFIX}ENUM_`;

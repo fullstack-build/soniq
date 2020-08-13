@@ -13,7 +13,7 @@ import {
   DocumentNode,
 } from "graphql";
 import * as createHttpError from "http-errors";
-import * as isObject from "isobject";
+import { isObject } from "lodash";
 import { Koa } from "@soniq/server";
 import * as koaBodyParser from "koa-bodyparser";
 import * as koaJson from "koa-json";
