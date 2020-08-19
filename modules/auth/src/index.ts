@@ -1,5 +1,4 @@
 import * as fs from "fs";
-//@ts-ignore TODO: @eugene Koa-cors has no type-def
 import * as koaCors from "@koa/cors";
 import { DI } from "soniq";
 import {
