@@ -75,7 +75,6 @@ export interface IRuntimeExtensions {
 
 @DI.singleton()
 export class GraphQl {
-  // DI
   private _server: Server;
   private _resolvers: ICustomResolverObject = {};
   private _extensionResolvers: IExtensionResolversObject = {};
@@ -83,7 +82,7 @@ export class GraphQl {
   private _runtimeExtensions: IRuntimeExtensions = {};
   private _runtimeExtensionVersion: number = 0;
   private _runtimeExtensionVersionByKey: { [key: string]: number } = {};
-  private _getRuntimeConifg: TGetGraphqlModuleRuntimeConfig | null = null;
+  private _getRuntimeConfig: TGetGraphqlModuleRuntimeConfig | null = null;
   private _pgPool: Pool | null = null;
   private _schema: GraphQLSchema | null = null;
   private _schemaVersion: number = 0;
@@ -155,7 +154,7 @@ export class GraphQl {
     return result;
   }
   private async _boot(getRuntimeConfig: TGetGraphqlModuleRuntimeConfig, pgPool: Pool): Promise<void> {
-    this._getRuntimeConifg = getRuntimeConfig;
+    this._getRuntimeConfig = getRuntimeConfig;
     this._pgPool = pgPool;
     this.addResolvers({
       "@fullstack-one/graphql/Mutation/beginTransaction": getBeginTransactionResolver(pgPool, this._logger),
@@ -231,13 +230,13 @@ export class GraphQl {
   }
 
   public async getSchema(updateKey: string): Promise<IGetSchemaResult> {
-    if (this._getRuntimeConifg == null || this._pgPool == null) {
+    if (this._getRuntimeConfig == null || this._pgPool == null) {
       throw new Error("Cannot get schema before boot is finished.");
     }
     if (this._schemaVersionByKey[updateKey] == null) {
       this._schemaVersionByKey[updateKey] = 0;
     }
-    const { runtimeConfig, hasBeenUpdated } = await this._getRuntimeConifg("GQL_ENDPOINT");
+    const { runtimeConfig, hasBeenUpdated } = await this._getRuntimeConfig("GQL_ENDPOINT");
     const runtimeExtensionsResult: IGetRuntimeExtensionsResult = this.getRuntimeExtensions("GQL_ENDPOINT");
 
     if (this._schema == null || hasBeenUpdated === true || runtimeExtensionsResult.hasBeenUpdated === true) {
