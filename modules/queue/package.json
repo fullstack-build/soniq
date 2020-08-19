@@ -1,0 +1,43 @@
+{
+  "name": "@soniq/queue",
+  "version": "1.0.0",
+  "description": "@soniq queue module",
+  "main": "index",
+  "typings": "src/index",
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "build": "tsc",
+    "eslint": "eslint . --ext .ts",
+    "eslint-fix": "eslint . --ext .ts --fix",
+    "test": "jest"
+  },
+  "eslintConfig": {
+    "extends": "@soniq/eslint-config"
+  },
+  "jest": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/soniq.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fullstack-build/soniq/issues"
+  },
+  "homepage": "https://soniq.js.org",
+  "devDependencies": {
+    "@types/node": "^14",
+    "@soniq/eslint-config": "~1.0.0-dev.3",
+    "eslint": "~7.6.0",
+    "prettier": "~2.0.5"
+  },
+  "dependencies": {
+    "soniq": "1.0.0-dev.3",
+    "pg-boss": "~5.0.7"
+  }
+}
