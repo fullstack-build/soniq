@@ -1,7 +1,7 @@
 import { DI } from "soniq";
 
 @DI.injectable()
-export class Server {
+export class Example {
   public constructor() {
     console.log("I am an example modules!");
   }
