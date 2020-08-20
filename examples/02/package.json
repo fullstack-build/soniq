@@ -51,6 +51,7 @@
     "@soniq/graphql-playground": "1.0.0-dev.3",
     "@soniq/auth": "1.0.0-dev.3",
     "lodash": "~4.17.19",
-    "moment": "~2.27.0"
+    "moment": "~2.27.0",
+    "@soniq/queue": "~1.0.0"
   }
 }

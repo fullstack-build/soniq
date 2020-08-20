@@ -3,6 +3,7 @@ import { Server } from "@soniq/server";
 import { GraphQl } from "@soniq/graphql";
 import { Auth, AuthProviderEmail, AuthProviderPassword, IUserAuthentication, IProofMailPayload } from "@soniq/auth";
 import { GraphqlPlayground } from "@soniq/graphql-playground";
+import { Queue } from "@soniq/queue";
 
 export const $auth: Auth = DI.container.resolve(Auth);
 export const $core: Core = DI.container.resolve(Core);
@@ -14,6 +15,7 @@ export const $graphqlPlayground: GraphqlPlayground = DI.container.resolve(Graphq
 export const $authProviderEmail: AuthProviderEmail = DI.container.resolve(AuthProviderEmail);
 export const $authProviderPassword: AuthProviderPassword = DI.container.resolve(AuthProviderPassword);
 // export const $fileStorage: FileStorage = Container.get(FileStorage);
+export const $queue: Queue = DI.container.resolve(Queue);
 
 // TODO: Implement this
 // export const $dynamicModules: DynamicModules = Container.get(DynamicModules);

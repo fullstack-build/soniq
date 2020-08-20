@@ -31,13 +31,13 @@
   },
   "homepage": "https://soniq.js.org",
   "devDependencies": {
-    "@types/node": "^14",
     "@soniq/eslint-config": "~1.0.0-dev.3",
+    "@types/node": "^14",
     "eslint": "~7.6.0",
     "prettier": "~2.0.5"
   },
   "dependencies": {
-    "soniq": "1.0.0-dev.3",
-    "pg-boss": "~5.0.7"
+    "pg-boss": "~5.0.7",
+    "soniq": "1.0.0-dev.3"
   }
 }
