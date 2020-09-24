@@ -1,4 +1,4 @@
-import {ISettingsParam, Logger} from "tslog";
+import { ISettingsParam, Logger } from "tslog";
 export * as tslog from "tslog";
 export { Logger };
 

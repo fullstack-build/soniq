@@ -70,7 +70,7 @@ export class Server {
     try {
       this.app = new Koa();
 
-      /** START AsyncLocalStorage requestId middleware **/
+      /* START AsyncLocalStorage requestId middleware */
       this.app.use(async (ctx: Koa.Context, next: Koa.Next) => {
         const requestId: string = ctx.request.headers["x-request-id"] || customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 6)();
 
@@ -78,7 +78,7 @@ export class Server {
           return next();
         });
       });
-      /** END AsyncLocalStorage requestId middleware **/
+      /* END AsyncLocalStorage requestId middleware */
 
       this.app.use(bodyParser());
       // Handle errors like ECONNRESET
