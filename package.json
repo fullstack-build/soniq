@@ -62,6 +62,7 @@
   "dependencies": {
     "ava": "^2.4.0",
     "ts-node": "^8.10.2",
+    "tslog": "^2.8.0",
     "tsutils": "^2.28.0",
     "typescript": "^3.9.5"
   },
