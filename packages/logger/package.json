@@ -20,6 +20,6 @@
   "dependencies": {
     "@fullstack-one/config": "^0.7.0",
     "@fullstack-one/di": "^0.7.0",
-    "tslog": "^2.9.0"
+    "tslog": "^3.0.1"
   }
 }
