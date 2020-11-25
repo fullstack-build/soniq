@@ -22,7 +22,8 @@
     "build": "node -v & lerna run build",
     "clean:dist": "lerna exec -- rm -rf ./dist",
     "clean:modules": "lerna clean",
-    "reinstall": "npm run clean:modules && npm run clean:dist && npm run lerna-bootstrap && npm run build"
+    "npm:audit-fix": "lerna exec -- npm i && npm audit fix",
+    "reinstall": "npm run npm:audit-fix && npm run clean:modules && npm run clean:dist && npm run lerna-bootstrap && npm run build"
   },
   "repository": {
     "type": "git",
