@@ -1,6 +1,6 @@
 {
   "name": "example-5-file-storage",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Example project: how to use fullstack.one file-storage",
   "private": true,
   "engines": {
@@ -39,14 +39,14 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.7.4",
-    "@fullstack-one/db": "^0.7.4",
+    "@fullstack-one/auth": "^0.7.5",
+    "@fullstack-one/db": "^0.7.5",
     "@fullstack-one/di": "^0.7.0",
-    "@fullstack-one/file-storage": "^0.7.4",
-    "@fullstack-one/graphql": "^0.7.4",
-    "@fullstack-one/schema-builder": "^0.7.4",
+    "@fullstack-one/file-storage": "^0.7.5",
+    "@fullstack-one/graphql": "^0.7.5",
+    "@fullstack-one/schema-builder": "^0.7.5",
     "dotenv": "^4.0.0",
-    "fullstack-one": "^0.7.4",
+    "fullstack-one": "^0.7.5",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.12",
     "ts-node": "7.0.1"
