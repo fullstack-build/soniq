@@ -24,7 +24,7 @@
     "@fullstack-one/graceful-shutdown": "^0.7.5",
     "@fullstack-one/logger": "^0.7.5",
     "@types/node": "^14.0.13",
-    "koa": "^2.5.2",
+    "koa": "^2.13.1",
     "koa-bodyparser": "^4.2.1",
     "koa-compress": "^3.0.0",
     "nanoid": "^3.1.10"
