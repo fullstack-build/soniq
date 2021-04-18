@@ -1,6 +1,6 @@
 {
   "name": "example-4-orm-computed-and-custom-columns",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -40,11 +40,11 @@
     "typescript": "^3.1.1"
   },
   "dependencies": {
-    "@fullstack-one/auth": "^0.7.5",
-    "@fullstack-one/db": "^0.7.5",
+    "@fullstack-one/auth": "^0.7.6",
+    "@fullstack-one/db": "^0.7.6",
     "@fullstack-one/di": "^0.7.0",
-    "@fullstack-one/graphql": "^0.7.5",
-    "@fullstack-one/schema-builder": "^0.7.5",
+    "@fullstack-one/graphql": "^0.7.6",
+    "@fullstack-one/schema-builder": "^0.7.6",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.7.5",
     "reflect-metadata": "^0.1.13",
