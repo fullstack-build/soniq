@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/server",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
