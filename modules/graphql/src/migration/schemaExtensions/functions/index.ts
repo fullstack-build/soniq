@@ -5,7 +5,6 @@ import { IGqlMigrationResult } from "../../interfaces";
 import { getPgSelector } from "../../helpers";
 
 import * as crypto from "crypto";
-import { IGraphqlAppConfig } from "../../../moduleDefinition/interfaces";
 
 function sha1(input: string): string {
   return crypto.createHash("sha1").update(input).digest("hex");
@@ -69,9 +68,7 @@ function getFunctionsByRegClass(
 }
 
 export const schemaExtensionFunctions: ISchemaExtension = {
-  generateCommands: async (appConfig: IGraphqlAppConfig, dbClient: PoolClient): Promise<IGqlMigrationResult> => {
-    const schema: IDbSchema = appConfig.schema;
-
+  generateCommands: async (schema: IDbSchema, dbClient: PoolClient): Promise<IGqlMigrationResult> => {
     const result: IGqlMigrationResult = {
       errors: [],
       warnings: [],

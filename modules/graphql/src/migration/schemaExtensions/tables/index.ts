@@ -11,7 +11,6 @@ import {
   IColumnData,
 } from "../../tableExtensions/ITableExtension";
 import { IColumnExtension } from "../../columnExtensions/IColumnExtension";
-import { IGraphqlAppConfig } from "../../../moduleDefinition/interfaces";
 
 function filterTableExtensionData(tableMeta: ITableMeta, preloadedData: ITableExtensionData[]): ITableExtensionData[] {
   if (tableMeta == null) {
@@ -29,12 +28,11 @@ function filterTableExtensionData(tableMeta: ITableMeta, preloadedData: ITableEx
 
 export const schemaExtensionTables: ISchemaExtension = {
   generateCommands: async (
-    appConfig: IGraphqlAppConfig,
+    schema: IDbSchema,
     dbClient: PoolClient,
     helpers: IHelpers,
     gqlMigrationContext: IGqlMigrationContext
   ): Promise<IGqlMigrationResult> => {
-    const schema: IDbSchema = appConfig.schema;
     const result: IGqlMigrationResult = {
       errors: [],
       warnings: [],

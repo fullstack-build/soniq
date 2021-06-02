@@ -1,11 +1,11 @@
 import { IGqlMigrationResult, IGqlMigrationContext } from "../interfaces";
 import { PoolClient } from "soniq";
 import { IHelpers } from "../schemaExtensions/ISchemaExtension";
-import { IGraphqlAppConfig } from "../../moduleDefinition/interfaces";
+import { IDbSchema } from "../DbSchemaInterface";
 
 export interface IPostProcessingExtension {
   generateCommands: (
-    appConfig: IGraphqlAppConfig,
+    schema: IDbSchema,
     dbClient: PoolClient,
     helpers: IHelpers,
     gqlMigrationContext: IGqlMigrationContext,

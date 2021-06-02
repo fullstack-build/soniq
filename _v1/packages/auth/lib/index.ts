@@ -5,7 +5,13 @@ import { ORM, PostgresQueryRunner } from "@fullstack-one/db";
 import { Server } from "@fullstack-one/server";
 import { SchemaBuilder } from "@fullstack-one/schema-builder";
 import { Config } from "@fullstack-one/config";
-import { GraphQl, ReturnIdHandler, RevertibleResult, UserInputError, AuthenticationError } from "@fullstack-one/graphql";
+import {
+  GraphQl,
+  ReturnIdHandler,
+  RevertibleResult,
+  UserInputError,
+  AuthenticationError,
+} from "@fullstack-one/graphql";
 import { ILogger, LoggerFactory } from "@fullstack-one/logger";
 
 import migrations from "./migrations";
@@ -93,7 +99,7 @@ export class Auth {
       ...this.authConfig.corsOptions,
       origin: (ctx) => {
         return ctx.request.get("origin");
-      }
+      },
     };
 
     // Allow CORS requests
@@ -154,7 +160,7 @@ export class Auth {
   private setAccessTokenCookie(ctx: any, loginData: ILoginData) {
     const cookieOptions = {
       ...this.authConfig.cookie,
-      maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000
+      maxAge: loginData.tokenMeta.accessTokenMaxAgeInSeconds * 1000,
     };
 
     ctx.cookies.set(this.authConfig.cookie.name, loginData.accessToken, cookieOptions);
@@ -176,10 +182,21 @@ export class Auth {
 
   private getResolvers() {
     return {
-      "@fullstack-one/auth/getUserIdentifier": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+      "@fullstack-one/auth/getUserIdentifier": async (
+        obj,
+        args,
+        context,
+        info,
+        params,
+        returnIdHandler: ReturnIdHandler
+      ) => {
         return this.callAndHideErrorDetails(async () => {
           const queryRunner = context._transactionQueryRunner;
-          const userIdentifierObject = await this.authConnector.findUser(queryRunner, args.username, args.tenant || null);
+          const userIdentifierObject = await this.authConnector.findUser(
+            queryRunner,
+            args.username,
+            args.tenant || null
+          );
           if (returnIdHandler.setReturnId(userIdentifierObject.userIdentifier)) {
             return "Token hidden due to returnId usage.";
           }
@@ -205,7 +222,14 @@ export class Auth {
           return loginData;
         });
       },
-      "@fullstack-one/auth/modifyAuthFactors": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+      "@fullstack-one/auth/modifyAuthFactors": async (
+        obj,
+        args,
+        context,
+        info,
+        params,
+        returnIdHandler: ReturnIdHandler
+      ) => {
         return this.callAndHideErrorDetails(async () => {
           const queryRunner = context._transactionQueryRunner;
           // tslint:disable-next-line:prettier
@@ -221,7 +245,14 @@ export class Auth {
           return true;
         });
       },
-      "@fullstack-one/auth/proofAuthFactor": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+      "@fullstack-one/auth/proofAuthFactor": async (
+        obj,
+        args,
+        context,
+        info,
+        params,
+        returnIdHandler: ReturnIdHandler
+      ) => {
         return this.callAndHideErrorDetails(async () => {
           const queryRunner = context._transactionQueryRunner;
           await this.authConnector.proofAuthFactor(queryRunner, returnIdHandler.getReturnId(args.authFactorProofToken));
@@ -276,7 +307,14 @@ export class Auth {
           }
         });
       },
-      "@fullstack-one/auth/createUserAuthentication": async (obj, args, context, info, params, returnIdHandler: ReturnIdHandler) => {
+      "@fullstack-one/auth/createUserAuthentication": async (
+        obj,
+        args,
+        context,
+        info,
+        params,
+        returnIdHandler: ReturnIdHandler
+      ) => {
         return this.callAndHideErrorDetails(async () => {
           const queryRunner = context._transactionQueryRunner;
 
@@ -296,7 +334,10 @@ export class Auth {
             },
             async () => {
               await this.authQueryHelper.transaction(async (queryRunnerInternal) => {
-                const userAuthentication = await this.authConnector.getUserAuthenticationById(queryRunnerInternal, userAuthenticationId);
+                const userAuthentication = await this.authConnector.getUserAuthenticationById(
+                  queryRunnerInternal,
+                  userAuthenticationId
+                );
                 this.userRegistrationCallback(userAuthentication);
               });
             }
@@ -309,7 +350,7 @@ export class Auth {
             return this.authConnector.getUserAuthentication(queryRunnerInternal, context.accessToken);
           });
         });
-      }
+      },
     };
   }
 

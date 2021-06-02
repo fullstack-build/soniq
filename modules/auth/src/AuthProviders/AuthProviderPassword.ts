@@ -1,5 +1,5 @@
-import { DI, PoolClient } from "soniq";
-import { GraphQl, ReturnIdHandler, ICustomResolverObject } from "@soniq/graphql";
+import { Core, DI, IModuleConfig, PoolClient, SoniqModule } from "soniq";
+import { GraphQl, ReturnIdHandler } from "@soniq/graphql";
 import { Auth, AuthProvider } from "../index";
 import * as _ from "lodash";
 import { IProofResponse } from "../interfaces";
@@ -25,28 +25,17 @@ export class AuthProviderPassword {
 
   public constructor(
     // @Inject((type) => SchemaBuilder) schemaBuilder: SchemaBuilder,
+    @DI.inject(Core) core: Core,
     @DI.inject(GraphQl) graphQl: GraphQl,
     @DI.inject(DI.delay(() => Auth)) auth: Auth
   ) {
-    graphQl.addTypeDefsExtension(() => {
-      return schema;
+    core.initModule({
+      key: this.constructor.name,
     });
 
-    graphQl.addResolvers(this._getResolvers());
+    graphQl.addSchemaExtension(schema);
 
-    Object.keys(this._getResolvers())
-      .map((key) => {
-        const splittedKey: string[] = key.split("/");
-
-        return () => {
-          return {
-            path: `${splittedKey[3]}.${splittedKey[4]}`,
-            key,
-            config: {},
-          };
-        };
-      })
-      .forEach(graphQl.addResolverMappingExtension.bind(graphQl));
+    this._addResolvers(graphQl);
 
     this._authProvider = auth.createAuthProvider("password");
   }
@@ -67,45 +56,59 @@ export class AuthProviderPassword {
     try {
       return await callback();
     } catch (error) {
+      console.log("<E", error);
       _.set(error, "extensions.hideDetails", true);
       throw error;
     }
   }
 
-  private _getResolvers(): ICustomResolverObject {
+  private _addResolvers(graphQl: GraphQl): void {
+    graphQl.addMutationResolver(
+      "createPassword",
+      true,
+      async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+        return this._callAndHideErrorDetails(async () => {
+          const token: string = await this._createPassword(args.password);
+          if (returnIdHandler.setReturnId(token)) {
+            return "Token hidden due to returnId usage.";
+          }
+          return token;
+        });
+      }
+    );
+    graphQl.addMutationResolver(
+      "proofPassword",
+      true,
+      async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+        return this._callAndHideErrorDetails(async () => {
+          const token: string = await this._proofPassword(
+            context._transactionPgClient,
+            returnIdHandler.getReturnId(args.userIdentifier),
+            args.password
+          );
+          if (returnIdHandler.setReturnId(token)) {
+            return "Token hidden due to returnId usage.";
+          }
+          return token;
+        });
+      }
+    );
+  }
+}
+
+export class AuthProviderPasswordModule extends SoniqModule {
+  public constructor() {
+    super("AuthProviderPassword");
+  }
+
+  public _getDiModule(): typeof AuthProviderPassword {
+    return AuthProviderPassword;
+  }
+
+  public _build(): IModuleConfig {
     return {
-      "@fullstack-one/auth/PasswordProvider/Mutation/createPassword": (resolver) => {
-        return {
-          usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
-            return this._callAndHideErrorDetails(async () => {
-              const token: string = await this._createPassword(args.password);
-              if (returnIdHandler.setReturnId(token)) {
-                return "Token hidden due to returnId usage.";
-              }
-              return token;
-            });
-          },
-        };
-      },
-      "@fullstack-one/auth/PasswordProvider/Mutation/proofPassword": (resolver) => {
-        return {
-          usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
-            return this._callAndHideErrorDetails(async () => {
-              const token: string = await this._proofPassword(
-                context._transactionPgClient,
-                returnIdHandler.getReturnId(args.userIdentifier),
-                args.password
-              );
-              if (returnIdHandler.setReturnId(token)) {
-                return "Token hidden due to returnId usage.";
-              }
-              return token;
-            });
-          },
-        };
-      },
+      key: this.getModuleKey(),
+      appConfig: {},
     };
   }
 }

@@ -8,7 +8,7 @@ import { AuthenticationError } from "@soniq/graphql";
 import { ITransactionAuth } from "./interfaces";
 
 export class AuthQueryHelper {
-  private _pgPool: Pool;
+  private _getPgPool: () => Pool;
   private readonly _logger: Logger;
   private readonly _cryptoFactory: CryptoFactory;
   private readonly _signHelper: SignHelper;
@@ -19,8 +19,8 @@ export class AuthQueryHelper {
     "READ UNCOMMITTED",
   ];
 
-  public constructor(pgPool: Pool, logger: Logger, cryptoFactory: CryptoFactory, signHelper: SignHelper) {
-    this._pgPool = pgPool;
+  public constructor(getPgPool: () => Pool, logger: Logger, cryptoFactory: CryptoFactory, signHelper: SignHelper) {
+    this._getPgPool = getPgPool;
     this._logger = logger;
     this._cryptoFactory = cryptoFactory;
     this._signHelper = signHelper;
@@ -58,7 +58,7 @@ export class AuthQueryHelper {
     transactionAuth: ITransactionAuth = {},
     isolationLevel: IsolationLevel = "READ COMMITTED"
   ): Promise<unknown> {
-    const pgClient: PoolClient = await this._pgPool.connect();
+    const pgClient: PoolClient = await this._getPgPool().connect();
 
     const tAuth: ITransactionAuth = {
       accessToken: transactionAuth.accessToken || null,
@@ -90,8 +90,12 @@ export class AuthQueryHelper {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async query(transactionAuth: ITransactionAuth = {}, ...queryArguments: [string, ...any[]]): Promise<unknown> {
-    const pgClient: PoolClient = await this._pgPool.connect();
+  public async query(
+    transactionAuth: ITransactionAuth = {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...queryArguments: [string, ...any[]]
+  ): Promise<QueryResult> {
+    const pgClient: PoolClient = await this._getPgPool().connect();
 
     const tAuth: ITransactionAuth = {
       accessToken: transactionAuth.accessToken || null,
@@ -123,10 +127,10 @@ export class AuthQueryHelper {
   }
 
   public async adminTransaction(
-    callback: (pgClient: PoolClient) => Promise<unknown>,
+    callback: (pgClient: PoolClient) => Promise<QueryResult>,
     isolationLevel: IsolationLevel = "READ COMMITTED"
   ): Promise<unknown> {
-    const pgClient: PoolClient = await this._pgPool.connect();
+    const pgClient: PoolClient = await this._getPgPool().connect();
 
     try {
       await this._createPgClientAdminTransaction(pgClient, isolationLevel);
@@ -146,7 +150,7 @@ export class AuthQueryHelper {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async adminQuery(...queryArguments: [string, ...any[]]): Promise<QueryResult> {
-    const pgClient: PoolClient = await this._pgPool.connect();
+    const pgClient: PoolClient = await this._getPgPool().connect();
 
     try {
       await pgClient.query("BEGIN;");
@@ -247,9 +251,5 @@ export class AuthQueryHelper {
       this._logger.warn("unsetRoot.error", err);
       throw err;
     }
-  }
-
-  public setPool(pgPool: Pool): void {
-    this._pgPool = pgPool;
   }
 }

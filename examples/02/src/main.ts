@@ -1,4 +1,4 @@
-import { DI, Core, Logger, Extensions } from "soniq";
+/* import { DI, Core, Logger, Extensions } from "soniq";
 import { Server } from "@soniq/server";
 import { GraphQl } from "@soniq/graphql";
 import { Auth, AuthProviderEmail, AuthProviderPassword, IUserAuthentication, IProofMailPayload } from "@soniq/auth";
@@ -27,3 +27,4 @@ $auth.registerUserRegistrationCallback((userAuthentication: IUserAuthentication)
 $authProviderEmail.registerSendMailCallback((mail: IProofMailPayload) => {
   logger.info("authProviderEmail.sendMailCallback", JSON.stringify(mail, null, 2));
 });
+*/

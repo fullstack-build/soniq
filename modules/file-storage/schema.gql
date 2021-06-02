@@ -1,0 +1,36 @@
+
+type UploadFile {
+  extension: String!
+  type: String!
+  fileName: String!
+  uploadFileName: String!
+  presignedPutUrl: String!
+}
+
+type BucketFile {
+  fileName: String!
+  objects: [BucketObject!]!
+}
+
+type BucketObject {
+  objectName: String!
+  presignedGetUrl: String!
+  info: String!
+}
+
+extend type Mutation {
+  """
+  Creates a new file for upload. Login required.
+  """
+  createFile(extension: String!, type: FILE_TYPES): UploadFile
+
+  """
+  Verifies a new file after upload. Login required.
+  """
+  verifyFile(fileName: String!): BucketFile
+
+  """
+  Deletes temporary files of the current user which have not been added to any entity. If you provide a fileName only this will be deleted. Login required.
+  """
+  clearUpFiles(fileName: String): [String]
+}

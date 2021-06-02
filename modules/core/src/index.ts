@@ -7,67 +7,42 @@ import { Pool, PoolClient, PoolConfig, QueryResult } from "pg";
 import * as Ajv from "ajv";
 import { Logger, TLogLevelName } from "tslog";
 
-import { IModuleRuntimeConfig, IModuleAppConfig } from "./interfaces";
-import {
-  getLatestMigrationVersion,
-  ICoreMigration,
-  getLatestMigrationVersionPoll,
-  ICoreMigrationPoll,
-} from "./helpers";
-import { Migration } from "./Migration";
-import { SoniqApp, SoniqEnvironment } from "./Application";
-import { IModuleMigrationResult } from "./Migration/interfaces";
+import { IModuleRunConfig, IModuleAppConfig, IApplicationConfig, IAppConfig } from "./moduleDefinition/interfaces";
+import { drawCliArt, ICoreMigration } from "./helpers";
+import { Migration } from "./migration";
+import { IModuleMigrationResult, IObjectTrace } from "./migration/interfaces";
 import { EventEmitter } from "events";
 
-export interface IGetModuleRuntimeConfigResult {
-  runtimeConfig: IModuleRuntimeConfig;
-  hasBeenUpdated: boolean;
-}
+export type TShouldMigrateFunction = () => string;
+export type TMigrationFunction = (pgClient: PoolClient) => Promise<IModuleMigrationResult>;
+export type TBootFunction = (moduleRunConfig: IModuleRunConfig, pgPool: Pool) => Promise<void>;
 
-export type TGetModuleRuntimeConfig = (updateKey?: string) => Promise<IGetModuleRuntimeConfigResult>;
-export type TMigrationFunction = (appConfig: IModuleAppConfig, pgClient: PoolClient) => Promise<IModuleMigrationResult>;
-export type TBootFunction = (getRuntimeConfig: TGetModuleRuntimeConfig, pgPool: Pool) => Promise<void>;
-export type TCreateExtensionConnectorFunction = () => ExtensionConnector;
+export type IModule =
+  | {
+      key: string;
+      shouldMigrate?: never;
+      migrate?: never;
+      boot?: TBootFunction;
+    }
+  | {
+      key: string;
+      shouldMigrate: TShouldMigrateFunction;
+      migrate: TMigrationFunction;
+      boot?: TBootFunction;
+    };
 
-export interface IExtensionConnector {
-  detach: () => void;
-}
-
-export class ExtensionConnector {
-  public detach(): void {
-    return;
-  }
-}
-
-export class CoreExtensionConnector extends ExtensionConnector {
-  private _core: Core;
-  private _runtimeExtensionKeys: string[] = [];
-
-  public constructor(core: Core) {
-    super();
-    this._core = core;
-  }
-
-  public getPgPool(): Pool {
-    return this._core.getRuntimePgPool();
-  }
-
-  public detach(): void {}
-}
-
-export interface IModuleCoreFunctions {
+/*export interface IModule {
   key: string;
+  shouldMigrate?: TShouldMigrateFunction;
   migrate?: TMigrationFunction;
   boot?: TBootFunction;
-  createExtensionConnector?: TCreateExtensionConnectorFunction;
-}
+}*/
 
-export * from "./interfaces";
-export * from "./Migration/interfaces";
-export * from "./Migration/constants";
-export * from "./Migration/helpers";
-export * from "./Application";
-export * from "./Extensions";
+export * from "./moduleDefinition/interfaces";
+export * from "./migration/interfaces";
+export * from "./migration/constants";
+export * from "./migration/helpers";
+export * from "./moduleDefinition";
 export { Pool, PoolClient, PoolConfig, QueryResult, Ajv };
 
 export enum EBootState {
@@ -88,6 +63,7 @@ process.on("unhandledRejection", (reason) => {
   } catch (e) {
     console.error("UNHANDLED REJECTION:", reason);
   }
+  process.exit(1);
 });
 
 process.on("uncaughtException", (err) => {
@@ -97,6 +73,7 @@ process.on("uncaughtException", (err) => {
   } catch (e) {
     console.error("UNCAUGHT EXCEPTION:", err);
   }
+  process.exit(1);
 });
 
 @DI.singleton()
@@ -105,15 +82,22 @@ export class Core {
   private readonly _logger: Logger;
   private _state: EBootState = EBootState.Initial;
 
-  private _modules: IModuleCoreFunctions[] = [];
+  private _modules: IModule[] = [];
   private _bootReadyPromiseResolver: ((value?: unknown) => void)[] = [];
 
-  private _runTimePgPool: Pool | undefined;
+  private _pgPool: Pool | undefined;
+  private _runTimeCoreMigration: ICoreMigration | undefined;
   private _migration: Migration;
 
   private _eventEmitter: EventEmitter;
 
-  public constructor() {
+  private _appConfig: IAppConfig;
+  private _objectTraces: IObjectTrace[];
+
+  public constructor(@DI.inject("ApplicationConfig") applicationConfig: IApplicationConfig) {
+    this._appConfig = applicationConfig.appConfig;
+    this._objectTraces = applicationConfig.objectTraces;
+
     // TODO: catch all errors & exceptions
     this._logger = new Logger({
       instanceName: customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 6)(),
@@ -123,17 +107,10 @@ export class Core {
     this._migration = new Migration(this._logger, this);
     this._eventEmitter = new EventEmitter();
 
-    this.addCoreFunctions({
-      key: this.constructor.name,
-      createExtensionConnector: this._createExtensionConnector.bind(this),
-    });
+    this.initModule({ key: this.constructor.name });
   }
 
-  private _createExtensionConnector(): CoreExtensionConnector {
-    return new CoreExtensionConnector(this);
-  }
-
-  public _getModuleCoreFunctionsByKey(key: string): IModuleCoreFunctions | null {
+  public _getModuleCoreFunctionsByKey(key: string): IModule | null {
     for (const module of this._modules) {
       if (module.key === key) {
         return module;
@@ -142,35 +119,31 @@ export class Core {
     return null;
   }
 
-  public async deployApp(app: SoniqApp, env: SoniqEnvironment): Promise<void> {
-    return this._migration.deployApp(app, env);
+  public async bootApp(pgPoolConfig: PoolConfig, disableAutoMigration: boolean): Promise<void> {
+    this._logger.info("Starting Application");
+    try {
+      this._pgPool = new Pool(pgPoolConfig);
+      await this._pgPool.query("SELECT TRUE;");
+    } catch (err) {
+      this._logger.fatal("Failed to connect to database", err);
+      throw err;
+    }
+
+    this._runTimeCoreMigration = await this._migration.migrateApp(
+      this._appConfig,
+      this._objectTraces,
+      this._pgPool,
+      disableAutoMigration
+    );
+
+    await this.bootModules();
+
+    return;
   }
 
-  private _getModuleRuntimeConfigGetter(moduleKey: string): TGetModuleRuntimeConfig {
-    return async () => {
-      if (this._runTimePgPool == null) {
-        throw new Error("Cannot call getModuleRuntimeConfigGetter when the Pool is not started");
-      }
-
-      const pgClient: PoolClient = await this._runTimePgPool.connect();
-      try {
-        const latestMigration: ICoreMigration = await getLatestMigrationVersion(pgClient);
-
-        if (latestMigration == null) {
-          throw new Error("This database has no runtimeConfig.");
-        }
-        return {
-          runtimeConfig: latestMigration.runtimeConfig[moduleKey],
-          hasBeenUpdated: true,
-        };
-      } catch (err) {
-        this._logger.error(`core.boot.error.caught: ${err}\n`);
-        throw err;
-      } finally {
-        await pgClient.release();
-      }
-    };
-  }
+  /* public async migrateApp(app: SoniqApp, env: SoniqEnvironment): Promise<void> {
+    return this._migration.migrateApp(app, env);
+  }*/
 
   public getBootState(): EBootState {
     return this._state;
@@ -184,8 +157,20 @@ export class Core {
     return this._state === EBootState.Finished;
   }
 
-  public addCoreFunctions(moduleCoreFunctions: IModuleCoreFunctions): void {
-    this._modules.push(moduleCoreFunctions);
+  public initModule(module: IModule): IModuleAppConfig {
+    for (const existingModule of this._modules) {
+      if (existingModule.key === module.key) {
+        throw new Error(`A module with key ${module.key} has already been initialised.`);
+      }
+    }
+    for (const moduleConfig of this._appConfig.modules) {
+      if (moduleConfig.key === module.key) {
+        this._modules.push(module);
+        return moduleConfig.appConfig;
+      }
+    }
+
+    throw new Error(`Could not find config for module ${module.key}.`);
   }
 
   public hasBootedPromise(): Promise<unknown> | true {
@@ -198,19 +183,26 @@ export class Core {
     }
   }
 
-  public async boot(pgPoolConfig: PoolConfig): Promise<void> {
-    this._logger.info("Booting Application...");
-    this._runTimePgPool = new Pool(pgPoolConfig);
+  public async bootModules(): Promise<void> {
+    this._logger.info("Booting Modules");
+
+    if (this._runTimeCoreMigration == null) {
+      throw new Error("_runTimeCoreMigration must be set before boot");
+    }
+    if (this._pgPool == null) {
+      throw new Error("_pgPool must be set before boot");
+    }
+
     this._state = EBootState.Booting;
 
-    this._startConfigPoller(null).catch(() => {});
+    const latestMigration: ICoreMigration = this._runTimeCoreMigration;
 
     try {
-      for (const moduleObject of this._modules) {
-        if (moduleObject.boot != null) {
-          this._logger.info("Module-boot: Start => ", moduleObject.key);
-          await moduleObject.boot(this._getModuleRuntimeConfigGetter(moduleObject.key), this._runTimePgPool);
-          this._logger.info("Module-boot: Finished => ", moduleObject.key);
+      for (const module of this._modules) {
+        if (module.boot != null && latestMigration.runConfig[module.key] != null) {
+          this._logger.info("Module-boot: Start => ", module.key);
+          await module.boot(latestMigration.runConfig[module.key], this._pgPool);
+          this._logger.info("Module-boot: Finished => ", module.key);
         }
       }
       this._state = EBootState.Finished;
@@ -224,64 +216,12 @@ export class Core {
           // Ignore Errors because this is only an Event
         }
       }
-      this._logger.info("Soniq Worker running!");
+      this._logger.info("Soniq application running!");
     } catch (err) {
-      this._logger.error(`Module-boot failed`, err);
+      this._logger.fatal(`Module-boot failed`, err);
       throw err;
     }
-    this._drawCliArt();
-  }
-
-  private async _startConfigPoller(lastMigration: ICoreMigrationPoll | null): Promise<void> {
-    if (this._runTimePgPool == null) {
-      throw new Error("Cannot call getModuleRuntimeConfigGetter when the Pool is not started");
-    }
-
-    const pgClient: PoolClient = await this._runTimePgPool.connect();
-    try {
-      const latestMigration: ICoreMigrationPoll = await getLatestMigrationVersionPoll(pgClient);
-
-      if (latestMigration == null) {
-        throw new Error("This database has no runtimeConfig.");
-      }
-
-      if (lastMigration != null) {
-        if (
-          lastMigration.version !== latestMigration.version ||
-          lastMigration.id !== latestMigration.id ||
-          lastMigration.createdAt.toString() !== latestMigration.createdAt.toString()
-        ) {
-          // Update
-          this._logger.info("New runtimeConfig version detected. Trigger update");
-          this._eventEmitter.emit("runtimeConfigUpdate");
-        }
-      }
-      setTimeout(() => {
-        this._startConfigPoller(latestMigration).catch(() => {});
-      }, 3000);
-    } catch (err) {
-      this._logger.error(`Config-Poller Error:`, err);
-      setTimeout(() => {
-        this._startConfigPoller(null).catch(() => {});
-      }, 3000);
-    } finally {
-      await pgClient.release();
-    }
-  }
-
-  private _drawCliArt(): void {
-    process.stdout.write(
-      `     
-  ___  ___  _ __  _  __ _ 
- / __|/ _ \\| '_ \\| |/ _\` |
- \\__ \\ (_) | | | | | (_| |
- |___/\\___/|_| |_|_|\\__, |
-                       | |
-                       |_|\n`
-    );
-    process.stdout.write("____________________________________\n");
-    /* process.stdout.write(JSON.stringify({ no: "env" }, undefined, 2) + "\n");
-    process.stdout.write("====================================\n"); */
+    drawCliArt();
   }
 
   public getLogger(name?: string, minLevel: TLogLevelName = "silly", exposeStack: boolean = false): Logger {
@@ -292,10 +232,10 @@ export class Core {
     return this._eventEmitter;
   }
 
-  public getRuntimePgPool(): Pool {
-    if (this._runTimePgPool == null) {
+  public getPgPool(): Pool {
+    if (this._pgPool == null || this._state !== EBootState.Finished) {
       throw new Error("You cannot get a pool before boot is finished.");
     }
-    return this._runTimePgPool;
+    return this._pgPool;
   }
 }

@@ -43,7 +43,8 @@
     "@types/uuid": "~8.3.0",
     "@soniq/eslint-config": "~1.0.0-dev.3",
     "eslint": "~7.6.0",
-    "prettier": "~2.0.5"
+    "prettier": "~2.0.5",
+    "@types/heft-jest": "1.0.2"
   },
   "dependencies": {
     "@koa/cors": "^2.2.3",

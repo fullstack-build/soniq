@@ -2,57 +2,47 @@ import { GraphQLSchema } from "graphql";
 
 import { Logger } from "soniq";
 import { Pool } from "soniq";
-import { IGraphqlRuntimeConfig, IResolverMapping } from "../RuntimeInterfaces";
+import { IResolverMapping } from "../moduleDefinition/RuntimeInterfaces";
 import getDefaultResolvers from "../getDefaultResolvers";
 import { getResolvers, ICustomResolverObject } from "../resolverTransactions";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { HookManager } from "../hooks";
 import { OperatorsBuilder } from "../logicalOperators";
 import { IResolvers } from "@graphql-tools/utils";
-
-import { IRuntimeExtension } from "../interfaces";
+import { IGraphqlAppConfig, IGraphqlRunConfig } from "../moduleDefinition/interfaces";
 
 export async function makeSchema(
-  runtimeConfig: IGraphqlRuntimeConfig,
+  runConfig: IGraphqlRunConfig,
+  appConfig: IGraphqlAppConfig,
   diResolvers: ICustomResolverObject,
   pgPool: Pool,
   hookManager: HookManager,
   logger: Logger,
   operatorsBuilder: OperatorsBuilder,
-  runtimeExtensions: IRuntimeExtension[]
+  runtimeResolverMappings: IResolverMapping[],
+  runtimeSchemaExtensions: string[]
 ): Promise<GraphQLSchema> {
   const defaultResolvers: ICustomResolverObject = getDefaultResolvers(
     operatorsBuilder,
-    runtimeConfig.defaultResolverMeta,
+    runConfig.defaultResolverMeta,
     hookManager,
     pgPool,
     logger,
-    runtimeConfig.options
+    appConfig
   );
 
-  let typeDefs: string = runtimeConfig.gqlTypeDefs;
+  let typeDefs: string = runConfig.gqlTypeDefs;
 
-  let runtimeResolvers: ICustomResolverObject = { ...defaultResolvers, ...diResolvers };
+  const runtimeResolvers: ICustomResolverObject = { ...defaultResolvers, ...diResolvers };
 
-  const resolverMappings: IResolverMapping[] = runtimeConfig.resolverMappings;
+  const resolverMappings: IResolverMapping[] = runConfig.resolverMappings;
 
-  runtimeExtensions.forEach((runtimeExtension: IRuntimeExtension) => {
-    if (runtimeExtension.resolverMappings != null) {
-      runtimeExtension.resolverMappings.forEach((resolverMapping: IResolverMapping) => {
-        resolverMappings.push(resolverMapping);
-      });
-    }
-    if (runtimeExtension.resolverObject != null) {
-      runtimeResolvers = {
-        ...runtimeResolvers,
-        ...runtimeExtension.resolverObject,
-      };
-    }
-    if (runtimeExtension.schemaExtensions != null) {
-      runtimeExtension.schemaExtensions.forEach((schemaExtension: string) => {
-        typeDefs += `\n${schemaExtension}`;
-      });
-    }
+  runtimeSchemaExtensions.forEach((schemaExtension: string) => {
+    typeDefs += `\n${schemaExtension}`;
+  });
+
+  runtimeResolverMappings.forEach((resolverMapping: IResolverMapping) => {
+    resolverMappings.push(resolverMapping);
   });
 
   const resolvers: IResolvers = getResolvers(resolverMappings, runtimeResolvers, pgPool, logger);

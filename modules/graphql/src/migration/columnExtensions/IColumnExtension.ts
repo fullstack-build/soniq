@@ -1,7 +1,7 @@
 import { IDbTable, IDbSchema, IDbColumn, IDbMutationColumn, IDbMutation } from "../DbSchemaInterface";
 import { IGqlMigrationResult, IColumnInfo, ITableMeta, IGqlMigrationContext } from "../interfaces";
 import { PoolClient, IMigrationError } from "soniq";
-import { IQueryFieldMeta, IResolverMapping } from "../../RuntimeInterfaces";
+import { IQueryFieldMeta, IResolverMapping } from "../../moduleDefinition/RuntimeInterfaces";
 import { ExpressionGenerator } from "../ExpressionGenerator";
 import { ICompiledExpression } from "../ExpressionCompiler";
 

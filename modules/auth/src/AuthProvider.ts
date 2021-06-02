@@ -6,8 +6,6 @@ import {
   IProofResponse,
   IAuthFactorForProofResponse,
   IPasswordData,
-  ISodiumConfig,
-  IAuthRuntimeConfig,
   IAuthFactorMeta,
 } from "./interfaces";
 import { createConfig, newHash, hashByMeta, generateRandomPassword } from "./crypto";
@@ -16,30 +14,31 @@ import { DateTime } from "luxon";
 import { SignHelper } from "./SignHelper";
 import { AuthQueryHelper } from "./AuthQueryHelper";
 import { Logger, PoolClient } from "soniq";
+import { IAuthAppConfig, ISodiumConfig } from "./moduleDefinition/interfaces";
 
 export class AuthProvider {
-  private _authConnector: AuthConnector | null = null;
-  private _authQueryHelper: AuthQueryHelper | null = null;
-  private _signHelper: SignHelper | null = null;
+  private _authConnector: AuthConnector;
+  private _authQueryHelper: AuthQueryHelper;
+  private _signHelper: SignHelper;
   private _logger: Logger;
-  private _authRuntimeConfig: IAuthRuntimeConfig | null;
+  private _appConfig: IAuthAppConfig;
   public readonly providerName: string;
   public authFactorProofTokenMaxAgeInSeconds: number | null;
 
   public constructor(
     providerName: string,
-    authConnector: AuthConnector | null,
-    authQueryHelper: AuthQueryHelper | null,
-    signHelper: SignHelper | null,
+    authConnector: AuthConnector,
+    authQueryHelper: AuthQueryHelper,
+    signHelper: SignHelper,
     logger: Logger,
-    authRuntimeConfig: IAuthRuntimeConfig | null,
-    authFactorProofTokenMaxAgeInSeconds: number | null = null
+    appConfig: IAuthAppConfig,
+    authFactorProofTokenMaxAgeInSeconds: number | null
   ) {
     this._authConnector = authConnector;
     this._authQueryHelper = authQueryHelper;
     this._signHelper = signHelper;
     this._logger = logger;
-    this._authRuntimeConfig = authRuntimeConfig;
+    this._appConfig = appConfig;
     this.providerName = providerName;
     this.authFactorProofTokenMaxAgeInSeconds = authFactorProofTokenMaxAgeInSeconds;
   }
@@ -49,7 +48,7 @@ export class AuthProvider {
     passwordData: IPasswordData;
   }> {
     const randomPassword: string = generateRandomPassword();
-    const sodiumConfig: ISodiumConfig = createConfig(this.getAuthRuntimeConfig().sodium);
+    const sodiumConfig: ISodiumConfig = createConfig(this._appConfig.sodium);
     const passwordData: IPasswordData = await newHash(randomPassword, sodiumConfig);
 
     const randomTime: string | null = DateTime.fromMillis(Math.round(Date.now() * Math.random()), {
@@ -83,10 +82,10 @@ export class AuthProvider {
     isProofed: boolean = false,
     providerMeta: unknown = {}
   ): Promise<string> {
-    const sodiumConfig: ISodiumConfig = createConfig(this.getAuthRuntimeConfig().sodium);
+    const sodiumConfig: ISodiumConfig = createConfig(this._appConfig.sodium);
 
     const providerSignature: string = this.getSignHelper().getProviderSignature(
-      this.getAuthRuntimeConfig().secrets.authProviderHashSignature,
+      this._appConfig.secrets.authProviderHashSignature,
       this.providerName,
       ""
     );
@@ -122,14 +121,14 @@ export class AuthProvider {
       const password: string | null = await getPassword(authFactor);
 
       const providerSignature: string = this.getSignHelper().getProviderSignature(
-        this.getAuthRuntimeConfig().secrets.authProviderHashSignature,
+        this._appConfig.secrets.authProviderHashSignature,
         meta.isOldPassword === true ? "local" : provider,
         meta.isOldPassword === true ? authFactor.userId : ""
       );
 
       passwordData = await hashByMeta(password + providerSignature, meta.sodiumMeta);
     } catch (err) {
-      this._logger.trace(`Password proof failed.`);
+      this._logger.trace(`Password proof failed.`, err);
       const randomAuthFactor: {
         authFactor: IAuthFactorForProof;
         passwordData: IPasswordData;
@@ -206,24 +205,5 @@ export class AuthProvider {
       throw new Error(`SignHelper has not been initialised yet.`);
     }
     return this._signHelper;
-  }
-
-  public getAuthRuntimeConfig(): IAuthRuntimeConfig {
-    if (this._authRuntimeConfig == null) {
-      throw new Error(`AuthRuntimeConfig has not been initialised yet.`);
-    }
-    return this._authRuntimeConfig;
-  }
-
-  public _boot(
-    authConnector: AuthConnector,
-    authQueryHelper: AuthQueryHelper,
-    signHelper: SignHelper,
-    runtimeConfig: IAuthRuntimeConfig
-  ): void {
-    this._authConnector = authConnector;
-    this._authQueryHelper = authQueryHelper;
-    this._signHelper = signHelper;
-    this._authRuntimeConfig = runtimeConfig;
   }
 }

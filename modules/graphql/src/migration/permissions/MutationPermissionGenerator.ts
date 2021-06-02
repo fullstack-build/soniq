@@ -4,7 +4,7 @@ import { ExpressionCompiler, ICompiledExpression } from "../ExpressionCompiler";
 import { ExpressionGenerator } from "../ExpressionGenerator";
 import { IColumnExtensionContext, IColumnExtension, IMutationFieldData } from "../columnExtensions/IColumnExtension";
 import { getPgSelector, getPgRegClass } from "../helpers";
-import { IMutationPermissionGeneratorResult, IMutationsMeta } from "../../RuntimeInterfaces";
+import { IMutationPermissionGeneratorResult, IMutationsMeta } from "../../moduleDefinition/RuntimeInterfaces";
 import { LOCAL_TABLE_ALIAS } from "./PermissionsGenerator";
 import { IGqlInputType } from "./interfaces";
 

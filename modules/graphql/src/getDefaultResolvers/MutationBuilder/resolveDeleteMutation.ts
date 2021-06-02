@@ -1,6 +1,6 @@
 import { IMutationBuildObject } from "./types";
 import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
-import { IMutationViewMeta, IDefaultResolverMeta } from "../../RuntimeInterfaces";
+import { IMutationViewMeta, IDefaultResolverMeta } from "../../moduleDefinition/RuntimeInterfaces";
 import { ResolveTree } from "graphql-parse-resolve-info";
 
 export default function resolveDeleteMutation(

@@ -7,7 +7,7 @@ import { ReturnIdHandler } from "./ReturnIdHandler";
 import { RevertibleResult } from "./RevertibleResult";
 import { Logger } from "soniq";
 import { UserInputError } from "../GraphqlErrors";
-import { IResolverMapping } from "../RuntimeInterfaces";
+import { IResolverMapping } from "../moduleDefinition/RuntimeInterfaces";
 import { Pool } from "soniq";
 
 export type ICustomFieldResolver<TSource, TContext> = (

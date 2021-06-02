@@ -1,13 +1,22 @@
+import { defaultAppConfig } from "./defaultAppConfig";
 import { SoniqModule, IModuleConfig } from "soniq";
-import { IGraphqlPlaygroundAppConfigOptional } from "../interfaces";
+import { GraphqlPlayground } from "..";
+import { IGraphqlPlaygroundAppConfig, IGraphqlPlaygroundAppConfigInput } from "./interfaces";
 
 export class GraphqlPlaygroundModule extends SoniqModule {
-  private _appConfig: IGraphqlPlaygroundAppConfigOptional;
+  private _appConfig: IGraphqlPlaygroundAppConfig;
 
-  public constructor(appConfig: IGraphqlPlaygroundAppConfigOptional) {
+  public constructor(appConfig: IGraphqlPlaygroundAppConfigInput) {
     super("GraphqlPlayground");
 
-    this._appConfig = appConfig;
+    this._appConfig = {
+      ...defaultAppConfig,
+      ...appConfig,
+    };
+  }
+
+  public _getDiModule(): typeof GraphqlPlayground {
+    return GraphqlPlayground;
   }
 
   public _build(): IModuleConfig {

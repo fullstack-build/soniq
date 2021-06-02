@@ -1,5 +1,5 @@
-import { DI } from "soniq";
-import { GraphQl, ReturnIdHandler, ICustomResolverObject } from "@soniq/graphql";
+import { Core, DI, IModuleConfig, SoniqModule } from "soniq";
+import { GraphQl, ReturnIdHandler } from "@soniq/graphql";
 import { Auth, AuthProvider, IAuthFactorForProof } from "../index";
 
 const schema: string = `
@@ -31,26 +31,18 @@ export class AuthProviderEmail {
   private _sendMail: ((mail: IProofMailPayload) => void) | null = null;
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public constructor(@DI.inject(GraphQl) graphQl: GraphQl, @DI.inject(DI.delay(() => Auth)) auth: Auth) {
-    graphQl.addTypeDefsExtension(() => {
-      return schema;
+  public constructor(
+    @DI.inject(Core) core: Core,
+    @DI.inject(GraphQl) graphQl: GraphQl,
+    @DI.inject(DI.delay(() => Auth)) auth: Auth
+  ) {
+    core.initModule({
+      key: this.constructor.name,
     });
 
-    graphQl.addResolvers(this._getResolvers());
+    graphQl.addSchemaExtension(schema);
 
-    Object.keys(this._getResolvers())
-      .map((key) => {
-        const splittedKey: string[] = key.split("/");
-
-        return () => {
-          return {
-            path: `${splittedKey[3]}.${splittedKey[4]}`,
-            key,
-            config: {},
-          };
-        };
-      })
-      .forEach(graphQl.addResolverMappingExtension.bind(graphQl));
+    this._addResolvers(graphQl);
 
     this._authProvider = auth.createAuthProvider("email", 60 * 60 * 24);
   }
@@ -99,36 +91,32 @@ export class AuthProviderEmail {
     }
   } */
 
-  private _getResolvers(): ICustomResolverObject {
-    return {
-      "@fullstack-one/auth/EmailProvider/Mutation/createEmail": (resolver) => {
-        return {
-          usesPgClientFromContext: true,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
-            const token: string = await this._createEmail(args.email);
-            if (returnIdHandler.setReturnId(token)) {
-              return "Token hidden due to returnId usage.";
-            }
-            return token;
-          },
-        };
-      },
-      "@fullstack-one/auth/EmailProvider/Mutation/initiateEmailProof": (resolver) => {
-        return {
-          usesPgClientFromContext: false,
-          resolver: async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
-            try {
-              // Don't await this. because we want to make no hint to an attacker wether a user with this email exists or not
-              // eslint-disable-next-line @typescript-eslint/no-floating-promises
-              this._initiateEmailProof(returnIdHandler.getReturnId(args.userIdentifier), args.info);
-            } catch (err) {
-              /* Ignore Error */
-            }
-            return true;
-          },
-        };
-      },
-    };
+  private _addResolvers(graphQl: GraphQl): void {
+    graphQl.addMutationResolver(
+      "createEmail",
+      true,
+      async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+        const token: string = await this._createEmail(args.email);
+        if (returnIdHandler.setReturnId(token)) {
+          return "Token hidden due to returnId usage.";
+        }
+        return token;
+      }
+    );
+    graphQl.addMutationResolver(
+      "initiateEmailProof",
+      false,
+      async (obj, args, context, info, returnIdHandler: ReturnIdHandler) => {
+        try {
+          // Don't await this. because we want to make no hint to an attacker wether a user with this email exists or not
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          this._initiateEmailProof(returnIdHandler.getReturnId(args.userIdentifier), args.info);
+        } catch (err) {
+          /* Ignore Error */
+        }
+        return true;
+      }
+    );
   }
 
   public registerSendMailCallback(callback: (mail: IProofMailPayload) => void): void {
@@ -136,5 +124,22 @@ export class AuthProviderEmail {
       throw new Error("EmailAuthProvider 'registerSendMailCallback' can only be called once.");
     }
     this._sendMail = callback;
+  }
+}
+
+export class AuthProviderEmailModule extends SoniqModule {
+  public constructor() {
+    super("AuthProviderEmail");
+  }
+
+  public _getDiModule(): typeof AuthProviderEmail {
+    return AuthProviderEmail;
+  }
+
+  public _build(): IModuleConfig {
+    return {
+      key: this.getModuleKey(),
+      appConfig: {},
+    };
   }
 }

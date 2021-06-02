@@ -39,7 +39,7 @@ export function printMigrationResult(
   objectTraces: IObjectTrace[],
   logger: Logger
 ): void {
-  console.log("\n\u001b[34;1m DEPLOYMENT:");
+  console.log("\n\u001b[34;1m MIGRATION:");
   console.log("\u001b[34;1m ____________________________________________________________________\n");
 
   if (
@@ -80,6 +80,7 @@ export function printMigrationResult(
 
     result.errors.forEach((error, index) => {
       console.log(`\n\u001b[31;1mERR [${index + 1}/${result.errors.length}]`, "\u001b[0m", error.message);
+      console.log("=>", error);
       if (error.objectId != null) {
         for (const objectTrace of objectTraces) {
           if (objectTrace.objectId === error.objectId) {
@@ -132,14 +133,14 @@ export function printMigrationResult(
     });
   }
 
-  console.log("\n\n\u001b[34;1m DEPLOYMENT SUMMARY:");
+  console.log("\n\n\u001b[34;1m MIGRATION SUMMARY:");
   console.log("\u001b[34;1m ____________________________________________________________________\n");
   printMigrationResultSummary(result);
   console.log("");
 
   if (result.errors.length > 0) {
     console.log(`\u001b[31;1m The migration-generation finished with some errors.`);
-    console.log(`\u001b[31;1m Your Application cannot be deployed.`);
+    console.log(`\u001b[31;1m Your Application cannot be migrated.`);
   } else {
     if (result.warnings.length > 0) {
       console.log(`\u001b[33;1m The migration-generation finished with some warnings.`);
@@ -148,7 +149,7 @@ export function printMigrationResult(
       console.log(`\u001b[33;1m There are some auto-fixes you should apply.`);
     }
     if (result.commands.length > 0) {
-      console.log(`\n\u001b[32;1m Your app can be deployed.`);
+      console.log(`\n\u001b[32;1m Your app can be migrated.`);
     } else {
       console.log(`\n\u001b[32;1m Nothing to deploy. Everything is fine.`);
     }

@@ -1,7 +1,7 @@
 import { IMutationBuildObject } from "./types";
 import parseValue from "./parseValue";
 import { ReturnIdHandler } from "../../resolverTransactions/ReturnIdHandler";
-import { IMutationViewMeta, IDefaultResolverMeta } from "../../RuntimeInterfaces";
+import { IMutationViewMeta, IDefaultResolverMeta } from "../../moduleDefinition/RuntimeInterfaces";
 import { ResolveTree } from "graphql-parse-resolve-info";
 
 export default function resolveCreateMutation(

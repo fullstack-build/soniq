@@ -36,11 +36,11 @@ import { columnExtensionEnum } from "./columnExtensions/enum";
 import { columnExtensionCreatedAt } from "./columnExtensions/createdAt";
 import { columnExtensionUpdatedAt } from "./columnExtensions/updatedAt";
 import { schemaExtensionFunctions } from "./schemaExtensions/functions";
-import { IResolverMapping, IGraphqlRuntimeConfig } from "../RuntimeInterfaces";
+import { IResolverMapping } from "../moduleDefinition/RuntimeInterfaces";
 import { columnExtensionComputed } from "./columnExtensions/computed";
 import { IGqlCommand, IGqlMigrationContext, IGqlMigrationResult, IAutoSchemaFix, IPropertySchema } from "./interfaces";
-import { IGraphqlAppConfig, IGraphqlOptionsInput } from "../moduleDefinition/interfaces";
 import { IDbSchema, IDbTable, IDbColumn, IDbIndex, IDbCheck } from "./DbSchemaInterface";
+import { IGraphqlRunConfig } from "../moduleDefinition/interfaces";
 
 export type ITypeDefsExtension = () => string;
 export type IResolverMappingExtension = () => IResolverMapping;
@@ -114,12 +114,10 @@ export class Migration {
   }
 
   public async generateSchemaMigrationCommands(
-    appConfig: IGraphqlAppConfig,
+    schema: IDbSchema,
     pgClient: PoolClient
   ): Promise<IModuleMigrationResult> {
     const gqlMigrationContext: IGqlMigrationContext = {};
-    const options: IGraphqlOptionsInput = appConfig.options;
-    const schema: IDbSchema = appConfig.schema;
 
     let gqlResult: IGqlMigrationResult = {
       commands: [],
@@ -134,7 +132,7 @@ export class Migration {
     const validationErrors: IMigrationError[] = dbSchemaValidator.validate(schema);
     if (validationErrors.length > 0) {
       return {
-        moduleRuntimeConfig: {},
+        moduleRunConfig: {},
         errors: validationErrors,
         warnings: [],
         commands: [],
@@ -169,7 +167,7 @@ export class Migration {
     // Generate Table-Migrations
     for (const schemaExtension of this._schemaExtensions) {
       const extensionResult: IGqlMigrationResult = await schemaExtension.generateCommands(
-        appConfig,
+        schema,
         pgClient,
         helpers,
         gqlMigrationContext
@@ -179,14 +177,14 @@ export class Migration {
     if (gqlResult.errors.length > 0) {
       return {
         ...gqlResult,
-        moduleRuntimeConfig: {},
+        moduleRunConfig: {},
       };
     }
 
     // Migration post-processing
     for (const postProcessingExtension of this._postProcessingExtensions) {
       gqlResult = await postProcessingExtension.generateCommands(
-        appConfig,
+        schema,
         pgClient,
         helpers,
         gqlMigrationContext,
@@ -196,12 +194,12 @@ export class Migration {
     if (gqlResult.errors.length > 0) {
       return {
         ...gqlResult,
-        moduleRuntimeConfig: {},
+        moduleRunConfig: {},
       };
     }
 
     const gqlSchemaResult: IGqlMigrationResult = gqlResult;
-    let moduleRuntimeConfig: IGraphqlRuntimeConfig | {} = {};
+    let moduleRunConfig: IGraphqlRunConfig | {} = {};
 
     // Generate Gql-Schema, Permission-Views and Metadata
     if (schema.permissionViewSchema != null) {
@@ -234,18 +232,10 @@ export class Migration {
         resolverMappings.push(resolverMappingExtension());
       });
 
-      moduleRuntimeConfig = {
+      moduleRunConfig = {
         gqlTypeDefs: print(gqlSchema),
         defaultResolverMeta: permissions.defaultResolverMeta,
         resolverMappings: resolverMappings,
-        options: {
-          costLimit: options.costLimit != null ? options.costLimit : 2000000000,
-          minSubqueryCountToCheckCostLimit:
-            options.minSubqueryCountToCheckCostLimit != null ? options.minSubqueryCountToCheckCostLimit : 3,
-          introspectionActive: options.introspectionActive === true,
-          endpointPath: options.endpointPath || "/graphql",
-          dangerouslyExposeErrorDetails: options.dangerouslyExposeErrorDetails === true,
-        },
       };
     }
 
@@ -327,7 +317,7 @@ export class Migration {
       commands,
       errors: gqlSchemaResult.errors,
       warnings: gqlSchemaResult.warnings,
-      moduleRuntimeConfig,
+      moduleRunConfig,
     };
   }
 

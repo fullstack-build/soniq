@@ -1,4 +1,4 @@
-import { IMutationViewMeta } from "../../RuntimeInterfaces";
+import { IMutationViewMeta } from "../../moduleDefinition/RuntimeInterfaces";
 
 export interface IMutationBuildObject {
   sql: string;

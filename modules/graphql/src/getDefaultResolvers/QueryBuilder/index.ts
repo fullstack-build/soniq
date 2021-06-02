@@ -3,9 +3,9 @@ import { GraphQLResolveInfo } from "graphql";
 import { parseResolveInfo, IMatch } from "../types";
 import { IQueryBuildObject } from "./types";
 import QueryBuild from "./QueryBuild";
-import { IDefaultResolverMeta } from "../../RuntimeInterfaces";
+import { IDefaultResolverMeta } from "../../moduleDefinition/RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
-import { IGraphqlOptions } from "../../moduleDefinition/interfaces";
+import { IGraphqlAppConfig } from "../../moduleDefinition/interfaces";
 import { ResolveTree } from "graphql-parse-resolve-info";
 
 export * from "./types";
@@ -13,16 +13,16 @@ export * from "./types";
 export default class QueryBuilder {
   private _operatorsBuilder: OperatorsBuilder;
   private _defaultResolverMeta: IDefaultResolverMeta;
-  private _options: IGraphqlOptions;
+  private _appConfig: IGraphqlAppConfig;
 
   public constructor(
     operatorsBuilder: OperatorsBuilder,
     defaultResolverMeta: IDefaultResolverMeta,
-    options: IGraphqlOptions
+    appConfig: IGraphqlAppConfig
   ) {
     this._operatorsBuilder = operatorsBuilder;
     this._defaultResolverMeta = defaultResolverMeta;
-    this._options = options;
+    this._appConfig = appConfig;
   }
 
   public build(
@@ -45,6 +45,6 @@ export default class QueryBuilder {
   }
 
   public getCostLimit(): number {
-    return this._options.costLimit;
+    return this._appConfig.options.costLimit;
   }
 }

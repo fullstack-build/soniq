@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { IAppConfig, IRuntimeConfig, IModuleRuntimeConfig } from "../interfaces";
+import { IAppConfig, IRunConfig, IModuleRunConfig } from "../moduleDefinition/interfaces";
 
 export interface ICommand {
   sqls: string[];
@@ -34,12 +34,12 @@ export interface IMigrationResult {
 }
 
 export interface IModuleMigrationResult extends IMigrationResult {
-  moduleRuntimeConfig: IModuleRuntimeConfig;
+  moduleRunConfig: IModuleRunConfig;
 }
 
 export interface IAppMigrationResult extends IMigrationResult {
-  runtimeConfig: {
-    [moduleKey: string]: IRuntimeConfig;
+  runConfig: {
+    [moduleKey: string]: IRunConfig;
   };
 }
 

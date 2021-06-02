@@ -1,7 +1,12 @@
 import { PoolClient } from "pg";
-import { IAppConfig, IModuleConfig } from "../interfaces";
+import { IAppConfig, IModuleConfig } from "../moduleDefinition/interfaces";
 import { IAutoAppConfigFix, IMigrationResult, IMigrationResultWithFixes } from "./interfaces";
 import * as _ from "lodash";
+import * as crypto from "crypto";
+
+export function sha256(input: string): string {
+  return crypto.createHash("sha256").update(input).digest("hex");
+}
 
 export function getPgSelector(selector: string): string {
   if (selector.toLowerCase() === selector && selector.match("-") == null) {

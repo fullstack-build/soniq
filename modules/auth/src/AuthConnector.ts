@@ -16,13 +16,13 @@ import {
   IUserAuthentication,
   ILoginResult,
   IValidateAccessTokenResult,
-  IAuthRuntimeConfig,
 } from "./interfaces";
 import { Encoder } from "./Encoder";
+import { IAuthAppConfig } from "./moduleDefinition/interfaces";
 
 export class AuthConnector {
   private _logger: Logger;
-  private _authRuntimeConfig: IAuthRuntimeConfig;
+  private _appConfig: IAuthAppConfig;
   private _cryptoFactory: CryptoFactory;
   private _authQueryHelper: AuthQueryHelper;
   private _encoder: Encoder = new Encoder();
@@ -31,9 +31,9 @@ export class AuthConnector {
     authQueryHelper: AuthQueryHelper,
     logger: Logger,
     cryptoFactory: CryptoFactory,
-    authConfig: IAuthRuntimeConfig
+    appConfig: IAuthAppConfig
   ) {
-    this._authRuntimeConfig = authConfig;
+    this._appConfig = appConfig;
     this._logger = logger;
     this._authQueryHelper = authQueryHelper;
     this._cryptoFactory = cryptoFactory;
@@ -48,7 +48,7 @@ export class AuthConnector {
     authFactorProof.maxAgeInSeconds =
       authFactorProof.maxAgeInSeconds != null && Number.isInteger(authFactorProof.maxAgeInSeconds)
         ? authFactorProof.maxAgeInSeconds
-        : this._authRuntimeConfig.authFactorProofTokenMaxAgeInSeconds;
+        : this._appConfig.authFactorProofTokenMaxAgeInSeconds;
 
     authFactorProof.hash = this._encoder.hexToString(authFactorProof.hash);
 
@@ -143,7 +143,7 @@ export class AuthConnector {
       throw new UserInputError("Invalid UserIdentifier. 'issuedAt' is missing.");
     }
     // tslint:disable-next-line:prettier
-    if (userIdentifierObject.issuedAt + this._authRuntimeConfig.userIdentifierMaxAgeInSeconds * 1000 < Date.now()) {
+    if (userIdentifierObject.issuedAt + this._appConfig.userIdentifierMaxAgeInSeconds * 1000 < Date.now()) {
       throw new UserInputError("Expired UserIdentifier.");
     }
 

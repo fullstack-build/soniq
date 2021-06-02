@@ -1,6 +1,6 @@
 const STARTUP_TIME: [number, number] = process.hrtime();
 
-import { IAppConfig } from "../interfaces";
+import { IAppConfig } from "../moduleDefinition/interfaces";
 
 import {
   IMigrationResult,
@@ -11,14 +11,13 @@ import {
   IMigrationResultWithFixes,
 } from "./interfaces";
 
-import { Pool, PoolClient, PoolConfig } from "pg";
-import { applyAutoAppConfigFixes, buildMigrationResult, getTables } from "./helpers";
+import { Pool, PoolClient } from "pg";
+import { applyAutoAppConfigFixes, buildMigrationResult, sha256 } from "./helpers";
 
-import { SoniqApp, SoniqEnvironment, SoniqAppConfigOverwrite } from "../Application";
-import { Logger, Core, IModuleCoreFunctions } from "..";
+import { Logger, Core, IModule } from "..";
 import { generateCoreMigrations } from "./coreMigrations";
 import { printMigrationResult } from "./printer";
-import { getLatestMigrationVersion, ICoreMigration } from "../helpers";
+import { getLatestNMigrations, ICoreMigration } from "../helpers";
 
 export class Migration {
   private _logger: Logger;
@@ -29,55 +28,76 @@ export class Migration {
     this._core = core;
   }
 
-  public async deployApp(app: SoniqApp, env: SoniqEnvironment): Promise<void> {
-    const migrationResult: IMigrationResultWithFixes = await this.generateMigration(app, env);
-    const objectTraces: IObjectTrace[] = app._buildObjectTraces();
+  public async migrateApp(
+    appConfig: IAppConfig,
+    objectTraces: IObjectTrace[],
+    pgPool: Pool,
+    disableAutoMigration: boolean = false
+  ): Promise<ICoreMigration> {
+    let latestMigrations: ICoreMigration[] = await this._getLatestMigration(pgPool);
 
-    printMigrationResult(migrationResult, objectTraces, this._logger);
+    let appMigConfigString: string = "";
 
-    await this.applyMigrationResult(migrationResult, env.getPgConfig());
-  }
+    for (const moduleConfig of appConfig.modules) {
+      const moduleCoreFunctions: IModule | null = this._core._getModuleCoreFunctionsByKey(moduleConfig.key);
 
-  public async generateMigration(app: SoniqApp, env: SoniqEnvironment): Promise<IMigrationResultWithFixes> {
-    let appConfig: IAppConfig = app._build();
-
-    env.getAppConfigOverwrites().forEach((appConfigOverwrite: SoniqAppConfigOverwrite) => {
-      appConfig = appConfigOverwrite._build(JSON.parse(JSON.stringify(appConfig)));
-    });
-    let nextVersion: number = 0;
-    const pgPool: Pool = new Pool(env.getPgConfig());
-
-    try {
-      const pgClient: PoolClient = await pgPool.connect();
-      const currentTableNames: string[] = await getTables(pgClient, ["_core"]);
-
-      if (currentTableNames.indexOf("Migrations") >= 0) {
-        const lastMigration: ICoreMigration | null = await getLatestMigrationVersion(pgClient);
-
-        if (lastMigration != null) {
-          nextVersion = lastMigration.version + 1;
-        }
+      if (moduleCoreFunctions != null && moduleCoreFunctions.shouldMigrate != null) {
+        appMigConfigString += moduleCoreFunctions.shouldMigrate();
+      } else {
+        appMigConfigString += sha256(JSON.stringify(moduleConfig.appConfig));
       }
-      pgClient.release();
-    } catch (e) {
-      console.log("Error", e);
-      throw e;
-    } finally {
-      await pgPool.end();
     }
 
-    return this.generateMigrationWithAppConfigAndPool(nextVersion, appConfig, env.getPgConfig());
+    const currentVersionHash: string = sha256(appMigConfigString);
+    this._logger.info(`Current versionHash: ${currentVersionHash}`);
+    this._logger.info(`Latest versionHash: ${latestMigrations[0]?.versionHash}`);
+
+    if (latestMigrations.length === 0 || latestMigrations[0].versionHash !== currentVersionHash) {
+      if (disableAutoMigration === true) {
+        if (latestMigrations.length === 0) {
+          const error: Error = new Error(
+            "This database has never been migrated and Auto-Migrate is disabled. Please migrate before or enable Auto-Migrate."
+          );
+          this._logger.fatal(error);
+          throw error;
+        } else {
+          this._logger.warn("Your application does not match the state of your database. Auto-Migrate is disable.");
+        }
+        /**
+         * TODO: Make Blue-Green deployment possilbe.
+         * If we just check for the version to be not in recent history a simple revert of a change would not migrate
+         * => We need a better solution
+         */
+        /* } else if (latestMigrations.length > 1 && latestMigrations[1].versionHash === currentVersionHash) {
+        this._logger.warn(
+          "Your application does not match the state of your database. However, we skip migrating as this application-version is the preview one. If you are running a blue-green deployment this can happen and will prevent soniq from migrating back."
+        );
+        */
+      } else {
+        const migrationResult: IMigrationResultWithFixes = await this.generateMigrationWithAppConfigAndPool(
+          appConfig,
+          pgPool,
+          currentVersionHash
+        );
+
+        printMigrationResult(migrationResult, objectTraces, this._logger);
+
+        await this.applyMigrationResult(migrationResult, pgPool);
+
+        latestMigrations = (await this._getLatestMigration(pgPool)) as ICoreMigration[];
+      }
+    }
+
+    return latestMigrations[0];
   }
 
   public async generateMigrationWithAppConfigAndPool(
-    version: number,
     appConfig: IAppConfig,
-    pgPoolConfig: PoolConfig
+    pgPool: Pool,
+    currentVersionHash: string
   ): Promise<IMigrationResultWithFixes> {
-    const pgPool: Pool = new Pool(pgPoolConfig);
-
     try {
-      return await this.generateMigrationWithPgPool(version, appConfig, pgPool);
+      return await this.generateMigrationWithPgPool(appConfig, pgPool, currentVersionHash);
     } catch (e) {
       return buildMigrationResult({
         commands: [],
@@ -89,15 +109,13 @@ export class Migration {
         ],
         warnings: [],
       });
-    } finally {
-      await pgPool.end();
     }
   }
 
   public async generateMigrationWithPgPool(
-    version: number,
     appConfig: IAppConfig,
     pgPool: Pool,
+    currentVersionHash: string,
     throwErrorOnInfiniteMigration: boolean = false
   ): Promise<IMigrationResultWithFixes> {
     this._logger.info("Start of generating migration commands...");
@@ -110,7 +128,7 @@ export class Migration {
 
     try {
       await firstDbClient.query("BEGIN;");
-      firstGenerationResult = await this._generateModuleMigrations(version, appConfig, firstDbClient);
+      firstGenerationResult = await this._generateModuleMigrations(appConfig, firstDbClient, currentVersionHash);
       await firstDbClient.query("ROLLBACK;");
     } catch (err) {
       await firstDbClient.query("ROLLBACK;");
@@ -167,7 +185,7 @@ export class Migration {
       // 3) try to generate the commands again to check if there are any infinite-migrations
       this._logger.info("Starting second migration generation...");
       try {
-        secondGenerationResult = await this._generateModuleMigrations(version, appConfig, secondDbClient);
+        secondGenerationResult = await this._generateModuleMigrations(appConfig, secondDbClient, currentVersionHash);
       } catch (err) {
         firstGenerationResult.errors.push({
           message: `Failed to generate second migration commands.`,
@@ -283,7 +301,7 @@ export class Migration {
         throw new Error("The first run has not returned a fixedAppConfig.");
       }
 
-      thirdMigrationResult = await this.generateMigrationWithPgPool(version, fixedAppConfig, pgPool, true);
+      thirdMigrationResult = await this.generateMigrationWithPgPool(fixedAppConfig, pgPool, currentVersionHash, true);
 
       if (thirdMigrationResult.errors.length > 0) {
         this._logger.info("Third migration generation finished with errors.");
@@ -313,65 +331,62 @@ export class Migration {
     return buildMigrationResult(thirdMigrationResult, autoAppConfigFixes, fixedAppConfig);
   }
 
-  public async applyMigrationResult(result: IMigrationResultWithFixes, pgPoolConfig: PoolConfig): Promise<void> {
-    if (result.errors.length < 1 && result.commands.length > 0) {
-      this._logger.info("Deploying application...");
-      const pgPool: Pool = new Pool(pgPoolConfig);
+  public async applyMigrationResult(result: IMigrationResultWithFixes, pgPool: Pool): Promise<void> {
+    if (result.errors.length < 1) {
+      if (result.commands.length > 0) {
+        this._logger.info("Migrating database...");
 
-      const pgClient: PoolClient = await pgPool.connect();
+        const pgClient: PoolClient = await pgPool.connect();
 
-      try {
-        await pgClient.query("BEGIN;");
-        for (const command of result.commands) {
-          for (const sql of command.sqls) {
-            await pgClient.query(sql);
+        try {
+          await pgClient.query("BEGIN;");
+          for (const command of result.commands) {
+            for (const sql of command.sqls) {
+              await pgClient.query(sql);
+            }
           }
+          await pgClient.query("COMMIT;");
+          this._logger.info("Migration successful.");
+          console.log("\u001b[32;1mSUCCESSFUL MIGRATION!");
+        } catch (e) {
+          this._logger.info("Deployment failed.", e);
+          console.error("\x1b[31m", "Migration Failed");
+          await pgClient.query("ROLLBACK;");
+        } finally {
+          await pgClient.release();
         }
-        await pgClient.query("COMMIT;");
-        this._logger.info("Deployment successful.");
-        console.log("\u001b[32;1mSUCCESSFUL DEPLOYMENT!");
-      } catch (e) {
-        this._logger.info("Deployment failed.", e);
-        console.error("\x1b[31m", "Deployment Failed");
-        await pgClient.query("ROLLBACK;");
-      } finally {
-        await pgClient.release();
+        this._logger.info(`Finished. Took ${process.hrtime(STARTUP_TIME)} seconds.`);
       }
-      this._logger.info(`Finished Took ${process.hrtime(STARTUP_TIME)} seconds.`);
-      await pgPool.end();
+    } else {
+      throw new Error("Migration contains errors. Cannot migrate.");
     }
   }
 
   private async _generateModuleMigrations(
-    version: number,
     appConfig: IAppConfig,
-    pgClient: PoolClient
+    pgClient: PoolClient,
+    currentVersionHash: string
   ): Promise<IMigrationResult> {
     const result: IAppMigrationResult = {
-      runtimeConfig: {},
+      runConfig: {},
       errors: [],
       warnings: [],
       commands: [],
     };
 
     for (const moduleConfig of appConfig.modules) {
-      const moduleCoreFunctions: IModuleCoreFunctions | null = this._core._getModuleCoreFunctionsByKey(
-        moduleConfig.key
-      );
+      const moduleCoreFunctions: IModule | null = this._core._getModuleCoreFunctionsByKey(moduleConfig.key);
 
       if (moduleCoreFunctions == null) {
         result.errors.push({
-          message: `The module with key '${moduleConfig.key}' does not exist on this system.`,
+          message: `The module with key '${moduleConfig.key}' does not exist or has not defined core functions.`,
         });
       } else {
         if (moduleCoreFunctions.migrate != null) {
-          const moduleMigrationResult: IModuleMigrationResult = await moduleCoreFunctions.migrate(
-            moduleConfig.appConfig,
-            pgClient
-          );
+          const moduleMigrationResult: IModuleMigrationResult = await moduleCoreFunctions.migrate(pgClient);
 
           if (moduleMigrationResult != null) {
-            result.runtimeConfig[moduleConfig.key] = moduleMigrationResult.moduleRuntimeConfig;
+            result.runConfig[moduleConfig.key] = moduleMigrationResult.moduleRunConfig;
 
             moduleMigrationResult.errors.forEach((error) => {
               error.moduleKey = moduleConfig.key;
@@ -386,16 +401,30 @@ export class Migration {
               result.commands.push(command);
             });
           }
+        } else {
+          result.runConfig[moduleConfig.key] = {};
         }
       }
     }
 
-    const rawResult: IMigrationResult = await generateCoreMigrations(version, appConfig, pgClient, result);
+    const rawResult: IMigrationResult = await generateCoreMigrations(appConfig, pgClient, result, currentVersionHash);
 
     rawResult.commands.sort((a, b) => {
       return a.operationSortPosition - b.operationSortPosition;
     });
 
     return rawResult;
+  }
+
+  private async _getLatestMigration(pgPool: Pool): Promise<ICoreMigration[]> {
+    const pgClient: PoolClient = await pgPool.connect();
+    try {
+      return await getLatestNMigrations(pgClient, 2);
+    } catch (err) {
+      this._logger.error(`Failed to load latest migration version: ${err}\n`);
+      throw err;
+    } finally {
+      await pgClient.release();
+    }
   }
 }

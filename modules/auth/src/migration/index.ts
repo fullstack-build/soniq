@@ -1,10 +1,9 @@
 import { generateAuthSchema } from "./basic";
-import { GraphQl, IDbSchema, IGraphqlAppConfig } from "@soniq/graphql";
-import { PoolClient, OPERATION_SORT_POSITION, IModuleMigrationResult, IMigrationError } from "soniq";
+import { GraphQl, IDbSchema } from "@soniq/graphql";
+import { PoolClient, OPERATION_SORT_POSITION, IModuleMigrationResult } from "soniq";
 import { Migration } from "@soniq/graphql/src/migration/Migration";
-import { IPgSettings, IAuthApplicationConfig } from "../interfaces";
-import { ConfigMergeHelper } from "./ConfigMergeHelper";
-import { defaultConfig } from "./defaultConfig";
+import { IPgSettings } from "../interfaces";
+import { IAuthAppConfig, IPgConfigFinal } from "../moduleDefinition/interfaces";
 
 const requiredSecrets: string[] = [
   "access_token_secret",
@@ -45,47 +44,32 @@ async function getCurrentSettings(pgClient: PoolClient): Promise<IPgSettings> {
 
 export async function migrate(
   graphQl: GraphQl,
-  appConfig: IAuthApplicationConfig,
+  appConfig: IAuthAppConfig,
   pgClient: PoolClient,
   authFactorProviders: string
 ): Promise<IModuleMigrationResult> {
   const authSchema: IDbSchema = await generateAuthSchema();
 
-  const authSchemaAppConfig: IGraphqlAppConfig = {
-    schema: authSchema,
-    options: {},
-  };
-
   const gqlMigration: Migration = graphQl.getMigration();
 
-  const result: IModuleMigrationResult = await gqlMigration.generateSchemaMigrationCommands(
-    authSchemaAppConfig,
-    pgClient
-  );
+  const result: IModuleMigrationResult = await gqlMigration.generateSchemaMigrationCommands(authSchema, pgClient);
 
-  const { runtimeConfig, errors } = ConfigMergeHelper.merge(defaultConfig, appConfig);
-
-  errors.forEach((error: IMigrationError) => {
-    result.errors.push(error);
-  });
-
-  runtimeConfig.pgConfig.auth_factor_providers = authFactorProviders;
+  const pgConfig: IPgConfigFinal = appConfig.pgConfig as IPgConfigFinal;
+  pgConfig.auth_factor_providers = authFactorProviders;
+  pgConfig.admin_token_secret = appConfig.secrets.admin;
+  pgConfig.root_token_secret = appConfig.secrets.root;
 
   const currentSettings: { [key: string]: unknown } = await getCurrentSettings(pgClient);
   const sqls: string[] = [];
 
-  Object.keys(runtimeConfig.pgConfig).forEach((key) => {
+  Object.keys(pgConfig).forEach((key) => {
     if (currentSettings[key] == null) {
-      sqls.push(
-        `INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, $tok$${runtimeConfig.pgConfig[key]}$tok$);`
-      );
+      sqls.push(`INSERT INTO _auth."Settings"("key", "value") VALUES($tok$${key}$tok$, $tok$${pgConfig[key]}$tok$);`);
     } else {
       // TODO: I disabled this, because I am not sure if I did use != instead of !== on purpose
       // eslint-disable-next-line eqeqeq
-      if (runtimeConfig.pgConfig[key] != null && runtimeConfig.pgConfig[key] != currentSettings[key]) {
-        sqls.push(
-          `UPDATE _auth."Settings" SET "value"=$tok$${runtimeConfig.pgConfig[key]}$tok$ WHERE "key"=$tok$${key}$tok$;`
-        );
+      if (pgConfig[key] != null && pgConfig[key] != currentSettings[key]) {
+        sqls.push(`UPDATE _auth."Settings" SET "value"=$tok$${pgConfig[key]}$tok$ WHERE "key"=$tok$${key}$tok$;`);
       }
     }
   });
@@ -108,10 +92,6 @@ export async function migrate(
       operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA,
     });
   }
-
-  result.moduleRuntimeConfig = JSON.parse(JSON.stringify(runtimeConfig));
-  result.moduleRuntimeConfig.pgConfig = null;
-  delete result.moduleRuntimeConfig.pgConfig;
 
   return result;
 }

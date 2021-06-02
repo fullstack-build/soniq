@@ -2,7 +2,7 @@ import { UserInputError } from "../../GraphqlErrors";
 import { IMatch } from "../types";
 import { ClausesBuilder } from "./ClausesBuilder";
 import { IQueryBuildObject } from "./types";
-import { IDefaultResolverMeta, IQueryViewMeta, IQueryFieldMeta } from "../../RuntimeInterfaces";
+import { IDefaultResolverMeta, IQueryViewMeta, IQueryFieldMeta } from "../../moduleDefinition/RuntimeInterfaces";
 import { OperatorsBuilder } from "../../logicalOperators";
 import { ResolveTree } from "graphql-parse-resolve-info";
 

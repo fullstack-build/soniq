@@ -1,4 +1,5 @@
-import { ISodiumConfig, ISodiumConfigOptional, IPasswordData, IPasswordMeta } from "./interfaces";
+import { IPasswordData, IPasswordMeta } from "./interfaces";
+import { ISodiumConfig, ISodiumConfigOptional } from "./moduleDefinition/interfaces";
 
 import * as sodium from "sodium-native";
 

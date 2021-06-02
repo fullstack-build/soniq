@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { IDbColumn } from "./DbSchemaInterface";
+import { IDbColumn, IDbSchema } from "./DbSchemaInterface";
 import { ICommand, IMigrationError } from "soniq";
 
 export interface IColumnInfo {
@@ -105,4 +105,8 @@ export type IGqlMigrationContext = any;
 export interface IPropertySchema {
   type: string;
   schema: boolean | object;
+}
+
+export interface IGraphqlMigConfig {
+  schema: IDbSchema;
 }

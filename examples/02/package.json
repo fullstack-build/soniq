@@ -12,6 +12,8 @@
     "start-ts": "ts-node src/index.ts",
     "deploy": "node dist/deploy.js",
     "deploy-ts": "ts-node src/deploy.ts",
+    "run": "node dist/run.js",
+    "run-ts": "ts-node src/run.ts",
     "dev": "onchange -i \"../../**/*.ts\" -- npm run start-ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "eslint": "eslint . --ext .ts",
@@ -41,7 +43,8 @@
     "@soniq/eslint-config": "~1.0.0-dev.3",
     "eslint": "~7.6.0",
     "prettier": "~2.0.5",
-    "@types/lodash": "~4.14.159"
+    "@types/lodash": "~4.14.159",
+    "@types/heft-jest": "1.0.2"
   },
   "dependencies": {
     "dotenv": "~8.2.0",
@@ -50,6 +53,7 @@
     "@soniq/graphql": "1.0.0-dev.3",
     "@soniq/graphql-playground": "1.0.0-dev.3",
     "@soniq/auth": "1.0.0-dev.3",
+    "@soniq/file-storage": "1.0.0-dev.3",
     "lodash": "~4.17.19",
     "moment": "~2.27.0"
   }

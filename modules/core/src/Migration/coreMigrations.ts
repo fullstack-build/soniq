@@ -1,15 +1,15 @@
-import { IAppConfig } from "../interfaces";
+import { IAppConfig } from "../moduleDefinition/interfaces";
 import { PoolClient } from "pg";
 import { IAppMigrationResult, IMigrationResult } from "./interfaces";
 import { getSchemas, getTables, getExtensions, getPgSelector } from "./helpers";
 import { OPERATION_SORT_POSITION } from "./constants";
-import { ICoreMigration, getLatestMigrationVersion } from "../helpers";
+import { ICoreMigration, getLatestNMigrations } from "../helpers";
 
 export async function generateCoreMigrations(
-  version: number,
   appConfig: IAppConfig,
   pgClient: PoolClient,
-  migrationResult: IAppMigrationResult
+  migrationResult: IAppMigrationResult,
+  currentVersionHash: string
 ): Promise<IMigrationResult> {
   const currentSchemaNames: string[] = await getSchemas(pgClient);
   const currentTableNames: string[] = await getTables(pgClient, ["_core"]);
@@ -49,9 +49,10 @@ export async function generateCoreMigrations(
         `
           CREATE TABLE "_core"."Migrations" (
             "id" uuid DEFAULT uuid_generate_v4(),
-            "version" integer NOT NULL,
+            "version" SERIAL NOT NULL,
+            "versionHash" text NOT NULL,
             "appConfig" json NOT NULL,
-            "runtimeConfig" json NOT NULL,
+            "runConfig" json NOT NULL,
             "createdAt" timestamp without time zone NOT NULL DEFAULT timezone('UTC'::text, now()),
             PRIMARY KEY ("id"),
             UNIQUE ("version")
@@ -66,29 +67,18 @@ export async function generateCoreMigrations(
     let latestMigration: ICoreMigration | null = null;
 
     if (currentTableNames.indexOf("Migrations") >= 0) {
-      latestMigration = await getLatestMigrationVersion(pgClient);
+      latestMigration = (await getLatestNMigrations(pgClient, 1))[0];
     }
-    // .replace(new RegExp("'", "g"), "\\'")
 
     if (
       latestMigration == null ||
-      JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig) ||
-      migrationResult.commands.length > 0
+      JSON.stringify(latestMigration.runConfig) !== JSON.stringify(migrationResult.runConfig)
     ) {
-      console.log(
-        "REDO",
-        latestMigration == null,
-        latestMigration != null &&
-          JSON.stringify(latestMigration.runtimeConfig) !== JSON.stringify(migrationResult.runtimeConfig),
-        migrationResult.commands.length > 0
-      );
-      // console.log("A", JSON.stringify(latestMigration?.runtimeConfig));
-      // console.log("B", JSON.stringify(migrationResult.runtimeConfig));
       migrationResult.commands.push({
         sqls: [
-          `INSERT INTO "_core"."Migrations"("version", "appConfig", "runtimeConfig") VALUES('${version}', $SoniqJsonToken$${JSON.stringify(
+          `INSERT INTO "_core"."Migrations"("versionHash", "appConfig", "runConfig") VALUES('${currentVersionHash}', $SoniqJsonToken$${JSON.stringify(
             appConfig
-          )}$SoniqJsonToken$, $SoniqJsonToken$${JSON.stringify(migrationResult.runtimeConfig)}$SoniqJsonToken$);`,
+          )}$SoniqJsonToken$, $SoniqJsonToken$${JSON.stringify(migrationResult.runConfig)}$SoniqJsonToken$);`,
         ],
         operationSortPosition: OPERATION_SORT_POSITION.INSERT_DATA,
       });

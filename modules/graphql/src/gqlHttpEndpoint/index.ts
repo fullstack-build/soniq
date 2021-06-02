@@ -2,24 +2,28 @@ import { Logger } from "soniq";
 import { Koa } from "@soniq/server";
 
 import { createMiddleware } from "./createMiddleware";
-import { TGetSchema } from "../interfaces";
+import { IGraphqlAppConfig } from "../moduleDefinition/interfaces";
+import { GraphQLSchema } from "graphql";
 
-export async function applyMiddleware(app: Koa, getSchema: TGetSchema, logger: Logger): Promise<void> {
+export async function applyMiddleware(
+  app: Koa,
+  schema: GraphQLSchema,
+  appConfig: IGraphqlAppConfig,
+  logger: Logger
+): Promise<void> {
   let gqlMiddleware: Koa.Middleware | null = null;
 
   app.use(async (ctx: Koa.Context, next: Koa.Next) => {
-    const { schema, runtimeConfig, hasBeenUpdated } = await getSchema("GQL_ENDPOINT"); // IRuntimeConfigGql
-
-    if (ctx.request.path !== (runtimeConfig.options.endpointPath || "/graphql")) {
+    if (ctx.request.path !== (appConfig.options.endpointPath || "/graphql")) {
       return next();
     }
 
-    if (gqlMiddleware == null || hasBeenUpdated === true) {
+    if (gqlMiddleware == null) {
       // eslint-disable-next-line require-atomic-updates
       gqlMiddleware = createMiddleware(
         schema,
-        runtimeConfig.options.introspectionActive !== true,
-        runtimeConfig.options.dangerouslyExposeErrorDetails === true,
+        appConfig.options.introspectionActive !== true,
+        appConfig.options.dangerouslyExposeErrorDetails === true,
         logger
       );
     }

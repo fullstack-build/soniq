@@ -1,0 +1,56 @@
+{
+  "name": "@soniq/file-storage",
+  "version": "1.0.0-dev.3",
+  "description": "soniq file-storage",
+  "main": "index",
+  "typings": "src/index",
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "build": "tsc",
+    "eslint": "eslint . --ext .ts",
+    "eslint-fix": "eslint . --ext .ts --fix",
+    "test": "jest"
+  },
+  "eslintConfig": {
+    "extends": "@soniq/eslint-config"
+  },
+  "jest": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fullstack-build/soniq.git"
+  },
+  "authors": [
+    "Eugene Terehov <eugene@fullstack.build>",
+    "Dustin Hoffner <dustin@fullstack.build>"
+  ],
+  "bugs": {
+    "url": "https://github.com/fullstack-build/soniq/issues"
+  },
+  "homepage": "https://soniq.js.org",
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "@soniq/graphql": "1.0.0-dev.3",
+    "@soniq/server": "1.0.0-dev.3",
+    "@soniq/auth": "1.0.0-dev.3",
+    "soniq": "1.0.0-dev.3",
+    "jsonwebtoken": "^8.2.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.3.0",
+    "lodash": "^4.17.15",
+    "minio": "^7.0.2",
+    "uuid": "~8.3.0"
+  },
+  "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad",
+  "devDependencies": {
+    "@types/uuid": "~8.3.0",
+    "@types/minio": "^7.0.3",
+    "@soniq/eslint-config": "~1.0.0-dev.3",
+    "@types/lodash": "~4.14.159",
+    "eslint": "~7.6.0",
+    "prettier": "~2.0.5",
+    "@types/heft-jest": "1.0.2"
+  }
+}

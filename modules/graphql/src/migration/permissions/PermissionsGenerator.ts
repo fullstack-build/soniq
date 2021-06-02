@@ -10,7 +10,7 @@ import {
   IQueryPermissionGeneratorResult,
   IMutationsMeta,
   IResolverMapping,
-} from "../../RuntimeInterfaces";
+} from "../../moduleDefinition/RuntimeInterfaces";
 import { IGqlCommand } from "../interfaces";
 import { getPgSelector } from "../helpers";
 

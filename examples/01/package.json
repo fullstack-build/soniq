@@ -37,7 +37,8 @@
     "ts-node": "~8.9.1",
     "@soniq/eslint-config": "~1.0.0-dev.3",
     "eslint": "~7.6.0",
-    "prettier": "~2.0.5"
+    "prettier": "~2.0.5",
+    "@types/heft-jest": "1.0.2"
   },
   "dependencies": {
     "@soniq/server": "1.0.0-dev.3",

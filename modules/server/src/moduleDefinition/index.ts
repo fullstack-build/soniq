@@ -1,13 +1,22 @@
 import { SoniqModule, IModuleConfig } from "soniq";
-import { IServerAppConfigOptional } from "../interfaces";
+import { Server } from "..";
+import { defaultAppConfig } from "./defaultAppConfig";
+import { IServerAppConfig, IServerAppConfigInput } from "./interfaces";
 
 export class ServerModule extends SoniqModule {
-  private _appConfig: IServerAppConfigOptional;
+  private _appConfig: IServerAppConfig;
 
-  public constructor(appConfig: IServerAppConfigOptional) {
+  public constructor(appConfig: IServerAppConfigInput) {
     super("Server");
 
-    this._appConfig = appConfig;
+    this._appConfig = {
+      ...defaultAppConfig,
+      ...appConfig,
+    };
+  }
+
+  public _getDiModule(): typeof Server {
+    return Server;
   }
 
   public _build(): IModuleConfig {

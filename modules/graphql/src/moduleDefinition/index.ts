@@ -1,6 +1,9 @@
 import { SoniqModule, IModuleConfig, IObjectTrace } from "soniq";
+import { GraphQl } from "..";
 import { IDbSchema } from "../migration/DbSchemaInterface";
-import { IGraphqlAppConfigInput } from "./interfaces";
+import { defaultAppConfig } from "./defaultAppConfig";
+import { IGraphqlOptions, IGraphqlOptionsOptional } from "./interfaces";
+import { Schema } from "./schema";
 
 export * from "./schema";
 export * from "./table";
@@ -8,27 +11,36 @@ export * from "./column";
 export * from "./expression";
 
 export class GraphQlModule extends SoniqModule {
-  private _appConfig: IGraphqlAppConfigInput;
+  private _schema: Schema;
+  private _options: IGraphqlOptions;
 
-  public constructor(appConfig: IGraphqlAppConfigInput) {
+  public constructor(schema: Schema, options: IGraphqlOptionsOptional) {
     super("GraphQl");
 
-    this._appConfig = appConfig;
+    this._schema = schema;
+    this._options = {
+      ...defaultAppConfig,
+      ...options,
+    };
+  }
+
+  public _getDiModule(): typeof GraphQl {
+    return GraphQl;
   }
 
   public _build(appId: string): IModuleConfig {
-    const schema: IDbSchema = this._appConfig.schema._build(appId);
+    const schema: IDbSchema = this._schema._build(appId);
 
     return {
       key: this.getModuleKey(),
       appConfig: {
         schema,
-        options: this._appConfig.options,
+        options: this._options,
       },
     };
   }
 
   public _buildObjectTraces(appId: string): IObjectTrace[] {
-    return this._appConfig.schema._buildObjectTraces(appId);
+    return this._schema._buildObjectTraces(appId);
   }
 }

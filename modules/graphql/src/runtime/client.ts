@@ -8,9 +8,11 @@ import {
   specifiedRules,
   validate,
   ExecutionResult,
+  GraphQLSchema,
 } from "graphql";
 import { formatErrors } from "./formatErrors";
 import { PoolClient } from "soniq";
+import { IGraphqlAppConfig } from "../moduleDefinition/interfaces";
 
 export interface IQueryOptions {
   variables?: {
@@ -45,7 +47,8 @@ export class GraphQlClient {
       };
     }
 
-    const { schema, runtimeConfig } = await this._graphQl.getSchema("GQL_CLIENT");
+    const schema: GraphQLSchema = this._graphQl.getSchema();
+    const appConfig: IGraphqlAppConfig = this._graphQl.getAppConfig();
 
     // eslint-disable-next-line @typescript-eslint/typedef
     const queryValidationErrors = validate(schema, document, [...specifiedRules]);
@@ -66,7 +69,7 @@ export class GraphQlClient {
 
     return formatErrors(
       gqlExecutionResult,
-      runtimeConfig.options.dangerouslyExposeErrorDetails === true,
+      appConfig.options.dangerouslyExposeErrorDetails === true,
       this._graphQl.getLogger()
     );
   }
