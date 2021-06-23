@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { getLatestNMigrations } from "./helpers";
+import { drawCliArt, getLatestNMigrations } from "../helpers";
 
 it("getLatestNMigrations should return empty array if rows are empty", async () => {
   expect(true).toBe(true);
@@ -45,4 +45,8 @@ it("getLatestNMigrations should return the array if available", async () => {
   const result = await getLatestNMigrations(pgClient, 2);
 
   expect(result).toEqual([1, 2, 3]);
+});
+
+it("should print cliArt without error", async () => {
+  drawCliArt();
 });

@@ -12,7 +12,7 @@
     "rootDirs": ["src/"],
     "target": "es2019",
     "module": "commonjs",
-    "types": ["node", "heft-jest"],
+    "types": ["jest", "node"],
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

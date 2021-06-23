@@ -44,7 +44,10 @@
     "@soniq/eslint-config": "~1.0.0-dev.3",
     "eslint": "~7.6.0",
     "prettier": "~2.0.5",
-    "@types/heft-jest": "1.0.2"
+    "typescript": "~4.3.4",
+    "jest": "~27.0.4",
+    "ts-jest": "~27.0.3",
+    "@types/jest": "~26.0.23"
   },
   "dependencies": {
     "@koa/cors": "^2.2.3",
