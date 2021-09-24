@@ -145,7 +145,7 @@ export class FileStorage {
     }
   }
 
-  private deleteObjects(filePrefix: string) {
+  private deleteObjects(filePrefix: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const objectsList = [];
 
