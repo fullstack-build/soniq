@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/logger",
-  "version": "0.7.5",
+  "version": "0.7.8",
   "description": "fullstack.one logger package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,6 +20,6 @@
   "dependencies": {
     "@fullstack-one/config": "^0.7.0",
     "@fullstack-one/di": "^0.7.0",
-    "tslog": "^3.0.1"
+    "tslog": "^3.2.0"
   }
 }

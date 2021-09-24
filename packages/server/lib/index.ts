@@ -80,7 +80,7 @@ export class Server {
       });
       /* END AsyncLocalStorage requestId middleware */
 
-      this.app.use(bodyParser());
+      this.app.use(bodyParser(this.serverConfig.bodyParser));
       // Handle errors like ECONNRESET
       this.app.on("error", (error, ctx) => {
         const bodyHidden =
