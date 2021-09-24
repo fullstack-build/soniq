@@ -18,7 +18,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/di": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
     "@fullstack-one/logger": "^0.7.9"
   }
 }

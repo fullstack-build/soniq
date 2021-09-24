@@ -19,10 +19,10 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.7.9",
-    "@fullstack-one/config": "^0.7.0",
+    "@fullstack-one/config": "^0.7.9",
     "@fullstack-one/db": "^0.7.9",
-    "@fullstack-one/di": "^0.7.0",
-    "@fullstack-one/helper": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
+    "@fullstack-one/helper": "^0.7.9",
     "@fullstack-one/logger": "^0.7.9",
     "@types/graphql": "^0.13.4",
     "@types/lodash": "^4.14.120",

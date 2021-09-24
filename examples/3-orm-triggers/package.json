@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@fullstack-one/db": "^0.7.9",
-    "@fullstack-one/di": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
     "dotenv": "^4.0.0",
     "fullstack-one": "^0.7.9"
   }

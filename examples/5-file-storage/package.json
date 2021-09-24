@@ -41,7 +41,7 @@
   "dependencies": {
     "@fullstack-one/auth": "^0.7.9",
     "@fullstack-one/db": "^0.7.9",
-    "@fullstack-one/di": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
     "@fullstack-one/file-storage": "^0.7.9",
     "@fullstack-one/graphql": "^0.7.9",
     "@fullstack-one/schema-builder": "^0.7.9",

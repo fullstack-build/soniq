@@ -19,9 +19,9 @@
   "license": "MIT",
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.7.9",
-    "@fullstack-one/config": "^0.7.0",
+    "@fullstack-one/config": "^0.7.9",
     "@fullstack-one/db": "^0.7.9",
-    "@fullstack-one/di": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
     "@fullstack-one/graceful-shutdown": "^0.7.9",
     "@fullstack-one/logger": "^0.7.9",
     "pg-boss": "^6.2.1"

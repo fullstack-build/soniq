@@ -20,9 +20,9 @@
   "dependencies": {
     "@fullstack-one/auth": "^0.7.9",
     "@fullstack-one/boot-loader": "^0.7.9",
-    "@fullstack-one/config": "^0.7.0",
+    "@fullstack-one/config": "^0.7.9",
     "@fullstack-one/db": "^0.7.9",
-    "@fullstack-one/di": "^0.7.0",
+    "@fullstack-one/di": "^0.7.9",
     "@fullstack-one/graphql": "^0.7.9",
     "@fullstack-one/logger": "^0.7.9",
     "@fullstack-one/schema-builder": "^0.7.9",
