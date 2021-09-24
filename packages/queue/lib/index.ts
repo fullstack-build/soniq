@@ -62,7 +62,7 @@ export class QueueFactory {
   }
 
   private async end(): Promise<void> {
-    if (this.queue != null) await this.queue.disconnect();
+    if (this.queue != null) await this.queue.stop();
   }
 
   public getQueue(): PgBoss {
