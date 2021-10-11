@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "PostgreSQL, Node.js, GraphQL, TypeScript, API Framework",
   "engines": {
-    "node": ">=12.17",
+    "node": ">=16",
     "npm": ">=8"
   },
   "main": "packages/server/main",
