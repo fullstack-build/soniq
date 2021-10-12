@@ -1,6 +1,6 @@
 {
   "name": "example-1-orm-basic",
-  "version": "0.7.11",
+  "version": "0.7.12",
   "description": "Example project: how to use fullstack.one with ORM",
   "private": true,
   "engines": {
@@ -42,9 +42,9 @@
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "@fullstack-one/db": "^0.7.10",
-    "@fullstack-one/di": "^0.7.10",
+    "@fullstack-one/db": "^0.7.12",
+    "@fullstack-one/di": "^0.7.12",
     "dotenv": "^4.0.0",
-    "fullstack-one": "^0.7.10"
+    "fullstack-one": "^0.7.12"
   }
 }
