@@ -22,10 +22,12 @@
     "@fullstack-one/config": "^0.7.13",
     "@fullstack-one/di": "^0.7.13",
     "@fullstack-one/logger": "^0.7.13",
-    "@types/node": "^14.0.13",
-    "@types/pg": "^7.4.14",
     "eventemitter2": "^5.0.1",
-    "pg": "^7.10.0"
+    "pg": "^8.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.13",
+    "@types/pg": "^8.6.1"
   },
   "gitHead": "8a756299ce2284a77fa8e7d9eb46f925a27be3ad"
 }
