@@ -1,4 +1,4 @@
-import { types as PgTypes } from "pg";
+import { types as PgTypes } from "pg"; //bump version
 import * as typeorm from "typeorm";
 import { PostgresQueryRunner } from "typeorm/driver/postgres/PostgresQueryRunner";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
