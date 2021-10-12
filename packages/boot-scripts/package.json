@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/boot-scripts",
-  "version": "0.7.13",
+  "version": "0.7.14",
   "description": "fullstack.one helper package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -21,7 +21,7 @@
     "@fullstack-one/boot-loader": "^0.7.13",
     "@fullstack-one/config": "^0.7.13",
     "@fullstack-one/di": "^0.7.13",
-    "@fullstack-one/events": "^0.7.13",
+    "@fullstack-one/events": "^0.7.14",
     "@fullstack-one/logger": "^0.7.13",
     "fast-glob": "^2.2.1",
     "koa": "^2.5.0"

@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/queue",
-  "version": "0.7.13",
+  "version": "0.7.14",
   "description": "fullstack.one queue package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -20,9 +20,9 @@
   "dependencies": {
     "@fullstack-one/boot-loader": "^0.7.13",
     "@fullstack-one/config": "^0.7.13",
-    "@fullstack-one/db": "^0.7.13",
+    "@fullstack-one/db": "^0.7.14",
     "@fullstack-one/di": "^0.7.13",
-    "@fullstack-one/graceful-shutdown": "^0.7.13",
+    "@fullstack-one/graceful-shutdown": "^0.7.14",
     "@fullstack-one/logger": "^0.7.13",
     "pg-boss": "^6.2.1"
   },

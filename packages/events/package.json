@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/events",
-  "version": "0.7.13",
+  "version": "0.7.14",
   "description": "fullstack.one events package",
   "main": "index.js",
   "types": "lib/index.ts",
