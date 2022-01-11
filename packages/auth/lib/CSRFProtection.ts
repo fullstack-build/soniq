@@ -62,8 +62,24 @@ export class CSRFProtection {
       }
     }
 
-    // If the client is not a browser we don't need to worry about CORS.
+    let isApiClient = false;
+    // Check for API-Client by x-api-client header
+    if (ctx.request.headers["x-api-client"] != null) {
+      if (typeof ctx.request.headers["x-api-client"] === "string" && ctx.request.headers["x-api-client"].toLowerCase().trim() === 'true') {
+        isApiClient = true;
+      }
+      if (ctx.request.headers["x-api-client"] === true) {
+        isApiClient = true;
+      }
+    }
+
+    // Check for API-Client by origin
     if (this.authConfig.apiClientOrigins.indexOf(origin) >= 0) {
+      isApiClient = true;
+    }
+
+    // If the client is not a browser we don't need to worry about CORS. * OR Cors is disabled by the header
+    if (isApiClient) {
       ctx.securityContext.isApiClient = true;
       ctx.securityContext.isBrowser = false;
     }
