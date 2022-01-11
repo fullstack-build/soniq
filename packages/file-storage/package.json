@@ -1,6 +1,6 @@
 {
   "name": "@fullstack-one/file-storage",
-  "version": "0.7.14",
+  "version": "0.7.15",
   "description": "fullstack.one example package",
   "main": "index.js",
   "types": "lib/index.ts",
@@ -18,7 +18,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@fullstack-one/auth": "^0.7.14",
+    "@fullstack-one/auth": "^0.7.15",
     "@fullstack-one/boot-loader": "^0.7.13",
     "@fullstack-one/config": "^0.7.13",
     "@fullstack-one/db": "^0.7.14",
